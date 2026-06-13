@@ -284,7 +284,25 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   `test_token_en_cache_sobrevive_caida_de_supabase`.
 
 > **Hito:** los 5 críticos de la auditoría (T-001…T-005) cerrados. `run_checks.py` TODO VERDE.
-> Siguiente fase: Fase 2 (Pydantic v2, deps pineadas…) o empezar la extracción del MOLDE.
+
+### ✅ T-007/T-008/T-009 — Modernización del backend
+- **Pydantic v2:** `orm_mode`→`ConfigDict(from_attributes=True)` (5×, `schemas.py`),
+  `.dict()`→`.model_dump()` (11×, `songs_router.py`).
+- **Deps pineadas:** `requirements.txt` con versiones probadas en Py3.12.
+- **datetime tz-aware:** `datetime.utcnow()`→`_utcnow()` (UTC) en `models.py`.
+- **Efecto:** desaparecen los `DeprecationWarning` de Pydantic y datetime.
+
+### ✅ T-006 — `apiFetch` maneja el 401
+- **Qué/por qué:** si el token expira, las llamadas fallaban en silencio. Ahora `apiFetch`
+  (`auth.js`) detecta `401` y redirige a `login.html` (evita bucle si ya estás en login).
+- **Cómo:** cache-busting `auth.js?v=11` en los 4 `.html`.
+- **Verificación:** E2E `test_apifetch_redirige_a_login_en_401` (fila S4 del CHECKLIST).
+
+### ✅ T-015 — Limpieza
+- Eliminado `test_api.py` (script manual legacy con `requests`, redundante con el harness).
+
+> **Estado (ultracode):** lanzada en paralelo una auditoría multi-agente (8 dimensiones +
+> verificación adversaria) cuyos hallazgos confirmados se fundirán en el ROADMAP (T-026+).
 
 ---
 

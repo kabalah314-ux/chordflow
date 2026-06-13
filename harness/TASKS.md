@@ -23,6 +23,12 @@ La cola de críticos está vacía. Elegir la siguiente de `ROADMAP.md`:
 
 ## ✅ Hechas
 
+### T-006 / T-015 — apiFetch 401 + limpieza (2026-06-13)
+- `apiFetch` redirige a login en 401 (`auth.js?v=11`); test S4. Eliminado `test_api.py` legacy.
+
+### T-007 / T-008 / T-009 — Modernización backend (2026-06-13)
+- Pydantic v2 (ConfigDict/model_dump), deps pineadas, datetime tz-aware. Sin DeprecationWarnings.
+
 ### T-005 — Caché de validación de token (2026-06-13)
 - Caché TTL en memoria (`CHORDFLOW_TOKEN_TTL`) + degradación elegante si Supabase cae.
   `auth.py`. Tests en `test_security.py`.

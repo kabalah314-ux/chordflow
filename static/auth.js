@@ -94,5 +94,11 @@ async function apiFetch(url, opts = {}) {
     opts.headers = Object.assign({}, opts.headers, {
         'Authorization': 'Bearer ' + token
     });
-    return fetch(url, opts);
+    const res = await fetch(url, opts);
+    // Token expirado o inválido: volver al login automáticamente (T-006).
+    // En una página que ya es el login, no redirigimos para evitar bucles.
+    if (res.status === 401 && !window.location.pathname.endsWith('login.html')) {
+        window.location.href = 'login.html';
+    }
+    return res;
 }

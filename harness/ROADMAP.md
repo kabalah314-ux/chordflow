@@ -24,8 +24,8 @@
       Test `test_cors_restringe_origenes`.
 - [x] **T-005** 🔴 **Validación de token cacheada**. Caché TTL en memoria + degradación elegante
       si Supabase cae. Tests `test_validacion_de_token_se_cachea` y `..._sobrevive_caida_de_supabase`.
-- [ ] **T-006** 🟠 **`apiFetch` maneja 401** (`auth.js`): si el backend responde 401, redirigir
-      a `login.html` automáticamente. → Test E2E: token inválido → acaba en login.
+- [x] **T-006** 🟠 **`apiFetch` maneja 401** (`auth.js`): si el backend responde 401, redirige a
+      `login.html`. Test E2E `test_apifetch_redirige_a_login_en_401`. Cache-bust `auth.js?v=11`.
 
 ## Fase 2 — Base mantenible
 - [x] **T-007** 🟠 **Pydantic v2**: `orm_mode`→`ConfigDict(from_attributes=True)` (5×) y
@@ -41,8 +41,8 @@
       y decidir el comportamiento de `is_public` (hoy `get_song` filtra siempre por dueño).
 - [ ] **T-014** 🟡 **Unificar logging**: quitar `basicConfig` de `db.py` (módulo de librería);
       configurarlo una sola vez en `main.py` y permitir log a stdout (cloud-friendly).
-- [ ] **T-015** 🟡 **Limpiar `test_api.py`** de la raíz (script manual viejo, usa `requests` no
-      declarado, redundante con el harness). Eliminar o mover a `scripts/`.
+- [x] **T-015** 🟡 **`test_api.py` legacy eliminado** (script manual con `requests`, redundante
+      con el harness).
 - [ ] **T-016** 🟡 **`pydantic-settings`**: un objeto `Settings` validado en vez de `os.getenv`
       sueltos repartidos por `db.py`/`auth.py`/`main.py`.
 

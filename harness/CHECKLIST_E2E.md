@@ -8,6 +8,7 @@
 | S1 | La app carga sin errores de consola (login + biblioteca) | `test_smoke.py` | ✅ |
 | S2 | API protegida: `/songs` sin token → 401 (modo normal) | `test_smoke.py` | ✅ |
 | S3 | `/config` responde y expone `test_mode` | `test_smoke.py` | ✅ |
+| S4 | `apiFetch`: un 401 redirige al login | `test_smoke.py` | ✅ |
 | A1 | API: crear → leer → listar → borrar canción (CRUD) | `test_api_songs.py` | ✅ |
 | A2 | API: un usuario solo ve sus propias canciones | `test_api_songs.py` | ✅ |
 | A3 | API: editar (PUT) no deja filas huérfanas | `test_api_songs.py` | ✅ |
