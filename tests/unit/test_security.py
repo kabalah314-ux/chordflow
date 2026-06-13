@@ -8,6 +8,48 @@ import pytest
 pytestmark = pytest.mark.unit
 
 
+def test_cabeceras_de_seguridad(client):
+    """Las respuestas llevan cabeceras de seguridad básicas (T-029)."""
+    r = client.get("/config")
+    assert r.headers.get("X-Content-Type-Options") == "nosniff"
+    assert r.headers.get("X-Frame-Options") == "SAMEORIGIN"
+    assert "Referrer-Policy" in r.headers
+
+
+def test_cache_set_seguro_bajo_concurrencia(monkeypatch):
+    """_cache_set no lanza ni excede la cota con muchos hilos a la vez (T-028).
+    Sin el lock, esto provocaba 'dictionary changed size during iteration'."""
+    import threading
+    import time as _time
+
+    from src.services import auth
+
+    monkeypatch.setattr(auth, "TOKEN_CACHE_MAX", 50)
+    auth._token_cache.clear()
+
+    errors = []
+    barrier = threading.Barrier(8)
+
+    def worker(base):
+        try:
+            barrier.wait()  # maximizar la contención: todos arrancan a la vez
+            now = _time.monotonic()
+            for i in range(500):
+                auth._cache_set(f"{base}-{i}", "u", now)
+        except Exception as e:  # noqa: BLE001
+            errors.append(repr(e))
+
+    threads = [threading.Thread(target=worker, args=(b,)) for b in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert errors == [], f"_cache_set lanzó bajo concurrencia: {errors[:3]}"
+    assert len(auth._token_cache) <= 50
+    auth._token_cache.clear()
+
+
 def test_cors_restringe_origenes(client):
     """Solo los orígenes de CHORDFLOW_ALLOWED_ORIGINS reciben cabecera CORS (T-004).
     Default de test: http://127.0.0.1:8000 y http://localhost:8000."""

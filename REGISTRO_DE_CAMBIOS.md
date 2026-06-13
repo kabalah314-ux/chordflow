@@ -321,12 +321,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - El resto de hallazgos (cabeceras de seguridad, SRI, ON DELETE, paginación, consolidar escapeHtml,
   cobertura, desacoplar auth para el molde…) quedaron registrados en `ROADMAP.md` Fase A (T-029…T-044).
 
+### ✅ T-029 / T-037 + endurecimiento (verificación adversaria lean)
+> Un segundo workflow (3 agentes) verificó los fixes T-026/27/28. T-026 y T-027 correctos;
+> **T-028 estaba incompleto** (bug de concurrencia) → arreglado. También cerró 2 items de Fase A.
+- **T-028 (concurrencia):** `_cache_set` iteraba el dict mientras otro hilo del threadpool de
+  uvicorn insertaba → `RuntimeError: dictionary changed size during iteration` (HTTP 500 a
+  usuarios válidos) + la cota se saltaba por TOCTOU. Arreglado con `threading.Lock`.
+  Test `test_cache_set_seguro_bajo_concurrencia`.
+- **T-027 (hardening):** el `except Exception` de create/update ya no degrada a 400 con `str(e)`
+  (filtraba internos) → **500 genérico**.
+- **T-029:** middleware de cabeceras de seguridad (`X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `Permissions-Policy`). CSP pendiente. Test `test_cabeceras_de_seguridad`.
+- **T-037:** paginación acotada (`skip` ge=0, `limit` 1–500) → 422. Test `test_paginacion_acotada`.
+- **Verificación:** 13 unit + 17 e2e verde. ⚠️ e2e con flakiness intermitente (T-042).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. (Nos mordió 2 veces: el scroll y la transposición.) Versión actual de la mayoría: `v=9`.
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-13): `auth.js?v=11`, `score_render.js?v=8`, `chord_shapes.js?v=9`; el resto en `v=9`. (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

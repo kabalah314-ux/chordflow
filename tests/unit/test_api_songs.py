@@ -50,6 +50,15 @@ def test_patch_solo_metadatos(client):
     assert len(r.json()["sections"]) == 1
 
 
+def test_paginacion_acotada(client):
+    """skip/limit fuera de rango → 422 (T-037)."""
+    assert client.get("/songs/?skip=-1").status_code == 422
+    assert client.get("/songs/?limit=0").status_code == 422
+    assert client.get("/songs/?limit=99999").status_code == 422
+    # valores válidos siguen funcionando
+    assert client.get("/songs/?skip=0&limit=10").status_code == 200
+
+
 def test_put_inexistente_devuelve_404(client):
     """PUT sobre un id que no existe debe devolver 404 (regresión: el except
     Exception ancho lo convertía en 400). T-027."""

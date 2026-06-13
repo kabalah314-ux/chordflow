@@ -14,9 +14,12 @@
 | A3 | API: editar (PUT) no deja filas huérfanas | `test_api_songs.py` | ✅ |
 | A4 | API: PUT a id inexistente → 404 (no 400) | `test_api_songs.py` | ✅ |
 | A5 | API: metadatos fuera de rango → 422 | `test_api_songs.py` | ✅ |
+| A6 | API: paginación `skip`/`limit` acotada → 422 | `test_api_songs.py` | ✅ |
 | SEC1 | CORS restringe orígenes no permitidos | `test_security.py` | ✅ |
 | SEC2 | Validación de token se cachea y resiste caídas de Supabase | `test_security.py` | ✅ |
 | SEC3 | La caché de token tiene cota de tamaño (no memory leak) | `test_security.py` | ✅ |
+| SEC4 | Respuestas con cabeceras de seguridad (nosniff, frame-options…) | `test_security.py` | ✅ |
+| SEC5 | `_cache_set` es seguro bajo concurrencia (lock) | `test_security.py` | ✅ |
 | L1 | Biblioteca: estado vacío se muestra correctamente | `test_library.py` | ✅ |
 | L2 | Biblioteca: una canción aparece como tarjeta | `test_library.py` | ✅ |
 | L3 | Biblioteca: búsqueda en vivo filtra | `test_library.py` | ✅ |
@@ -31,3 +34,8 @@
 | J4 | Seguridad: el popup de diagramas escapa el nombre (XSS 2º orden) | `test_js_logic.py` | ✅ |
 
 > Al añadir una feature nueva, **añade aquí su fila** y crea su test antes de cerrar la tarea.
+
+⚠️ **Flakiness conocida (T-042):** los e2e dependen de un `live_server` (uvicorn en subproceso)
+y `httpx` con timeout por defecto (5 s). Bajo carga, alguna petición puede dar `ReadTimeout` y
+`run_checks` falla de forma intermitente; al re-ejecutar suele pasar. Fix pendiente: subir el
+timeout de `httpx`/Playwright en `conftest.py`.

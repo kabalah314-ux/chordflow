@@ -261,28 +261,22 @@ La DB SQLite y las tablas se crean solas al arrancar (`Base.metadata.create_all`
 
 ---
 
-## 12. Deuda técnica conocida (auditoría 2026-06-13)
+## 12. Deuda técnica y estado de calidad (auditoría 2026-06-13)
 
-Resultado del estudio completo del código. **Plan detallado y priorizado en
-[`harness/ROADMAP.md`](harness/ROADMAP.md)** (cada punto tiene un ID T-NNN). Resumen por severidad:
+**Estado:** tras el estudio inicial + una **auditoría multi-agente** (workflow de 8 finders), se han
+cerrado **todos los críticos y la mayoría de los altos**. Plan e historial con IDs T-NNN en
+**[`harness/ROADMAP.md`](harness/ROADMAP.md)**; bitácora en `REGISTRO_DE_CAMBIOS.md`.
 
-**🔴 Críticos (hacer antes de extraer el molde):**
-- **T-002 — XSS:** `score_render.js` inyecta `line.content` y `chord_name` con `innerHTML` sin
-  escapar (player y preview del editor). `library.js` sí escapa; el renderer no.
-- **T-003 — Fuga de huérfanos:** el `PUT` borra secciones con bulk delete, que no dispara el
-  cascade ORM, y SQLite no fuerza FKs → `lines`/`chord_markers`/`tab_lines` se acumulan huérfanos
-  en cada edición.
-- **T-004 — CORS:** `allow_origins=["*"]` + `allow_credentials=True` (inseguro e inconsistente).
-- **T-005 — Token bloqueante:** validación contra Supabase en cada request (latencia + caída total
-  si Supabase cae); falta caché o validación local del JWT.
-- **T-001 — Sin git:** el proyecto aún no está bajo control de versiones.
+**✅ Ya resueltos:** T-001 git · T-002 XSS en el render · T-003 fuga de huérfanos (PUT) · T-004 CORS ·
+T-005 caché de token · T-006 `apiFetch` 401 · T-007 Pydantic v2 · T-008 deps pineadas · T-009 datetime ·
+T-012 índices · T-015 limpieza · T-024 validación de rangos · **T-026 XSS en popup de diagramas** ·
+**T-027 404→400 + 500 genérico** · **T-028 caché de token (cota + lock de concurrencia)** ·
+T-029 cabeceras de seguridad · T-037 paginación acotada.
 
-**🟠 Altos:** Pydantic v1 sobre v2 (`orm_mode`/`.dict()` — T-007) · deps sin pinear (T-008) ·
-N+1 en `GET /songs/` por anidar toda la estructura en el listado (T-010) · `apiFetch` no maneja
-401 (T-006) · `datetime.utcnow()` deprecado (T-009).
-
-**🟡 Medios:** hard delete pese a `deleted_at` · sin índices · `logging.basicConfig` duplicado ·
-`test_api.py` legacy en la raíz · `CHORD_REGEX` limitado · sin validación de rangos en schemas.
+**⏳ Pendiente (ver ROADMAP):** T-010 N+1 en `GET /songs/` · T-011 Alembic · T-013 soft delete real ·
+T-014 logging unificado · T-016 pydantic-settings · T-030 SRI · T-031 caché y tokens revocados ·
+T-033 `ON DELETE CASCADE` · T-039 consolidar `escapeHtml` · **T-042 flakiness del e2e** · UX (T-017–022) ·
+T-023 CI · y la **Fase M (molde)** con T-043/T-044 (desacoplar auth + backend base).
 
 > Lo que está **bien** y conviene preservar (y moldear): separación `api`/`services`, motor de sync
 > sin DOM, render compartido player↔editor, modo test con BD temporal, y el harness completo.

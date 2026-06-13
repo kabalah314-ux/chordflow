@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import threading
 import time
 import urllib.request
 
@@ -28,17 +29,23 @@ TOKEN_TTL_SECONDS = int(os.getenv("CHORDFLOW_TOKEN_TTL", "60"))
 # Cota dura para que la caché no crezca sin límite (memory leak ante muchos tokens).
 TOKEN_CACHE_MAX = int(os.getenv("CHORDFLOW_TOKEN_CACHE_MAX", "1000"))
 _token_cache: dict[str, tuple[str, float]] = {}
+# uvicorn ejecuta los endpoints sync en un threadpool → varios hilos tocan la caché a la
+# vez. Sin lock, iterar el dict mientras otro hilo inserta lanza "dictionary changed size
+# during iteration" (HTTP 500 a usuarios válidos) y la cota se salta por TOCTOU. Ver T-028.
+_cache_lock = threading.Lock()
 
 
 def _cache_set(token: str, user_id: str, now: float):
-    """Guarda en la caché aplicando una cota de tamaño: primero purga los
-    expirados; si sigue llena, la vacía (límite de memoria)."""
-    if len(_token_cache) >= TOKEN_CACHE_MAX:
-        for t in [t for t, (_, exp) in _token_cache.items() if exp <= now]:
-            _token_cache.pop(t, None)
+    """Guarda en la caché de forma atómica (lock): purga los expirados y, si sigue
+    llena, la vacía (cota de memoria). El lock evita el RuntimeError de iteración
+    concurrente y respeta TOKEN_CACHE_MAX bajo concurrencia."""
+    with _cache_lock:
         if len(_token_cache) >= TOKEN_CACHE_MAX:
-            _token_cache.clear()
-    _token_cache[token] = (user_id, now + TOKEN_TTL_SECONDS)
+            for t in [t for t, (_, exp) in _token_cache.items() if exp <= now]:
+                _token_cache.pop(t, None)
+            if len(_token_cache) >= TOKEN_CACHE_MAX:
+                _token_cache.clear()
+        _token_cache[token] = (user_id, now + TOKEN_TTL_SECONDS)
 
 
 def _validate_token_with_supabase(token: str):

@@ -40,6 +40,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Cabeceras de seguridad en todas las respuestas (T-029). Conjunto conservador que no
+# rompe la app (CSP queda pendiente: requiere afinar 'unsafe-inline' por los estilos inline).
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    return response
+
 # Montar carpeta de archivos estáticos (Frontend)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

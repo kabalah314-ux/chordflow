@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -18,9 +18,9 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[SongResponse])
-def get_songs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
-              user_id: str = Depends(get_current_user)):
-    """Obtiene las canciones del usuario autenticado (paginadas)."""
+def get_songs(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500),
+              db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
+    """Obtiene las canciones del usuario autenticado (paginadas). T-037: skip/limit acotados."""
     try:
         songs = (db.query(Song)
                  .filter(Song.deleted_at.is_(None), Song.owner_id == user_id)
@@ -83,7 +83,7 @@ def create_song(song: SongCreate, db: Session = Depends(get_db),
     except Exception as e:
         db.rollback()
         logger.error(f"Error inesperado creando canción: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.put("/{song_id}", response_model=SongResponse)
 def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get_db),
@@ -139,7 +139,7 @@ def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get
     except Exception as e:
         db.rollback()
         logger.error(f"Error inesperado actualizando canción {song_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 @router.patch("/{song_id}", response_model=SongResponse)
 def patch_song(song_id: str, song_update: SongUpdate, db: Session = Depends(get_db),

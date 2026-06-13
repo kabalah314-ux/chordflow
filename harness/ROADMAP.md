@@ -73,13 +73,18 @@
 - [x] **T-026** 🔴 **XSS de 2º orden en el popup de diagramas** (`chord_shapes.js` inyectaba `name`
       sin escapar; `name` = `textContent` decodificado). Escapado. Test `test_popup_diagrama_escapa_nombre_malicioso`.
 - [x] **T-027** 🔴 **404→400 en `PUT`/`POST`**: el `except Exception` ancho tragaba el `HTTPException`.
-      Añadido `except HTTPException: raise`. Test `test_put_inexistente_devuelve_404`.
-- [x] **T-028** 🟠 **`_token_cache` sin cota** (memory leak de T-005). Cota dura `TOKEN_CACHE_MAX`.
-      Test `test_token_cache_tiene_cota_de_tamano`.
+      Añadido `except HTTPException: raise`. **Hardening** (de la verificación): el `except Exception`
+      ahora responde **500 genérico** (antes 400 con `str(e)` → filtraba internals). Test `test_put_inexistente_devuelve_404`.
+- [x] **T-028** 🟠 **`_token_cache` sin cota + concurrencia** (memory leak de T-005). Cota dura
+      `TOKEN_CACHE_MAX` **y `threading.Lock`** en `_cache_set` (la verificación adversaria encontró
+      que sin lock, iterar el dict mientras otro hilo del threadpool inserta lanzaba
+      `RuntimeError: dictionary changed size` → HTTP 500). Tests `test_token_cache_tiene_cota_de_tamano`
+      y `test_cache_set_seguro_bajo_concurrencia`.
 
 **🟠 Seguridad / robustez (pendientes):**
-- [ ] **T-029** 🟠 Cabeceras de seguridad faltantes (CSP, X-Content-Type-Options, Referrer-Policy…)
-      vía middleware.
+- [x] **T-029** 🟠 Cabeceras de seguridad vía middleware (X-Content-Type-Options, X-Frame-Options,
+      Referrer-Policy, Permissions-Policy). CSP queda pendiente (sub-tarea: requiere afinar inline).
+      Test `test_cabeceras_de_seguridad`.
 - [ ] **T-030** 🟡 Sin **SRI** en el `<script>` del CDN de Supabase (integrity + crossorigin).
 - [ ] **T-031** 🟡 Degradación del caché de token (T-005) puede dejar pasar un token **revocado**
       mientras dure la caché → acotar la ventana de gracia / invalidación.
@@ -93,8 +98,8 @@
 - [ ] **T-036** 🟡 Defaults solo en Python, no `server_default` en la DB.
 
 **🟠 API / backend (pendientes):**
-- [ ] **T-037** 🟠 Paginación: `skip`/`limit` sin tope ni validación (negativos, límite gigante) →
-      `Query(ge=0, le=...)`.
+- [x] **T-037** 🟠 Paginación acotada: `skip` `Query(ge=0)`, `limit` `Query(ge=1, le=500)` → 422
+      fuera de rango. Test `test_paginacion_acotada`.
 - [ ] **T-038** 🟡 `create_song`/`update_song` duplican el armado de la estructura → extraer helper.
 
 **🟡 Frontend (pendientes):**
