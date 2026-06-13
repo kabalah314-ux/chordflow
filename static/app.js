@@ -166,12 +166,17 @@ async function fetchAndRenderSong() {
             const res = await apiFetch("/songs/");
             if (!res.ok) throw new Error("Error fetching songs");
             const songs = await res.json();
-            
+
             if (songs.length === 0) {
                 elSongTitle.textContent = "No hay canciones. Pulsa el botón + para crear una.";
                 return;
             }
-            song = songs[0]; // Cargamos la primera canción por defecto
+            // El listado /songs/ es ligero (SongSummary) y NO trae la estructura
+            // sections→lines→chords (T-010). Para reproducir la primera canción por
+            // defecto necesitamos el DETALLE completo, no el resumen.
+            const detRes = await apiFetch(`/songs/${songs[0].id}`);
+            if (!detRes.ok) throw new Error("Error fetching default song detail");
+            song = await detRes.json();
         }
         
         currentSong = song;

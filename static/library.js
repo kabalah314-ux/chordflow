@@ -41,7 +41,9 @@ function renderGrid(songs) {
         card.className = 'song-card';
         card.dataset.id = song.id;
 
-        const sectionCount = song.sections ? song.sections.length : 0;
+        // El listado /songs/ es ligero (SongSummary): trae `section_count`, no la
+        // estructura `sections` (T-010). Fallback a 0 si no viniera.
+        const sectionCount = song.section_count ?? 0;
 
         card.innerHTML = `
             <div class="card-actions">

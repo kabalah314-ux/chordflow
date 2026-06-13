@@ -118,3 +118,19 @@ class SongResponse(SongBase):
     sections: List[SectionResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Listado ligero de `GET /songs/`: metadatos planos + número de secciones, SIN la
+# estructura anidada (sections→lines→chords). Serializar `SongResponse` en el listado
+# obligaba a lazy-load de toda la estructura por cada canción → N+1. `SongSummary` no
+# declara `sections`, así que pydantic nunca toca esa relación. El `section_count` lo
+# rellena el router con UNA sola query agregada para todas las canciones (T-010).
+class SongSummary(SongBase):
+    id: str
+    owner_id: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+    section_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)

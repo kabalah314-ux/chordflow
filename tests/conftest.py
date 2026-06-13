@@ -119,8 +119,10 @@ def live_server():
         stdout=log_fh, stderr=subprocess.STDOUT,
     )
 
-    # Esperar a que responda
-    deadline = time.time() + 25
+    # Esperar a que responda. 45s de margen: el arranque de uvicorn en frío (import
+    # de la app + JIT) puede tardar bajo carga (varias suites seguidas / CI) y un
+    # deadline corto provocaba fallos en cascada de todos los e2e (flakiness T-042).
+    deadline = time.time() + 45
     up = False
     while time.time() < deadline:
         try:
@@ -159,10 +161,15 @@ def live_server():
 
 @pytest.fixture()
 def api(live_server):
-    """Cliente HTTP autenticado (modo test) contra el live_server."""
+    """Cliente HTTP autenticado (modo test) contra el live_server.
+
+    Timeout explícito de 30s: el default de httpx (5s) provocaba `ReadTimeout`
+    intermitentes cuando el primer request al subproceso uvicorn coincidía con el
+    arranque/JIT del worker o con un pico de carga del CI (flakiness T-042)."""
     import httpx
     with httpx.Client(base_url=live_server,
-                      headers={"Authorization": "Bearer test-token"}) as c:
+                      headers={"Authorization": "Bearer test-token"},
+                      timeout=30.0) as c:
         yield c
 
 

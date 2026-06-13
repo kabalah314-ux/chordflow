@@ -3,6 +3,8 @@ Smoke E2E: la app arranca y las páginas cargan sin errores de JS (S1),
 y /config responde con test_mode (S3).
 """
 
+import time
+
 import pytest
 
 pytestmark = pytest.mark.e2e
@@ -28,11 +30,26 @@ def test_paginas_cargan_sin_errores_js(page, live_server, path):
 
 def test_apifetch_redirige_a_login_en_401(page, live_server):
     """Si una llamada autenticada devuelve 401, apiFetch lleva al login (T-006).
-    La config ya está cacheada tras cargar la página, así que sobreescribir fetch
-    solo afecta a la llamada a la API, no a getToken()."""
+
+    Determinista (T-042). Dos carreras que antes hacían este test flaky:
+    1. La caché de `/config`: si `networkidle` salta antes de que `_cfg` esté cacheada,
+       sobreescribir `fetch` rompe `getConfig()` y `getToken()` lanzaría antes del 401.
+       → lo evitamos calentando la caché con un `getToken()` real previo.
+    2. `login.js` rebota a `library.html` cuando HAY sesión (modo test → siempre la hay),
+       así que exigir *quedarse* en login.html era una carrera contra ese rebote.
+       → comprobamos que la navegación de apiFetch PASÓ por login.html (aunque rebote)."""
     page.goto(live_server + "/static/library.html", wait_until="networkidle")
-    # Forzar que cualquier fetch posterior devuelva 401
+    page.evaluate("async () => { await getToken(); }")  # caché de config con fetch REAL
+
+    navegaciones = []
+    page.on("framenavigated", lambda f: navegaciones.append(f.url))
+
     page.evaluate("() => { window.fetch = async () => new Response('{}', {status: 401}); }")
     page.evaluate("() => { apiFetch('/songs/'); }")
-    page.wait_for_url("**/login.html", timeout=5000)
-    assert page.url.endswith("login.html")
+
+    # Esperar a que la navegación pase por login.html (login.js puede rebotar después).
+    deadline = time.time() + 5
+    while time.time() < deadline and not any("login.html" in u for u in navegaciones):
+        page.wait_for_timeout(50)
+    assert any("login.html" in u for u in navegaciones), (
+        f"apiFetch no redirigió a login tras un 401; navegaciones vistas: {navegaciones}")

@@ -32,9 +32,10 @@
       `.dict()`→`.model_dump()` (11×). DeprecationWarnings de Pydantic eliminados.
 - [x] **T-008** 🟠 **Dependencias pineadas** en `requirements.txt` (versiones probadas en Py3.12).
 - [x] **T-009** 🟠 **`datetime.utcnow()`→`_utcnow()` (tz-aware)** en `models.py`.
-- [ ] **T-010** 🟠 **N+1 en `GET /songs/`**: la lista usa `SongResponse` anidado (sections→lines→
-      chords) → lazy-load por canción. Crear `SongSummary` ligero (sin estructura) para el listado.
-      → Test: el JSON de `/songs/` no trae `sections`.
+- [x] **T-010** 🟠 **N+1 en `GET /songs/`** resuelto: `SongSummary` ligero (metadatos + `section_count`,
+      sin `sections`) → pydantic no toca la relación; `section_count` vía UNA query agregada
+      (`func.count`+`group_by`) → O(1) queries. Frontend usa `section_count` (`library.js?v=10`).
+      Test `test_listado_es_ligero_sin_estructura`.
 - [ ] **T-011** 🟠 **Alembic** para migraciones (hoy solo `create_all`, no aplica cambios de esquema).
 - [x] **T-012** 🟠 **Índices** en `Song.owner_id`, `Song.deleted_at` y las 4 FKs (`index=True`).
       (Aplica a BD nuevas; la existente requerirá la migración de T-011.)
@@ -110,8 +111,11 @@
 - [ ] **T-041** 🟡 Fallos de carga inicial silenciosos en el frontend (avisar al usuario).
 
 **🟡 Tests (pendientes):**
-- [ ] **T-042** 🟡 Cobertura: `sync_engine.js`, `chord_shapes.js`, caminos negativos de la API y
-      errores de red sin test; añadir medición de cobertura.
+- [~] **T-042** 🟡 **Flakiness e2e resuelta** (3 carreras): timeout httpx de la fixture `api` 5→30 s;
+      deadline de arranque del `live_server` 25→45 s; y `test_apifetch_redirige_a_login_en_401`
+      reescrito determinista (caché de `/config` + rebote de `login.js`, vía `framenavigated`).
+      Pasó 5/5 en repetición. **Pendiente** del alcance original (no bloqueante): cobertura de
+      `sync_engine.js`/`chord_shapes.js`, caminos negativos de API y medición de cobertura.
 
 **🧬 Molde (van a `MOLDE.md` / Fase M):**
 - [ ] **T-043** 🟠 Desacoplar `auth.py` de Supabase (provider enchufable) y parametrizar el prefijo

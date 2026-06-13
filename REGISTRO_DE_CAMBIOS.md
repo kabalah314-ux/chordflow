@@ -335,12 +335,42 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **T-037:** paginación acotada (`skip` ge=0, `limit` 1–500) → 422. Test `test_paginacion_acotada`.
 - **Verificación:** 13 unit + 17 e2e verde. ⚠️ e2e con flakiness intermitente (T-042).
 
+### ✅ T-010 / T-042 — Listado ligero (fin del N+1) + flakiness e2e
+
+> **Por qué:** `GET /songs/` serializaba `SongResponse` (con `sections→lines→chords`), forzando
+> un lazy-load de toda la jerarquía **por cada canción** del listado → N+1. Y el harness e2e
+> fallaba de forma intermitente por timeouts (T-042).
+
+- **T-010 (N+1):** nuevo schema `SongSummary` (metadatos planos + `section_count`, **sin** la
+  relación `sections`), así pydantic nunca toca esa relación al serializar el listado. El nº de
+  secciones se obtiene con **una sola query agregada** (`func.count` + `group_by`) para toda la
+  página, no una por canción → de O(N) a O(1) queries. Archivos: `src/services/schemas.py`
+  (`SongSummary`), `src/api/songs_router.py` (`get_songs` → `List[SongSummary]`).
+  - **Frontend (2 consumidores del listado):** `static/library.js` usa `song.section_count` en vez
+    de `song.sections.length`. Y `static/app.js` (reproductor sin `?songId`, que cargaba `songs[0]`
+    del listado como canción completa) ahora pide el **detalle** `/songs/{id}` antes de renderizar
+    —si no, al abrir `index.html` sin parámetro la partitura salía vacía y sin acordes—. Esta
+    **regresión la cazó la revisión adversaria multi-agente del diff**, no estaba en el plan inicial.
+    Cache-bust `library.js?v=10`, `app.js?v=10`.
+  - **Tests:** `test_listado_es_ligero_sin_estructura` (listado sin `sections`, con `section_count`;
+    el detalle sí trae la estructura) + e2e `test_carga_por_defecto_sin_songId` (abrir el player sin
+    `?songId` carga la 1ª canción **con acordes** — cubre la regresión de `app.js`).
+- **T-042 (flakiness e2e):** se atacaron 3 carreras reales del harness:
+  1. Fixture `api`: timeout httpx por defecto (5 s) → `ReadTimeout` intermitente. Ahora 30 s.
+  2. `live_server`: deadline de arranque 25 s → fallos en cascada bajo carga (varias suites). Ahora 45 s.
+  3. `test_apifetch_redirige_a_login_en_401`: doble carrera —caché de `/config` sin poblar al
+     sobreescribir `fetch`, y `login.js` que **rebota** a `library.html` si hay sesión (modo test
+     siempre la tiene)—. Reescrito determinista: calienta la caché con `getToken()` y comprueba que
+     la navegación **pasó por** `login.html` (no que se quede), capturando `framenavigated`.
+- **Verificación:** `doctor.py` verde + `run_checks.py` **TODO VERDE** (14 unit + 18 e2e); el e2e
+  antes flaky pasó 5/5 en repetición. Revisión adversaria multi-agente del diff antes de cerrar.
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-13): `auth.js?v=11`, `score_render.js?v=8`, `chord_shapes.js?v=9`; el resto en `v=9`. (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-13): `auth.js?v=11`, `library.js?v=10`, `app.js?v=10`, `score_render.js?v=8`, `chord_shapes.js?v=9`; el resto en `v=9`. (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

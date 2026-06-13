@@ -24,6 +24,19 @@ def test_carga_la_cancion(page, live_server, api):
     assert page.locator(".chord-container, .chord-pill").count() >= 1
 
 
+def test_carga_por_defecto_sin_songId(page, live_server, api):
+    """Abrir el reproductor SIN ?songId debe cargar la primera canción con sus
+    acordes. Regresión T-010: el listado /songs/ se volvió ligero (SongSummary sin
+    `sections`); app.js debe pedir el detalle de songs[0], no renderizar el resumen."""
+    wipe_songs(api)
+    api.post("/songs/", json=sample_song_payload(title="Primera Por Defecto"))
+    page.goto(live_server + "/static/index.html", wait_until="networkidle")
+    page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
+    assert page.inner_text("#song-title") == "Primera Por Defecto"
+    # Si app.js hubiera renderizado el SongSummary (sin sections), no habría acordes.
+    assert page.locator(".chord-container, .chord-pill").count() >= 1
+
+
 def test_play_avanza_el_beat(page, live_server, api):
     _crear_y_abrir(page, live_server, api)
     assert "0.0" in page.inner_text("#current-beat-display")

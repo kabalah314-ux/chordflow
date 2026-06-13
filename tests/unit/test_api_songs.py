@@ -59,6 +59,23 @@ def test_paginacion_acotada(client):
     assert client.get("/songs/?skip=0&limit=10").status_code == 200
 
 
+def test_listado_es_ligero_sin_estructura(client):
+    """El listado GET /songs/ no debe traer la estructura anidada `sections`
+    (evita el N+1), sino un `section_count` plano (T-010)."""
+    client.post("/songs/", json=sample_song_payload(title="Una"))
+
+    listado = client.get("/songs/").json()
+    assert len(listado) == 1
+    item = listado[0]
+    # Ligero: ni rastro de la jerarquía sections→lines→chords
+    assert "sections" not in item
+    # Pero sí el contador (el payload de ejemplo tiene 1 sección)
+    assert item["section_count"] == 1
+    # El detalle SÍ sigue trayendo la estructura completa
+    detalle = client.get(f"/songs/{item['id']}").json()
+    assert len(detalle["sections"]) == 1
+
+
 def test_put_inexistente_devuelve_404(client):
     """PUT sobre un id que no existe debe devolver 404 (regresión: el except
     Exception ancho lo convertía en 400). T-027."""

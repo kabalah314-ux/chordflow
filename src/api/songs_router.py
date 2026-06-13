@@ -2,13 +2,14 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
 from ..services.db import get_db
 from ..services.models import ChordMarker, Line, Section, Song, TabLine
-from ..services.schemas import SongCreate, SongResponse, SongUpdate
+from ..services.schemas import SongCreate, SongResponse, SongSummary, SongUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +18,30 @@ router = APIRouter(
     tags=["songs"]
 )
 
-@router.get("/", response_model=List[SongResponse])
+@router.get("/", response_model=List[SongSummary])
 def get_songs(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500),
               db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
-    """Obtiene las canciones del usuario autenticado (paginadas). T-037: skip/limit acotados."""
+    """Lista (ligera) de las canciones del usuario, paginada. Devuelve `SongSummary`
+    (metadatos + section_count, SIN la estructura anidada) para evitar el N+1 de
+    serializar toda la jerarquía por canción (T-010). T-037: skip/limit acotados."""
     try:
         songs = (db.query(Song)
                  .filter(Song.deleted_at.is_(None), Song.owner_id == user_id)
                  .offset(skip).limit(limit).all())
+        if not songs:
+            return []
+        # UNA sola query agregada para el nº de secciones de TODAS las canciones de la
+        # página (en vez de un lazy-load por canción → N+1).
+        song_ids = [s.id for s in songs]
+        counts = dict(
+            db.query(Section.song_id, func.count(Section.id))
+            .filter(Section.song_id.in_(song_ids))
+            .group_by(Section.song_id)
+            .all()
+        )
+        for s in songs:
+            # Atributo no mapeado, solo para la serialización (no se persiste).
+            s.section_count = counts.get(s.id, 0)
         return songs
     except SQLAlchemyError as e:
         logger.error(f"Error recuperando canciones: {e}", exc_info=True)
