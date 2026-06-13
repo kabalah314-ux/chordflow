@@ -19,8 +19,9 @@ La cola de críticos y la mayoría de los 🟠 altos están cerrados. Elegir de 
 
 1. **Integridad de datos (Alembic ya operativo)**: T-034 `owner_id NOT NULL` (cuando la auth sea
    obligatoria), T-035 `Line.type` Enum/CHECK, T-036 `server_default` — vía migración batch.
-2. **Fase M (molde)**: T-M02 crear `app-skeleton/` (backend base T-044 + auth desacoplada T-043
-   ya listos), luego T-M01 (inventario universal vs por-proyecto) y T-M03 (plantillar + prefijo env).
+2. **Fase M (molde)**: **T-M02 crear `app-skeleton/`** (inventario T-M01 validado, backend base
+   T-044 + auth desacoplada T-043 ya listos), luego T-M03 (plantillar + prefijo env) y T-M06 (criterio
+   de molde estable: doctor verde sin tocar dominio).
 3. **Fase M (el molde)**: T-M02 crear `app-skeleton/`. Pre-requisito (críticos) ya cumplido.
    T-043/T-044 (desacoplar auth + backend base) alimentan el molde.
 
@@ -46,7 +47,9 @@ T-013 soft delete real (`deleted_at`, 2º DELETE → 404) · T-016 `Settings` co
 T-025 `/health` liveness · T-039 `escapeHtml` consolidado en `util.js` · T-044 backend base del
 molde (handler de errores global → cierra los 4 pilares) · T-043 auth desacoplada (provider enchufable).
 
-> Estado de calidad: 30 unit + 18 e2e en verde. Git: 18+ commits. `run_checks.py` TODO VERDE.
-> **Molde listo para extraer (T-M02)**: backend base T-044 (logging/Settings/health/errores) +
-> auth desacoplada T-043 (AuthProvider). Pendiente del molde: prefijo env `CHORDFLOW_*` → T-M03.
+**Fase M (molde):** T-M01 inventario universal-vs-dominio validado contra el árbol real.
+
+> Estado de calidad: 30 unit + 18 e2e en verde. Git: 19+ commits. `run_checks.py` TODO VERDE.
+> **Molde listo para extraer (T-M02)**: inventario validado (T-M01) + backend base T-044
+> (logging/Settings/health/errores) + auth desacoplada T-043. Pendiente: prefijo env → T-M03.
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

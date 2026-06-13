@@ -153,7 +153,9 @@
 > Detalle del diseño en [`harness/MOLDE.md`](MOLDE.md). **Pre-requisito: T-001 a T-005 hechos**
 > (no se moldean bugs). Ver `MOLDE.md` para qué es universal y qué es por-proyecto.
 
-- [ ] **T-M01** 🟠 Validar el inventario universal vs por-proyecto (tabla en `MOLDE.md`).
+- [x] **T-M01** 🟠 Inventario universal vs por-proyecto **validado** contra el árbol real (`MOLDE.md`
+      §2 reescrita en 4 sub-tablas + §4 actualizada). Reconciliado `settings.py`→`config.py`; añadidos
+      `logging_config.py`/`auth_provider.py`/`util.js`/`alembic`/`login.*` y sus tests.
 - [ ] **T-M02** 🟠 Crear `app-skeleton/` con el esqueleto agnóstico (harness + `src` base +
       `tests` scaffold + config), usando un recurso de ejemplo genérico (`Item`) en vez de `Song`.
 - [ ] **T-M03** 🟡 Plantillar `CLAUDE.md` y `GUIA_MAESTRA.md` con huecos `{{APP_NAME}}`, etc.

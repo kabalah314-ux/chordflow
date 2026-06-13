@@ -552,6 +552,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   de ChordFlow, y tocar los nombres de los settings ahora solo añadiría riesgo sin valor aquí.
 - **Verificación:** `run_checks.py` **TODO VERDE** (30 unit + 18 e2e).
 
+### ✅ T-M01 — Inventario del molde validado contra el árbol real
+
+> **Por qué:** la tabla universal-vs-dominio de `MOLDE.md` se escribió en fase de diseño; desde
+> entonces el código creció (T-011 Alembic, T-014 logging, T-016 `config.py`, T-039 `util.js`,
+> T-043 `auth_provider.py`, T-044 handler global). Antes de extraer `app-skeleton/` (T-M02) hay que
+> asegurar que el inventario refleja la realidad, o el molde nacería incompleto.
+
+- **Validación:** listado del árbol real (`src/`, `static/`, `tests/`, `harness/`, `alembic/`, raíz)
+  y cotejo fila a fila. Hallazgos corregidos en `MOLDE.md`:
+  - `settings.py` del diseño **es** `config.py` en el real → reconciliado.
+  - Añadidos como **Universal (nuevo)**: `logging_config.py`, `auth_provider.py`, `static/util.js`,
+    `alembic.ini`+`env.py`+`script.py.mako`, y los tests `test_config/logging_config/auth_provider`.
+  - `static/login.html`+`login.js` reclasificados **Universal (plantilla)** (faltaban).
+  - `alembic/versions/*` marcados **Dominio** (el molde trae solo el baseline del `Item`).
+  - `src/main.py`: añadidos `/health` y el handler de errores global a su descripción.
+- **`MOLDE.md`:** tabla §2 reescrita en 4 sub-tablas (harness/raíz, backend, frontend, tests) y la
+  estructura §4 de `app-skeleton/` actualizada a los nombres reales. Estado del doc → «inventario
+  validado», pre-requisitos técnicos (T-043/T-044) marcados cumplidos.
+- **Verificación:** tarea de diseño/documentación, sin cambio de runtime → `doctor.py` **verde**
+  (10/10); el "test" es el cotejo del inventario contra el árbol real.
+
 ---
 
 <a name="notas"></a>

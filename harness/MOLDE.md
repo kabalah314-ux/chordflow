@@ -3,7 +3,9 @@
 > Documento de diseño y constancia. Explica **qué de ChordFlow es reutilizable**, cómo se
 > extrae a un molde, y cómo nace un proyecto nuevo a partir de él.
 > Tareas asociadas: **T-M01 … T-M06** en [`ROADMAP.md`](ROADMAP.md) (Fase M).
-> Estado: **DISEÑO** (no ejecutado todavía). Pre-requisito para extraer: T-001…T-005 hechos.
+> Estado: **INVENTARIO VALIDADO** (T-M01, 2026-06-13) contra el árbol real. Pre-requisitos
+> técnicos para extraer **cumplidos**: backend base (T-044) + auth desacoplada (T-043). Siguiente:
+> materializar `app-skeleton/` (T-M02).
 
 ---
 
@@ -24,39 +26,68 @@ con reglas claras** desde el minuto 1. Filosofía en dos capas:
 
 ## 2. Inventario: qué es universal y qué es por-proyecto
 
+> **Validado en T-M01 (2026-06-13)** contra el árbol real. Las filas marcadas «(nuevo desde el
+> diseño)» se añadieron tras construir T-011/T-014/T-016/T-039/T-043/T-044.
+
+### 2.1 Harness y raíz
 | Archivo / carpeta | Capa | En el molde queda… |
 |---|---|---|
-| `harness/doctor.py` | **Universal** | igual (algún check parametrizado por nombre de app) |
+| `harness/doctor.py` | **Universal** | igual (algún check parametrizado por nombre de app; añadir check de `/health`) |
 | `harness/run_checks.py` | **Universal** | igual |
-| `harness/ROADMAP.md` | **Universal (plantilla)** | con la Fase 0–2 genérica + huecos |
+| `harness/ROADMAP.md` | **Universal (plantilla)** | Fase 0–2 genérica + huecos |
 | `harness/TASKS.md` + `templates/` | **Universal** | igual |
-| `harness/CHECKLIST_E2E.md` | **Universal (plantilla)** | solo las filas genéricas (smoke, auth, CRUD) |
+| `harness/CHECKLIST_E2E.md` | **Universal (plantilla)** | solo filas genéricas (smoke, auth, CRUD) |
 | `harness/MOLDE.md` | **Universal** | este documento (guía de uso del molde) |
-| `CLAUDE.md` | **Universal (plantilla)** | con huecos `{{APP_NAME}}`, `{{STACK}}`, etc. |
-| `GUIA_MAESTRA.md` | **Plantilla** | esqueleto de secciones a rellenar por proyecto |
-| `pyproject.toml` | **Universal** | igual (ruff/black/pytest config) |
-| `requirements.txt` / `-dev.txt` | **Universal** | **pineado** (deuda T-008 ya resuelta en el molde) |
-| `.gitignore` | **Universal** | igual |
-| `.env` / `.env.local` (ejemplos) | **Universal** | `.env.example` con claves vacías |
-| `src/main.py` | **Universal (base)** | app FastAPI, CORS por env, static, `/config`, `/health` |
-| `src/services/db.py` | **Universal** | engine + `get_db` + `PRAGMA foreign_keys` (T-003 ya resuelto) |
-| `src/services/auth.py` | **Universal** | auth con modo test; Supabase **opcional/desacoplado** |
-| `src/services/settings.py` | **Universal (nuevo)** | `pydantic-settings` (T-016) — config validada |
-| `tests/conftest.py` | **Universal** | fixtures `client` + `live_server` + `api` + modo test |
-| `tests/e2e/test_smoke.py` | **Universal** | smoke + auth 401 + `/config` |
-| `tests/unit/test_*_resource.py` | **Plantilla** | CRUD + aislamiento por dueño sobre `Item` |
-| `src/services/models.py` | **Dominio** | reemplazar `Song/Section/...` por tu modelo |
-| `src/services/schemas.py` | **Dominio** | tus schemas |
-| `src/api/*_router.py` | **Dominio (patrón)** | CRUD genérico de ejemplo (`items_router.py`) |
-| `static/*` (player, editor, sync_engine, score_render, chord_shapes) | **Dominio** | tu UI |
-| `static/auth.js` | **Universal** | igual (login, guards, `apiFetch`, modo test) |
-| `static/style.css` (tokens base) | **Mixto** | extraer variables (`--accent`, glass) como base |
+| `CLAUDE.md` | **Universal (plantilla)** | huecos `{{APP_NAME}}`, `{{STACK}}`, `{{ENV_PREFIX}}` |
+| `GUIA_MAESTRA.md` | **Plantilla** | esqueleto de secciones a rellenar |
+| `pyproject.toml` | **Universal** | igual (ruff/black/pytest) |
+| `requirements.txt` / `-dev.txt` | **Universal** | **pineado** (T-008); incluye `pydantic-settings`, `alembic` |
+| `.gitignore` / `.gitattributes` | **Universal** | igual |
+| `.env` / `.env.local` | **Universal** | `.env.example` con claves vacías (ver §4) |
+| `alembic.ini` + `alembic/env.py` + `script.py.mako` | **Universal (nuevo)** | infra de migraciones (T-011); URL de `DATABASE_URL`, `render_as_batch` |
+| `alembic/versions/*` | **Dominio (nuevo)** | el molde trae solo el baseline del `Item`, no los de `Song` |
+
+### 2.2 Backend (`src/`)
+| Archivo | Capa | En el molde queda… |
+|---|---|---|
+| `src/main.py` | **Universal (base)** | app FastAPI, CORS por env, static, `/config`, `/health`, **handler de errores global** (T-044) |
+| `src/services/db.py` | **Universal** | engine + `get_db` + `PRAGMA foreign_keys` (T-003) |
+| `src/services/config.py` | **Universal (nuevo)** | `Settings` pydantic-settings (T-016) — config validada. *(En el diseño se llamó `settings.py`; el real es `config.py`.)* |
+| `src/services/logging_config.py` | **Universal (nuevo)** | `setup_logging()` una vez + stdout cloud (T-014) |
+| `src/services/auth.py` | **Universal** | `get_current_user` con modo test + caché TTL/lock/degradación (agnóstico al IdP) |
+| `src/services/auth_provider.py` | **Universal (nuevo)** | `AuthProvider` + `SupabaseAuthProvider` + factoría (T-043) |
+| `src/services/models.py` | **Dominio** | reemplazar `Song/Section/...` por `Item` de ejemplo |
+| `src/services/schemas.py` | **Dominio (patrón)** | `ItemBase/Create/Update/Response/Summary` |
+| `src/api/songs_router.py` | **Dominio (patrón)** | → `items_router.py`: CRUD + auth + filtro por `owner_id` + soft delete + paginación |
+
+### 2.3 Frontend (`static/`)
+| Archivo | Capa | En el molde queda… |
+|---|---|---|
+| `static/auth.js` | **Universal** | login, guards, `apiFetch` (401→login), modo test |
+| `static/util.js` | **Universal (nuevo)** | `escapeHtml` canónico (T-039) |
+| `static/login.html` + `login.js` | **Universal (plantilla)** | flujo de login (branding aparte) |
+| `static/style.css` | **Mixto** | extraer tokens (`--accent`, glass) como base estética opcional |
+| `static/library.*`, `index.html`, `editor.*`, `app.js`, `sync_engine.js`, `score_render.js`, `chord_shapes.js` | **Dominio** | la UI de partituras NO va al molde |
+
+### 2.4 Tests
+| Archivo | Capa | En el molde queda… |
+|---|---|---|
+| `tests/conftest.py` | **Universal** | fixtures `client` + `live_server` + `api` + modo test + BD temporal |
+| `tests/unit/test_security.py` | **Universal** | CORS, caché de token, cabeceras, handler global |
+| `tests/unit/test_config.py` | **Universal (nuevo)** | validación de `Settings` |
+| `tests/unit/test_logging_config.py` | **Universal (nuevo)** | logging único + stdout |
+| `tests/unit/test_auth_provider.py` | **Universal (nuevo)** | provider enchufable |
+| `tests/unit/test_migrations.py` | **Universal (infra)** | `upgrade head` + `check` (sobre el esquema del `Item`) |
+| `tests/e2e/test_smoke.py` | **Universal** | carga sin errores JS + 401 + `/config` |
+| `tests/unit/test_api_songs.py` | **Plantilla** | → `test_items.py`: CRUD + aislamiento por dueño + soft delete |
+| `tests/e2e/test_{editor,js_logic,library,player}.py` | **Dominio** | tests de la UI de partituras |
 
 **Resumen del esqueleto que comparten TODAS las apps:**
 1. El **harness** completo (doctor, run_checks, roadmap/tasks, checklist, plantillas).
 2. El **bucle de trabajo** de `CLAUDE.md` (los 7 pasos) y la división GUIA vs CLAUDE.
-3. El **arranque backend**: FastAPI + SQLAlchemy + `get_db` + settings + CORS por env + `/health`.
-4. La **auth con modo test** (bypass por env var + usuario fijo) → tests sin proveedor externo.
+3. El **arranque backend**: FastAPI + SQLAlchemy + `get_db` + `Settings` + logging único + CORS por
+   env + `/health` + handler de errores global + migraciones Alembic.
+4. La **auth con modo test** + **proveedor de identidad enchufable** (Supabase como una impl).
 5. El **scaffolding de tests** (conftest con server real y BD temporal, smoke + CRUD + aislamiento).
 6. La **higiene**: `.gitignore`, pyproject (ruff/black/pytest), deps pineadas, `.env.example`.
 
@@ -81,31 +112,40 @@ aporta solo su dominio.
 
 ```
 app-skeleton/
-├── CLAUDE.md                 # plantilla con {{APP_NAME}}, {{DESCRIPTION}}, {{STACK}}
+├── CLAUDE.md                 # plantilla con {{APP_NAME}}, {{DESCRIPTION}}, {{STACK}}, {{ENV_PREFIX}}
 ├── GUIA_MAESTRA.md           # esqueleto de secciones
 ├── REGISTRO_DE_CAMBIOS.md    # vacío con cabecera
-├── .gitignore
-├── .env.example              # DATABASE_URL, LOG_LEVEL, CHORDFLOW_ALLOWED_ORIGINS, AUTH_PROVIDER…
+├── .gitignore  .gitattributes
+├── .env.example              # DATABASE_URL, LOG_LEVEL, {{PREFIX}}_LOG_STDOUT,
+│                             #   {{PREFIX}}_ALLOWED_ORIGINS, {{PREFIX}}_AUTH_PROVIDER,
+│                             #   {{PREFIX}}_TOKEN_TTL, SUPABASE_URL/ANON_KEY…
 ├── pyproject.toml
-├── requirements.txt          # PINEADO
+├── requirements.txt          # PINEADO (incluye pydantic-settings, alembic)
 ├── requirements-dev.txt      # PINEADO
+├── alembic.ini  alembic/      # env.py (URL de DATABASE_URL, batch) + versions/ con baseline de Item
 ├── harness/                  # doctor, run_checks, ROADMAP, TASKS, CHECKLIST, MOLDE, templates/
 ├── src/
-│   ├── main.py               # app + CORS(env) + static + /config + /health
+│   ├── main.py               # app + CORS(env) + static + /config + /health + handler errores global
 │   ├── api/
-│   │   └── items_router.py   # CRUD genérico de ejemplo (Item) con auth + filtro por owner
+│   │   └── items_router.py   # CRUD de ejemplo (Item): auth + filtro owner + soft delete + paginación
 │   └── services/
-│       ├── settings.py       # pydantic-settings (config validada)
+│       ├── config.py         # pydantic-settings (Settings validado)
+│       ├── logging_config.py # setup_logging() una vez + stdout cloud
 │       ├── db.py             # engine + get_db + PRAGMA foreign_keys ON
-│       ├── auth.py           # get_current_user con modo test + provider enchufable
+│       ├── auth.py           # get_current_user con modo test + caché (agnóstico al IdP)
+│       ├── auth_provider.py  # AuthProvider + SupabaseAuthProvider + factoría
 │       ├── models.py         # Item de ejemplo (id, owner_id, deleted_at, timestamps)
 │       └── schemas.py        # ItemBase/Create/Update/Response + ItemSummary
 ├── static/
-│   ├── auth.js               # universal
+│   ├── auth.js  util.js      # universal (apiFetch/guards/modo test; escapeHtml)
+│   ├── login.html  login.js  # flujo de login (branding aparte)
 │   └── style.css             # tokens base (opcional)
 └── tests/
     ├── conftest.py           # fixtures universales
-    ├── unit/test_items.py    # CRUD + aislamiento por dueño
+    ├── unit/
+    │   ├── test_items.py     # CRUD + aislamiento por dueño + soft delete
+    │   ├── test_security.py  test_config.py  test_logging_config.py  test_auth_provider.py
+    │   └── test_migrations.py
     └── e2e/test_smoke.py     # carga sin errores + 401 + /config
 ```
 
