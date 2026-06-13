@@ -1,17 +1,19 @@
-import json
 import logging
 import threading
 import time
-import urllib.request
 
 from fastapi import Header, HTTPException
 
+from .auth_provider import build_auth_provider
 from .config import settings
 
 logger = logging.getLogger(__name__)
 
 SUPABASE_URL = settings.supabase_url
 SUPABASE_ANON_KEY = settings.supabase_anon_key
+
+# Proveedor de identidad enchufable (T-043). El núcleo de esta caché es agnóstico a él.
+_provider = build_auth_provider(settings)
 
 # Modo test: SOLO para tests automatizados / CI. Si está activo, se salta la
 # validación con Supabase y se usa un usuario de prueba fijo. NUNCA en producción.
@@ -44,27 +46,11 @@ def _cache_set(token: str, user_id: str, now: float):
         _token_cache[token] = (user_id, now + TOKEN_TTL_SECONDS)
 
 
-def _validate_token_with_supabase(token: str):
-    """Pregunta a Supabase '¿de quién es este token?'. Devuelve el dict del usuario
-    o None si el token no es válido. No requiere el JWT secret: usa el endpoint
-    /auth/v1/user con la anon key, validado por el propio Supabase."""
-    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
-        logger.error("Faltan SUPABASE_URL o SUPABASE_ANON_KEY en el entorno")
-        return None
-    try:
-        req = urllib.request.Request(
-            f"{SUPABASE_URL}/auth/v1/user",
-            headers={
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": f"Bearer {token}",
-            },
-        )
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            if resp.status == 200:
-                return json.loads(resp.read())
-    except Exception as e:
-        logger.warning(f"Token inválido o error validando con Supabase: {e}")
-    return None
+def _validate_token(token: str):
+    """Valida el token contra el proveedor de identidad configurado (T-043) y devuelve el
+    dict del usuario (con `id`) o None. Punto de extensión y seam de test: el resto de
+    `auth.py` (caché, TTL, lock, degradación) no sabe qué proveedor hay detrás."""
+    return _provider.validate(token)
 
 
 def get_current_user(authorization: str = Header(None)) -> str:
@@ -86,7 +72,7 @@ def get_current_user(authorization: str = Header(None)) -> str:
         return cached[0]
 
     # 2) Validación remota; si va bien, cacheamos con TTL.
-    user = _validate_token_with_supabase(token)
+    user = _validate_token(token)
     if user and user.get("id"):
         _cache_set(token, user["id"], now)
         return user["id"]

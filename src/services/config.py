@@ -27,8 +27,10 @@ class Settings(BaseSettings):
     # ── Base de datos ───────────────────────────────────────────────────────
     database_url: str = "sqlite:///./chordflow.db"
 
-    # ── Supabase (auth) ─────────────────────────────────────────────────────
-    # La anon key es pública por diseño; la service_role NUNCA va aquí ni al front.
+    # ── Auth ────────────────────────────────────────────────────────────────
+    # Proveedor de identidad enchufable (T-043). "supabase" hoy; el molde puede añadir otros.
+    chordflow_auth_provider: str = "supabase"
+    # Supabase: la anon key es pública por diseño; la service_role NUNCA va aquí ni al front.
     supabase_url: str | None = None
     supabase_anon_key: str | None = None
 

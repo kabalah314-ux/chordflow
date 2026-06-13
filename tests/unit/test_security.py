@@ -100,7 +100,7 @@ def test_validacion_de_token_se_cachea(monkeypatch):
         calls["n"] += 1
         return {"id": "user-123"}
 
-    monkeypatch.setattr(auth, "_validate_token_with_supabase", fake_validate)
+    monkeypatch.setattr(auth, "_validate_token", fake_validate)
 
     assert auth.get_current_user("Bearer abc") == "user-123"
     assert auth.get_current_user("Bearer abc") == "user-123"
@@ -115,12 +115,12 @@ def test_token_en_cache_sobrevive_caida_de_supabase(monkeypatch):
     auth._token_cache.clear()
 
     # Primera validación OK → queda en caché
-    monkeypatch.setattr(auth, "_validate_token_with_supabase", lambda _t: {"id": "u1"})
+    monkeypatch.setattr(auth, "_validate_token", lambda _t: {"id": "u1"})
     assert auth.get_current_user("Bearer tok") == "u1"
 
     # Supabase cae (devuelve None) y forzamos caché caducada: degradación elegante
     auth._token_cache["tok"] = ("u1", 0.0)  # expirada
-    monkeypatch.setattr(auth, "_validate_token_with_supabase", lambda _t: None)
+    monkeypatch.setattr(auth, "_validate_token", lambda _t: None)
     assert auth.get_current_user("Bearer tok") == "u1"
 
     # Sin caché y con Supabase caído → 401
@@ -136,7 +136,7 @@ def test_token_cache_tiene_cota_de_tamano(monkeypatch):
     monkeypatch.setattr(auth, "TEST_MODE", False)
     monkeypatch.setattr(auth, "TOKEN_CACHE_MAX", 5)
     auth._token_cache.clear()
-    monkeypatch.setattr(auth, "_validate_token_with_supabase", lambda t: {"id": "u-" + t})
+    monkeypatch.setattr(auth, "_validate_token", lambda t: {"id": "u-" + t})
 
     for i in range(50):
         auth.get_current_user(f"Bearer tok{i}")

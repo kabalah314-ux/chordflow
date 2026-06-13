@@ -19,8 +19,8 @@ La cola de críticos y la mayoría de los 🟠 altos están cerrados. Elegir de 
 
 1. **Integridad de datos (Alembic ya operativo)**: T-034 `owner_id NOT NULL` (cuando la auth sea
    obligatoria), T-035 `Line.type` Enum/CHECK, T-036 `server_default` — vía migración batch.
-2. **Fase M (molde)**: T-M02 crear `app-skeleton/` (con el backend base de T-044 ya listo),
-   T-043 (desacoplar `auth.py` de Supabase → provider enchufable).
+2. **Fase M (molde)**: T-M02 crear `app-skeleton/` (backend base T-044 + auth desacoplada T-043
+   ya listos), luego T-M01 (inventario universal vs por-proyecto) y T-M03 (plantillar + prefijo env).
 3. **Fase M (el molde)**: T-M02 crear `app-skeleton/`. Pre-requisito (críticos) ya cumplido.
    T-043/T-044 (desacoplar auth + backend base) alimentan el molde.
 
@@ -44,9 +44,9 @@ T-033 FKs ON DELETE CASCADE a nivel DB · T-037 paginación acotada.
 **Fase 2 (continuación):** T-014 logging unificado (`setup_logging()` una vez + stdout cloud-friendly) ·
 T-013 soft delete real (`deleted_at`, 2º DELETE → 404) · T-016 `Settings` con pydantic-settings ·
 T-025 `/health` liveness · T-039 `escapeHtml` consolidado en `util.js` · T-044 backend base del
-molde (handler de errores global → cierra los 4 pilares).
+molde (handler de errores global → cierra los 4 pilares) · T-043 auth desacoplada (provider enchufable).
 
-> Estado de calidad: 27 unit + 18 e2e en verde. Git: 17+ commits. `run_checks.py` TODO VERDE.
-> **Backend base del molde (T-044) COMPLETO**: logging único (T-014), Settings (T-016),
-> `/health` (T-025), handler de errores global. Listo para extraer a `app-skeleton/` (T-M02).
+> Estado de calidad: 30 unit + 18 e2e en verde. Git: 18+ commits. `run_checks.py` TODO VERDE.
+> **Molde listo para extraer (T-M02)**: backend base T-044 (logging/Settings/health/errores) +
+> auth desacoplada T-043 (AuthProvider). Pendiente del molde: prefijo env `CHORDFLOW_*` → T-M03.
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

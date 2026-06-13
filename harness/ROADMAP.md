@@ -132,8 +132,10 @@
       `sync_engine.js`/`chord_shapes.js`, caminos negativos de API y medición de cobertura.
 
 **🧬 Molde (van a `MOLDE.md` / Fase M):**
-- [ ] **T-043** 🟠 Desacoplar `auth.py` de Supabase (provider enchufable) y parametrizar el prefijo
-      de env vars (`CHORDFLOW_*`).
+- [x] **T-043** 🟠 `auth.py` desacoplado: `auth_provider.py` (`AuthProvider` Protocol +
+      `SupabaseAuthProvider` + factoría por `CHORDFLOW_AUTH_PROVIDER`). El núcleo (caché/TTL/lock/
+      degradación) es agnóstico. Tests `test_auth_provider.py`. **Parametrizar el prefijo `CHORDFLOW_*`
+      → diferido a T-M03** (hueco de templating del molde, no runtime de ChordFlow).
 - [x] **T-044** 🟠 Backend base del molde — **4 pilares técnicos completos**: `/health` (T-025),
       handler de errores global (`@app.exception_handler(Exception)` → 500 genérico, sin filtrar
       internals; test `test_handler_global_500_no_filtra_internals`), logging único (T-014),
@@ -155,6 +157,7 @@
 - [ ] **T-M02** 🟠 Crear `app-skeleton/` con el esqueleto agnóstico (harness + `src` base +
       `tests` scaffold + config), usando un recurso de ejemplo genérico (`Item`) en vez de `Song`.
 - [ ] **T-M03** 🟡 Plantillar `CLAUDE.md` y `GUIA_MAESTRA.md` con huecos `{{APP_NAME}}`, etc.
+      **Incluye** parametrizar el prefijo de env vars `CHORDFLOW_*` → `{{ENV_PREFIX}}_*` (de T-043).
 - [ ] **T-M04** 🟡 `MOLDE.md` → guía de uso del molde (cómo nace un proyecto nuevo desde él).
 - [ ] **T-M05** 🟢 (Opcional) `create_app.py` tipo cookiecutter que rellene los huecos solo.
 - [ ] **T-M06** 🟡 Criterio de molde estable: generar un proyecto vacío desde el molde y que

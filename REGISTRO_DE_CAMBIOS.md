@@ -530,6 +530,28 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   `app-skeleton/` (T-M02), no aquí.
 - **Verificación:** `run_checks.py` **TODO VERDE** (27 unit + 18 e2e).
 
+### ✅ T-043 — `auth.py` desacoplado de Supabase (proveedor de identidad enchufable)
+
+> **Por qué:** la lógica valiosa y reutilizable de `auth.py` —caché TTL, lock de concurrencia,
+> degradación elegante si el IdP cae (T-005/T-028)— estaba **soldada** a la llamada concreta a
+> Supabase. Para el molde, ese núcleo debe servir con cualquier backend de identidad.
+
+- **Nuevo `src/services/auth_provider.py`:** `AuthProvider` (Protocol con `validate(token) -> dict|None`),
+  `SupabaseAuthProvider` (la lógica de `/auth/v1/user` que antes vivía inline en `auth.py`) y la
+  factoría `build_auth_provider(settings)` que elige por `CHORDFLOW_AUTH_PROVIDER` (default `supabase`,
+  **fail-fast** ante un nombre desconocido).
+- **`auth.py` agnóstico:** `_validate_token(token)` delega en `_provider.validate(token)`; toda la
+  caché/TTL/lock/degradación se queda igual y ya **no sabe** que detrás hay Supabase. Migrados el
+  import (fuera `json`/`urllib`) y el seam interno.
+- **Tests:** los de caché (T-005/T-028) ahora hacen monkeypatch del seam genérico `_validate_token`.
+  **Nuevo** `test_auth_provider.py`: factoría (default + desconocido→`ValueError`), Supabase sin
+  credenciales → None, y `test_auth_es_agnostico_al_provider` (inyecta un `FakeProvider` y
+  `get_current_user` devuelve su user_id sin tocar la caché).
+- **Alcance:** la 2ª mitad de T-043 ("parametrizar el prefijo `CHORDFLOW_*`") se **difiere** a la
+  plantilla del molde (T-M03): cambiar el prefijo es un hueco de templating, no un cambio de runtime
+  de ChordFlow, y tocar los nombres de los settings ahora solo añadiría riesgo sin valor aquí.
+- **Verificación:** `run_checks.py` **TODO VERDE** (30 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>
