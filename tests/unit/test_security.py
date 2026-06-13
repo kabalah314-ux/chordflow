@@ -50,6 +50,30 @@ def test_cache_set_seguro_bajo_concurrencia(monkeypatch):
     auth._token_cache.clear()
 
 
+def test_handler_global_500_no_filtra_internals():
+    """Una excepción inesperada que escapa de los try/except (aquí, lanzada en una
+    dependencia) cae en el handler global (T-044) → 500 con cuerpo GENÉRICO; el mensaje
+    interno NUNCA llega al cliente (misma política que el hardening de T-027)."""
+    from fastapi.testclient import TestClient
+
+    from src.main import app
+    from src.services.auth import get_current_user
+
+    def boom():
+        raise RuntimeError("detalle interno secreto: password=hunter2")
+
+    app.dependency_overrides[get_current_user] = boom
+    try:
+        # raise_server_exceptions=False → el TestClient NO re-lanza; obtenemos la respuesta.
+        with TestClient(app, raise_server_exceptions=False) as c:
+            r = c.get("/songs/")
+        assert r.status_code == 500
+        assert r.json() == {"detail": "Error interno del servidor"}
+        assert "secreto" not in r.text and "hunter2" not in r.text
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_cors_restringe_origenes(client):
     """Solo los orígenes de CHORDFLOW_ALLOWED_ORIGINS reciben cabecera CORS (T-004).
     Default de test: http://127.0.0.1:8000 y http://localhost:8000."""

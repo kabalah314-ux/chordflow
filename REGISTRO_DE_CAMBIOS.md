@@ -510,6 +510,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   (library.html→library.js). Todos en verde.
 - **Verificación:** `run_checks.py` **TODO VERDE** (26 unit + 18 e2e).
 
+### ✅ T-044 — Backend base del molde: handler de errores global (cierra los 4 pilares)
+
+> **Por qué:** T-044 reúne lo agnóstico-al-dominio que todo backend del molde necesita. Tres pilares
+> ya estaban (logging único T-014, `Settings` T-016, `/health` T-025); faltaba un **handler de errores
+> global** como red de seguridad: hoy cada endpoint envuelve su lógica en try/except, pero una
+> excepción en una **dependencia** o middleware (fuera de esos try) llegaría a Starlette y, en debug,
+> podría exponer la traza.
+
+- **`@app.exception_handler(Exception)`** en `main.py`: registra la excepción con traza (`exc_info`)
+  y responde **500 genérico** (`{"detail": "Error interno del servidor"}`) — nunca `str(e)` al cliente
+  (misma política anti-fuga que el hardening de T-027). Las `HTTPException` (401/404/422...) siguen
+  manejadas por FastAPI con su código propio, no pasan por aquí.
+- **Test:** `test_handler_global_500_no_filtra_internals` — vía `dependency_overrides` se fuerza un
+  `RuntimeError` con un mensaje "secreto" en una dependencia; se verifica 500, cuerpo genérico y que
+  el mensaje interno **no** aparece en la respuesta. (`TestClient(raise_server_exceptions=False)`.)
+- **Estado de T-044:** los **4 pilares técnicos** del backend base del molde quedan completos
+  (T-014 + T-016 + T-025 + handler global). El README/plantillas del molde se materializa al extraer
+  `app-skeleton/` (T-M02), no aquí.
+- **Verificación:** `run_checks.py` **TODO VERDE** (27 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>

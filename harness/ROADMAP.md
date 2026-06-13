@@ -134,8 +134,10 @@
 **🧬 Molde (van a `MOLDE.md` / Fase M):**
 - [ ] **T-043** 🟠 Desacoplar `auth.py` de Supabase (provider enchufable) y parametrizar el prefijo
       de env vars (`CHORDFLOW_*`).
-- [ ] **T-044** 🟠 Backend base del molde: `/health` (T-025), handler de errores global, logging
-      configurado **una vez** (T-014), `Settings` con pydantic-settings (T-016), README/plantillas.
+- [x] **T-044** 🟠 Backend base del molde — **4 pilares técnicos completos**: `/health` (T-025),
+      handler de errores global (`@app.exception_handler(Exception)` → 500 genérico, sin filtrar
+      internals; test `test_handler_global_500_no_filtra_internals`), logging único (T-014),
+      `Settings` pydantic-settings (T-016). README/plantillas del molde → se materializan en T-M02.
 
 ## Fase 5 — Diferenciación de producto
 - [ ] 🟢 PWA + offline · 🟢 Setlists/repertorios · 🟢 Export PDF · 🟢 UI de tablaturas

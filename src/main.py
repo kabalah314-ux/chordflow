@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from .api.songs_router import router as songs_router
@@ -12,6 +14,7 @@ from .services.logging_config import setup_logging
 # Logging configurado UNA sola vez para toda la app (T-014). Los módulos de librería
 # solo usan getLogger; aquí decidimos el destino (fichero o stdout cloud-friendly).
 setup_logging()
+logger = logging.getLogger(__name__)
 
 # Inicializar Base de Datos
 Base.metadata.create_all(bind=engine)
@@ -21,6 +24,21 @@ app = FastAPI(
     description="Backend API para la aplicación ChordFlow (Partituras y Acordes)",
     version="1.0.0"
 )
+
+
+# Handler de errores global (T-044): backstop de defensa en profundidad. Si una excepción
+# inesperada escapa de un endpoint (o salta en una dependencia/middleware, fuera de los
+# try/except de los routers), la registramos con traza y respondemos un 500 GENÉRICO —
+# nunca `str(e)` al cliente, para no filtrar internals (misma política que T-027).
+# Las HTTPException (404/401/422/...) NO pasan por aquí: las maneja FastAPI con su código.
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        f"Excepción no controlada en {request.method} {request.url.path}: {exc}",
+        exc_info=True,
+    )
+    return JSONResponse(status_code=500, content={"detail": "Error interno del servidor"})
+
 
 # CORS: lista explícita de orígenes vía env (coma-separada). Default seguro a localhost.
 # El frontend se sirve desde el mismo origen que la API, así que esto no afecta al uso normal;
