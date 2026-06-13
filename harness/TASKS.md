@@ -42,7 +42,10 @@ T-012 índices · T-015 limpieza `test_api.py` · T-024 validación de rangos.
 T-033 FKs ON DELETE CASCADE a nivel DB · T-037 paginación acotada.
 
 **Fase 2 (continuación):** T-014 logging unificado (`setup_logging()` una vez + stdout cloud-friendly) ·
-T-013 soft delete real (`deleted_at`, 2º DELETE → 404) · T-016 `Settings` con pydantic-settings.
+T-013 soft delete real (`deleted_at`, 2º DELETE → 404) · T-016 `Settings` con pydantic-settings ·
+T-025 `/health` liveness.
 
-> Estado de calidad: 25 unit + 18 e2e en verde. Git: 14+ commits. `run_checks.py` TODO VERDE.
+> Estado de calidad: 26 unit + 18 e2e en verde. Git: 15+ commits. `run_checks.py` TODO VERDE.
+> Pilares de T-044 (molde backend) ya en su sitio: logging único (T-014), Settings (T-016),
+> `/health` (T-025). Falta el handler de errores global.
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

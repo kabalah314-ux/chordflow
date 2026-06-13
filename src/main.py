@@ -56,6 +56,15 @@ def read_root():
     return RedirectResponse(url="/static/library.html")
 
 
+@app.get("/health")
+def health():
+    """Liveness check (T-025): '¿el proceso está vivo y sirviendo?'. Barato y sin
+    dependencias (no toca la BD ni Supabase) para que orquestadores/uptime checks lo
+    consulten a alta frecuencia sin coste. Separado de `/config`, que expone config
+    pública del frontend y no es un health check."""
+    return {"status": "ok"}
+
+
 @app.get("/config")
 def get_config():
     """Config pública para el frontend (la anon key es pública por diseño).

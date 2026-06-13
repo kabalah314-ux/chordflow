@@ -480,6 +480,16 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Deps:** `pydantic-settings==2.14.1` pineada en `requirements.txt`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (25 unit + 18 e2e).
 
+### ✅ T-025 — Endpoint `/health` (liveness) separado de `/config`
+
+> **Por qué:** no había un health check propio; los uptime checks/orquestadores tendrían que pegar
+> a `/config` (que expone config pública del frontend, no es un health check) o a `/` (redirección).
+
+- **`GET /health`** → `{"status": "ok"}`. Liveness **barato y sin dependencias** (no toca la BD ni
+  Supabase) para consultarlo a alta frecuencia sin coste; sin auth. Tercer/último pilar de T-044.
+- **Test:** `test_health_es_liveness` — 200 con el cuerpo esperado y sin filtrar config sensible.
+- **Verificación:** `run_checks.py` **TODO VERDE** (26 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>

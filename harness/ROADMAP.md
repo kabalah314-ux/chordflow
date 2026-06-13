@@ -71,7 +71,8 @@
 - [ ] **T-023** 🟠 **GitHub Actions**: correr `python harness/run_checks.py` en cada push/PR.
 - [x] **T-024** 🟡 **Validación de rangos en schemas** con `Field(...)`: `bpm` 20–400, `year` 0–3000,
       compás 1–32, `capo` 0–24, `title` 1–255. Test `test_validacion_de_rangos` (422).
-- [ ] **T-025** 🟡 **Endpoint `/health`** real (liveness) separado de `/config`.
+- [x] **T-025** 🟡 **Endpoint `/health`** (liveness) → `{"status":"ok"}`, sin deps ni auth,
+      separado de `/config`. Test `test_health_es_liveness`. (Pilar de T-044.)
 
 ## Fase A — Hallazgos de la auditoría multi-agente (2026-06-13)
 

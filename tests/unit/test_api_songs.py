@@ -41,6 +41,16 @@ def test_crud_completo(client):
     assert client.get("/songs/").json() == []
 
 
+def test_health_es_liveness(client):
+    """/health responde 200 con {status: ok} y NO expone config sensible (T-025).
+    Es un liveness barato, separado de /config (que sí trae datos del frontend)."""
+    r = client.get("/health")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok"}
+    # No debe filtrar nada de la config pública/Supabase.
+    assert "supabase_url" not in r.json()
+
+
 def test_delete_es_soft(client):
     """DELETE marca `deleted_at` en vez de borrar la fila (T-013): la canción
     desaparece de las lecturas pero su fila se conserva en la BD. Un segundo DELETE
