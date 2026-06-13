@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Entornos Virtuales
+venv/
+env/
+.env
+.env.local
+
+# Directorios de datos y logs
+.tmp/
+logs/
+*.db
+*.sqlite3
+
+# IDEs
+.vscode/
+.idea/

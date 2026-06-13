@@ -1,0 +1,10 @@
+# Dependencias de desarrollo y testing del harness ChordFlow
+# Instalar con:  python -m pip install -r requirements-dev.txt
+#                python -m playwright install chromium
+
+pytest>=8.0
+pytest-playwright>=0.5
+playwright>=1.40
+httpx>=0.27          # TestClient de FastAPI y llamadas directas a la API en tests
+ruff>=0.6            # linter
+black>=24.0          # formateador

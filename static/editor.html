@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Partitura - ChordFlow Editor</title>
+    <link rel="stylesheet" href="style.css?v=9">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Top Bar -->
+        <header class="glass-panel top-bar">
+            <div class="song-info">
+                <h1>Crear Partitura</h1>
+                <h2>Importación rápida desde texto</h2>
+            </div>
+            <div class="global-controls">
+                <a href="library.html" class="icon-btn" title="Cancelar y volver">❌</a>
+            </div>
+        </header>
+
+        <!-- Main Content: Editor Form -->
+        <main id="editor-container">
+            <div class="editor-content">
+                <form id="song-form">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="title">Título de la Canción *</label>
+                            <input type="text" id="title" required placeholder="Ej: Wonderwall">
+                        </div>
+                        <div class="input-group">
+                            <label for="artist">Artista</label>
+                            <input type="text" id="artist" placeholder="Ej: Oasis">
+                        </div>
+                        <div class="input-group small">
+                            <label for="bpm">BPM *</label>
+                            <input type="number" id="bpm" required value="120" min="40" max="240">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group mt-2" style="margin-bottom: 0.5rem;">
+                        <label for="raw-text">Letra y Acordes *</label>
+                        <p class="help-text">Pega la canción directamente desde <strong>Ultimate Guitar</strong>, <strong>LaCuerda.net</strong> o cualquier web de partituras. Detecta solo los acordes sobre la letra. <strong>La vista previa de la derecha te muestra cómo quedará.</strong></p>
+                    </div>
+                    <div class="editor-split">
+                        <textarea id="raw-text" required style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6; white-space: pre;" placeholder="Intro:&#10;: F#m : C#7 : D :&#10;&#10;Verso 1:&#10;        Am          F&#10;Today is gonna be the day&#10;        C           G&#10;That they throw it back to you" rows="18"></textarea>
+                        <div class="preview-pane">
+                            <div class="preview-label">👁 Vista previa</div>
+                            <div id="preview-content" class="preview-content">
+                                <p class="preview-empty">Pega aquí tu canción y verás cómo quedará…</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions mt-2">
+                        <button type="submit" class="primary-btn" id="btn-save">💾 Guardar y Reproducir</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=10"></script>
+    <script src="score_render.js?v=7"></script>
+    <script src="editor.js?v=9"></script>
+</body>
+</html>

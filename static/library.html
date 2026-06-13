@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChordFlow — Biblioteca</title>
+    <link rel="stylesheet" href="style.css?v=9">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Top Bar -->
+        <header class="glass-panel top-bar">
+            <div class="song-info">
+                <h1>ChordFlow</h1>
+                <h2>Tu biblioteca de partituras</h2>
+            </div>
+            <div class="global-controls" style="display:flex; align-items:center; gap:1rem;">
+                <a href="editor.html" class="primary-btn" title="Crear Partitura" style="text-decoration: none;">➕ Nueva Partitura</a>
+                <div class="user-box">
+                    <span id="user-email" class="user-email"></span>
+                    <button id="btn-logout" class="icon-btn" title="Cerrar sesión">⎋</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content: Song Library -->
+        <main id="library-container">
+            <div class="library-content">
+                <input type="search" id="search-input" class="search-box" placeholder="🔍 Buscar por título o artista...">
+                <div id="song-grid" class="song-grid">
+                    <!-- Cards inyectadas dinámicamente -->
+                    <p class="loading-text">Cargando canciones...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=10"></script>
+    <script src="library.js?v=9"></script>
+</body>
+</html>

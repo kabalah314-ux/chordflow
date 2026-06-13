@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChordFlow Player</title>
+    <link rel="stylesheet" href="style.css?v=8">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Top Bar: Song Info & Global Controls -->
+        <header class="glass-panel top-bar">
+            <div class="song-info">
+                <h1 id="song-title">Cargando...</h1>
+                <h2 id="song-artist"></h2>
+            </div>
+            <div class="global-controls" style="display: flex; gap: 1rem;">
+                <div class="control-group">
+                    <button id="btn-bpm-down" class="icon-btn">-</button>
+                    <div class="bpm-display">
+                        <span id="bpm-value">120</span> <span class="label">BPM</span>
+                    </div>
+                    <button id="btn-bpm-up" class="icon-btn">+</button>
+                </div>
+                <div class="control-group">
+                    <button id="btn-key-down" class="icon-btn" title="Bajar semitono">♭</button>
+                    <div class="bpm-display">
+                        <span id="key-value">0</span> <span class="label">Tono</span>
+                    </div>
+                    <button id="btn-key-up" class="icon-btn" title="Subir semitono">♯</button>
+                    <button id="btn-key-save" class="icon-btn" title="Guardar tono">💾</button>
+                </div>
+                <a href="library.html" class="primary-btn square" title="Biblioteca" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
+                <a href="editor.html" class="primary-btn square" title="Crear Partitura" style="text-decoration: none;">➕</a>
+            </div>
+        </header>
+
+        <!-- Main Content: The Score -->
+        <main id="score-container">
+            <div class="scroll-anchor"></div>
+            <!-- Dynamic content will be injected here -->
+            <div id="score-content"></div>
+        </main>
+
+        <!-- Bottom Bar: Playback Controls -->
+        <footer class="glass-panel bottom-bar">
+            <div class="playback-controls">
+                <button id="btn-metronome" class="primary-btn square" title="Metrónomo (clic por beat)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🥁</button>
+                <button id="btn-stop" class="primary-btn square">⏹</button>
+                <button id="btn-play-pause" class="primary-btn">▶ Play</button>
+            </div>
+            <div class="time-display">
+                <span id="current-beat-display">Beat: 0.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=10"></script>
+    <script src="sync_engine.js?v=7"></script>
+    <script src="score_render.js?v=7"></script>
+    <script src="chord_shapes.js?v=8"></script>
+    <script src="app.js?v=9"></script>
+</body>
+</html>
