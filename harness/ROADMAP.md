@@ -97,7 +97,9 @@
       y el historial); documentar.
 
 **🟠 Integridad de datos (pendientes, encajan con Alembic T-011):**
-- [ ] **T-033** 🟠 FKs sin `ondelete="CASCADE"` a nivel DB (hoy solo cascade ORM + PRAGMA).
+- [x] **T-033** 🟠 FKs con `ondelete="CASCADE"` a nivel DB (las 4) + migración `dac91229a048`
+      (batch mode con naming_convention para soltar FKs sin nombre). Defensa en profundidad sobre
+      el cascade ORM (T-003). Test `test_cascade_a_nivel_db` (borrado con SQL directo).
 - [ ] **T-034** 🟡 `owner_id` nullable → `NOT NULL` cuando la auth sea obligatoria.
 - [ ] **T-035** 🟡 `Line.type` sin restricción (Enum/CHECK) y columnas JSON sin validar.
 - [ ] **T-036** 🟡 Defaults solo en Python, no `server_default` en la DB.

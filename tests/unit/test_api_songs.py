@@ -130,6 +130,31 @@ def test_put_no_deja_filas_huerfanas(client):
     assert contar() == {"sections": 1, "lines": 1, "chords": 2}
 
 
+def test_cascade_a_nivel_db(client):
+    """Borrar una canción con SQL DIRECTO (sin pasar por el cascade ORM) tampoco debe
+    dejar huérfanos: las FKs llevan ON DELETE CASCADE y SQLite fuerza FKs por conexión
+    (PRAGMA). Defensa en profundidad sobre T-003. (T-033)."""
+    from sqlalchemy import func, text
+
+    from src.services.db import SessionLocal
+    from src.services.models import ChordMarker, Line, Section, TabLine
+
+    sid = client.post("/songs/", json=sample_song_payload()).json()["id"]
+
+    db = SessionLocal()
+    try:
+        # Borrado crudo de la fila padre: NO dispara el cascade del ORM, solo el de la BD.
+        db.execute(text("DELETE FROM songs WHERE id = :id"), {"id": sid})
+        db.commit()
+        # Sin cascade de BD, estas hijas quedarían huérfanas.
+        assert db.query(func.count(Section.id)).scalar() == 0
+        assert db.query(func.count(Line.id)).scalar() == 0
+        assert db.query(func.count(ChordMarker.id)).scalar() == 0
+        assert db.query(func.count(TabLine.id)).scalar() == 0
+    finally:
+        db.close()
+
+
 def test_aislamiento_por_dueno(client):
     """Una canción de otro usuario no aparece para el usuario de prueba (A2)."""
     from src.services.db import SessionLocal

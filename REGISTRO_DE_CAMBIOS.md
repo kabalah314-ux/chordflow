@@ -394,6 +394,25 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   índices + `alembic_version`) y `alembic check` no detecta drift modelos↔migraciones.
 - **Verificación:** `run_checks.py` **TODO VERDE** (16 unit + 18 e2e).
 
+### ✅ T-033 — FKs con `ON DELETE CASCADE` a nivel de BD
+
+> **Por qué:** hasta ahora el borrado en cascada vivía solo en el ORM (`delete-orphan`) + el
+> `PRAGMA foreign_keys=ON`. Si alguien borraba una fila padre con **SQL directo** (un script, una
+> migración futura, una consola), las hijas quedaban huérfanas. T-033 lo blinda a nivel de esquema.
+
+- **Modelos:** las 4 FKs (`sections.song_id`, `lines.section_id`, `chord_markers.line_id`,
+  `tab_lines.line_id`) ahora llevan `ondelete="CASCADE"`. Las BD nuevas (create_all / tests) ya
+  nacen con la cascada.
+- **Migración `dac91229a048`:** aplica el cambio a BD existentes. SQLite no permite `ALTER` de una
+  FK → `batch_alter_table` recrea la tabla. **Gotcha clave:** para *soltar* una FK sin nombre en
+  batch mode hace falta un `naming_convention`; sin él `drop_constraint(None)` es un no-op y la tabla
+  se recreaba **conservando la FK vieja sin `ondelete`** (lo detecté inspeccionando el DDL real:
+  `FOREIGN KEY(song_id) REFERENCES songs (id)` sin cascada). Con el naming convention, las 4 FKs
+  quedan con `ondelete=CASCADE` y `alembic check` no detecta drift.
+- **Test:** `test_cascade_a_nivel_db` borra la canción padre con `DELETE FROM songs` crudo (sin pasar
+  por el cascade ORM) y verifica que `sections/lines/chord_markers/tab_lines` quedan a 0.
+- **Verificación:** `run_checks.py` **TODO VERDE** (17 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>
