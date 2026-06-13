@@ -20,5 +20,6 @@
 | P3 | Reproductor: transponer cambia los acordes mostrados | `test_player.py` | ✅ |
 | J1 | Lógica JS: el parser detecta acordes y secciones | `test_js_logic.py` | ✅ |
 | J2 | Lógica JS: `transposeChord` sube/baja semitonos correctamente | `test_js_logic.py` | ✅ |
+| J3 | Seguridad: el render escapa letra y `chord_name` maliciosos (XSS) | `test_js_logic.py` | ✅ |
 
 > Al añadir una feature nueva, **añade aquí su fila** y crea su test antes de cerrar la tarea.

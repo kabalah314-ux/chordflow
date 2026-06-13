@@ -8,43 +8,11 @@
 
 ## 🟢 En curso
 
-_(ninguna — la siguiente recomendada es **T-001: Inicializar git**)_
+_(ninguna — la siguiente recomendada es **T-003: fuga de huérfanos en PUT**)_
 
 ---
 
 ## 📋 Próximas (cola priorizada, ya detalladas)
-
-### T-001 — Inicializar git + primer commit
-- **Prioridad:** 🔴 · **Apertura:** 2026-06-13
-- **Objetivo:** red de seguridad mínima; poder volver atrás sin perder trabajo.
-- **Plan:**
-  1. `git init` en la raíz.
-  2. `git status` → **confirmar** que `.env.local` y `*.db` NO aparecen (ya en `.gitignore`).
-  3. `git add -A && git commit -m "chore: estado inicial con harness"`.
-- **Archivos a tocar:** ninguno de código (solo VCS).
-- **Aceptación:**
-  - [ ] `git log` muestra el commit inicial.
-  - [ ] `git ls-files` NO lista `.env.local` ni `chordflow.db`.
-  - [ ] `python harness/doctor.py` verde.
-- **Nota:** no hace falta test automatizado (tarea de tooling, no de comportamiento).
-
-### T-002 — Arreglar XSS en el renderer
-- **Prioridad:** 🔴 · **Apertura:** 2026-06-13
-- **Objetivo:** que la letra y los nombres de acorde del usuario no puedan inyectar HTML/JS.
-- **Plan:**
-  1. Añadir un `escapeHtml(str)` en `score_render.js` (o factorizar el de `library.js`).
-  2. Escapar `line.content` antes de inyectarlo con `innerHTML` (casos A-fusión y B-lyric).
-  3. En `chordSpan`: escapar `chord_name` tanto en el texto visible como en `data-orig="..."`.
-  4. Subir `?v=N` en `index.html` **y** `editor.html` (ambos cargan `score_render.js`).
-- **Archivos a tocar:**
-  - `static/score_render.js` — escapado.
-  - `static/index.html`, `static/editor.html` — cache-busting.
-- **Aceptación:**
-  - [ ] Canción con letra `<img src=x onerror="window.__xss=1">` no setea `window.__xss`.
-  - [ ] La letra se ve literal (con los `<` `>`), no interpretada.
-  - [ ] Test E2E nuevo en `tests/e2e/` (añadir fila al CHECKLIST, p. ej. `S4`).
-  - [ ] `?v=N` subido en los .html afectados.
-  - [ ] `python harness/run_checks.py` verde.
 
 ### T-003 — Eliminar la fuga de filas huérfanas en PUT
 - **Prioridad:** 🔴 · **Apertura:** 2026-06-13
@@ -89,6 +57,16 @@ _(ninguna — la siguiente recomendada es **T-001: Inicializar git**)_
 ---
 
 ## ✅ Hechas
+
+### T-002 — Arreglar XSS en el renderer (2026-06-13)
+- Escapado en `score_render.js` (`escapeHtml` + `renderLyricWithChords` + `chordSpan`),
+  cache-busting `?v=8`. Test J3 `test_render_escapa_letra_y_acorde_maliciosos`. run_checks verde.
+- Extra: arreglado bug de cuelgue del `live_server` en `conftest.py` (pipe lleno → bloqueo),
+  `test_editor` insensible a mayúsculas, lint (`is_(None)`, orden de imports).
+
+### T-001 — Inicializar git + primer commit (2026-06-13)
+- `git init` + commit inicial. Verificado: `.env.local`/`*.db` fuera de git.
+  `.gitattributes` (EOL=LF) y `*.log` añadidos.
 
 ### T-000 — Montar el harness de funcionamiento
 - **Objetivo:** sistema de trabajo ordenado (doctor, tests Playwright, roadmap, reglas).

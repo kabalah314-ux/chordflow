@@ -225,6 +225,43 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+<a name="bloque-i"></a>
+## Bloque I — Auditoría + endurecimiento (Fase de calidad)
+
+> Tras estudio completo del código (2026-06-13). Plan en `harness/ROADMAP.md`.
+
+### ✅ T-001 — Control de versiones
+- **Qué:** `git init` + primer commit del estado completo (app + harness + tests + docs).
+- **Por qué:** red de seguridad mínima; poder volver atrás.
+- **Cómo / verificación:** `git ls-files` confirma que `.env.local` y `*.db` **no** están
+  trackeados. Añadido `.gitattributes` (normaliza EOL a LF) y `*.log` al `.gitignore`.
+
+### ✅ T-002 — Arreglo de XSS en el renderer
+- **Qué:** la letra (`line.content`) y el `chord_name` del usuario se inyectaban con `innerHTML`
+  sin escapar (reproductor y vista previa del editor) → ejecución de JS arbitrario.
+- **Cómo:**
+  - `static/score_render.js`: nuevo `escapeHtml()` + `renderLyricWithChords()` que escapa cada
+    segmento de letra por separado e inserta solo HTML de acorde saneado (preserva la alineación
+    por columnas, que depende de `char_position` sobre el texto original). `chordSpan` ahora escapa
+    `chord_name` en el texto visible **y** en el atributo `data-orig`.
+  - Cache-busting `score_render.js?v=8` en `index.html` y `editor.html`.
+- **Verificación:** test nuevo `tests/e2e/test_js_logic.py::test_render_escapa_letra_y_acorde_maliciosos`
+  (payload `<img onerror>` → no se crea `<img>`, no se dispara, letra escapada). Fila **J3** en el
+  CHECKLIST. `run_checks.py` **TODO VERDE**.
+
+### ✅ Robustez del harness (descubierto al activar Playwright)
+- **Bug del `live_server` (`tests/conftest.py`):** uvicorn arrancaba con `stdout=PIPE` sin que nadie
+  lo vaciara → el buffer del pipe del SO se llenaba con los logs y el servidor se **bloqueaba** a
+  mitad del suite e2e (cascada de `ReadTimeout`). Arreglado volcando la salida a un fichero temporal
+  + `--no-access-log`. También: `test_editor.py` comparaba la sección sensible a mayúsculas, pero el
+  CSS la pone en uppercase → ahora compara con `.lower()`.
+- Lint: `ruff --fix` (orden de imports en `harness/`) y `Song.deleted_at == None` →
+  `.is_(None)` (forma correcta en SQLAlchemy, además contenta a E711).
+
+### ⏳ Próximas (críticas): T-003 huérfanos en PUT · T-004 CORS · T-005 token. Ver ROADMAP/TASKS.
+
+---
+
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 

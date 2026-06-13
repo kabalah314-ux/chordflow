@@ -6,7 +6,7 @@ Corre en modo test → el usuario autenticado es siempre TEST_USER_ID.
 
 import pytest
 
-from tests.conftest import sample_song_payload, TEST_USER_ID
+from tests.conftest import TEST_USER_ID, sample_song_payload
 
 pytestmark = pytest.mark.unit
 

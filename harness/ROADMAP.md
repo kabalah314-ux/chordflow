@@ -9,17 +9,15 @@
 ---
 
 ## Fase 0 — Red de seguridad
-- [ ] **T-001** 🔴 **Inicializar git** y primer commit. Verificar con `git status` que
-      `.env.local` y `*.db` **NO** entran (ya están en `.gitignore`; confirmar antes de commitear).
+- [x] **T-001** 🔴 **Inicializar git** y primer commit. Verificado: `.env.local` y `*.db` no
+      trackeados. + `.gitattributes` (EOL) y `*.log` en `.gitignore`.
 - [x] 🔴 Montar el harness (doctor, tests, roadmap). *(T-000, hecho)*
 - [x] 🟠 Modo test (bypass de auth por env var) para verificar con Playwright. *(hecho)*
 
 ## Fase 1 — Seguridad (🔴 antes de moldear nada)
-- [ ] **T-002** 🔴 **XSS en el renderer** (`score_render.js`). Escapar `line.content` y
-      `chord_name` en `chordSpan` (texto **y** atributo `data-orig`) y en la inyección con
-      `innerHTML` (líneas ~85, ~118, ~134). Reusar el patrón `escapeHtml` que ya usa `library.js`.
-      → Test: crear canción con `<img src=x onerror=...>` en la letra y comprobar que el nodo
-      llega escapado / no se ejecuta. Subir `?v=N` en `index.html` y `editor.html`.
+- [x] **T-002** 🔴 **XSS en el renderer** (`score_render.js`). Resuelto con `escapeHtml()` +
+      `renderLyricWithChords()` (escapa letra por segmentos preservando alineación) y `chordSpan`
+      escapando `chord_name` en texto y `data-orig`. Test J3 + `?v=8`. run_checks verde.
 - [ ] **T-003** 🔴 **Fuga de filas huérfanas en `PUT`** (`songs_router.py:95`). El bulk
       `db.query(Section).delete()` NO dispara el cascade ORM y SQLite no fuerza FKs → `lines`,
       `chord_markers` y `tab_lines` quedan huérfanos en cada edición. Arreglar con **una** de:

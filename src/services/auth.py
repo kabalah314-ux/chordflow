@@ -1,9 +1,10 @@
-import os
 import json
 import logging
+import os
 import urllib.request
-from fastapi import Header, HTTPException
+
 from dotenv import load_dotenv
+from fastapi import Header, HTTPException
 
 # Cargar también .env.local (donde están las credenciales de Supabase)
 load_dotenv()

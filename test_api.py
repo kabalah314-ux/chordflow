@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 base_url = "http://127.0.0.1:8000"
 
@@ -35,12 +36,12 @@ def test_api():
             }
         ]
     }
-    
+
     res = requests.post(base_url + "/songs/", json=payload)
     if res.status_code == 201:
         song = res.json()
         print(f"Canción creada con ID: {song.get('id')}")
-        
+
         print("\nTest 3: GET /songs/{id}")
         res2 = requests.get(f"{base_url}/songs/{song['id']}")
         print(json.dumps(res2.json(), indent=2))

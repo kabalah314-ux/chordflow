@@ -11,10 +11,10 @@ Claves:
 """
 
 import os
-import sys
-import time
 import socket
 import subprocess
+import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -41,9 +41,10 @@ Hola mundo esto es una prueba
 def client():
     """TestClient de FastAPI. Recrea el esquema en cada test para aislarlos."""
     from fastapi.testclient import TestClient
+
     from src.main import app
-    from src.services.db import engine, Base
     from src.services import models  # noqa: F401 - registra los modelos en Base
+    from src.services.db import Base, engine
 
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -104,11 +105,18 @@ def live_server():
     env["CHORDFLOW_TEST_MODE"] = "1"
     env["DATABASE_URL"] = f"sqlite:///{e2e_db.as_posix()}"
 
+    # IMPORTANTE: la salida del servidor va a un FICHERO, no a subprocess.PIPE.
+    # Con PIPE y nadie leyéndolo, el buffer del pipe del SO (~64 KB en Windows) se
+    # llena con los logs y uvicorn se BLOQUEA al escribir → el servidor cuelga a
+    # mitad del suite y todo lo posterior da ReadTimeout. Además, --no-access-log
+    # reduce el volumen de salida.
+    log_path = ROOT / "test_e2e_server.log"
+    log_fh = open(log_path, "w", encoding="utf-8")
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "src.main:app",
-         "--host", "127.0.0.1", "--port", str(port)],
+         "--host", "127.0.0.1", "--port", str(port), "--no-access-log"],
         cwd=str(ROOT), env=env,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        stdout=log_fh, stderr=subprocess.STDOUT,
     )
 
     # Esperar a que responda
@@ -125,7 +133,11 @@ def live_server():
             time.sleep(0.4)
 
     if not up:
-        out = proc.stdout.read()[:1000] if proc.stdout else ""
+        log_fh.flush()
+        try:
+            out = log_path.read_text(encoding="utf-8")[:1000]
+        except OSError:
+            out = ""
         proc.terminate()
         pytest.fail(f"El live_server no arrancó en {base}\n{out}")
 
@@ -136,11 +148,13 @@ def live_server():
         proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
         proc.kill()
-    if e2e_db.exists():
-        try:
-            e2e_db.unlink()
-        except OSError:
-            pass
+    log_fh.close()
+    for f in (e2e_db, log_path):
+        if f.exists():
+            try:
+                f.unlink()
+            except OSError:
+                pass
 
 
 @pytest.fixture()

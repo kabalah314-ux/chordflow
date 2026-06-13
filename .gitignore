@@ -12,6 +12,7 @@ env/
 # Directorios de datos y logs
 .tmp/
 logs/
+*.log
 *.db
 *.sqlite3
 

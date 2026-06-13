@@ -12,12 +12,12 @@ verde, 1 si algo falla (útil para CI).
 """
 
 import os
-import sys
 import socket
-import tempfile
 import subprocess
-import urllib.request
+import sys
+import tempfile
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 # La consola de Windows usa cp1252 por defecto y revienta con los emojis (🩺, ✅…).

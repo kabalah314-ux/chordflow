@@ -14,8 +14,8 @@ Uso:
 Código de salida 0 si todo pasa, 1 si algo falla. Es la definición de "terminado".
 """
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 # UTF-8 en la salida: la consola de Windows (cp1252) revienta con los emojis del resumen.

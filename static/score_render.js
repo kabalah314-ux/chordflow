@@ -30,6 +30,40 @@ function transposeChord(chord, semis) {
     }).join('/');
 }
 
+// ─── Seguridad: escapado de texto del usuario (anti-XSS) ─────────────────────
+// La letra y los nombres de acorde vienen del usuario y se inyectan con innerHTML.
+// SIEMPRE pasar por aquí antes de meterlos en el DOM. Sirve para texto y atributos.
+function escapeHtml(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
+ * Construye el HTML de una línea de letra con sus acordes flotando en su columna.
+ * Clave: las posiciones (char_position) son índices del texto ORIGINAL, así que
+ * escapamos cada segmento de texto por separado e insertamos solo HTML de acorde
+ * ya saneado (chordSpan). Así el escapado no descuadra la alineación.
+ */
+function renderLyricWithChords(content, chords, transposeOffset) {
+    content = content || '';
+    const sorted = [...(chords || [])].sort((a, b) => (a.char_position || 0) - (b.char_position || 0));
+    let html = '';
+    let cursor = 0;
+    sorted.forEach(chord => {
+        let pos = Math.min(Math.max(chord.char_position || 0, 0), content.length);
+        if (pos < cursor) pos = cursor; // dos acordes en la misma columna: no retroceder
+        html += escapeHtml(content.substring(cursor, pos));
+        html += chordSpan(chord, transposeOffset);
+        cursor = pos;
+    });
+    html += escapeHtml(content.substring(cursor));
+    return html;
+}
+
 // ─── Render de la partitura ──────────────────────────────────────────────────
 /**
  * Pinta una canción (o el resultado del parser {sections:[...]}) dentro de un
@@ -74,15 +108,7 @@ function renderScoreInto(container, song, transposeOffset = 0) {
                     // Fusionar: acordes encima de la letra siguiente
                     const lineDiv = document.createElement('div');
                     lineDiv.className = 'line-lyric';
-                    let contentHTML = nextLine.content || '';
-
-                    const sortedChords = [...(line.chords || [])].sort((a, b) => b.char_position - a.char_position);
-                    sortedChords.forEach(chord => {
-                        const pos = Math.min(chord.char_position || 0, contentHTML.length);
-                        contentHTML = contentHTML.substring(0, pos) + chordSpan(chord, transposeOffset) + contentHTML.substring(pos);
-                    });
-
-                    lineDiv.innerHTML = contentHTML;
+                    lineDiv.innerHTML = renderLyricWithChords(nextLine.content, line.chords || [], transposeOffset);
                     secDiv.appendChild(lineDiv);
                     i += 2;
                 } else {
@@ -105,17 +131,7 @@ function renderScoreInto(container, song, transposeOffset = 0) {
             } else if (line.type === 'lyric') {
                 const lineDiv = document.createElement('div');
                 lineDiv.className = 'line-lyric';
-                let contentHTML = line.content || '';
-
-                if (line.chords && line.chords.length > 0) {
-                    const sortedChords = [...line.chords].sort((a, b) => b.char_position - a.char_position);
-                    sortedChords.forEach(chord => {
-                        const pos = chord.char_position || 0;
-                        contentHTML = contentHTML.substring(0, pos) + chordSpan(chord, transposeOffset) + contentHTML.substring(pos);
-                    });
-                }
-
-                lineDiv.innerHTML = contentHTML;
+                lineDiv.innerHTML = renderLyricWithChords(line.content, line.chords || [], transposeOffset);
                 secDiv.appendChild(lineDiv);
                 i++;
 
@@ -128,10 +144,13 @@ function renderScoreInto(container, song, transposeOffset = 0) {
     });
 }
 
-// Acorde flotante (span) — devuelve HTML string para inyectar en la letra
+// Acorde flotante (span) — devuelve HTML string para inyectar en la letra.
+// chord_name viene del usuario: escapar tanto en el texto visible como en data-orig.
 function chordSpan(chord, transposeOffset) {
-    const idAttr = chord.id ? ` id="chord-${chord.id}"` : '';
-    return `<span${idAttr} class="chord-container" data-orig="${chord.chord_name}">${transposeChord(chord.chord_name, transposeOffset)}</span>`;
+    const idAttr = chord.id ? ` id="chord-${escapeHtml(chord.id)}"` : '';
+    const orig = chord.chord_name || '';
+    const shown = transposeChord(orig, transposeOffset);
+    return `<span${idAttr} class="chord-container" data-orig="${escapeHtml(orig)}">${escapeHtml(shown)}</span>`;
 }
 
 // Pill de acorde (Intro) — devuelve un elemento

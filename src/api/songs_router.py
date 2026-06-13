@@ -1,13 +1,14 @@
 import logging
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 
-from ..services.db import get_db
-from ..services.models import Song, Section, Line, ChordMarker, TabLine
-from ..services.schemas import SongCreate, SongResponse, SongBase, SongUpdate
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from ..services.auth import get_current_user
+from ..services.db import get_db
+from ..services.models import ChordMarker, Line, Section, Song, TabLine
+from ..services.schemas import SongCreate, SongResponse, SongUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def get_songs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
     """Obtiene las canciones del usuario autenticado (paginadas)."""
     try:
         songs = (db.query(Song)
-                 .filter(Song.deleted_at == None, Song.owner_id == user_id)
+                 .filter(Song.deleted_at.is_(None), Song.owner_id == user_id)
                  .offset(skip).limit(limit).all())
         return songs
     except SQLAlchemyError as e:
@@ -35,7 +36,7 @@ def get_song(song_id: str, db: Session = Depends(get_db),
     """Obtiene el detalle completo de una canción del usuario."""
     try:
         song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
-                                      Song.deleted_at == None).first()
+                                      Song.deleted_at.is_(None)).first()
         if not song:
             raise HTTPException(status_code=404, detail="Canción no encontrada")
         return song
@@ -50,23 +51,23 @@ def create_song(song: SongCreate, db: Session = Depends(get_db),
     try:
         # Crear la estructura anidada de SQLAlchemy, asignando el dueño
         db_song = Song(**song.dict(exclude={"sections"}), owner_id=user_id)
-        
+
         for sec_data in song.sections:
             db_sec = Section(**sec_data.dict(exclude={"lines"}))
             db_song.sections.append(db_sec)
-            
+
             for line_data in sec_data.lines:
                 db_line = Line(**line_data.dict(exclude={"chords", "tab_strings"}))
                 db_sec.lines.append(db_line)
-                
+
                 for chord_data in line_data.chords:
                     db_chord = ChordMarker(**chord_data.dict())
                     db_line.chords.append(db_chord)
-                    
+
                 for tab_data in line_data.tab_strings:
                     db_tab = TabLine(**tab_data.dict())
                     db_line.tab_strings.append(db_tab)
-                    
+
         db.add(db_song)
         db.commit()
         db.refresh(db_song)
@@ -87,31 +88,31 @@ def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get
     """Actualiza una canción existente recreando su estructura (Fase 1 simplificada)."""
     try:
         db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
-                                        Song.deleted_at == None).first()
+                                        Song.deleted_at.is_(None)).first()
         if not db_song:
             raise HTTPException(status_code=404, detail="Canción no encontrada")
-        
+
         # Eliminar todas las secciones existentes e insertar las nuevas (forma simplificada)
         db.query(Section).filter(Section.song_id == song_id).delete()
-        
+
         # Actualizar campos base de la canción
         update_data = song_update.dict(exclude={"sections"}, exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_song, key, value)
-            
+
         # Re-crear secciones
         for sec_data in song_update.sections:
             db_sec = Section(**sec_data.dict(exclude={"lines"}))
             db_song.sections.append(db_sec)
-            
+
             for line_data in sec_data.lines:
                 db_line = Line(**line_data.dict(exclude={"chords", "tab_strings"}))
                 db_sec.lines.append(db_line)
-                
+
                 for chord_data in line_data.chords:
                     db_chord = ChordMarker(**chord_data.dict())
                     db_line.chords.append(db_chord)
-                    
+
                 for tab_data in line_data.tab_strings:
                     db_tab = TabLine(**tab_data.dict())
                     db_line.tab_strings.append(db_tab)
@@ -136,7 +137,7 @@ def patch_song(song_id: str, song_update: SongUpdate, db: Session = Depends(get_
     recrear su estructura. Ligero: solo aplica los campos enviados."""
     try:
         db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
-                                        Song.deleted_at == None).first()
+                                        Song.deleted_at.is_(None)).first()
         if not db_song:
             raise HTTPException(status_code=404, detail="Canción no encontrada")
 
@@ -162,7 +163,7 @@ def delete_song(song_id: str, db: Session = Depends(get_db),
         db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id).first()
         if not db_song:
             raise HTTPException(status_code=404, detail="Canción no encontrada")
-        
+
         db.delete(db_song)
         db.commit()
         logger.info(f"Canción eliminada: {song_id}")

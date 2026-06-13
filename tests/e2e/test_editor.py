@@ -14,7 +14,9 @@ def test_preview_renderiza_secciones_y_acordes(page, live_server):
     page.fill("#raw-text", SAMPLE_RAW)
     page.wait_for_timeout(300)  # updatePreview corre en el evento input
     preview = page.inner_text("#preview-content")
-    assert "Verso 1" in preview          # sección detectada
+    # inner_text refleja el text-transform:uppercase del CSS en .section-name,
+    # por eso comparamos insensible a mayúsculas.
+    assert "verso 1" in preview.lower()  # sección detectada
     assert "Am" in preview               # acorde detectado
     assert "Hola mundo" in preview       # letra emparejada
 

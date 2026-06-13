@@ -1,14 +1,14 @@
-import os
 import logging
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from .api.songs_router import router as songs_router
-from .services.db import engine, Base
-from .services.auth import SUPABASE_URL, SUPABASE_ANON_KEY, TEST_MODE
-
-from fastapi.staticfiles import StaticFiles
+from .services.auth import SUPABASE_ANON_KEY, SUPABASE_URL, TEST_MODE
+from .services.db import Base, engine
 
 # Configuración básica de logging si main.py se corre directamente
 os.makedirs("logs", exist_ok=True)
