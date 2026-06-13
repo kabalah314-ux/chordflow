@@ -15,6 +15,10 @@
 | A4 | API: PUT a id inexistente → 404 (no 400) | `test_api_songs.py` | ✅ |
 | A5 | API: metadatos fuera de rango → 422 | `test_api_songs.py` | ✅ |
 | A6 | API: paginación `skip`/`limit` acotada → 422 | `test_api_songs.py` | ✅ |
+| A7 | API: el listado `/songs/` es ligero (sin `sections`, con `section_count`) | `test_api_songs.py` | ✅ |
+| A8 | API: borrar canción cascada a nivel DB (SQL directo, sin huérfanos) | `test_api_songs.py` | ✅ |
+| MIG1 | Migraciones: `alembic upgrade head` crea el esquema completo | `test_migrations.py` | ✅ |
+| MIG2 | Migraciones: sin drift entre modelos y migraciones (`alembic check`) | `test_migrations.py` | ✅ |
 | SEC1 | CORS restringe orígenes no permitidos | `test_security.py` | ✅ |
 | SEC2 | Validación de token se cachea y resiste caídas de Supabase | `test_security.py` | ✅ |
 | SEC3 | La caché de token tiene cota de tamaño (no memory leak) | `test_security.py` | ✅ |
@@ -28,6 +32,7 @@
 | P1 | Reproductor: carga la canción (título + partitura) | `test_player.py` | ✅ |
 | P2 | Reproductor: Play avanza el beat | `test_player.py` | ✅ |
 | P3 | Reproductor: transponer cambia los acordes mostrados | `test_player.py` | ✅ |
+| P4 | Reproductor: abrir sin `?songId` carga la 1ª canción con acordes | `test_player.py` | ✅ |
 | J1 | Lógica JS: el parser detecta acordes y secciones | `test_js_logic.py` | ✅ |
 | J2 | Lógica JS: `transposeChord` sube/baja semitonos correctamente | `test_js_logic.py` | ✅ |
 | J3 | Seguridad: el render escapa letra y `chord_name` maliciosos (XSS) | `test_js_logic.py` | ✅ |
@@ -35,7 +40,8 @@
 
 > Al añadir una feature nueva, **añade aquí su fila** y crea su test antes de cerrar la tarea.
 
-⚠️ **Flakiness conocida (T-042):** los e2e dependen de un `live_server` (uvicorn en subproceso)
-y `httpx` con timeout por defecto (5 s). Bajo carga, alguna petición puede dar `ReadTimeout` y
-`run_checks` falla de forma intermitente; al re-ejecutar suele pasar. Fix pendiente: subir el
-timeout de `httpx`/Playwright en `conftest.py`.
+✅ **Flakiness (T-042) resuelta:** se atacaron 3 carreras del harness — timeout de la fixture
+`api` (httpx) 5→30 s, deadline de arranque del `live_server` 25→45 s, y el test S4 reescrito
+determinista (caché de `/config` + rebote de `login.js`, comprobando la navegación vía
+`framenavigated`). La suite e2e pasó 5/5 en repetición. Pendiente (no bloqueante): cobertura de
+`sync_engine.js`/`chord_shapes.js` y medición de cobertura.
