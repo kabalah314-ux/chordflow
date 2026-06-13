@@ -2,7 +2,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
@@ -22,6 +22,16 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./chordflow.db")
 engine_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(DATABASE_URL, connect_args=engine_args)
+
+# SQLite no fuerza las foreign keys por defecto: hay que activarlo por conexión.
+# Defensa en profundidad contra filas huérfanas (ver T-003).
+if DATABASE_URL.startswith("sqlite"):
+    @event.listens_for(engine, "connect")
+    def _enable_sqlite_fk(dbapi_conn, _record):
+        cur = dbapi_conn.cursor()
+        cur.execute("PRAGMA foreign_keys=ON")
+        cur.close()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

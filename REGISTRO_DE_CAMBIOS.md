@@ -258,7 +258,33 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - Lint: `ruff --fix` (orden de imports en `harness/`) y `Song.deleted_at == None` →
   `.is_(None)` (forma correcta en SQLAlchemy, además contenta a E711).
 
-### ⏳ Próximas (críticas): T-003 huérfanos en PUT · T-004 CORS · T-005 token. Ver ROADMAP/TASKS.
+### ✅ T-003 — Fin de la fuga de filas huérfanas en PUT
+- **Qué:** `PUT /songs/{id}` borraba las secciones con bulk `query(...).delete()`, que no dispara
+  el cascade ORM; con las FKs de SQLite desactivadas, `lines`/`chord_markers`/`tab_lines` quedaban
+  huérfanos en cada edición (la BD crecía sin límite).
+- **Cómo:** borrado vía ORM (`for sec in db_song.sections: db.delete(sec); db.flush()`) para que
+  el cascade `delete-orphan` actúe. Defensa en profundidad: `PRAGMA foreign_keys=ON` por conexión
+  en `db.py` (event listener).
+- **Verificación:** `tests/unit/test_api_songs.py::test_put_no_deja_filas_huerfanas` (editar 2 veces
+  y comprobar que sections/lines/chords no crecen).
+
+### ✅ T-004 — CORS por lista explícita de orígenes
+- **Qué:** `allow_origins=["*"]` + `allow_credentials=True` (inseguro e inconsistente).
+- **Cómo:** `main.py` lee `CHORDFLOW_ALLOWED_ORIGINS` (coma-separada); default a localhost.
+  Documentada la var en `.env`. El frontend es same-origin, así que no afecta al uso normal.
+- **Verificación:** `tests/unit/test_security.py::test_cors_restringe_origenes`.
+
+### ✅ T-005 — Caché de validación de token (no depender de Supabase en cada request)
+- **Qué:** `auth.py` validaba el token con una llamada de red **síncrona a Supabase en cada
+  request** → latencia y caída total si Supabase caía.
+- **Cómo:** caché en memoria `token → (user_id, expiry)` con TTL (`CHORDFLOW_TOKEN_TTL`, 60 s).
+  Caché válida no llama a Supabase; si la validación remota falla pero hay caché, degradación
+  elegante (la request pasa).
+- **Verificación:** `test_validacion_de_token_se_cachea` (valida una sola vez) y
+  `test_token_en_cache_sobrevive_caida_de_supabase`.
+
+> **Hito:** los 5 críticos de la auditoría (T-001…T-005) cerrados. `run_checks.py` TODO VERDE.
+> Siguiente fase: Fase 2 (Pydantic v2, deps pineadas…) o empezar la extracción del MOLDE.
 
 ---
 

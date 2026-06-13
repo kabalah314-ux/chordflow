@@ -10,6 +10,9 @@
 | S3 | `/config` responde y expone `test_mode` | `test_smoke.py` | ✅ |
 | A1 | API: crear → leer → listar → borrar canción (CRUD) | `test_api_songs.py` | ✅ |
 | A2 | API: un usuario solo ve sus propias canciones | `test_api_songs.py` | ✅ |
+| A3 | API: editar (PUT) no deja filas huérfanas | `test_api_songs.py` | ✅ |
+| SEC1 | CORS restringe orígenes no permitidos | `test_security.py` | ✅ |
+| SEC2 | Validación de token se cachea y resiste caídas de Supabase | `test_security.py` | ✅ |
 | L1 | Biblioteca: estado vacío se muestra correctamente | `test_library.py` | ✅ |
 | L2 | Biblioteca: una canción aparece como tarjeta | `test_library.py` | ✅ |
 | L3 | Biblioteca: búsqueda en vivo filtra | `test_library.py` | ✅ |

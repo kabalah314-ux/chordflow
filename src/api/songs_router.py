@@ -92,8 +92,13 @@ def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get
         if not db_song:
             raise HTTPException(status_code=404, detail="Canción no encontrada")
 
-        # Eliminar todas las secciones existentes e insertar las nuevas (forma simplificada)
-        db.query(Section).filter(Section.song_id == song_id).delete()
+        # Eliminar las secciones existentes vía ORM para que el cascade
+        # `delete-orphan` borre también sus lines/chords/tab_lines. (Un bulk
+        # `query(...).delete()` NO dispara el cascade ORM y, como SQLite no fuerza
+        # FKs por defecto, dejaba filas huérfanas en cada edición. Ver T-003.)
+        for sec in list(db_song.sections):
+            db.delete(sec)
+        db.flush()
 
         # Actualizar campos base de la canción
         update_data = song_update.dict(exclude={"sections"}, exclude_unset=True)

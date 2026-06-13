@@ -50,6 +50,38 @@ def test_patch_solo_metadatos(client):
     assert len(r.json()["sections"]) == 1
 
 
+def test_put_no_deja_filas_huerfanas(client):
+    """Editar (PUT) no debe dejar lines/chord_markers/tab_lines huérfanos (T-003).
+    El bug original: bulk delete de secciones que no disparaba el cascade ORM."""
+    from sqlalchemy import func
+
+    from src.services.db import SessionLocal
+    from src.services.models import ChordMarker, Line, Section
+
+    def contar():
+        db = SessionLocal()
+        try:
+            return {
+                "sections": db.query(func.count(Section.id)).scalar(),
+                "lines": db.query(func.count(Line.id)).scalar(),
+                "chords": db.query(func.count(ChordMarker.id)).scalar(),
+            }
+        finally:
+            db.close()
+
+    # Crear: el payload de ejemplo tiene 1 sección, 1 línea, 2 acordes
+    sid = client.post("/songs/", json=sample_song_payload()).json()["id"]
+    assert contar() == {"sections": 1, "lines": 1, "chords": 2}
+
+    # Editar dos veces con el mismo payload. Si hubiera fuga, los contadores crecerían.
+    for _ in range(2):
+        r = client.put(f"/songs/{sid}", json=sample_song_payload(title="Editada"))
+        assert r.status_code == 200, r.text
+
+    # Tras editar, sigue habiendo exactamente la estructura de UNA canción.
+    assert contar() == {"sections": 1, "lines": 1, "chords": 2}
+
+
 def test_aislamiento_por_dueno(client):
     """Una canción de otro usuario no aparece para el usuario de prueba (A2)."""
     from src.services.db import SessionLocal

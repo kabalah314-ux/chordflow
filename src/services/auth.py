@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import time
 import urllib.request
 
 from dotenv import load_dotenv
@@ -19,6 +20,12 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 # validación con Supabase y se usa un usuario de prueba fijo. NUNCA en producción.
 TEST_MODE = os.getenv("CHORDFLOW_TEST_MODE") == "1"
 TEST_USER_ID = "test-user-0000-0000-0000-000000000000"
+
+# Caché de validación de token: evita llamar a Supabase en cada request (latencia)
+# y permite que la app siga funcionando si Supabase está temporalmente caído (T-005).
+# token -> (user_id, expires_at_monotonic)
+TOKEN_TTL_SECONDS = int(os.getenv("CHORDFLOW_TOKEN_TTL", "60"))
+_token_cache: dict[str, tuple[str, float]] = {}
 
 
 def _validate_token_with_supabase(token: str):
@@ -55,8 +62,23 @@ def get_current_user(authorization: str = Header(None)) -> str:
         raise HTTPException(status_code=401, detail="No autenticado")
 
     token = authorization.split(" ", 1)[1].strip()
-    user = _validate_token_with_supabase(token)
-    if not user or not user.get("id"):
-        raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
-    return user["id"]
+    # 1) Caché válida → no llamamos a Supabase (rápido y resistente a caídas).
+    now = time.monotonic()
+    cached = _token_cache.get(token)
+    if cached and cached[1] > now:
+        return cached[0]
+
+    # 2) Validación remota; si va bien, cacheamos con TTL.
+    user = _validate_token_with_supabase(token)
+    if user and user.get("id"):
+        _token_cache[token] = (user["id"], now + TOKEN_TTL_SECONDS)
+        return user["id"]
+
+    # 3) Falló la validación remota: si teníamos una entrada (aunque caducada),
+    #    la usamos como degradación elegante mientras Supabase se recupera.
+    if cached:
+        logger.warning("Validación remota falló; usando caché previa del token (Supabase caído?)")
+        return cached[0]
+
+    raise HTTPException(status_code=401, detail="Token inválido o expirado")

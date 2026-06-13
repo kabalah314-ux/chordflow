@@ -18,19 +18,12 @@
 - [x] **T-002** 🔴 **XSS en el renderer** (`score_render.js`). Resuelto con `escapeHtml()` +
       `renderLyricWithChords()` (escapa letra por segmentos preservando alineación) y `chordSpan`
       escapando `chord_name` en texto y `data-orig`. Test J3 + `?v=8`. run_checks verde.
-- [ ] **T-003** 🔴 **Fuga de filas huérfanas en `PUT`** (`songs_router.py:95`). El bulk
-      `db.query(Section).delete()` NO dispara el cascade ORM y SQLite no fuerza FKs → `lines`,
-      `chord_markers` y `tab_lines` quedan huérfanos en cada edición. Arreglar con **una** de:
-      (a) `PRAGMA foreign_keys=ON` por conexión + `ON DELETE CASCADE`, o (b) borrar vía ORM
-      (`for sec in db_song.sections: db.delete(sec)`) para que cascade actúe.
-      → Test: editar una canción dos veces y comprobar que `chord_markers` no acumula huérfanos.
-- [ ] **T-004** 🔴 **CORS explícito**. Sustituir `allow_origins=["*"]` + `allow_credentials=True`
-      por lista de orígenes vía `CHORDFLOW_ALLOWED_ORIGINS` (coma-separada). → Test: petición con
-      `Origin` no permitido no recibe cabecera CORS.
-- [ ] **T-005** 🔴 **Validación de token sin bloquear ni depender de Supabase en cada request**
-      (`auth.py`). Hoy `urllib.urlopen` síncrono por request: latencia + caída total si Supabase cae.
-      Cachear el resultado (TTL corto, p. ej. 60 s) o validar el JWT localmente con el secret.
-      → Test: dos requests seguidas con el mismo token solo llaman a Supabase una vez (mock).
+- [x] **T-003** 🔴 **Fuga de filas huérfanas en `PUT`**. Resuelto: borrado vía ORM (cascade
+      `delete-orphan`) + `PRAGMA foreign_keys=ON` por conexión. Test `test_put_no_deja_filas_huerfanas`.
+- [x] **T-004** 🔴 **CORS explícito**. `CHORDFLOW_ALLOWED_ORIGINS` (default localhost).
+      Test `test_cors_restringe_origenes`.
+- [x] **T-005** 🔴 **Validación de token cacheada**. Caché TTL en memoria + degradación elegante
+      si Supabase cae. Tests `test_validacion_de_token_se_cachea` y `..._sobrevive_caida_de_supabase`.
 - [ ] **T-006** 🟠 **`apiFetch` maneja 401** (`auth.js`): si el backend responde 401, redirigir
       a `login.html` automáticamente. → Test E2E: token inválido → acaba en login.
 

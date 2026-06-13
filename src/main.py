@@ -27,10 +27,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configurar CORS (Permitir todo para desarrollo)
+# CORS: lista explícita de orígenes vía env (coma-separada). Default seguro a localhost.
+# El frontend se sirve desde el mismo origen que la API, así que esto no afecta al uso normal;
+# protege frente a sitios de terceros que intenten usar la sesión del usuario (ver T-004).
+_origins_raw = os.getenv("CHORDFLOW_ALLOWED_ORIGINS", "http://127.0.0.1:8000,http://localhost:8000")
+ALLOWED_ORIGINS = [o.strip() for o in _origins_raw.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
