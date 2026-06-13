@@ -28,11 +28,10 @@
       a `login.html` automáticamente. → Test E2E: token inválido → acaba en login.
 
 ## Fase 2 — Base mantenible
-- [ ] **T-007** 🟠 **Migrar a Pydantic v2**: `orm_mode`→`from_attributes`, `.dict()`→`.model_dump()`
-      en `schemas.py`, `songs_router.py`. Quita los DeprecationWarning.
-- [ ] **T-008** 🟠 **Pinear dependencias** en `requirements.txt` (hoy sin versiones).
-      Congelar versiones probadas (`pip freeze` filtrado).
-- [ ] **T-009** 🟠 **`datetime.utcnow()`→`datetime.now(timezone.utc)`** (`models.py`).
+- [x] **T-007** 🟠 **Pydantic v2**: `orm_mode`→`ConfigDict(from_attributes=True)` (5×) y
+      `.dict()`→`.model_dump()` (11×). DeprecationWarnings de Pydantic eliminados.
+- [x] **T-008** 🟠 **Dependencias pineadas** en `requirements.txt` (versiones probadas en Py3.12).
+- [x] **T-009** 🟠 **`datetime.utcnow()`→`_utcnow()` (tz-aware)** en `models.py`.
 - [ ] **T-010** 🟠 **N+1 en `GET /songs/`**: la lista usa `SongResponse` anidado (sections→lines→
       chords) → lazy-load por canción. Crear `SongSummary` ligero (sin estructura) para el listado.
       → Test: el JSON de `/songs/` no trae `sections`.

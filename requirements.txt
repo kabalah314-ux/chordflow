@@ -1,5 +1,7 @@
-fastapi
-uvicorn
-sqlalchemy
-pydantic
-python-dotenv
+# Dependencias de runtime de ChordFlow (versiones pineadas — T-008).
+# Probadas con Python 3.12. Subir versiones de forma deliberada, no automática.
+fastapi==0.136.3
+uvicorn==0.34.0
+sqlalchemy==2.0.50
+pydantic==2.13.4
+python-dotenv==1.0.1

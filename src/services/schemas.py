@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ChordMarkerBase(BaseModel):
@@ -20,8 +20,7 @@ class ChordMarkerResponse(ChordMarkerBase):
     id: str
     line_id: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TabLineBase(BaseModel):
     string_number: int
@@ -34,8 +33,7 @@ class TabLineResponse(TabLineBase):
     id: str
     line_id: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LineBase(BaseModel):
     order: int
@@ -55,8 +53,7 @@ class LineResponse(LineBase):
     chords: List[ChordMarkerResponse] = []
     tab_strings: List[TabLineResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class SectionBase(BaseModel):
     name: Optional[str] = None
@@ -72,8 +69,7 @@ class SectionResponse(SectionBase):
     song_id: str
     lines: List[LineResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class SongBase(BaseModel):
     title: str
@@ -121,5 +117,4 @@ class SongResponse(SongBase):
     deleted_at: Optional[datetime] = None
     sections: List[SectionResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     JSON,
@@ -15,6 +15,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from .db import Base
+
+
+def _utcnow():
+    """Hora actual en UTC con zona (reemplaza datetime.utcnow(), deprecado en 3.12)."""
+    return datetime.now(timezone.utc)
 
 
 # Utilidad para usar UUID
@@ -44,8 +49,8 @@ class Song(Base):
     source_file_path = Column(Text)
     tags = Column(JSON)
     duration_beats = Column(Float)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime, nullable=True)
 
     sections = relationship("Section", back_populates="song", cascade="all, delete-orphan", order_by="Section.order")

@@ -50,22 +50,22 @@ def create_song(song: SongCreate, db: Session = Depends(get_db),
     """Crea una canción completa con sus secciones, líneas y acordes."""
     try:
         # Crear la estructura anidada de SQLAlchemy, asignando el dueño
-        db_song = Song(**song.dict(exclude={"sections"}), owner_id=user_id)
+        db_song = Song(**song.model_dump(exclude={"sections"}), owner_id=user_id)
 
         for sec_data in song.sections:
-            db_sec = Section(**sec_data.dict(exclude={"lines"}))
+            db_sec = Section(**sec_data.model_dump(exclude={"lines"}))
             db_song.sections.append(db_sec)
 
             for line_data in sec_data.lines:
-                db_line = Line(**line_data.dict(exclude={"chords", "tab_strings"}))
+                db_line = Line(**line_data.model_dump(exclude={"chords", "tab_strings"}))
                 db_sec.lines.append(db_line)
 
                 for chord_data in line_data.chords:
-                    db_chord = ChordMarker(**chord_data.dict())
+                    db_chord = ChordMarker(**chord_data.model_dump())
                     db_line.chords.append(db_chord)
 
                 for tab_data in line_data.tab_strings:
-                    db_tab = TabLine(**tab_data.dict())
+                    db_tab = TabLine(**tab_data.model_dump())
                     db_line.tab_strings.append(db_tab)
 
         db.add(db_song)
@@ -101,25 +101,25 @@ def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get
         db.flush()
 
         # Actualizar campos base de la canción
-        update_data = song_update.dict(exclude={"sections"}, exclude_unset=True)
+        update_data = song_update.model_dump(exclude={"sections"}, exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_song, key, value)
 
         # Re-crear secciones
         for sec_data in song_update.sections:
-            db_sec = Section(**sec_data.dict(exclude={"lines"}))
+            db_sec = Section(**sec_data.model_dump(exclude={"lines"}))
             db_song.sections.append(db_sec)
 
             for line_data in sec_data.lines:
-                db_line = Line(**line_data.dict(exclude={"chords", "tab_strings"}))
+                db_line = Line(**line_data.model_dump(exclude={"chords", "tab_strings"}))
                 db_sec.lines.append(db_line)
 
                 for chord_data in line_data.chords:
-                    db_chord = ChordMarker(**chord_data.dict())
+                    db_chord = ChordMarker(**chord_data.model_dump())
                     db_line.chords.append(db_chord)
 
                 for tab_data in line_data.tab_strings:
-                    db_tab = TabLine(**tab_data.dict())
+                    db_tab = TabLine(**tab_data.model_dump())
                     db_line.tab_strings.append(db_tab)
 
         db.commit()
@@ -146,7 +146,7 @@ def patch_song(song_id: str, song_update: SongUpdate, db: Session = Depends(get_
         if not db_song:
             raise HTTPException(status_code=404, detail="Canción no encontrada")
 
-        update_data = song_update.dict(exclude_unset=True)
+        update_data = song_update.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_song, key, value)
 
