@@ -573,6 +573,34 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Verificación:** tarea de diseño/documentación, sin cambio de runtime → `doctor.py` **verde**
   (10/10); el "test" es el cotejo del inventario contra el árbol real.
 
+### ✅ T-M02 — `app-skeleton/` creado (molde reutilizable extraído)
+
+> **Por qué:** es el objetivo de fondo de la Fase M — capturar de una vez el esqueleto técnico +
+> sistema de trabajo, para que cada app nueva arranque estable y testeada desde el minuto 1.
+
+- **Ubicación:** carpeta/repo hermano `../app-skeleton` (fuera de este repo; `git init` propio,
+  commit `e02b1b0`). Decisión del usuario: backend completo + recurso `Item`, repo aparte.
+- **Qué contiene (todo agnóstico al dominio):**
+  - **Harness** completo: `doctor.py` (relajado: IdP opcional, `.env.example`, `/health`, `/items` 401),
+    `run_checks.py`, ROADMAP/TASKS/CHECKLIST/MOLDE genéricos + plantilla de tarea.
+  - **Backend base** (los 4 pilares de T-044): `config.py` (Settings), `logging_config.py`,
+    `main.py` (CORS env + cabeceras + `/health` + `/config` + **handler de errores global**),
+    `db.py` (PRAGMA FK).
+  - **Auth** con modo test + `auth_provider.py` (AuthProvider enchufable, Supabase de ejemplo).
+  - **Recurso de ejemplo `Item`** (reemplaza a `Song`): modelo (owner_id/deleted_at/timestamps/JSON),
+    schemas (Create/Update/Response/Summary), router CRUD (auth + filtro dueño + soft delete +
+    paginación), migración Alembic baseline.
+  - **Frontend universal:** `auth.js`, `util.js` (escapeHtml), `login.*`, `index.*` de ejemplo
+    (demuestra requireAuth + apiFetch + escapeHtml), `style.css` con tokens base.
+  - **Higiene:** `.gitignore`, `.gitattributes`, `pyproject.toml`, deps **pineadas** (incl.
+    pydantic-settings + alembic), `.env.example` con prefijo neutral `APP_`.
+- **Prefijo de env vars:** neutral `APP_` (concreto y funcional). Parametrizarlo a `{{ENV_PREFIX}}`
+  queda para T-M03 (huecos solo en docs, no en código → el molde sigue corriendo).
+- **Verificación (criterio T-M06 esencialmente cumplido):** `run_checks.py` del esqueleto **TODO
+  VERDE** recién creado, sin tocar dominio — doctor (10/10) + ruff + **26 unit** + **4 e2e**.
+  Dos tropiezos resueltos en el camino: faltaba `alembic.ini` (lo añadí) y un orden de imports
+  (ruff --fix).
+
 ---
 
 <a name="notas"></a>

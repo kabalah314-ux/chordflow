@@ -3,9 +3,10 @@
 > Documento de diseño y constancia. Explica **qué de ChordFlow es reutilizable**, cómo se
 > extrae a un molde, y cómo nace un proyecto nuevo a partir de él.
 > Tareas asociadas: **T-M01 … T-M06** en [`ROADMAP.md`](ROADMAP.md) (Fase M).
-> Estado: **INVENTARIO VALIDADO** (T-M01, 2026-06-13) contra el árbol real. Pre-requisitos
-> técnicos para extraer **cumplidos**: backend base (T-044) + auth desacoplada (T-043). Siguiente:
-> materializar `app-skeleton/` (T-M02).
+> Estado: **MOLDE EXTRAÍDO** (T-M02, 2026-06-13). El esqueleto vive en el repo hermano
+> `../app-skeleton` (commit `e02b1b0`) con recurso de ejemplo `Item`; `run_checks` queda TODO VERDE
+> recién copiado (doctor + ruff + 26 unit + 4 e2e). Inventario validado en T-M01. Pendiente:
+> T-M03 (plantillar docs + prefijo env `APP_`→`{{ENV_PREFIX}}`), T-M06 (criterio de molde estable).
 
 ---
 

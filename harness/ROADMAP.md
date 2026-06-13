@@ -156,8 +156,10 @@
 - [x] **T-M01** 🟠 Inventario universal vs por-proyecto **validado** contra el árbol real (`MOLDE.md`
       §2 reescrita en 4 sub-tablas + §4 actualizada). Reconciliado `settings.py`→`config.py`; añadidos
       `logging_config.py`/`auth_provider.py`/`util.js`/`alembic`/`login.*` y sus tests.
-- [ ] **T-M02** 🟠 Crear `app-skeleton/` con el esqueleto agnóstico (harness + `src` base +
-      `tests` scaffold + config), usando un recurso de ejemplo genérico (`Item`) en vez de `Song`.
+- [x] **T-M02** 🟠 `app-skeleton/` creado (repo hermano `../app-skeleton`, commit `e02b1b0`):
+      harness + backend base (Settings/logging/health/handler) + auth enchufable + recurso `Item`
+      (CRUD/soft delete/paginación) + Alembic baseline + frontend universal. `run_checks` TODO VERDE
+      recién copiado (doctor + ruff + 26 unit + 4 e2e). Prefijo `APP_` (→ `{{ENV_PREFIX}}` en T-M03).
 - [ ] **T-M03** 🟡 Plantillar `CLAUDE.md` y `GUIA_MAESTRA.md` con huecos `{{APP_NAME}}`, etc.
       **Incluye** parametrizar el prefijo de env vars `CHORDFLOW_*` → `{{ENV_PREFIX}}_*` (de T-043).
 - [ ] **T-M04** 🟡 `MOLDE.md` → guía de uso del molde (cómo nace un proyecto nuevo desde él).
