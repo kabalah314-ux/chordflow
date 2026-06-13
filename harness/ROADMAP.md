@@ -36,7 +36,8 @@
       chords) → lazy-load por canción. Crear `SongSummary` ligero (sin estructura) para el listado.
       → Test: el JSON de `/songs/` no trae `sections`.
 - [ ] **T-011** 🟠 **Alembic** para migraciones (hoy solo `create_all`, no aplica cambios de esquema).
-- [ ] **T-012** 🟠 **Índices** en `Song.owner_id`, `Song.deleted_at` y las FKs (`index=True`).
+- [x] **T-012** 🟠 **Índices** en `Song.owner_id`, `Song.deleted_at` y las 4 FKs (`index=True`).
+      (Aplica a BD nuevas; la existente requerirá la migración de T-011.)
 - [ ] **T-013** 🟡 **Soft delete real** en `DELETE` (hoy hard delete pese a existir `deleted_at`)
       y decidir el comportamiento de `is_public` (hoy `get_song` filtra siempre por dueño).
 - [ ] **T-014** 🟡 **Unificar logging**: quitar `basicConfig` de `db.py` (módulo de librería);
@@ -57,7 +58,8 @@
 
 ## Fase 4 — CI / profesionalización
 - [ ] **T-023** 🟠 **GitHub Actions**: correr `python harness/run_checks.py` en cada push/PR.
-- [ ] **T-024** 🟡 **Validación de rangos en schemas** (`bpm` 40–240, `year` razonable) con `Field(...)`.
+- [x] **T-024** 🟡 **Validación de rangos en schemas** con `Field(...)`: `bpm` 20–400, `year` 0–3000,
+      compás 1–32, `capo` 0–24, `title` 1–255. Test `test_validacion_de_rangos` (422).
 - [ ] **T-025** 🟡 **Endpoint `/health`** real (liveness) separado de `/config`.
 
 ## Fase 5 — Diferenciación de producto

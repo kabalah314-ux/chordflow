@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChordMarkerBase(BaseModel):
@@ -72,17 +72,17 @@ class SectionResponse(SectionBase):
     model_config = ConfigDict(from_attributes=True)
 
 class SongBase(BaseModel):
-    title: str
+    title: str = Field(min_length=1, max_length=255)
     artist: Optional[str] = None
     album: Optional[str] = None
-    year: Optional[int] = None
-    bpm: int = 120
-    time_signature_num: int = 4
-    time_signature_den: int = 4
+    year: Optional[int] = Field(None, ge=0, le=3000)
+    bpm: int = Field(120, ge=20, le=400)
+    time_signature_num: int = Field(4, ge=1, le=32)
+    time_signature_den: int = Field(4, ge=1, le=32)
     key_root: Optional[str] = None
     key_mode: Optional[str] = None
     tuning: Optional[str] = None
-    capo: int = 0
+    capo: int = Field(0, ge=0, le=24)
     instrument: Optional[str] = None
     format_version: str = "1.0"
     is_public: bool = False
@@ -97,15 +97,15 @@ class SongCreate(SongBase):
 # Actualización parcial de metadatos (no toca la estructura de secciones).
 # Usado por PATCH para, p. ej., guardar el último tempo elegido.
 class SongUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
     artist: Optional[str] = None
     album: Optional[str] = None
-    year: Optional[int] = None
-    bpm: Optional[int] = None
+    year: Optional[int] = Field(None, ge=0, le=3000)
+    bpm: Optional[int] = Field(None, ge=20, le=400)
     key_root: Optional[str] = None
     key_mode: Optional[str] = None
     tuning: Optional[str] = None
-    capo: Optional[int] = None
+    capo: Optional[int] = Field(None, ge=0, le=24)
     instrument: Optional[str] = None
     is_public: Optional[bool] = None
 

@@ -43,7 +43,7 @@ class Song(Base):
     capo = Column(Integer, default=0)
     instrument = Column(String(32))
     format_version = Column(String(8), default="1.0")
-    owner_id = Column(String(36)) # FK a Users (Fase futura)
+    owner_id = Column(String(36), index=True) # FK a Users (Fase futura)
     is_public = Column(Boolean, default=False)
     source_type = Column(String(32))
     source_file_path = Column(Text)
@@ -51,7 +51,7 @@ class Song(Base):
     duration_beats = Column(Float)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime, nullable=True, index=True)
 
     sections = relationship("Section", back_populates="song", cascade="all, delete-orphan", order_by="Section.order")
 
@@ -59,7 +59,7 @@ class Section(Base):
     __tablename__ = "sections"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    song_id = Column(String(36), ForeignKey("songs.id"), nullable=False)
+    song_id = Column(String(36), ForeignKey("songs.id"), nullable=False, index=True)
     name = Column(String(64))
     order = Column(Integer, nullable=False)
     repeat_count = Column(Integer, default=1)
@@ -72,7 +72,7 @@ class Line(Base):
     __tablename__ = "lines"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    section_id = Column(String(36), ForeignKey("sections.id"), nullable=False)
+    section_id = Column(String(36), ForeignKey("sections.id"), nullable=False, index=True)
     order = Column(Integer, nullable=False)
     type = Column(String(32), nullable=False) # lyric | tab | chord_only | comment | spacer
     content = Column(Text)
@@ -88,7 +88,7 @@ class ChordMarker(Base):
     __tablename__ = "chord_markers"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    line_id = Column(String(36), ForeignKey("lines.id"), nullable=False)
+    line_id = Column(String(36), ForeignKey("lines.id"), nullable=False, index=True)
     chord_name = Column(String(16), nullable=False)
     char_position = Column(Integer)
     beat_offset = Column(Float)
@@ -103,7 +103,7 @@ class TabLine(Base):
     __tablename__ = "tab_lines"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    line_id = Column(String(36), ForeignKey("lines.id"), nullable=False)
+    line_id = Column(String(36), ForeignKey("lines.id"), nullable=False, index=True)
     string_number = Column(Integer, nullable=False)
     fret_sequence = Column(JSON) # Array of objects: beat, fret, technique, duration
 

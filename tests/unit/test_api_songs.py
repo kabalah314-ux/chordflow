@@ -50,6 +50,21 @@ def test_patch_solo_metadatos(client):
     assert len(r.json()["sections"]) == 1
 
 
+def test_validacion_de_rangos(client):
+    """La API rechaza metadatos fuera de rango con 422 (T-024)."""
+    bad_bpm = sample_song_payload()
+    bad_bpm["bpm"] = 9999
+    assert client.post("/songs/", json=bad_bpm).status_code == 422
+
+    bad_year = sample_song_payload()
+    bad_year["year"] = 99999
+    assert client.post("/songs/", json=bad_year).status_code == 422
+
+    # El PATCH también valida
+    sid = client.post("/songs/", json=sample_song_payload()).json()["id"]
+    assert client.patch(f"/songs/{sid}", json={"bpm": -5}).status_code == 422
+
+
 def test_put_no_deja_filas_huerfanas(client):
     """Editar (PUT) no debe dejar lines/chord_markers/tab_lines huérfanos (T-003).
     El bug original: bulk delete de secciones que no disparaba el cascade ORM."""
