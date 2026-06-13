@@ -36,7 +36,11 @@
       sin `sections`) → pydantic no toca la relación; `section_count` vía UNA query agregada
       (`func.count`+`group_by`) → O(1) queries. Frontend usa `section_count` (`library.js?v=10`).
       Test `test_listado_es_ligero_sin_estructura`.
-- [ ] **T-011** 🟠 **Alembic** para migraciones (hoy solo `create_all`, no aplica cambios de esquema).
+- [x] **T-011** 🟠 **Alembic** para migraciones: `alembic/` + `env.py` (URL de `DATABASE_URL`,
+      `target_metadata=Base.metadata`, `render_as_batch=True` para SQLite) + baseline `fefcd5a0b14a`
+      (5 tablas + índices T-012). `create_all` sigue para bootstrap; Alembic para evolucionar la BD
+      real (adoptar con `alembic stamp head`). Tests `tests/unit/test_migrations.py`. **Desbloquea
+      T-033/34/35/36.**
 - [x] **T-012** 🟠 **Índices** en `Song.owner_id`, `Song.deleted_at` y las 4 FKs (`index=True`).
       (Aplica a BD nuevas; la existente requerirá la migración de T-011.)
 - [ ] **T-013** 🟡 **Soft delete real** en `DELETE` (hoy hard delete pese a existir `deleted_at`)

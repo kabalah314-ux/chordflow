@@ -365,6 +365,35 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Verificación:** `doctor.py` verde + `run_checks.py` **TODO VERDE** (14 unit + 18 e2e); el e2e
   antes flaky pasó 5/5 en repetición. Revisión adversaria multi-agente del diff antes de cerrar.
 
+### ✅ T-011 — Alembic (migraciones de esquema)
+
+> **Por qué:** hasta ahora el esquema se creaba con `Base.metadata.create_all`, que **solo crea
+> tablas que faltan**: nunca aplica cambios a columnas/índices/constraints existentes. Sin una
+> herramienta de migraciones no se podían abordar T-033 (`ON DELETE CASCADE`), T-034 (`NOT NULL`),
+> T-036 (`server_default`), etc. — todo el cluster de integridad de datos quedaba bloqueado.
+
+- **Infra:** `alembic.ini` + `alembic/env.py` + `alembic/script.py.mako` + `alembic/versions/`.
+  `env.py` lee la URL de **`DATABASE_URL`** (misma fuente y default que `db.py`), usa
+  `target_metadata = Base.metadata` (importando los modelos) para `--autogenerate`, y activa
+  **`render_as_batch=True`** — imprescindible en SQLite, que no soporta la mayoría de `ALTER TABLE`
+  y necesita recrear la tabla por debajo (lo usarán T-033/34/36).
+- **Baseline `fefcd5a0b14a`:** migración inicial autogenerada que crea las 5 tablas + los índices
+  de T-012, en orden de dependencia de FKs. `alembic check` confirma que está **en sincronía** con
+  los modelos (sin diffs).
+- **Coexistencia con `create_all`:** la app (`main.py`) y el harness siguen usando `create_all`
+  para arrancar rápido sobre BD temporales/nuevas; Alembic es la vía para **evolucionar** una BD
+  real. ⚠️ Para adoptar Alembic sobre una `chordflow.db` ya existente (creada con `create_all`, sin
+  tabla `alembic_version`): `alembic stamp head` (marcarla al día) **en vez de** `upgrade head`
+  (que intentaría recrear tablas ya presentes).
+- **Gotcha resuelto:** un `PRAGMA foreign_keys=ON` manual en `env.py` (online) abría una transacción
+  que descuadraba el commit del *stamp* de versión en SQLAlchemy 2.0 → las tablas se creaban pero
+  `alembic_version` quedaba **vacía**. Se quitó (batch mode no lo necesita).
+- **Deps:** `alembic==1.14.1` + `Mako==1.3.12` pineadas en `requirements.txt`. `alembic/versions/`
+  excluido de ruff/black (código generado).
+- **Tests:** `tests/unit/test_migrations.py` — `upgrade head` crea el esquema completo (5 tablas +
+  índices + `alembic_version`) y `alembic check` no detecta drift modelos↔migraciones.
+- **Verificación:** `run_checks.py` **TODO VERDE** (16 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>

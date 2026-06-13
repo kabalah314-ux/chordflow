@@ -55,7 +55,17 @@ python -m pytest tests/unit -m unit
 python -m pytest tests/e2e  -m e2e
 python -m ruff check .
 python -m black .
+
+# Migraciones de esquema (Alembic, T-011). La URL sale de DATABASE_URL.
+python -m alembic upgrade head                 # aplicar migraciones a la BD
+python -m alembic revision --autogenerate -m "mensaje"   # crear migración desde los modelos
+python -m alembic check                        # ¿hay drift entre modelos y migraciones?
+python -m alembic stamp head                   # marcar una BD existente como "al día" (adopción)
 ```
+
+> ⚠️ Tras tocar `src/services/models.py`: crear una migración (`revision --autogenerate`),
+> revisar el SQL generado y correr `alembic check` (debe decir "no new upgrade operations").
+> SQLite necesita `render_as_batch` (ya configurado en `env.py`) para `ALTER TABLE`.
 
 ---
 

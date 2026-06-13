@@ -17,8 +17,9 @@ addopts = "-ra -q"
 # Línea algo ancha porque el código existente usa cadenas largas en español.
 line-length = 100
 target-version = "py312"
-# No tocar las carpetas generadas ni el frontend.
-extend-exclude = ["__pycache__", ".venv", "venv", "logs", "static"]
+# No tocar las carpetas generadas ni el frontend. Las migraciones de
+# `alembic/versions/` las genera Alembic (orden de imports fijado por la plantilla).
+extend-exclude = ["__pycache__", ".venv", "venv", "logs", "static", "alembic/versions"]
 
 [tool.ruff.lint]
 # Reglas razonables sin ser agresivas (no romper el MVP existente).
@@ -28,4 +29,4 @@ ignore = ["E501"]               # longitud de línea la controla black
 [tool.black]
 line-length = 100
 target-version = ["py312"]
-extend-exclude = "static|logs"
+extend-exclude = "static|logs|alembic/versions"
