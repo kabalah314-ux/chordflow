@@ -434,6 +434,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   regresión (`basicConfig(` no aparece en `db.py`).
 - **Verificación:** `run_checks.py` **TODO VERDE** (21 unit + 18 e2e).
 
+### ✅ T-013 — Soft delete real en `DELETE /songs/{id}`
+
+> **Por qué:** la columna `deleted_at` existía y **todas** las lecturas (list/get/put/patch) ya
+> filtraban `deleted_at IS NULL`, pero `delete_song` hacía **hard delete** (`db.delete`). Es decir,
+> la mitad del patrón soft-delete estaba implementada y la otra lo contradecía: un borrado era
+> irreversible pese a toda la infraestructura para no serlo.
+
+- **`delete_song`:** ahora marca `deleted_at = _utcnow()` (tz-aware, T-009) en vez de borrar la fila.
+  La canción desaparece de la app pero la fila y su estructura se **conservan** (recuperable/auditable).
+- **Idempotencia:** el filtro del DELETE incluye `deleted_at IS NULL`, así que un **segundo** DELETE
+  sobre una canción ya borrada → **404** (no 204). Añadido `except HTTPException: raise` para no
+  convertir ese 404 en 500.
+- **`is_public`:** decisión documentada → se mantiene el filtrado **solo por dueño** en todas las
+  lecturas. Exponer canciones públicas (a otros usuarios / sin auth) es una **feature de producto**
+  (Fase 5: compartir/setlists), no un arreglo de calidad; se difiere para no meter scope ni una
+  superficie de acceso nueva sin diseño.
+- **Test:** `test_delete_es_soft` — tras DELETE la fila sigue en la BD con `deleted_at` puesto, es
+  invisible para GET/list, y un 2º DELETE da 404. Los tests existentes (`test_crud_completo`) siguen
+  pasando: comprobaban “desaparece de GET/list”, que el soft delete también cumple.
+- **Verificación:** `run_checks.py` **TODO VERDE** (22 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>

@@ -43,8 +43,10 @@
       T-033/34/35/36.**
 - [x] **T-012** 🟠 **Índices** en `Song.owner_id`, `Song.deleted_at` y las 4 FKs (`index=True`).
       (Aplica a BD nuevas; la existente requerirá la migración de T-011.)
-- [ ] **T-013** 🟡 **Soft delete real** en `DELETE` (hoy hard delete pese a existir `deleted_at`)
-      y decidir el comportamiento de `is_public` (hoy `get_song` filtra siempre por dueño).
+- [x] **T-013** 🟡 **Soft delete real** en `DELETE`: marca `deleted_at` en vez de `db.delete`
+      (las lecturas ya filtraban `deleted_at IS NULL`); 2º DELETE → 404. `is_public`: se mantiene
+      filtrado solo-por-dueño; exponer públicas se difiere a Fase 5 (feature, no bug).
+      Test `test_delete_es_soft`.
 - [x] **T-014** 🟡 **Logging unificado**: `basicConfig` fuera de `db.py` (librería) y de `main.py`.
       Nuevo `services/logging_config.py::setup_logging()` (idempotente) llamado UNA vez en `main.py`;
       destino seleccionable (fichero o stdout con `CHORDFLOW_LOG_STDOUT=1`, cloud-friendly).

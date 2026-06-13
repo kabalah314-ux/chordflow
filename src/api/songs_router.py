@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
 from ..services.db import get_db
-from ..services.models import ChordMarker, Line, Section, Song, TabLine
+from ..services.models import ChordMarker, Line, Section, Song, TabLine, _utcnow
 from ..services.schemas import SongCreate, SongResponse, SongSummary, SongUpdate
 
 logger = logging.getLogger(__name__)
@@ -186,17 +186,24 @@ def patch_song(song_id: str, song_update: SongUpdate, db: Session = Depends(get_
 @router.delete("/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_song(song_id: str, db: Session = Depends(get_db),
                 user_id: str = Depends(get_current_user)):
-    """Elimina una canción del usuario (hard delete en Fase 1)."""
+    """Soft delete (T-013): marca `deleted_at` en vez de borrar la fila. Todas las
+    lecturas (list/get/put/patch) ya filtran `deleted_at IS NULL`, así que la canción
+    desaparece de la app pero la fila (y su estructura) se conserva en la BD —
+    recuperable y auditable. Un segundo DELETE sobre una canción ya borrada → 404."""
     try:
-        db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id).first()
+        db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
+                                         Song.deleted_at.is_(None)).first()
         if not db_song:
             raise HTTPException(status_code=404, detail="Canción no encontrada")
 
-        db.delete(db_song)
+        db_song.deleted_at = _utcnow()
         db.commit()
-        logger.info(f"Canción eliminada: {song_id}")
+        logger.info(f"Canción soft-deleted: {song_id}")
         return None
     except SQLAlchemyError as e:
         db.rollback()
         logger.error(f"Error eliminando canción {song_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error interno de base de datos")
+    except HTTPException:
+        db.rollback()
+        raise  # no convertir el 404 en 500

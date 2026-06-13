@@ -41,6 +41,31 @@ def test_crud_completo(client):
     assert client.get("/songs/").json() == []
 
 
+def test_delete_es_soft(client):
+    """DELETE marca `deleted_at` en vez de borrar la fila (T-013): la canción
+    desaparece de las lecturas pero su fila se conserva en la BD. Un segundo DELETE
+    sobre la misma canción → 404 (ya no es visible)."""
+    from src.services.db import SessionLocal
+    from src.services.models import Song
+
+    sid = client.post("/songs/", json=sample_song_payload()).json()["id"]
+
+    assert client.delete(f"/songs/{sid}").status_code == 204
+    # Invisible para la app...
+    assert client.get(f"/songs/{sid}").status_code == 404
+    assert client.get("/songs/").json() == []
+    # ...pero la fila sigue en la BD, con deleted_at puesto.
+    db = SessionLocal()
+    try:
+        row = db.query(Song).filter(Song.id == sid).first()
+        assert row is not None, "el soft delete no debe borrar la fila"
+        assert row.deleted_at is not None, "deleted_at debe quedar marcado"
+    finally:
+        db.close()
+    # Segundo DELETE: ya no es visible → 404 (no 204).
+    assert client.delete(f"/songs/{sid}").status_code == 404
+
+
 def test_patch_solo_metadatos(client):
     sid = client.post("/songs/", json=sample_song_payload()).json()["id"]
     r = client.patch(f"/songs/{sid}", json={"bpm": 88})
