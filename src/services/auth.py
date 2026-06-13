@@ -1,33 +1,29 @@
 import json
 import logging
-import os
 import threading
 import time
 import urllib.request
 
-from dotenv import load_dotenv
 from fastapi import Header, HTTPException
 
-# Cargar también .env.local (donde están las credenciales de Supabase)
-load_dotenv()
-load_dotenv(".env.local")
+from .config import settings
 
 logger = logging.getLogger(__name__)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_URL = settings.supabase_url
+SUPABASE_ANON_KEY = settings.supabase_anon_key
 
 # Modo test: SOLO para tests automatizados / CI. Si está activo, se salta la
 # validación con Supabase y se usa un usuario de prueba fijo. NUNCA en producción.
-TEST_MODE = os.getenv("CHORDFLOW_TEST_MODE") == "1"
+TEST_MODE = settings.chordflow_test_mode
 TEST_USER_ID = "test-user-0000-0000-0000-000000000000"
 
 # Caché de validación de token: evita llamar a Supabase en cada request (latencia)
 # y permite que la app siga funcionando si Supabase está temporalmente caído (T-005).
 # token -> (user_id, expires_at_monotonic)
-TOKEN_TTL_SECONDS = int(os.getenv("CHORDFLOW_TOKEN_TTL", "60"))
+TOKEN_TTL_SECONDS = settings.chordflow_token_ttl
 # Cota dura para que la caché no crezca sin límite (memory leak ante muchos tokens).
-TOKEN_CACHE_MAX = int(os.getenv("CHORDFLOW_TOKEN_CACHE_MAX", "1000"))
+TOKEN_CACHE_MAX = settings.chordflow_token_cache_max
 _token_cache: dict[str, tuple[str, float]] = {}
 # uvicorn ejecuta los endpoints sync en un threadpool → varios hilos tocan la caché a la
 # vez. Sin lock, iterar el dict mientras otro hilo inserta lanza "dictionary changed size

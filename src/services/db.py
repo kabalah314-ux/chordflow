@@ -1,17 +1,15 @@
 import logging
-import os
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-load_dotenv()
+from .config import settings
 
 # El logging lo configura la app una sola vez (ver services/logging_config.py, T-014).
 # Aquí, como módulo de librería, solo obtenemos un logger con nombre: sin basicConfig.
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./chordflow.db")
+DATABASE_URL = settings.database_url
 
 # Si se usa SQLite, se requieren argumentos adicionales para evitar errores en hilos múltiples
 engine_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}

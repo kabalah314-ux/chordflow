@@ -455,6 +455,31 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   pasando: comprobaban “desaparece de GET/list”, que el soft delete también cumple.
 - **Verificación:** `run_checks.py` **TODO VERDE** (22 unit + 18 e2e).
 
+### ✅ T-016 — `Settings` validado con pydantic-settings (fin de los `os.getenv` sueltos)
+
+> **Por qué:** la config vivía en `os.getenv` dispersos por `db.py`, `auth.py`, `main.py` y
+> `logging_config.py`, sin tipos ni validación: un `CHORDFLOW_TOKEN_TTL` mal puesto reventaba tarde
+> (en un `int(...)` en runtime) y no había un sitio único que documentara qué variables existen.
+
+- **Nuevo `src/services/config.py`:** clase `Settings(BaseSettings)` + singleton `settings`. Reúne
+  `DATABASE_URL`, `SUPABASE_URL/ANON_KEY`, `CHORDFLOW_TEST_MODE`, `CHORDFLOW_TOKEN_TTL`,
+  `CHORDFLOW_TOKEN_CACHE_MAX`, `CHORDFLOW_ALLOWED_ORIGINS`, `LOG_LEVEL`, `CHORDFLOW_LOG_STDOUT`,
+  con tipos, defaults y validación **fail-fast** al arrancar. `env_file=(.env, .env.local)` +
+  `load_dotenv()` (este último para poblar también `os.environ`, del que depende `alembic/env.py`).
+  Propiedad `allowed_origins_list` (parseo coma-separado → lista).
+- **Consumidores migrados:** `db.py` (`settings.database_url`), `auth.py` (supabase/test_mode/ttl/
+  cache_max — manteniendo los **nombres de módulo** `TEST_MODE`/`TOKEN_CACHE_MAX`/... porque
+  `test_security` les hace monkeypatch), `main.py` (`settings.allowed_origins_list`),
+  `logging_config.py` (`settings.log_level`/`chordflow_log_stdout`).
+- **Decisión:** `alembic/env.py` sigue leyendo `os.getenv("DATABASE_URL")` **fresco** (no el
+  singleton): cada migración corre en su contexto y `test_migrations` cambia la BD por env var.
+  Atarlo al singleton (leído una vez) habría usado la BD equivocada.
+- **Tests ajustados:** `test_logging_config` ahora hace monkeypatch sobre `settings` (el destino se
+  lee del singleton, no de `os.environ` en cada llamada). **Nuevo** `test_config.py`: tipos desde el
+  entorno, parseo de orígenes y `ValidationError` ante un TTL no numérico.
+- **Deps:** `pydantic-settings==2.14.1` pineada en `requirements.txt`.
+- **Verificación:** `run_checks.py` **TODO VERDE** (25 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>

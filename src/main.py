@@ -1,5 +1,3 @@
-import os
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -7,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .api.songs_router import router as songs_router
 from .services.auth import SUPABASE_ANON_KEY, SUPABASE_URL, TEST_MODE
+from .services.config import settings
 from .services.db import Base, engine
 from .services.logging_config import setup_logging
 
@@ -26,11 +25,9 @@ app = FastAPI(
 # CORS: lista explícita de orígenes vía env (coma-separada). Default seguro a localhost.
 # El frontend se sirve desde el mismo origen que la API, así que esto no afecta al uso normal;
 # protege frente a sitios de terceros que intenten usar la sesión del usuario (ver T-004).
-_origins_raw = os.getenv("CHORDFLOW_ALLOWED_ORIGINS", "http://127.0.0.1:8000,http://localhost:8000")
-ALLOWED_ORIGINS = [o.strip() for o in _origins_raw.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

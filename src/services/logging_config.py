@@ -13,21 +13,18 @@ import logging
 import os
 import sys
 
+from .config import settings
+
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-
-def _truthy(value: str | None) -> bool:
-    return (value or "").strip().lower() in ("1", "true", "yes", "on")
 
 
 def setup_logging() -> None:
     """Configura el logger raíz UNA sola vez. Idempotente: si se vuelve a llamar
     (p. ej. en tests), reemplaza los handlers en vez de duplicar líneas de log."""
-    level_name = os.getenv("LOG_LEVEL", "INFO").upper()
-    level = getattr(logging, level_name, logging.INFO)
+    level = getattr(logging, settings.log_level.upper(), logging.INFO)
 
     formatter = logging.Formatter(LOG_FORMAT)
-    if _truthy(os.getenv("CHORDFLOW_LOG_STDOUT")):
+    if settings.chordflow_log_stdout:
         handler: logging.Handler = logging.StreamHandler(sys.stdout)
     else:
         os.makedirs("logs", exist_ok=True)

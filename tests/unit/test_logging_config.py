@@ -1,11 +1,14 @@
-"""Tests de la configuración centralizada de logging (T-014).
+"""Tests de la configuración centralizada de logging (T-014, ajustado en T-016).
 
 Verifican que:
-- `setup_logging()` con `CHORDFLOW_LOG_STDOUT` manda los logs a stdout (cloud-friendly),
-  sin abrir el fichero `logs/app.log`.
-- Por defecto (sin esa var) escribe a un `FileHandler`.
+- `setup_logging()` con `settings.chordflow_log_stdout` manda los logs a stdout
+  (cloud-friendly), sin abrir el fichero `logs/app.log`.
+- Por defecto escribe a un `FileHandler`.
 - Es idempotente: llamarla varias veces no duplica handlers (ni líneas de log).
 - `db.py` (módulo de librería) NO configura el logging raíz por su cuenta (sin basicConfig).
+
+Nota (T-016): el destino se lee del singleton `settings` (poblado del entorno al arrancar,
+una sola vez), así que aquí se hace monkeypatch sobre `settings`, no sobre `os.environ`.
 """
 
 import logging
@@ -14,6 +17,7 @@ from pathlib import Path
 
 import pytest
 
+from src.services.config import settings
 from src.services.logging_config import setup_logging
 
 pytestmark = pytest.mark.unit
@@ -39,7 +43,7 @@ def _restore_root_logging():
 
 
 def test_stdout_cuando_la_var_esta_activa(monkeypatch):
-    monkeypatch.setenv("CHORDFLOW_LOG_STDOUT", "1")
+    monkeypatch.setattr(settings, "chordflow_log_stdout", True)
     setup_logging()
     handlers = logging.getLogger().handlers
     assert any(
@@ -51,7 +55,7 @@ def test_stdout_cuando_la_var_esta_activa(monkeypatch):
 
 
 def test_fichero_por_defecto(monkeypatch, tmp_path):
-    monkeypatch.delenv("CHORDFLOW_LOG_STDOUT", raising=False)
+    monkeypatch.setattr(settings, "chordflow_log_stdout", False)
     monkeypatch.chdir(tmp_path)  # logs/app.log se crea relativo al CWD
     setup_logging()
     handlers = logging.getLogger().handlers
@@ -60,7 +64,7 @@ def test_fichero_por_defecto(monkeypatch, tmp_path):
 
 
 def test_es_idempotente(monkeypatch):
-    monkeypatch.setenv("CHORDFLOW_LOG_STDOUT", "1")
+    monkeypatch.setattr(settings, "chordflow_log_stdout", True)
     setup_logging()
     setup_logging()
     setup_logging()

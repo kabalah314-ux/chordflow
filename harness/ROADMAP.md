@@ -53,8 +53,10 @@
       Test `tests/unit/test_logging_config.py`.
 - [x] **T-015** 🟡 **`test_api.py` legacy eliminado** (script manual con `requests`, redundante
       con el harness).
-- [ ] **T-016** 🟡 **`pydantic-settings`**: un objeto `Settings` validado en vez de `os.getenv`
-      sueltos repartidos por `db.py`/`auth.py`/`main.py`.
+- [x] **T-016** 🟡 **`pydantic-settings`**: `src/services/config.py::Settings` (singleton `settings`)
+      con tipos/defaults/validación fail-fast. Migrados `db.py`/`auth.py`/`main.py`/`logging_config.py`.
+      `alembic/env.py` sigue leyendo `DATABASE_URL` fresco (no el singleton). Test `test_config.py`.
+      Dep `pydantic-settings==2.14.1`.
 
 ## Fase 3 — Calidad percibida
 - [ ] **T-017** 🟡 Reemplazar `alert()`/`confirm()` por toasts/modales (lenguaje glassmorphism).
