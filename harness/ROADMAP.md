@@ -160,8 +160,10 @@
       harness + backend base (Settings/logging/health/handler) + auth enchufable + recurso `Item`
       (CRUD/soft delete/paginación) + Alembic baseline + frontend universal. `run_checks` TODO VERDE
       recién copiado (doctor + ruff + 26 unit + 4 e2e). Prefijo `APP_` (→ `{{ENV_PREFIX}}` en T-M03).
-- [ ] **T-M03** 🟡 Plantillar `CLAUDE.md` y `GUIA_MAESTRA.md` con huecos `{{APP_NAME}}`, etc.
-      **Incluye** parametrizar el prefijo de env vars `CHORDFLOW_*` → `{{ENV_PREFIX}}_*` (de T-043).
+- [x] **T-M03** 🟡 Docs plantilladas (`{{APP_NAME}}/{{DESCRIPTION}}/{{STACK}}/{{ENV_PREFIX}}`) +
+      prefijo de env como **una sola perilla** (`env_prefix="APP_"` en `config.py`; estándar por
+      `validation_alias`). `MOLDE.md` §4 con la receta de personalización. En `../app-skeleton`
+      (commit `5e14adf`); run_checks TODO VERDE (27 unit + 4 e2e).
 - [ ] **T-M04** 🟡 `MOLDE.md` → guía de uso del molde (cómo nace un proyecto nuevo desde él).
 - [ ] **T-M05** 🟢 (Opcional) `create_app.py` tipo cookiecutter que rellene los huecos solo.
 - [ ] **T-M06** 🟡 Criterio de molde estable: generar un proyecto vacío desde el molde y que

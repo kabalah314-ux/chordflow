@@ -601,6 +601,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   Dos tropiezos resueltos en el camino: faltaba `alembic.ini` (lo añadí) y un orden de imports
   (ruff --fix).
 
+### ✅ T-M03 — Plantillar docs + parametrizar el prefijo de env vars (en `../app-skeleton`)
+
+> **Por qué:** cierra la 2ª mitad de T-043 (parametrizar `CHORDFLOW_*`) y deja el molde listo para
+> renombrar a cualquier proyecto. Hecho en el repo hermano `../app-skeleton` (commit `5e14adf`).
+
+- **Prefijo como UNA sola perilla:** `config.py` ahora usa `env_prefix="APP_"` (pydantic-settings)
+  en vez de repetir `app_` en cada campo. Los campos pierden el sufijo (`settings.test_mode`,
+  `settings.token_ttl`, ...). Los nombres **estándar** (`DATABASE_URL`, `LOG_LEVEL`, `SUPABASE_*`)
+  van por `validation_alias` → SIN prefijo (no deben llevarlo). Renombrar el prefijo del proyecto =
+  cambiar esa línea + los literales `APP_*` del `.env.example`/`conftest`/`doctor` (documentado).
+- **Consumidores y tests** migrados a los nombres nuevos; **nuevo** `test_nombres_estandar_sin_prefijo`
+  (verifica que DATABASE_URL/LOG_LEVEL se leen sin prefijo).
+- **Docs plantilladas:** `CLAUDE.md`/`GUIA_MAESTRA.md`/ROADMAP/TASKS/CHECKLIST con huecos
+  `{{APP_NAME}}`/`{{DESCRIPTION}}`/`{{STACK}}`/`{{ENV_PREFIX}}` (solo en docs; el código nunca lleva
+  huecos, así el molde siempre corre). `MOLDE.md` §4 **Personalización**: receta exacta de las 3
+  sustituciones (nombre, prefijo, recurso `Item`).
+- **Verificación:** `run_checks.py` del esqueleto **TODO VERDE** (27 unit + 4 e2e).
+
 ---
 
 <a name="notas"></a>

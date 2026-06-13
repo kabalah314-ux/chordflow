@@ -17,14 +17,14 @@ _(ninguna)_
 
 La cola de críticos y la mayoría de los 🟠 altos están cerrados. Elegir de `ROADMAP.md`:
 
-1. **Fase M (molde)**: **T-M03** plantillar `CLAUDE.md`/`GUIA_MAESTRA.md` + parametrizar el prefijo
-   `APP_` → `{{ENV_PREFIX}}` (de T-043) en `../app-skeleton`. Luego **T-M06** (copiar el esqueleto y
-   que `doctor` quede verde — ya pasa verde in situ) y **T-M04/M05** (guía de uso + cookiecutter).
+1. **Fase M (molde)**: **T-M06** criterio de molde estable (copiar el esqueleto a una carpeta
+   nueva y que `doctor`/`run_checks` queden verdes sin tocar nada — ya pasa verde in situ). Luego
+   **T-M04** (guía de uso del molde) y **T-M05** (cookiecutter, opcional).
 2. **Integridad de datos (Alembic ya operativo)**: T-034 `owner_id NOT NULL`, T-035 `Line.type`
    Enum/CHECK, T-036 `server_default` — vía migración batch.
 
 > ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar. Ver CHECKLIST.
-> 🧬 El molde vive en el repo hermano `../app-skeleton` (commit `e02b1b0`).
+> 🧬 El molde vive en el repo hermano `../app-skeleton` (commits `e02b1b0`, `5e14adf`).
 
 ---
 
@@ -46,10 +46,10 @@ T-013 soft delete real (`deleted_at`, 2º DELETE → 404) · T-016 `Settings` co
 T-025 `/health` liveness · T-039 `escapeHtml` consolidado en `util.js` · T-044 backend base del
 molde (handler de errores global → cierra los 4 pilares) · T-043 auth desacoplada (provider enchufable).
 
-**Fase M (molde):** T-M01 inventario universal-vs-dominio validado · T-M02 `app-skeleton/` creado
-(repo hermano `../app-skeleton`, commit `e02b1b0`; run_checks TODO VERDE recién copiado).
+**Fase M (molde):** T-M01 inventario validado · T-M02 `app-skeleton/` creado · T-M03 docs
+plantilladas + prefijo env como una perilla (`env_prefix`). Todo en `../app-skeleton`.
 
-> Estado de calidad: 30 unit + 18 e2e en verde. Git: 20+ commits. `run_checks.py` TODO VERDE.
-> **Molde EXTRAÍDO (T-M02)** en `../app-skeleton` con recurso `Item`. Pendiente del molde:
-> T-M03 (plantillar + prefijo env), T-M06 (criterio de molde estable), T-M04/M05.
+> Estado de calidad ChordFlow: 30 unit + 18 e2e en verde. Molde: 27 unit + 4 e2e en verde.
+> Git: 21+ commits. **Molde EXTRAÍDO y PLANTILLADO** en `../app-skeleton`. Pendiente del molde:
+> T-M06 (criterio de molde estable), T-M04 (guía de uso), T-M05 (cookiecutter, opcional).
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.
