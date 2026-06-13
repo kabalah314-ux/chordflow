@@ -7,13 +7,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-# Configuración del logger
-os.makedirs("logs", exist_ok=True)
-logging.basicConfig(
-    filename="logs/app.log",
-    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# El logging lo configura la app una sola vez (ver services/logging_config.py, T-014).
+# Aquí, como módulo de librería, solo obtenemos un logger con nombre: sin basicConfig.
 logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./chordflow.db")

@@ -45,8 +45,10 @@
       (Aplica a BD nuevas; la existente requerirá la migración de T-011.)
 - [ ] **T-013** 🟡 **Soft delete real** en `DELETE` (hoy hard delete pese a existir `deleted_at`)
       y decidir el comportamiento de `is_public` (hoy `get_song` filtra siempre por dueño).
-- [ ] **T-014** 🟡 **Unificar logging**: quitar `basicConfig` de `db.py` (módulo de librería);
-      configurarlo una sola vez en `main.py` y permitir log a stdout (cloud-friendly).
+- [x] **T-014** 🟡 **Logging unificado**: `basicConfig` fuera de `db.py` (librería) y de `main.py`.
+      Nuevo `services/logging_config.py::setup_logging()` (idempotente) llamado UNA vez en `main.py`;
+      destino seleccionable (fichero o stdout con `CHORDFLOW_LOG_STDOUT=1`, cloud-friendly).
+      Test `tests/unit/test_logging_config.py`.
 - [x] **T-015** 🟡 **`test_api.py` legacy eliminado** (script manual con `requests`, redundante
       con el harness).
 - [ ] **T-016** 🟡 **`pydantic-settings`**: un objeto `Settings` validado en vez de `os.getenv`

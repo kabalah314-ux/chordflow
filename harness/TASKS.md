@@ -19,7 +19,7 @@ La cola de críticos y la mayoría de los 🟠 altos están cerrados. Elegir de 
 
 1. **Integridad de datos (Alembic ya operativo)**: T-034 `owner_id NOT NULL` (cuando la auth sea
    obligatoria), T-035 `Line.type` Enum/CHECK, T-036 `server_default` — vía migración batch.
-2. **Fase A / 2**: T-039 consolidar `escapeHtml` en `static/util.js`, T-014 logging,
+2. **Fase A / 2**: T-039 consolidar `escapeHtml` en `static/util.js`,
    T-016 pydantic-settings, T-013 soft delete.
 3. **Fase M (molde)**: T-M02 `app-skeleton/`, T-043/T-044 (desacoplar auth + backend base).
 3. **Fase M (el molde)**: T-M02 crear `app-skeleton/`. Pre-requisito (críticos) ya cumplido.
@@ -42,5 +42,7 @@ T-012 índices · T-015 limpieza `test_api.py` · T-024 validación de rangos.
 500 · T-028 caché de token (cota + lock de concurrencia) · T-029 cabeceras de seguridad ·
 T-033 FKs ON DELETE CASCADE a nivel DB · T-037 paginación acotada.
 
-> Estado de calidad: 17 unit + 18 e2e en verde. Git: 12+ commits. `run_checks.py` TODO VERDE.
+**Fase 2 (continuación):** T-014 logging unificado (`setup_logging()` una vez + stdout cloud-friendly).
+
+> Estado de calidad: 21 unit + 18 e2e en verde. Git: 12+ commits. `run_checks.py` TODO VERDE.
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

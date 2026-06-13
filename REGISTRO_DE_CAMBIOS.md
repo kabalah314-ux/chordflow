@@ -413,6 +413,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   por el cascade ORM) y verifica que `sections/lines/chord_markers/tab_lines` quedan a 0.
 - **Verificación:** `run_checks.py` **TODO VERDE** (17 unit + 18 e2e).
 
+### ✅ T-014 — Logging unificado (configurado una sola vez) + opción stdout cloud-friendly
+
+> **Por qué:** `db.py` (módulo de **librería**) llamaba a `logging.basicConfig`, y `main.py` repetía
+> la misma config. Configurar el logging raíz desde una librería es un anti-patrón: quien importe
+> `db.py` (tests, Alembic, scripts) hereda handlers que no pidió, y la doble config arriesga líneas
+> duplicadas. Además, escribir siempre a `logs/app.log` no sirve en cloud (contenedores efímeros),
+> donde la plataforma captura **stdout**.
+
+- **Nuevo `src/services/logging_config.py`:** `setup_logging()` monta el logger raíz **una sola vez**.
+  Idempotente (cierra y reemplaza handlers previos → no duplica líneas ni deja ficheros abiertos).
+  Respeta `LOG_LEVEL` (default `INFO`).
+- **Destino seleccionable:** por defecto `FileHandler` a `logs/app.log`; con `CHORDFLOW_LOG_STDOUT=1`
+  va a stdout (cloud-friendly). El formato se conserva (`%(asctime)s - %(name)s - %(levelname)s ...`).
+- **`main.py`:** sustituye su bloque `basicConfig` por `setup_logging()` (llamado al importar la app,
+  antes de `create_all`). `db.py`: eliminado su `basicConfig`/`makedirs`; ahora solo
+  `logging.getLogger(__name__)`, como debe hacer una librería. `auth.py` ya era correcto.
+- **Tests:** `tests/unit/test_logging_config.py` — stdout cuando la var está activa (sin abrir
+  fichero), `FileHandler` por defecto, idempotencia (1 handler tras N llamadas) y guardia de
+  regresión (`basicConfig(` no aparece en `db.py`).
+- **Verificación:** `run_checks.py` **TODO VERDE** (21 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>

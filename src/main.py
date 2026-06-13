@@ -1,4 +1,3 @@
-import logging
 import os
 
 from fastapi import FastAPI
@@ -9,14 +8,11 @@ from fastapi.staticfiles import StaticFiles
 from .api.songs_router import router as songs_router
 from .services.auth import SUPABASE_ANON_KEY, SUPABASE_URL, TEST_MODE
 from .services.db import Base, engine
+from .services.logging_config import setup_logging
 
-# Configuración básica de logging si main.py se corre directamente
-os.makedirs("logs", exist_ok=True)
-logging.basicConfig(
-    filename="logs/app.log",
-    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# Logging configurado UNA sola vez para toda la app (T-014). Los módulos de librería
+# solo usan getLogger; aquí decidimos el destino (fichero o stdout cloud-friendly).
+setup_logging()
 
 # Inicializar Base de Datos
 Base.metadata.create_all(bind=engine)
