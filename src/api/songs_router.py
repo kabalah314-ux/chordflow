@@ -77,6 +77,9 @@ def create_song(song: SongCreate, db: Session = Depends(get_db),
         db.rollback()
         logger.error(f"Error creando canción: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error interno de base de datos")
+    except HTTPException:
+        db.rollback()
+        raise  # no convertir 404/403/etc. en 400
     except Exception as e:
         db.rollback()
         logger.error(f"Error inesperado creando canción: {e}", exc_info=True)
@@ -130,6 +133,9 @@ def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get
         db.rollback()
         logger.error(f"Error actualizando canción {song_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error interno de base de datos")
+    except HTTPException:
+        db.rollback()
+        raise  # no convertir el 404 (canción no encontrada) en 400
     except Exception as e:
         db.rollback()
         logger.error(f"Error inesperado actualizando canción {song_id}: {e}", exc_info=True)

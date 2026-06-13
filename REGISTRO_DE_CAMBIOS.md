@@ -304,6 +304,23 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 > **Estado (ultracode):** lanzada en paralelo una auditoría multi-agente (8 dimensiones +
 > verificación adversaria) cuyos hallazgos confirmados se fundirán en el ROADMAP (T-026+).
 
+### ✅ T-012 / T-024 — Índices + validación de rangos
+- Índices (`index=True`) en `owner_id`, `deleted_at` y las 4 FKs. `Field(...)` de rangos en
+  schemas (bpm 20–400, year 0–3000, compás 1–32, capo 0–24, title 1–255) → 422 fuera de rango.
+
+### ✅ T-026 / T-027 / T-028 — Hallazgos críticos de la auditoría multi-agente
+> La auditoría (workflow de 8 finders) se quedó sin límite de sesión en la verificación, pero los
+> finders destaparon 3 bugs reales nuevos que verifiqué a mano y arreglé:
+- **T-026 — XSS de 2º orden en el popup de diagramas:** `chord_shapes.js::renderChordDiagramSVG`
+  inyectaba `name` con `innerHTML` sin escapar, y `name` = `el.textContent` (acorde **decodificado**)
+  → un acorde malicioso ejecutaba JS al pulsarlo. Escapado con `escapeHtml`. Cache-bust `chord_shapes.js?v=9`.
+- **T-027 — 404 degradado a 400:** el `except Exception` ancho de `create_song`/`update_song`
+  capturaba el `HTTPException(404)`. Añadido `except HTTPException: raise`.
+- **T-028 — `_token_cache` sin cota:** la caché de T-005 crecía sin límite. Cota dura `TOKEN_CACHE_MAX`.
+- **Verificación:** tests J4, A4, A5 y SEC3. `run_checks.py` TODO VERDE.
+- El resto de hallazgos (cabeceras de seguridad, SRI, ON DELETE, paginación, consolidar escapeHtml,
+  cobertura, desacoplar auth para el molde…) quedaron registrados en `ROADMAP.md` Fase A (T-029…T-044).
+
 ---
 
 <a name="notas"></a>

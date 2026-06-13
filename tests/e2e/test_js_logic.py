@@ -60,3 +60,22 @@ def test_render_escapa_letra_y_acorde_maliciosos(js_page):
     assert "<img" not in result["html"]
     assert js_page.evaluate("window.__xss") == 0   # el onerror nunca se ejecutó
     assert "hola" in result["text"]            # la letra se conserva literal
+
+
+def test_popup_diagrama_escapa_nombre_malicioso(page, live_server):
+    """El popup de diagramas de acorde escapa el nombre (XSS de 2º orden, T-026).
+    renderChordDiagramSVG vive en chord_shapes.js, que carga index.html."""
+    page.goto(live_server + "/static/index.html", wait_until="networkidle")
+    res = page.evaluate(
+        """() => {
+            window.__x = 0;
+            const html = renderChordDiagramSVG(null, '<img src=x onerror=\\"window.__x=1\\">');
+            const d = document.createElement('div');
+            d.innerHTML = html;
+            document.body.appendChild(d);
+            return { hasImg: !!d.querySelector('img'), html };
+        }"""
+    )
+    assert res["hasImg"] is False
+    assert "&lt;img" in res["html"]
+    assert page.evaluate("window.__x") == 0

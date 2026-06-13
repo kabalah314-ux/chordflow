@@ -61,3 +61,18 @@ def test_token_en_cache_sobrevive_caida_de_supabase(monkeypatch):
     auth._token_cache.clear()
     with pytest.raises(Exception):
         auth.get_current_user("Bearer otro")
+
+
+def test_token_cache_tiene_cota_de_tamano(monkeypatch):
+    """La caché de tokens no crece sin límite (T-028)."""
+    from src.services import auth
+
+    monkeypatch.setattr(auth, "TEST_MODE", False)
+    monkeypatch.setattr(auth, "TOKEN_CACHE_MAX", 5)
+    auth._token_cache.clear()
+    monkeypatch.setattr(auth, "_validate_token_with_supabase", lambda t: {"id": "u-" + t})
+
+    for i in range(50):
+        auth.get_current_user(f"Bearer tok{i}")
+
+    assert len(auth._token_cache) <= 5

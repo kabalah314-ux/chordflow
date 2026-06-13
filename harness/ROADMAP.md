@@ -62,6 +62,58 @@
       compás 1–32, `capo` 0–24, `title` 1–255. Test `test_validacion_de_rangos` (422).
 - [ ] **T-025** 🟡 **Endpoint `/health`** real (liveness) separado de `/config`.
 
+## Fase A — Hallazgos de la auditoría multi-agente (2026-06-13)
+
+> Producidos por el workflow `auditoria-profunda-chordflow` (8 finders + verificación).
+> La verificación/síntesis se cortó por límite de sesión, así que estos hallazgos vienen de
+> los finders y se confirmarán/afinarán al abordarlos. Los 3 primeros ya están **verificados a
+> mano y arreglados**.
+
+**🔴 Arreglados ya:**
+- [x] **T-026** 🔴 **XSS de 2º orden en el popup de diagramas** (`chord_shapes.js` inyectaba `name`
+      sin escapar; `name` = `textContent` decodificado). Escapado. Test `test_popup_diagrama_escapa_nombre_malicioso`.
+- [x] **T-027** 🔴 **404→400 en `PUT`/`POST`**: el `except Exception` ancho tragaba el `HTTPException`.
+      Añadido `except HTTPException: raise`. Test `test_put_inexistente_devuelve_404`.
+- [x] **T-028** 🟠 **`_token_cache` sin cota** (memory leak de T-005). Cota dura `TOKEN_CACHE_MAX`.
+      Test `test_token_cache_tiene_cota_de_tamano`.
+
+**🟠 Seguridad / robustez (pendientes):**
+- [ ] **T-029** 🟠 Cabeceras de seguridad faltantes (CSP, X-Content-Type-Options, Referrer-Policy…)
+      vía middleware.
+- [ ] **T-030** 🟡 Sin **SRI** en el `<script>` del CDN de Supabase (integrity + crossorigin).
+- [ ] **T-031** 🟡 Degradación del caché de token (T-005) puede dejar pasar un token **revocado**
+      mientras dure la caché → acotar la ventana de gracia / invalidación.
+- [ ] **T-032** 🟡 Verificar que la `service_role` key nunca se sirve ni se commitea (auditar `/config`
+      y el historial); documentar.
+
+**🟠 Integridad de datos (pendientes, encajan con Alembic T-011):**
+- [ ] **T-033** 🟠 FKs sin `ondelete="CASCADE"` a nivel DB (hoy solo cascade ORM + PRAGMA).
+- [ ] **T-034** 🟡 `owner_id` nullable → `NOT NULL` cuando la auth sea obligatoria.
+- [ ] **T-035** 🟡 `Line.type` sin restricción (Enum/CHECK) y columnas JSON sin validar.
+- [ ] **T-036** 🟡 Defaults solo en Python, no `server_default` en la DB.
+
+**🟠 API / backend (pendientes):**
+- [ ] **T-037** 🟠 Paginación: `skip`/`limit` sin tope ni validación (negativos, límite gigante) →
+      `Query(ge=0, le=...)`.
+- [ ] **T-038** 🟡 `create_song`/`update_song` duplican el armado de la estructura → extraer helper.
+
+**🟡 Frontend (pendientes):**
+- [ ] **T-039** 🟡 Consolidar `escapeHtml` (duplicado en `library.js`, `score_render.js`, + uso en
+      `chord_shapes.js`) en un `static/util.js` compartido.
+- [ ] **T-040** 🟡 Parser/sync: revisar casos borde de `isChordLine`, desalineación de acordes y
+      `findActiveChord` (último acorde / reset).
+- [ ] **T-041** 🟡 Fallos de carga inicial silenciosos en el frontend (avisar al usuario).
+
+**🟡 Tests (pendientes):**
+- [ ] **T-042** 🟡 Cobertura: `sync_engine.js`, `chord_shapes.js`, caminos negativos de la API y
+      errores de red sin test; añadir medición de cobertura.
+
+**🧬 Molde (van a `MOLDE.md` / Fase M):**
+- [ ] **T-043** 🟠 Desacoplar `auth.py` de Supabase (provider enchufable) y parametrizar el prefijo
+      de env vars (`CHORDFLOW_*`).
+- [ ] **T-044** 🟠 Backend base del molde: `/health` (T-025), handler de errores global, logging
+      configurado **una vez** (T-014), `Settings` con pydantic-settings (T-016), README/plantillas.
+
 ## Fase 5 — Diferenciación de producto
 - [ ] 🟢 PWA + offline · 🟢 Setlists/repertorios · 🟢 Export PDF · 🟢 UI de tablaturas
       (`TabLine` ya modelado) · 🟢 Responsive/tablet · 🟢 Migrar SQLite → Postgres/Supabase.

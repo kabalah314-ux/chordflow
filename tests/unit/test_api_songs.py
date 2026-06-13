@@ -50,6 +50,13 @@ def test_patch_solo_metadatos(client):
     assert len(r.json()["sections"]) == 1
 
 
+def test_put_inexistente_devuelve_404(client):
+    """PUT sobre un id que no existe debe devolver 404 (regresión: el except
+    Exception ancho lo convertía en 400). T-027."""
+    r = client.put("/songs/no-existe-123", json=sample_song_payload())
+    assert r.status_code == 404
+
+
 def test_validacion_de_rangos(client):
     """La API rechaza metadatos fuera de rango con 422 (T-024)."""
     bad_bpm = sample_song_payload()

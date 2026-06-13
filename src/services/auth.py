@@ -25,7 +25,20 @@ TEST_USER_ID = "test-user-0000-0000-0000-000000000000"
 # y permite que la app siga funcionando si Supabase está temporalmente caído (T-005).
 # token -> (user_id, expires_at_monotonic)
 TOKEN_TTL_SECONDS = int(os.getenv("CHORDFLOW_TOKEN_TTL", "60"))
+# Cota dura para que la caché no crezca sin límite (memory leak ante muchos tokens).
+TOKEN_CACHE_MAX = int(os.getenv("CHORDFLOW_TOKEN_CACHE_MAX", "1000"))
 _token_cache: dict[str, tuple[str, float]] = {}
+
+
+def _cache_set(token: str, user_id: str, now: float):
+    """Guarda en la caché aplicando una cota de tamaño: primero purga los
+    expirados; si sigue llena, la vacía (límite de memoria)."""
+    if len(_token_cache) >= TOKEN_CACHE_MAX:
+        for t in [t for t, (_, exp) in _token_cache.items() if exp <= now]:
+            _token_cache.pop(t, None)
+        if len(_token_cache) >= TOKEN_CACHE_MAX:
+            _token_cache.clear()
+    _token_cache[token] = (user_id, now + TOKEN_TTL_SECONDS)
 
 
 def _validate_token_with_supabase(token: str):
@@ -72,7 +85,7 @@ def get_current_user(authorization: str = Header(None)) -> str:
     # 2) Validación remota; si va bien, cacheamos con TTL.
     user = _validate_token_with_supabase(token)
     if user and user.get("id"):
-        _token_cache[token] = (user["id"], now + TOKEN_TTL_SECONDS)
+        _cache_set(token, user["id"], now)
         return user["id"]
 
     # 3) Falló la validación remota: si teníamos una entrada (aunque caducada),

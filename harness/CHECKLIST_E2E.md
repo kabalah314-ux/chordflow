@@ -12,8 +12,11 @@
 | A1 | API: crear → leer → listar → borrar canción (CRUD) | `test_api_songs.py` | ✅ |
 | A2 | API: un usuario solo ve sus propias canciones | `test_api_songs.py` | ✅ |
 | A3 | API: editar (PUT) no deja filas huérfanas | `test_api_songs.py` | ✅ |
+| A4 | API: PUT a id inexistente → 404 (no 400) | `test_api_songs.py` | ✅ |
+| A5 | API: metadatos fuera de rango → 422 | `test_api_songs.py` | ✅ |
 | SEC1 | CORS restringe orígenes no permitidos | `test_security.py` | ✅ |
 | SEC2 | Validación de token se cachea y resiste caídas de Supabase | `test_security.py` | ✅ |
+| SEC3 | La caché de token tiene cota de tamaño (no memory leak) | `test_security.py` | ✅ |
 | L1 | Biblioteca: estado vacío se muestra correctamente | `test_library.py` | ✅ |
 | L2 | Biblioteca: una canción aparece como tarjeta | `test_library.py` | ✅ |
 | L3 | Biblioteca: búsqueda en vivo filtra | `test_library.py` | ✅ |
@@ -25,5 +28,6 @@
 | J1 | Lógica JS: el parser detecta acordes y secciones | `test_js_logic.py` | ✅ |
 | J2 | Lógica JS: `transposeChord` sube/baja semitonos correctamente | `test_js_logic.py` | ✅ |
 | J3 | Seguridad: el render escapa letra y `chord_name` maliciosos (XSS) | `test_js_logic.py` | ✅ |
+| J4 | Seguridad: el popup de diagramas escapa el nombre (XSS 2º orden) | `test_js_logic.py` | ✅ |
 
 > Al añadir una feature nueva, **añade aquí su fila** y crea su test antes de cerrar la tarea.

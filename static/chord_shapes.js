@@ -118,8 +118,12 @@ function getChordShape(name) {
 
 // ─── Render SVG ──────────────────────────────────────────────────────────────
 function renderChordDiagramSVG(shape, name) {
+    // El nombre llega como texto del usuario (chord_name) y se inyecta con innerHTML
+    // en el popup → escapar para evitar XSS de segundo orden. escapeHtml vive en
+    // score_render.js, que index.html carga antes que este archivo.
+    const safeName = (typeof escapeHtml === 'function') ? escapeHtml(name) : String(name);
     if (!shape) {
-        return `<div class="diagram-none">Sin diagrama para <b>${name}</b></div>`;
+        return `<div class="diagram-none">Sin diagrama para <b>${safeName}</b></div>`;
     }
 
     const frets = shape.frets;
@@ -178,5 +182,5 @@ function renderChordDiagramSVG(shape, name) {
     });
 
     svg += `</svg>`;
-    return `<div class="diagram-name">${name}</div>${svg}`;
+    return `<div class="diagram-name">${safeName}</div>${svg}`;
 }
