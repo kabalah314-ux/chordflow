@@ -117,8 +117,9 @@
 - [ ] **T-038** 🟡 `create_song`/`update_song` duplican el armado de la estructura → extraer helper.
 
 **🟡 Frontend (pendientes):**
-- [ ] **T-039** 🟡 Consolidar `escapeHtml` (duplicado en `library.js`, `score_render.js`, + uso en
-      `chord_shapes.js`) en un `static/util.js` compartido.
+- [x] **T-039** 🟡 `escapeHtml` consolidado en `static/util.js` (global canónica, segura en atributos
+      + null-safe). Eliminadas las 2 copias divergentes; `util.js?v=1` cargado antes de sus dependientes
+      en las 3 HTML (`library.js v11`, `score_render.js v9`). Cubierto por los e2e de XSS existentes.
 - [ ] **T-040** 🟡 Parser/sync: revisar casos borde de `isChordLine`, desalineación de acordes y
       `findActiveChord` (último acorde / reset).
 - [ ] **T-041** 🟡 Fallos de carga inicial silenciosos en el frontend (avisar al usuario).

@@ -30,17 +30,8 @@ function transposeChord(chord, semis) {
     }).join('/');
 }
 
-// ─── Seguridad: escapado de texto del usuario (anti-XSS) ─────────────────────
-// La letra y los nombres de acorde vienen del usuario y se inyectan con innerHTML.
-// SIEMPRE pasar por aquí antes de meterlos en el DOM. Sirve para texto y atributos.
-function escapeHtml(s) {
-    return String(s == null ? '' : s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+// `escapeHtml` (anti-XSS) es global y vive en util.js, cargado antes que este script.
+// Fuente única de la verdad; antes estaba duplicada aquí y en library.js (ver T-039).
 
 /**
  * Construye el HTML de una línea de letra con sus acordes flotando en su columna.

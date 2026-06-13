@@ -490,12 +490,32 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Test:** `test_health_es_liveness` — 200 con el cuerpo esperado y sin filtrar config sensible.
 - **Verificación:** `run_checks.py` **TODO VERDE** (26 unit + 18 e2e).
 
+### ✅ T-039 — `escapeHtml` consolidado en `static/util.js` (fuente única)
+
+> **Por qué:** `escapeHtml` estaba **duplicado** (en `library.js` y `score_render.js`) y `chord_shapes.js`
+> dependía de "alguna" global. Peor: las dos copias **no eran iguales** — la de `library.js`
+> (`div.textContent → innerHTML`) NO escapaba comillas, así que no era segura en contexto de atributo.
+> Duplicar una función de seguridad es justo donde no quieres divergencia.
+
+- **Nuevo `static/util.js`:** define la global `escapeHtml` canónica (la versión `replace` de
+  `score_render`, que escapa también `"`/`'` → segura en texto **y** atributos; null-safe). Fuente única.
+- **Eliminadas** las dos definiciones locales; `library.js`/`score_render.js`/`chord_shapes.js` usan la
+  global de `util.js`.
+- **Cache-busting (CLAUDE.md §4):** `util.js?v=1` añadido **antes** de sus dependientes en
+  `library.html`, `index.html` y `editor.html`; subidos los que cambiaron: `library.js v10→11`,
+  `score_render.js v8→9` (en index **y** editor). `chord_shapes.js` sin cambios (sigue en v9).
+- **Cobertura:** los e2e existentes ya ejercen los 3 consumidores tras la consolidación —
+  `test_render_escapa_letra_y_acorde_maliciosos` (editor.html→score_render),
+  `test_popup_diagrama_escapa_nombre_malicioso` (index.html→chord_shapes) y los de biblioteca
+  (library.html→library.js). Todos en verde.
+- **Verificación:** `run_checks.py` **TODO VERDE** (26 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-13): `auth.js?v=11`, `library.js?v=10`, `app.js?v=10`, `score_render.js?v=8`, `chord_shapes.js?v=9`; el resto en `v=9`. (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-13): `auth.js?v=11`, `util.js?v=1` (nuevo, T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=9`, `chord_shapes.js?v=9`; el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

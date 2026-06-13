@@ -115,12 +115,7 @@ elSearch.addEventListener('input', () => {
     renderGrid(filtered);
 });
 
-// --- Utilidad: escapar HTML para evitar inyección desde los títulos ---
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+// `escapeHtml` es global y vive en util.js (cargado antes que este script). Ver T-039.
 
 // Mostrar usuario y cerrar sesión
 const elUserEmail = document.getElementById('user-email');
