@@ -60,7 +60,9 @@ server_default — migración batch `147a6a78da86` (alembic check limpio).
 **Seguridad menor:** T-030 SRI en el CDN de Supabase · T-032 auditoría service_role · T-031 ventana
 de gracia del caché de token acotada (TTL+gracia, no ilimitada).
 
-> Estado de calidad ChordFlow: 39 unit + 20 e2e en verde. Molde: 27 unit + 4 e2e en verde.
-> Git: 30+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. CI listo.
-> **Seguridad: cero pendientes.** Quedan: sync (T-019/040) + UX (T-017/021/022/041) + molde (M04/M05).
+**UX:** T-041 avisos de fallo de carga en el reproductor (404 vs conexión, salida a biblioteca).
+
+> Estado de calidad ChordFlow: 39 unit + 21 e2e en verde. Molde: 27 unit + 4 e2e en verde.
+> Git: 31+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. CI listo.
+> **Seguridad: cero pendientes.** Quedan: sync (T-019/040) + UX (T-017/021/022) + molde (M04/M05).
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

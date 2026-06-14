@@ -769,12 +769,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   (expirada hace 1000s → 401 + entrada purgada).
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 20 e2e).
 
+### ✅ T-041 — Avisar al usuario ante fallos de carga inicial (player)
+
+> **Por qué:** `library.js` y `editor.js` ya avisaban, pero el **reproductor** (`app.js`) ante un
+> fallo de carga ponía un mensaje técnico ("Error de conexión con FastAPI") **solo en el título** y
+> dejaba el área de partitura **en blanco** — el usuario se quedaba sin saber qué pasó ni cómo salir.
+
+- **`app.js`:** ahora distingue **404** (canción no encontrada/borrada → 🔍 "No encontramos esta
+  canción") de **fallo de conexión** (⚠️ "Revisa tu conexión…"), y pinta el aviso en el **área
+  principal** (`#score-content`) con un botón **← Volver a la biblioteca**. Mensajes estáticos (sin
+  riesgo XSS).
+- **Test:** `test_songid_inexistente_avisa_al_usuario` (e2e) — abrir `index.html?songId=no-existe`
+  muestra el aviso + la salida a la biblioteca; el título ya no filtra "FastAPI".
+- **Cache-busting:** `app.js v10→v11` en `index.html`.
+- **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 21 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=10` (T-018), `chord_shapes.js?v=9`, `editor.js?v=10` (T-020); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=10` (T-018), `chord_shapes.js?v=9`, `editor.js?v=10` (T-020), `app.js?v=11` (T-041); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

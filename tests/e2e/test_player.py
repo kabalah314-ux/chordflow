@@ -37,6 +37,21 @@ def test_carga_por_defecto_sin_songId(page, live_server, api):
     assert page.locator(".chord-container, .chord-pill").count() >= 1
 
 
+def test_songid_inexistente_avisa_al_usuario(page, live_server, api):
+    """Abrir el reproductor con un ?songId inexistente (404) muestra un aviso claro en el
+    área principal con salida a la biblioteca, no una pantalla en blanco ni un mensaje
+    técnico (T-041)."""
+    page.goto(live_server + "/static/index.html?songId=no-existe-1234",
+              wait_until="networkidle")
+    page.wait_for_selector(".empty-state", timeout=8000)
+    texto = page.inner_text("#score-content")
+    assert "No encontramos esta canción" in texto
+    # Hay una salida a la biblioteca.
+    assert page.locator('#score-content a[href="library.html"]').count() == 1
+    # No se filtra el mensaje técnico viejo.
+    assert "FastAPI" not in page.inner_text("#song-title")
+
+
 def test_play_avanza_el_beat(page, live_server, api):
     _crear_y_abrir(page, live_server, api)
     assert "0.0" in page.inner_text("#current-beat-display")

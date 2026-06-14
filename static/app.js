@@ -160,6 +160,7 @@ async function fetchAndRenderSong() {
 
         if (songId) {
             const res = await apiFetch(`/songs/${songId}`);
+            if (res.status === 404) throw new Error("NOT_FOUND");
             if (!res.ok) throw new Error("Error fetching specific song");
             song = await res.json();
         } else {
@@ -189,8 +190,20 @@ async function fetchAndRenderSong() {
         engine.loadSong(song);
 
     } catch (err) {
+        // Antes el fallo de carga era casi silencioso (mensaje técnico solo en el título y la
+        // partitura en blanco). Ahora avisamos en el área principal y distinguimos 404 de
+        // fallo de conexión, con una salida a la biblioteca (T-041).
         console.error(err);
-        elSongTitle.textContent = "Error de conexión con FastAPI";
+        const notFound = err && err.message === "NOT_FOUND";
+        elSongTitle.textContent = notFound ? "Canción no encontrada" : "No se pudo cargar la canción";
+        elSongArtist.textContent = "";
+        elScoreContent.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">${notFound ? "🔍" : "⚠️"}</div>
+                <h3>${notFound ? "No encontramos esta canción" : "No se pudo cargar la canción"}</h3>
+                <p>${notFound ? "Quizá fue borrada." : "Revisa tu conexión e inténtalo de nuevo."}</p>
+                <a href="library.html" class="primary-btn" style="text-decoration:none; margin-top:1rem;">← Volver a la biblioteca</a>
+            </div>`;
     }
 }
 

@@ -135,7 +135,9 @@
       en las 3 HTML (`library.js v11`, `score_render.js v9`). Cubierto por los e2e de XSS existentes.
 - [ ] **T-040** 🟡 Parser/sync: revisar casos borde de `isChordLine`, desalineación de acordes y
       `findActiveChord` (último acorde / reset).
-- [ ] **T-041** 🟡 Fallos de carga inicial silenciosos en el frontend (avisar al usuario).
+- [x] **T-041** 🟡 Fallos de carga del reproductor: `app.js` avisa en el área principal,
+      distingue 404 vs conexión, con salida a la biblioteca (antes: mensaje técnico solo en el título).
+      Test `test_songid_inexistente_avisa_al_usuario`. `app.js?v=11`.
 
 **🟡 Tests (pendientes):**
 - [~] **T-042** 🟡 **Flakiness e2e resuelta** (3 carreras): timeout httpx de la fixture `api` 5→30 s;
