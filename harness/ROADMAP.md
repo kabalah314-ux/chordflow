@@ -107,8 +107,9 @@
       ejecuta `createClient`). ⚠️ subir versión = recalcular hash.
 - [ ] **T-031** 🟡 Degradación del caché de token (T-005) puede dejar pasar un token **revocado**
       mientras dure la caché → acotar la ventana de gracia / invalidación.
-- [ ] **T-032** 🟡 Verificar que la `service_role` key nunca se sirve ni se commitea (auditar `/config`
-      y el historial); documentar.
+- [x] **T-032** 🟡 Auditado: la `service_role` key no se usa en código (Settings `extra=ignore` la
+      descarta), no hay `.env` trackeado, el historial no la filtra, y `/config` solo da las 3 claves
+      públicas. Guards `test_config_no_expone_service_role` + `test_settings_ignora_la_service_role_key`.
 
 **🟠 Integridad de datos (pendientes, encajan con Alembic T-011):**
 - [x] **T-033** 🟠 FKs con `ondelete="CASCADE"` a nivel DB (las 4) + migración `dac91229a048`

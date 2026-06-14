@@ -74,6 +74,31 @@ def test_handler_global_500_no_filtra_internals():
         app.dependency_overrides.clear()
 
 
+def test_config_no_expone_service_role(client):
+    """`/config` solo debe exponer config pública (T-032): supabase_url, anon_key y test_mode.
+    La service_role key (salta RLS) JAMÁS debe salir. Guard de regresión: si alguien añade un
+    campo sensible a /config, este test falla."""
+    r = client.get("/config")
+    assert r.status_code == 200
+    data = r.json()
+    assert set(data.keys()) == {"supabase_url", "supabase_anon_key", "test_mode"}
+    # Ni la clave ni el cuerpo deben mencionar secretos de servicio.
+    cuerpo = r.text.lower()
+    assert "service_role" not in cuerpo
+    assert "service-role" not in cuerpo
+
+
+def test_settings_ignora_la_service_role_key(monkeypatch):
+    """Aunque el entorno traiga SUPABASE_SERVICE_ROLE_KEY, Settings (extra='ignore') NO la
+    carga como atributo → no puede filtrarse desde el objeto de config (T-032)."""
+    from src.services.config import Settings
+
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "secreto-que-no-debe-cargarse")
+    s = Settings()
+    assert not hasattr(s, "service_role_key")
+    assert "secreto-que-no-debe-cargarse" not in s.model_dump_json()
+
+
 def test_cors_restringe_origenes(client):
     """Solo los orígenes de CHORDFLOW_ALLOWED_ORIGINS reciben cabecera CORS (T-004).
     Default de test: http://127.0.0.1:8000 y http://localhost:8000."""

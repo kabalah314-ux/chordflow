@@ -735,6 +735,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - ⚠️ **Mantenimiento:** subir la versión de supabase-js obliga a **recalcular** el hash SRI.
 - **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 20 e2e).
 
+### ✅ T-032 — Auditoría: la `service_role` key nunca se sirve ni se commitea
+
+> **Por qué:** la service_role key salta RLS; filtrarla (por `/config` o en git) sería crítico.
+
+- **Auditoría (resultado limpio):**
+  - El **código** nunca lee una service_role key: `config.py` no define ese campo y usa
+    `extra="ignore"`, así que aunque `.env.local` traiga `SUPABASE_SERVICE_ROLE_KEY`, Settings la
+    descarta y nunca entra a la app. Todas las menciones en el repo son **documentación/comentarios**
+    (CLAUDE, GUIA, SOP), no valores.
+  - `git ls-files` confirma que **ningún `.env`** está trackeado; `git log -S service_role` no revela
+    ningún **valor** filtrado (solo líneas de docs que usan el término).
+  - `/config` solo devuelve `supabase_url` + `supabase_anon_key` + `test_mode`.
+- **Guards de regresión (tests):** `test_config_no_expone_service_role` (las claves de `/config` son
+  EXACTAMENTE las 3 públicas; el cuerpo no menciona `service_role`) y
+  `test_settings_ignora_la_service_role_key` (inyectar `SUPABASE_SERVICE_ROLE_KEY` en el entorno no
+  crea atributo ni aparece en `model_dump_json`).
+- **Verificación:** `run_checks.py` **TODO VERDE** (38 unit + 20 e2e).
+
 ---
 
 <a name="notas"></a>
