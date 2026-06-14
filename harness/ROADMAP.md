@@ -166,6 +166,17 @@
 ## Fase 5 — Diferenciación de producto
 - [ ] 🟢 PWA + offline · 🟢 Setlists/repertorios · 🟢 Export PDF · 🟢 UI de tablaturas
       (`TabLine` ya modelado) · 🟢 Responsive/tablet · 🟢 Migrar SQLite → Postgres/Supabase.
+- [ ] **T-045** 🟢 **Importar desde URL**: pegar un link (LaCuerda.net primero; UG es difícil por
+      JS+anti-bot) → backend descarga la página, extrae el bloque de acordes y lo precarga en el
+      editor (que ya parsea texto). Por-sitio + heurística genérica. Ojo a ToS de las webs origen.
+
+## Fase 6 — Despliegue (Supabase + Vercel)
+- [x] **Paso 1** — Proyecto Supabase nuevo (`fwynfifvtthtpzpejfhb`) + login real verificado
+      (registro/login navegador + `/songs/` 200 autenticado). Claves nuevas `sb_publishable_`/`sb_secret_`.
+- [ ] **Paso 2** — Migrar BD SQLite → **Postgres de Supabase** (`DATABASE_URL` + ajustar Alembic;
+      `render_as_batch` es de SQLite). Necesario para persistir datos en serverless.
+- [ ] **Paso 3** — Desplegar en **Vercel**: entrypoint ASGI/`vercel.json`, env vars, CORS al dominio
+      real, repo en GitHub (hoy no hay remoto configurado).
 
 ---
 
