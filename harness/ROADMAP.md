@@ -102,7 +102,9 @@
 - [x] **T-029** 🟠 Cabeceras de seguridad vía middleware (X-Content-Type-Options, X-Frame-Options,
       Referrer-Policy, Permissions-Policy). CSP queda pendiente (sub-tarea: requiere afinar inline).
       Test `test_cabeceras_de_seguridad`.
-- [ ] **T-030** 🟡 Sin **SRI** en el `<script>` del CDN de Supabase (integrity + crossorigin).
+- [x] **T-030** 🟡 **SRI** en el CDN de Supabase: versión fijada `@2.108.1/dist/umd/supabase.js` +
+      `integrity` (sha384) + `crossorigin` en las 4 HTML. Verificado por el doctor (modo normal
+      ejecuta `createClient`). ⚠️ subir versión = recalcular hash.
 - [ ] **T-031** 🟡 Degradación del caché de token (T-005) puede dejar pasar un token **revocado**
       mientras dure la caché → acotar la ventana de gracia / invalidación.
 - [ ] **T-032** 🟡 Verificar que la `service_role` key nunca se sirve ni se commitea (auditar `/config`

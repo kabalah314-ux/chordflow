@@ -718,6 +718,23 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `score_render.js v9→v10` en `index.html` y `editor.html`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 19 e2e).
 
+### ✅ T-030 — SRI en el `<script>` del CDN de Supabase
+
+> **Por qué:** las 4 páginas cargaban `@supabase/supabase-js@2` (rango **mutable**) sin `integrity`.
+> Si el CDN sirviera un bundle alterado (compromiso de supply-chain), el navegador lo ejecutaría sin
+> rechistar — y la app maneja tokens de auth.
+
+- **Versión fijada + SRI:** `@2` → `@2.108.1/dist/umd/supabase.js` (inmutable) con
+  `integrity="sha384-EjUdIVmzWliPzdzhxZ9ZoO0etXLKWuUPUftAGxP6qH6Lm4oLwoLaJR0Ba4pIDiDL"` y
+  `crossorigin="anonymous"`, en `login.html`, `library.html`, `index.html` y `editor.html`. El hash
+  se calculó del fichero real que sirve jsDelivr (`openssl dgst -sha384`).
+- **Verificación:** el `doctor` (modo **normal**, no test) ejecuta `window.supabase.createClient` al
+  cargar `login.html` en su smoke de navegador; si el SRI bloqueara el script o faltara el global,
+  saltaría un error JS. **doctor verde** ⇒ el bundle fijado pasa el integrity y expone el global.
+  (Los e2e en modo test no tocan el CDN, por eso la cobertura efectiva es el doctor.)
+- ⚠️ **Mantenimiento:** subir la versión de supabase-js obliga a **recalcular** el hash SRI.
+- **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 20 e2e).
+
 ---
 
 <a name="notas"></a>
