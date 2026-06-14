@@ -843,6 +843,20 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `sync_engine.js v7→v8`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 26 e2e).
 
+### ✅ T-022 — Cache-busting automático por hash de contenido
+
+> **Por qué:** el `?v=N` manual obligaba a recordar subir el número en **todos** los `.html` al tocar
+> un `.js`/`.css` (mordió varias veces). Error humano clásico y silencioso.
+
+- **`harness/cachebust.py`:** reescribe el `?v=` de cada asset **local** de `static/*.html` con un
+  `sha256[:8]` de su contenido (ignora URLs http(s): CDN/fuentes). Modo `--check` (no escribe; sale 1
+  si algún `?v=` está desfasado) + modo aplicar.
+- **Aplicado:** todos los `?v=N` manuales → `?v=<hash>`.
+- **Enforcement:** `test_cache_busting_al_dia` (unit) corre `check()` → `run_checks` **falla** si se
+  edita un asset sin reejecutar el script. Se acabó la clase de error.
+- **CLAUDE.md** §4 actualizado: la regla ahora es "ejecutar `cachebust.py`".
+- **Verificación:** `run_checks.py` **TODO VERDE** (40 unit + 26 e2e).
+
 ---
 
 <a name="notas"></a>

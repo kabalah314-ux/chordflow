@@ -79,9 +79,9 @@ python -m alembic stamp head                   # marcar una BD existente como "a
 - Toda ruta de `/songs` exige `Depends(get_current_user)` y filtra por `owner_id`.
 
 ### Frontend (`static/`)
-- **Cache-busting `?v=N`**: al cambiar un `.js` o `.css`, subir el número de versión en
-  **TODOS** los `.html` que lo referencian, o el navegador sirve la copia vieja.
-  (Ya mordió 2 veces. Verificar con grep antes de cerrar la tarea.)
+- **Cache-busting AUTOMÁTICO (T-022)**: el `?v=` de los `.html` es un **hash del contenido**.
+  Tras cambiar un `.js`/`.css`, ejecutar **`python harness/cachebust.py`** (reescribe los `?v=`).
+  El test `test_cache_busting_al_dia` falla si te olvidas → ya no se sube el número a mano.
 - `score_render.js` es el **único** renderer de partituras (player + preview del editor).
 - El motor (`sync_engine.js`) trabaja con **ids** de acorde, no nombres → transposición
   y diagramas no afectan la sincronización.

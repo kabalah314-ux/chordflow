@@ -73,7 +73,8 @@
 - [x] **T-021** 🟡 Accesibilidad: `aria-label` en botones de emoji (reproductor + tarjetas) y atajo
       **Espacio = play/pausa** (ignora inputs). Test `test_accesibilidad_aria_y_atajo_espacio`.
       `app.js?v=12`, `library.js?v=12`.
-- [ ] **T-022** 🟡 Cache-busting automático (hash de contenido) en lugar de `?v=N` manual.
+- [x] **T-022** 🟡 Cache-busting automático: `harness/cachebust.py` reescribe `?v=<sha256[:8]>` por
+      contenido; `test_cache_busting_al_dia` falla si está desfasado. Fin del `?v=N` manual.
 
 ## Fase 4 — CI / profesionalización
 - [x] **T-023** 🟠 **GitHub Actions** (`.github/workflows/ci.yml`): Python 3.12 → deps + playwright
