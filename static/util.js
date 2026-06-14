@@ -16,3 +16,63 @@ function escapeHtml(s) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
+
+// ─── Toasts y modales (reemplazan alert()/confirm(), T-017) ──────────────────
+// Lenguaje glassmorphism (clases en style.css). El texto del usuario SIEMPRE se escapa.
+
+// Aviso no bloqueante que se autodescarta. type: 'info' | 'success' | 'error'.
+function toast(message, type = 'info') {
+    let cont = document.getElementById('toast-container');
+    if (!cont) {
+        cont = document.createElement('div');
+        cont.id = 'toast-container';
+        document.body.appendChild(cont);
+    }
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    el.innerHTML = escapeHtml(message);
+    cont.appendChild(el);
+    // Forzar reflow para la transición de entrada y programar la salida.
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+        el.classList.remove('show');
+        el.addEventListener('transitionend', () => el.remove(), { once: true });
+        setTimeout(() => el.remove(), 400);  // fallback si no hay transitionend
+    }, 3500);
+}
+
+// Modal de confirmación. Devuelve Promise<boolean> (true = aceptar). Reemplaza confirm().
+function confirmModal(message, { okText = 'Aceptar', cancelText = 'Cancelar' } = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+                <p class="modal-msg">${escapeHtml(message)}</p>
+                <div class="modal-actions">
+                    <button class="secondary-btn" data-act="cancel">${escapeHtml(cancelText)}</button>
+                    <button class="primary-btn danger" data-act="ok">${escapeHtml(okText)}</button>
+                </div>
+            </div>`;
+        const close = (val) => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve(val);
+        };
+        const onKey = (e) => {
+            if (e.key === 'Escape') close(false);
+            if (e.key === 'Enter') close(true);
+        };
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close(false);           // clic fuera = cancelar
+            const act = e.target.getAttribute('data-act');
+            if (act === 'ok') close(true);
+            if (act === 'cancel') close(false);
+        });
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        const okBtn = overlay.querySelector('[data-act="ok"]');
+        if (okBtn) okBtn.focus();
+    });
+}

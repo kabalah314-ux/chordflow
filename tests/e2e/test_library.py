@@ -24,6 +24,24 @@ def test_cancion_aparece_como_tarjeta(page, live_server, api):
     assert "Cancion Visible" in page.inner_text("#song-grid")
 
 
+def test_borrar_usa_modal_y_elimina(page, live_server, api):
+    """Borrar abre un modal de confirmación propio (no `confirm()` nativo, T-017); al aceptar,
+    la tarjeta desaparece."""
+    wipe_songs(api)
+    api.post("/songs/", json=sample_song_payload(title="Para Borrar"))
+    page.goto(live_server + "/static/library.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+
+    page.click('.card-action-btn[data-act="delete"]')
+    # Aparece nuestro modal glassmorphism (no el confirm() del navegador).
+    page.wait_for_selector(".modal-overlay .modal-card", timeout=4000)
+    assert "Para Borrar" in page.inner_text(".modal-card")
+    page.click('.modal-card [data-act="ok"]')
+
+    page.wait_for_selector(".empty-state", timeout=8000)
+    assert "Para Borrar" not in page.inner_text("#song-grid")
+
+
 def test_busqueda_filtra(page, live_server, api):
     wipe_songs(api)
     api.post("/songs/", json=sample_song_payload(title="Wonderwall"))

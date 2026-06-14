@@ -263,7 +263,7 @@ if (elKeySave) elKeySave.addEventListener('click', async () => {
         engine.loadSong(data);
     } catch (err) {
         console.error(err);
-        alert('No se pudo guardar el tono: ' + err.message);
+        toast('No se pudo guardar el tono: ' + err.message, 'error');
     } finally {
         elKeySave.disabled = false;
     }

@@ -81,7 +81,8 @@ function renderGrid(songs) {
 
 // --- Borrado de una canción ---
 async function deleteSong(song) {
-    const ok = confirm(`¿Borrar "${song.title}"?\nEsta acción no se puede deshacer.`);
+    const ok = await confirmModal(`¿Borrar "${song.title}"? Esta acción no se puede deshacer.`,
+        { okText: 'Borrar', cancelText: 'Cancelar' });
     if (!ok) return;
 
     try {
@@ -97,7 +98,7 @@ async function deleteSong(song) {
         renderGrid(list);
     } catch (err) {
         console.error(err);
-        alert('No se pudo borrar la canción: ' + err.message);
+        toast('No se pudo borrar la canción: ' + err.message, 'error');
     }
 }
 

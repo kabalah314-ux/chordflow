@@ -59,7 +59,8 @@
       Dep `pydantic-settings==2.14.1`.
 
 ## Fase 3 — Calidad percibida
-- [ ] **T-017** 🟡 Reemplazar `alert()`/`confirm()` por toasts/modales (lenguaje glassmorphism).
+- [x] **T-017** 🟡 `alert()`/`confirm()` → `toast()`/`confirmModal()` en `util.js` (glassmorphism,
+      escapan texto, Promise para el modal). 5 usos migrados. Test `test_borrar_usa_modal_y_elimina`.
 - [x] **T-018** 🟡 **Transposición con bemoles**: doble escala (SCALE_SHARP/FLAT); preserva el estilo
       de la raíz original (bemol→bemoles). `Bb`+3→`Db` (antes `C#`). Test `test_transpose_respeta_bemoles`.
       `score_render.js?v=10`.

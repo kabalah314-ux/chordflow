@@ -795,12 +795,30 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `app.js v11→v12`, `library.js v11→v12`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 22 e2e).
 
+### ✅ T-017 — Toasts y modales en vez de `alert()`/`confirm()`
+
+> **Por qué:** los `alert`/`confirm` nativos rompen el lenguaje glassmorphism, bloquean el hilo y se
+> ven "de sistema". Había 1 `confirm` (borrado) y 4 `alert` repartidos por library/editor/app.
+
+- **`util.js`** (compartido, ya cargado antes que el resto): `toast(msg, type)` —aviso no bloqueante
+  autodescartable, `info/success/error`, `role=alert/status`— y `confirmModal(msg, opts)` —modal con
+  overlay que devuelve `Promise<boolean>`, cierra con Esc/Enter/clic fuera, enfoca el botón OK—.
+  Ambos **escapan** el texto del usuario.
+- **CSS glassmorphism** en `style.css` (`.toast*`, `.modal-overlay`, `.modal-card`, `.primary-btn.danger`).
+- **Reemplazos:** `library.js` (confirm→`confirmModal`, alert→`toast`), `editor.js` (2 alert→toast),
+  `app.js` (1 alert→toast).
+- **Test:** `test_borrar_usa_modal_y_elimina` (e2e) — el borrado abre el modal propio y al aceptar la
+  tarjeta desaparece.
+- **Cache-busting:** `style.css→v10` (4 HTML), `util.js→v2` (3), `app.js→v13`, `library.js→v13`,
+  `editor.js→v11`.
+- **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 23 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=10` (T-018), `chord_shapes.js?v=9`, `editor.js?v=10` (T-020), `app.js?v=12` (T-041/T-021), `library.js?v=12` (T-021); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `style.css?v=10`, `auth.js?v=11`, `util.js?v=2` (T-017), `library.js?v=13`, `app.js?v=13`, `score_render.js?v=10`, `chord_shapes.js?v=9`, `editor.js?v=11`, `sync_engine.js?v=7`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

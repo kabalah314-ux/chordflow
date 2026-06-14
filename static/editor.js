@@ -334,7 +334,7 @@ async function initEditor() {
         document.getElementById('btn-save').innerHTML = '💾 Guardar cambios';
     } catch (err) {
         console.error(err);
-        alert('Error cargando la canción para editar: ' + err.message);
+        toast('Error cargando la canción para editar: ' + err.message, 'error');
     }
 }
 
@@ -399,7 +399,7 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
         window.location.href = `index.html?songId=${data.id}`;
 
     } catch (err) {
-        alert('Ocurrió un error: ' + err.message);
+        toast('Ocurrió un error: ' + err.message, 'error');
         btnSave.disabled = false;
         btnSave.innerHTML = originalLabel;
     }
