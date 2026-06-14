@@ -186,8 +186,10 @@
       prefijo de env como **una sola perilla** (`env_prefix="APP_"` en `config.py`; estándar por
       `validation_alias`). `MOLDE.md` §4 con la receta de personalización. En `../app-skeleton`
       (commit `5e14adf`); run_checks TODO VERDE (27 unit + 4 e2e).
-- [ ] **T-M04** 🟡 `MOLDE.md` → guía de uso del molde (cómo nace un proyecto nuevo desde él).
-- [ ] **T-M05** 🟢 (Opcional) `create_app.py` tipo cookiecutter que rellene los huecos solo.
+- [x] **T-M04** 🟡 `MOLDE.md` §5: guía de uso paso a paso (camino automático vs manual, de cero a la
+      primera tarea). En `../app-skeleton` (commit `1efcf67`).
+- [x] **T-M05** 🟢 `create_app.py` (cookiecutter): copia + rellena `{{...}}` + renombra el prefijo env.
+      Verificado generando un proyecto real (`--prefix DEMO`) → `run_checks` TODO VERDE. **Fase M completa.**
 - [x] **T-M06** 🟡 Criterio de molde estable **verificado**: `git archive` del molde → carpeta nueva
       limpia (45 ficheros) → `run_checks.py` **TODO VERDE sin tocar nada** (doctor + ruff + 27 unit +
       4 e2e). Anotado en `../app-skeleton/harness/MOLDE.md` (commit `31e450f`).

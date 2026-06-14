@@ -15,16 +15,13 @@ _(ninguna)_
 
 ## ▶️ Siguiente recomendado
 
-La cola de críticos y la mayoría de los 🟠 altos están cerrados. Elegir de `ROADMAP.md`:
-
-1. **Fase M (cierre)**: **T-M04** guía de uso del molde (en gran parte ya en README + MOLDE.md);
-   **T-M05** cookiecutter (🟢 opcional). El molde ya es estable y verificado (T-M06).
-2. **Calidad/UX restante**: T-017 toasts, T-020 parser regex, T-040 sync, T-038 refactor backend,
-   T-018 bemoles, T-019 auto-scroll, T-021 a11y, T-022 cache-bust auto.
-3. **Seguridad menor**: T-030 SRI, T-031 ventana de gracia del caché, T-032 auditar service_role.
+🎉 **No quedan tareas pendientes en el ROADMAP** (T-001…T-044 + T-M01…T-M06 cerradas). Lo único
+abierto es la **Fase 5 — Diferenciación de producto** (features 🟢: PWA/offline, setlists, export
+PDF, UI de tablaturas, responsive, migrar a Postgres), que son ampliaciones, no deuda.
 
 > ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar. Ver CHECKLIST.
-> 🧬 El molde vive en el repo hermano `../app-skeleton` (commits `e02b1b0`, `5e14adf`, `31e450f`).
+> 🧬 El molde vive en el repo hermano `../app-skeleton` (extraído, plantillado, verificado +
+> generador `create_app.py`).
 
 ---
 
@@ -62,8 +59,9 @@ de gracia del caché de token acotada (TTL+gracia, no ilimitada).
 
 **UX:** T-041 avisos de fallo de carga · T-021 a11y · T-017 toasts/modales · T-022 cache-busting
 automático por hash. **Sync:** T-019 auto-scroll anclado · T-040 findActiveChord casos borde.
+**Molde (Fase M completa):** T-M01..M06 + guía de uso + generador `create_app.py`.
 
-> Estado de calidad ChordFlow: 40 unit + 26 e2e en verde. Molde: 27 unit + 4 e2e en verde.
-> Git: 37+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. CI listo.
-> **Solo queda Fase M opcional:** T-M04 (guía, casi cubierta), T-M05 (cookiecutter 🟢).
+> Estado de calidad ChordFlow: 40 unit + 26 e2e en verde. Molde: 29 unit + 4 e2e en verde.
+> Git: 38+ commits. **ROADMAP AL 100%** (toda la deuda de calidad cerrada). El molde vive en
+> `../app-skeleton` (extraído, plantillado, verificado + cookiecutter). Solo queda Fase 5 (features).
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

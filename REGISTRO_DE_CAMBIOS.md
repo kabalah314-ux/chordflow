@@ -857,6 +857,23 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **CLAUDE.md** §4 actualizado: la regla ahora es "ejecutar `cachebust.py`".
 - **Verificación:** `run_checks.py` **TODO VERDE** (40 unit + 26 e2e).
 
+### ✅ T-M04 + T-M05 — Guía de uso del molde + generador `create_app.py` (en `../app-skeleton`)
+
+> **Por qué:** cerrar la Fase M con (1) una guía clara de cómo nace un proyecto desde el molde y
+> (2) el cookiecutter que automatiza los huecos. Hecho en el repo hermano `../app-skeleton`
+> (commit `1efcf67`).
+
+- **T-M04:** `harness/MOLDE.md` §5 "Guía de uso paso a paso" — dos caminos (automático con
+  `create_app.py` vs manual con `git archive`), de cero a la primera tarea del bucle. README ya
+  cubría el resumen; ahora la guía es explícita y completa.
+- **T-M05:** `create_app.py` (cookiecutter ligero): copia el esqueleto (excluye `.git`/caches/`*.db`
+  y el meta-test), rellena `{{APP_NAME}}/{{DESCRIPTION}}/{{STACK}}/{{ENV_PREFIX}}` en los docs y
+  renombra el prefijo de env `APP_` → el elegido en **código, config y tests** (no en los nombres
+  estándar `DATABASE_URL`/`SUPABASE_*`). `argparse`, no interactivo.
+- **Verificación (end-to-end):** generé un proyecto real (`--prefix DEMO`) y su `run_checks.py`
+  quedó **TODO VERDE** (doctor + ruff + unit + 4 e2e) **sin tocar dominio** — el modo test renombrado
+  (`DEMO_TEST_MODE`) funciona en navegador. Tests `test_create_app.py` en el molde. **Fase M COMPLETA.**
+
 ---
 
 <a name="notas"></a>
