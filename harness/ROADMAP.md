@@ -138,8 +138,9 @@
 - [x] **T-039** 🟡 `escapeHtml` consolidado en `static/util.js` (global canónica, segura en atributos
       + null-safe). Eliminadas las 2 copias divergentes; `util.js?v=1` cargado antes de sus dependientes
       en las 3 HTML (`library.js v11`, `score_render.js v9`). Cubierto por los e2e de XSS existentes.
-- [ ] **T-040** 🟡 Parser/sync: revisar casos borde de `isChordLine`, desalineación de acordes y
-      `findActiveChord` (último acorde / reset).
+- [x] **T-040** 🟡 Sync: `findActiveChord` reescrito (el último acorde cuyo inicio ya pasó) → arregla
+      persistencia del último acorde, empates de inicio y reset. Tests `test_sync_engine.py`.
+      `sync_engine.js?v=8`. (isChordLine/desalineación revisados: OK con la cobertura de T-020.)
 - [x] **T-041** 🟡 Fallos de carga del reproductor: `app.js` avisa en el área principal,
       distingue 404 vs conexión, con salida a la biblioteca (antes: mensaje técnico solo en el título).
       Test `test_songid_inexistente_avisa_al_usuario`. `app.js?v=11`.

@@ -829,12 +829,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `app.js v13→v14`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 24 e2e).
 
+### ✅ T-040 — Casos borde de `findActiveChord` (sync)
+
+> **Por qué:** el intervalo semiabierto `[start, nextStart)` con `nextStart = start+duration` para
+> el último acorde lo apagaba antes de tiempo (la parte final quedaba sin acorde resaltado), y los
+> empates de beat de inicio podían "saltarse" un acorde.
+
+- **`sync_engine.js`:** `findActiveChord` ahora devuelve el **último acorde cuyo inicio ya pasó**
+  (lista ordenada). Esto resuelve a la vez: **último acorde** persiste hasta el final; **empates**
+  (gana el último); **reset** (antes del primer acorde → null).
+- **Test:** `tests/e2e/test_sync_engine.py` (unit-en-navegador con `SyncEngine` global) —
+  `test_findactivechord_casos_borde` (reset/avance/persistencia) y `test_findactivechord_empate_de_inicio`.
+- **Cache-busting:** `sync_engine.js v7→v8`.
+- **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 26 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `style.css?v=10`, `auth.js?v=11`, `util.js?v=2` (T-017), `library.js?v=13`, `app.js?v=14`, `score_render.js?v=10`, `chord_shapes.js?v=9`, `editor.js?v=11`, `sync_engine.js?v=7`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `style.css?v=10`, `auth.js?v=11`, `util.js?v=2` (T-017), `library.js?v=13`, `app.js?v=14`, `score_render.js?v=10`, `chord_shapes.js?v=9`, `editor.js?v=11`, `sync_engine.js?v=8`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

@@ -161,19 +161,21 @@ class SyncEngine {
     }
 
     findActiveChord(currentBeat) {
-        // En un caso real con miles de acordes, usaríamos búsqueda binaria. 
-        // Para este MVP iteramos.
+        // El acorde activo es el ÚLTIMO cuyo inicio ya ha pasado (los acordes están ordenados
+        // por beat). Esta formulación arregla varios casos borde frente al intervalo semiabierto
+        // anterior (T-040):
+        //  - ÚLTIMO acorde: permanece activo hasta el final de la canción (antes se apagaba en
+        //    start+duration, dejando la parte final sin acorde resaltado).
+        //  - EMPATES (dos acordes con el mismo beat de inicio): gana el último, no se "saltan".
+        //  - RESET: antes del primer acorde no hay activo (devuelve null).
+        // En un caso real con miles de acordes usaríamos búsqueda binaria; para el MVP, iterar.
         let activeId = null;
         for (let i = 0; i < this.state.flatChords.length; i++) {
             const chord = this.state.flatChords[i];
-            // Asumimos que un acorde está activo desde su inicio hasta el inicio del siguiente
-            const nextChordStart = (i + 1 < this.state.flatChords.length) 
-                ? this.state.flatChords[i+1].absoluteBeatStart 
-                : chord.absoluteBeatStart + chord.duration;
-                
-            if (currentBeat >= chord.absoluteBeatStart && currentBeat < nextChordStart) {
-                activeId = chord.id;
-                break;
+            if (currentBeat >= chord.absoluteBeatStart) {
+                activeId = chord.id;        // su inicio ya pasó → candidato
+            } else {
+                break;                       // ordenados: los siguientes empiezan más tarde
             }
         }
         return activeId;
