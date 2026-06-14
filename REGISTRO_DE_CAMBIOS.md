@@ -702,12 +702,28 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `editor.js v9→v10` en `editor.html` (único que lo referencia).
 - **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 19 e2e).
 
+### ✅ T-018 — Transposición con bemoles correctos
+
+> **Por qué:** `transposeChord` usaba una única escala de **sostenidos**, así que un acorde con
+> bemol acababa mal escrito (transponer `Bb` +3 daba `C#` en vez de `Db`). Suena igual pero al
+> músico le chirría leer una canción en bemoles salpicada de sostenidos.
+
+- **Doble escala:** `SCALE_SHARP` / `SCALE_FLAT`. `transposeNote(note, semis, preferFlats)` elige.
+- **Heurística:** se preserva el estilo de la **raíz original** —con bemol → bemoles; con sostenido
+  o natural → sostenidos (comportamiento histórico, no rompe los casos existentes)—. Cada parte del
+  acorde (raíz y bajo de `Bb/Db`) conserva su propio estilo. Limitación conocida: una raíz natural
+  que cae en tecla negra usa sostenidos (no hay tracking de tonalidad por acorde).
+- **Cobertura:** `test_transpose_respeta_bemoles` (e2e) — `Bb`+3→`Db`, `Eb`-2→`Db`, `Bbm7`+3→`Dbm7`,
+  `F/Bb`+3→`G#/Db`; y `test_transpose_sube_y_baja_semitonos` sigue verde (naturales→sostenidos).
+- **Cache-busting:** `score_render.js v9→v10` en `index.html` y `editor.html`.
+- **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 19 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=9`, `chord_shapes.js?v=9`, `editor.js?v=10` (T-020); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=10` (T-018), `chord_shapes.js?v=9`, `editor.js?v=10` (T-020); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

@@ -55,9 +55,9 @@ plantilladas + prefijo env como una perilla · T-M06 molde estable verificado (c
 server_default — migración batch `147a6a78da86` (alembic check limpio).
 
 **Refactor/parser:** T-038 `_append_sections` (fin de duplicación) · T-020 CHORD_REGEX reescrito
-(add11/maj13/sus2/Em7b5/A7sus4).
+(add11/maj13/sus2/Em7b5/A7sus4) · T-018 transposición con bemoles (doble escala).
 
-> Estado de calidad ChordFlow: 36 unit + 19 e2e en verde. Molde: 27 unit + 4 e2e en verde.
-> Git: 26+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. CI listo.
+> Estado de calidad ChordFlow: 36 unit + 20 e2e en verde. Molde: 27 unit + 4 e2e en verde.
+> Git: 27+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. CI listo.
 > Pendiente: T-M04 (casi cubierta), T-M05 (opcional) + cola 🟡 de UX/sync/seguridad menor.
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

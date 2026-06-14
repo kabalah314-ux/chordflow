@@ -60,7 +60,9 @@
 
 ## Fase 3 — Calidad percibida
 - [ ] **T-017** 🟡 Reemplazar `alert()`/`confirm()` por toasts/modales (lenguaje glassmorphism).
-- [ ] **T-018** 🟡 **Transposición con bemoles correctos** (hoy siempre sostenidos: a Bb muestra A#).
+- [x] **T-018** 🟡 **Transposición con bemoles**: doble escala (SCALE_SHARP/FLAT); preserva el estilo
+      de la raíz original (bemol→bemoles). `Bb`+3→`Db` (antes `C#`). Test `test_transpose_respeta_bemoles`.
+      `score_render.js?v=10`.
 - [ ] **T-019** 🟡 **Auto-scroll anclado al acorde activo** (hoy mapeo lineal beat→píxel, se desfasa).
 - [x] **T-020** 🟡 **Parser**: `CHORD_REGEX` reescrito (sufijo como secuencia repetible de
       cualidad/nº+alteración + bajo) → ahora capta `add11`, `maj13`, `sus2`, `Em7b5`, `A7sus4`.

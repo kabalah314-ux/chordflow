@@ -7,26 +7,33 @@
  */
 
 // ─── Transposición ───────────────────────────────────────────────────────────
-const SCALE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+// Dos escalas para las teclas negras: una con sostenidos y otra con bemoles. La elección
+// la decide la alteración del acorde original (T-018): una raíz con bemol (Bb, Eb…) se
+// transpone con bemoles; con sostenido o natural, con sostenidos (comportamiento histórico).
+const SCALE_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const SCALE_FLAT  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 const NOTE_INDEX = {
     'C': 0, 'B#': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
     'E': 4, 'Fb': 4, 'F': 5, 'E#': 5, 'F#': 6, 'Gb': 6, 'G': 7,
     'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'Cb': 11
 };
 
-function transposeNote(note, semis) {
+function transposeNote(note, semis, preferFlats) {
     const idx = NOTE_INDEX[note];
     if (idx === undefined) return note;
-    return SCALE[(((idx + semis) % 12) + 12) % 12];
+    const scale = preferFlats ? SCALE_FLAT : SCALE_SHARP;
+    return scale[(((idx + semis) % 12) + 12) % 12];
 }
 
-// Transpone un acorde preservando sufijo (m7, sus4…) y bajo (G/B → A/C#)
+// Transpone un acorde preservando sufijo (m7, sus4…) y bajo (G/B → A/C#). Cada parte (raíz y
+// bajo) conserva su propio estilo: el bajo de `Bb/Db` sigue en bemoles tras transponer.
 function transposeChord(chord, semis) {
     if (!semis) return chord;
     return chord.split('/').map(part => {
         const m = part.match(/^([A-G][#b]?)(.*)$/);
         if (!m) return part;
-        return transposeNote(m[1], semis) + m[2];
+        const preferFlats = m[1].includes('b');
+        return transposeNote(m[1], semis, preferFlats) + m[2];
     }).join('/');
 }
 

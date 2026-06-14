@@ -45,6 +45,19 @@ def test_transpose_sube_y_baja_semitonos(js_page):
     assert js_page.evaluate("transposeChord('F#m7', -1)") == "Fm7"  # preserva el sufijo
 
 
+def test_transpose_respeta_bemoles(js_page):
+    """Un acorde con bemol se transpone a teclas negras CON bemoles, no sostenidos (T-018):
+    antes `Bb`+3 daba `C#`; ahora da `Db`. Las raíces sostenidas/naturales siguen en sostenidos."""
+    # Raíz con bemol → escala de bemoles
+    assert js_page.evaluate("transposeChord('Bb', 3)") == "Db"   # antes: C#
+    assert js_page.evaluate("transposeChord('Eb', -2)") == "Db"
+    assert js_page.evaluate("transposeChord('Bbm7', 3)") == "Dbm7"  # preserva sufijo
+    # Naturales que caen en negra → sostenidos (sin cambio de comportamiento)
+    assert js_page.evaluate("transposeChord('C', 3)") == "D#"
+    # Cada parte conserva su estilo: bajo en bemol sigue en bemol
+    assert js_page.evaluate("transposeChord('F/Bb', 3)") == "G#/Db"
+
+
 def test_render_escapa_letra_y_acorde_maliciosos(js_page):
     """XSS (J3 / T-002): la letra y el chord_name del usuario no deben inyectar
     HTML ni ejecutar JS. Renderizamos una canción con payloads y verificamos que
