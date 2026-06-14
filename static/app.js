@@ -15,6 +15,7 @@ const engine = new SyncEngine();
 // Estado de la canción y la transposición
 let currentSong = null;
 let transposeOffset = 0; // semitonos (-11..+11)
+let lastAutoScrollChordId = null; // último acorde al que ancló el auto-scroll (T-019)
 
 // La lógica de transposición (transposeChord) y el render (renderScoreInto)
 // viven en score_render.js, compartido con la vista previa del editor.
@@ -52,16 +53,22 @@ engine.subscribe((state) => {
         if (activeEl) activeEl.classList.add('active');
     }
 
-    // Auto-scroll continuo tipo teleprompter:
-    // la partitura baja suave y constante según el progreso de la canción,
-    // así no hay saltos y se sigue cómodamente mientras se toca.
-    if (state.status === "playing" && state.totalBeats) {
+    // Auto-scroll ANCLADO al acorde activo (T-019). El mapeo lineal beat→píxel anterior se
+    // desfasaba: los píxeles no son proporcionales a los beats (secciones de distinta densidad),
+    // así que el acorde activo se iba quedando fuera de pantalla. Ahora seguimos al elemento del
+    // acorde activo y lo mantenemos a ~1/3 de la altura visible (estilo teleprompter). Solo
+    // reposicionamos cuando CAMBIA el acorde activo, para no pelear con el scroll suave.
+    if (state.status === "playing" && state.activeChordId
+            && state.activeChordId !== lastAutoScrollChordId) {
         const container = document.getElementById('score-container');
-        const maxScroll = container.scrollHeight - container.clientHeight;
-        if (maxScroll > 0) {
-            const progress = Math.min(state.currentBeat / state.totalBeats, 1);
-            // Escribimos scrollTop directamente cada frame (rAF) → descenso fluido
-            container.scrollTop = progress * maxScroll;
+        const activeEl = document.getElementById(`chord-${state.activeChordId}`);
+        if (activeEl) {
+            const cRect = container.getBoundingClientRect();
+            const eRect = activeEl.getBoundingClientRect();
+            // Cuánto desplazar para llevar el acorde a 1/3 desde arriba (relativo al scroll real).
+            const delta = (eRect.top - cRect.top) - container.clientHeight * 0.33;
+            container.scrollTo({ top: Math.max(0, container.scrollTop + delta), behavior: 'smooth' });
+            lastAutoScrollChordId = state.activeChordId;
         }
     }
 });
@@ -77,6 +84,7 @@ elBtnPlayPause.addEventListener('click', () => {
 
 elBtnStop.addEventListener('click', () => {
     engine.stop();
+    lastAutoScrollChordId = null;  // reanclar desde el principio al volver a reproducir
     // Reset scroll
     document.getElementById('score-container').scrollTo({top: 0, behavior: 'smooth'});
 });

@@ -81,6 +81,50 @@ def test_accesibilidad_aria_y_atajo_espacio(page, live_server, api):
     assert valor > 0.0, "la barra espaciadora no arrancó la reproducción"
 
 
+def _payload_largo(title="Cancion Larga"):
+    """Canción con muchas secciones/líneas para que la partitura requiera scroll."""
+    secciones = []
+    for s in range(8):
+        lineas = []
+        for ln in range(4):
+            lineas.append({
+                "order": ln + 1, "type": "lyric",
+                "content": f"Linea {s}-{ln} con algo de letra para ocupar alto",
+                "beat_start": (s * 16) + ln * 4, "beat_duration": 4,
+                "chords": [{"chord_name": "C", "char_position": 0,
+                            "beat_offset": (s * 16) + ln * 4}],
+            })
+        secciones.append({"name": f"Seccion {s}", "order": s + 1, "lines": lineas})
+    return {"title": title, "artist": "Tester", "bpm": 240, "sections": secciones}
+
+
+def test_autoscroll_mantiene_visible_el_acorde_activo(page, live_server, api):
+    """El auto-scroll sigue al acorde activo: tras reproducir un rato en una canción larga, el
+    acorde activo (.active) queda dentro del viewport del contenedor (T-019), no desfasado."""
+    wipe_songs(api)
+    sid = api.post("/songs/", json=_payload_largo()).json()["id"]
+    page.goto(live_server + f"/static/index.html?songId={sid}", wait_until="networkidle")
+    page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
+
+    page.locator("#score-container").click()
+    page.click("#btn-play-pause")
+    page.wait_for_timeout(2500)  # dejar avanzar varios acordes
+    page.click("#btn-play-pause")  # pausar
+    page.wait_for_timeout(600)    # que termine el scroll suave
+
+    visible = page.evaluate("""() => {
+        const active = document.querySelector('.chord-container.active, .chord-pill.active');
+        if (!active) return null;
+        const c = document.getElementById('score-container').getBoundingClientRect();
+        const e = active.getBoundingClientRect();
+        // El acorde activo está dentro del viewport del contenedor (con margen).
+        return e.bottom > c.top && e.top < c.bottom;
+    }""")
+    assert visible is True, "el acorde activo no quedó visible tras el auto-scroll"
+    # Y efectivamente hubo scroll (no se quedó arriba del todo).
+    assert page.evaluate("document.getElementById('score-container').scrollTop") > 0
+
+
 def test_transponer_cambia_los_acordes(page, live_server, api):
     _crear_y_abrir(page, live_server, api)
     acorde = page.locator(".chord-container, .chord-pill").first

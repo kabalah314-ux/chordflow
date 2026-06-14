@@ -64,7 +64,9 @@
 - [x] **T-018** 🟡 **Transposición con bemoles**: doble escala (SCALE_SHARP/FLAT); preserva el estilo
       de la raíz original (bemol→bemoles). `Bb`+3→`Db` (antes `C#`). Test `test_transpose_respeta_bemoles`.
       `score_render.js?v=10`.
-- [ ] **T-019** 🟡 **Auto-scroll anclado al acorde activo** (hoy mapeo lineal beat→píxel, se desfasa).
+- [x] **T-019** 🟡 **Auto-scroll anclado al acorde activo**: sigue el elemento DOM del acorde activo
+      (1/3 de la altura, teleprompter) en vez del mapeo lineal beat→píxel. Test
+      `test_autoscroll_mantiene_visible_el_acorde_activo`. `app.js?v=14`.
 - [x] **T-020** 🟡 **Parser**: `CHORD_REGEX` reescrito (sufijo como secuencia repetible de
       cualidad/nº+alteración + bajo) → ahora capta `add11`, `maj13`, `sus2`, `Em7b5`, `A7sus4`.
       Test e2e `test_ischord_reconoce_acordes_extendidos`. `editor.js?v=10`.

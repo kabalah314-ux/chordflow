@@ -813,12 +813,28 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   `editor.js→v11`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 23 e2e).
 
+### ✅ T-019 — Auto-scroll anclado al acorde activo
+
+> **Por qué:** el auto-scroll mapeaba `currentBeat/totalBeats → scrollTop` (lineal). Como los píxeles
+> NO son proporcionales a los beats (secciones de distinta densidad de líneas), el acorde activo se
+> desfasaba y acababa fuera de pantalla justo cuando hay que leerlo.
+
+- **`app.js`:** ahora seguimos el **elemento DOM del acorde activo** y lo llevamos a ~1/3 de la
+  altura visible (teleprompter), vía `getBoundingClientRect` (robusto frente a offsetParent). Solo se
+  reposiciona cuando **cambia** el acorde activo (`lastAutoScrollChordId`), para no pelear con el
+  scroll suave; se resetea en Stop.
+- **Test:** `test_autoscroll_mantiene_visible_el_acorde_activo` (e2e) — con una canción larga (8
+  secciones × 4 líneas), tras reproducir el acorde `.active` queda dentro del viewport del contenedor
+  y `scrollTop > 0`.
+- **Cache-busting:** `app.js v13→v14`.
+- **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 24 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `style.css?v=10`, `auth.js?v=11`, `util.js?v=2` (T-017), `library.js?v=13`, `app.js?v=13`, `score_render.js?v=10`, `chord_shapes.js?v=9`, `editor.js?v=11`, `sync_engine.js?v=7`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `style.css?v=10`, `auth.js?v=11`, `util.js?v=2` (T-017), `library.js?v=13`, `app.js?v=14`, `score_render.js?v=10`, `chord_shapes.js?v=9`, `editor.js?v=11`, `sync_engine.js?v=7`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.
