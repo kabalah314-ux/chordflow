@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -11,10 +12,15 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    text,
 )
 from sqlalchemy.orm import relationship
 
 from .db import Base
+
+# Valores permitidos para Line.type. Fuente única para el CHECK de BD (T-035) y la validación
+# de schema (Literal en schemas.py).
+LINE_TYPES = ("lyric", "tab", "chord_only", "comment", "spacer")
 
 
 def _utcnow():
@@ -34,17 +40,19 @@ class Song(Base):
     artist = Column(String(255))
     album = Column(String(255))
     year = Column(Integer)
-    bpm = Column(Integer, default=120)
-    time_signature_num = Column(Integer, default=4)
-    time_signature_den = Column(Integer, default=4)
+    bpm = Column(Integer, default=120, server_default=text("120"))
+    time_signature_num = Column(Integer, default=4, server_default=text("4"))
+    time_signature_den = Column(Integer, default=4, server_default=text("4"))
     key_root = Column(String(4))
     key_mode = Column(String(32))
     tuning = Column(String(32))
-    capo = Column(Integer, default=0)
+    capo = Column(Integer, default=0, server_default=text("0"))
     instrument = Column(String(32))
-    format_version = Column(String(8), default="1.0")
-    owner_id = Column(String(36), index=True) # FK a Users (Fase futura)
-    is_public = Column(Boolean, default=False)
+    format_version = Column(String(8), default="1.0", server_default=text("'1.0'"))
+    # owner_id NOT NULL (T-034): la auth es obligatoria y el router siempre lo asigna; lo
+    # blindamos a nivel de esquema para que ninguna fila pueda quedar sin dueño.
+    owner_id = Column(String(36), nullable=False, index=True)
+    is_public = Column(Boolean, default=False, server_default=text("0"))
     source_type = Column(String(32))
     source_file_path = Column(Text)
     tags = Column(JSON)
@@ -62,7 +70,7 @@ class Section(Base):
     song_id = Column(String(36), ForeignKey("songs.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(64))
     order = Column(Integer, nullable=False)
-    repeat_count = Column(Integer, default=1)
+    repeat_count = Column(Integer, default=1, server_default=text("1"))
     color_tag = Column(String(7))
 
     song = relationship("Song", back_populates="sections")
@@ -70,6 +78,14 @@ class Section(Base):
 
 class Line(Base):
     __tablename__ = "lines"
+    # CHECK a nivel de BD: Line.type solo admite los valores conocidos (T-035). Defensa en
+    # profundidad sobre la validación de schema (Literal en LineBase).
+    __table_args__ = (
+        CheckConstraint(
+            "type IN (" + ", ".join(f"'{t}'" for t in LINE_TYPES) + ")",
+            name="ck_lines_type",
+        ),
+    )
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     section_id = Column(String(36), ForeignKey("sections.id", ondelete="CASCADE"), nullable=False, index=True)

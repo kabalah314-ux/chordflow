@@ -649,6 +649,31 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   restauré los reales). YAML validado (`yaml.safe_load`: 1 job, 6 steps). La ejecución real en
   GitHub Actions se activará al publicar el repo (hoy no hay remoto configurado).
 
+### ✅ T-034 + T-035 + T-036 — Integridad de datos a nivel de BD (migración `147a6a78da86`)
+
+> **Por qué:** los modelos confiaban en Python para defaults y validación, dejando la BD
+> "blanda": un INSERT por SQL directo podía crear una canción sin dueño, con un `Line.type`
+> inventado o sin los defaults. Una sola migración batch lo blinda en el esquema.
+
+- **T-034 — `owner_id` NOT NULL:** la auth es obligatoria y el router siempre asigna dueño; ahora
+  el esquema lo exige. Test `test_owner_id_not_null_en_bd` (INSERT directo sin owner_id →
+  `IntegrityError`).
+- **T-035 — `Line.type` restringido:** validación de **schema** (`Literal[...]` en `LineBase` →
+  **422** al usuario) + **CHECK** `ck_lines_type` en BD (defensa en profundidad). La lista vive en
+  `models.LINE_TYPES` (fuente única: el CHECK se construye de ahí). Tests
+  `test_line_type_invalido_da_422` y `test_check_line_type_en_bd` (INSERT directo con type basura →
+  `IntegrityError`).
+- **T-036 — `server_default`:** `bpm/time_signature_num/den/capo/format_version/is_public`
+  (songs) y `repeat_count` (sections) llevan `server_default`, así un INSERT por SQL directo recibe
+  los defaults desde la BD, no solo desde Python. Timestamps siguen Python-side (tz-aware, evita
+  drift con `func.now()`). Test `test_server_default_en_bd`.
+- **Migración:** autogenerate detectó el NOT NULL; añadí a mano los `server_default` (no se comparan,
+  `compare_server_default` off → sin drift) y el CHECK (SQLite no lo autodetecta). `alembic check`:
+  **"No new upgrade operations detected"**. El cascade FK de T-033 sobrevive a la recreación batch
+  de `lines` (verificado). ⚠️ El NOT NULL asume que no hay filas con owner_id NULL (la API siempre
+  lo asigna).
+- **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 18 e2e); nuevo `tests/unit/test_integridad.py`.
+
 ---
 
 <a name="notas"></a>

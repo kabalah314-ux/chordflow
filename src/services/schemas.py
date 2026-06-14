@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -37,7 +37,9 @@ class TabLineResponse(TabLineBase):
 
 class LineBase(BaseModel):
     order: int
-    type: str # lyric | tab | chord_only | comment | spacer
+    # Validación de entrada (T-035): un type fuera de la lista → 422 (defensa de usuario);
+    # el CHECK de BD (models.Line) es la defensa en profundidad.
+    type: Literal["lyric", "tab", "chord_only", "comment", "spacer"]
     content: Optional[str] = None
     beat_start: Optional[float] = None
     beat_duration: Optional[float] = None

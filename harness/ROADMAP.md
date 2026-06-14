@@ -109,9 +109,12 @@
 - [x] **T-033** 🟠 FKs con `ondelete="CASCADE"` a nivel DB (las 4) + migración `dac91229a048`
       (batch mode con naming_convention para soltar FKs sin nombre). Defensa en profundidad sobre
       el cascade ORM (T-003). Test `test_cascade_a_nivel_db` (borrado con SQL directo).
-- [ ] **T-034** 🟡 `owner_id` nullable → `NOT NULL` cuando la auth sea obligatoria.
-- [ ] **T-035** 🟡 `Line.type` sin restricción (Enum/CHECK) y columnas JSON sin validar.
-- [ ] **T-036** 🟡 Defaults solo en Python, no `server_default` en la DB.
+- [x] **T-034** 🟡 `owner_id` → `NOT NULL` (la auth es obligatoria). Migración `147a6a78da86`.
+      Test `test_owner_id_not_null_en_bd`.
+- [x] **T-035** 🟡 `Line.type` restringido: `Literal` en schema (422) + CHECK `ck_lines_type` en BD
+      (fuente única `models.LINE_TYPES`). Tests `test_line_type_invalido_da_422` / `test_check_line_type_en_bd`.
+- [x] **T-036** 🟡 `server_default` en BD para los defaults escalares (songs + sections), no solo en
+      Python (timestamps siguen Python-side). Test `test_server_default_en_bd`.
 
 **🟠 API / backend (pendientes):**
 - [x] **T-037** 🟠 Paginación acotada: `skip` `Query(ge=0)`, `limit` `Query(ge=1, le=500)` → 422
