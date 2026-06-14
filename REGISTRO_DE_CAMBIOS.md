@@ -674,6 +674,19 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   lo asigna).
 - **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 18 e2e); nuevo `tests/unit/test_integridad.py`.
 
+### ✅ T-038 — Extraer helper de armado de estructura (`_append_sections`)
+
+> **Por qué:** `create_song` y `update_song` repetían **verbatim** el triple bucle que arma
+> secciones→líneas→acordes/tabs (~16 líneas duplicadas). Un cambio en la estructura obligaba a
+> tocar dos sitios y arriesgaba que divergieran.
+
+- **`_append_sections(db_song, sections)`** en `songs_router.py`: construye la jerarquía sobre
+  `db_song` apoyándose en los cascades del ORM; no hace commit (la transacción la controla el
+  endpoint). `create_song` y `update_song` ahora lo invocan.
+- **Refactor puro** (comportamiento idéntico), cubierto por los tests existentes: `test_crud_completo`
+  (create con estructura anidada) y `test_put_no_deja_filas_huerfanas` (update la recrea sin fugas).
+- **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 18 e2e).
+
 ---
 
 <a name="notas"></a>

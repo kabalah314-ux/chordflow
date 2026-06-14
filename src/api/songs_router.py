@@ -18,6 +18,25 @@ router = APIRouter(
     tags=["songs"]
 )
 
+
+def _append_sections(db_song: Song, sections) -> None:
+    """Construye la estructura anidada (secciones→líneas→acordes/tabs) sobre `db_song`,
+    apoyándose en los cascades del ORM. Extraído de create/update_song, que armaban
+    exactamente lo mismo (T-038). No hace commit: el endpoint controla la transacción."""
+    for sec_data in sections:
+        db_sec = Section(**sec_data.model_dump(exclude={"lines"}))
+        db_song.sections.append(db_sec)
+
+        for line_data in sec_data.lines:
+            db_line = Line(**line_data.model_dump(exclude={"chords", "tab_strings"}))
+            db_sec.lines.append(db_line)
+
+            for chord_data in line_data.chords:
+                db_line.chords.append(ChordMarker(**chord_data.model_dump()))
+
+            for tab_data in line_data.tab_strings:
+                db_line.tab_strings.append(TabLine(**tab_data.model_dump()))
+
 @router.get("/", response_model=List[SongSummary])
 def get_songs(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500),
               db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
@@ -68,22 +87,7 @@ def create_song(song: SongCreate, db: Session = Depends(get_db),
     try:
         # Crear la estructura anidada de SQLAlchemy, asignando el dueño
         db_song = Song(**song.model_dump(exclude={"sections"}), owner_id=user_id)
-
-        for sec_data in song.sections:
-            db_sec = Section(**sec_data.model_dump(exclude={"lines"}))
-            db_song.sections.append(db_sec)
-
-            for line_data in sec_data.lines:
-                db_line = Line(**line_data.model_dump(exclude={"chords", "tab_strings"}))
-                db_sec.lines.append(db_line)
-
-                for chord_data in line_data.chords:
-                    db_chord = ChordMarker(**chord_data.model_dump())
-                    db_line.chords.append(db_chord)
-
-                for tab_data in line_data.tab_strings:
-                    db_tab = TabLine(**tab_data.model_dump())
-                    db_line.tab_strings.append(db_tab)
+        _append_sections(db_song, song.sections)
 
         db.add(db_song)
         db.commit()
@@ -125,22 +129,8 @@ def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get
         for key, value in update_data.items():
             setattr(db_song, key, value)
 
-        # Re-crear secciones
-        for sec_data in song_update.sections:
-            db_sec = Section(**sec_data.model_dump(exclude={"lines"}))
-            db_song.sections.append(db_sec)
-
-            for line_data in sec_data.lines:
-                db_line = Line(**line_data.model_dump(exclude={"chords", "tab_strings"}))
-                db_sec.lines.append(db_line)
-
-                for chord_data in line_data.chords:
-                    db_chord = ChordMarker(**chord_data.model_dump())
-                    db_line.chords.append(db_chord)
-
-                for tab_data in line_data.tab_strings:
-                    db_tab = TabLine(**tab_data.model_dump())
-                    db_line.tab_strings.append(db_tab)
+        # Re-crear secciones (mismo armado que en create_song, ver _append_sections)
+        _append_sections(db_song, song_update.sections)
 
         db.commit()
         db.refresh(db_song)

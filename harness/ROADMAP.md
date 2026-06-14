@@ -119,7 +119,8 @@
 **🟠 API / backend (pendientes):**
 - [x] **T-037** 🟠 Paginación acotada: `skip` `Query(ge=0)`, `limit` `Query(ge=1, le=500)` → 422
       fuera de rango. Test `test_paginacion_acotada`.
-- [ ] **T-038** 🟡 `create_song`/`update_song` duplican el armado de la estructura → extraer helper.
+- [x] **T-038** 🟡 `create_song`/`update_song` extraen el armado de estructura a `_append_sections`
+      (fin de ~16 líneas duplicadas). Refactor puro; cubierto por los tests CRUD/PUT existentes.
 
 **🟡 Frontend (pendientes):**
 - [x] **T-039** 🟡 `escapeHtml` consolidado en `static/util.js` (global canónica, segura en atributos
