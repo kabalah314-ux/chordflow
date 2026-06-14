@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     # ── Caché de validación de token (T-005 / T-028) ────────────────────────
     chordflow_token_ttl: int = 60
     chordflow_token_cache_max: int = 1000
+    # Ventana de gracia (T-031): segundos TRAS expirar el TTL en que una entrada caducada se
+    # sigue aceptando si la validación remota falla (Supabase caído). Acota cuánto puede pasar
+    # un token revocado: como mucho TTL + gracia. 0 = sin gracia (rechaza en cuanto expira).
+    chordflow_token_grace: int = 300
 
     # ── CORS (T-004): orígenes permitidos, coma-separados ───────────────────
     chordflow_allowed_origins: str = "http://127.0.0.1:8000,http://localhost:8000"

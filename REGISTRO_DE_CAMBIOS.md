@@ -753,6 +753,22 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   crea atributo ni aparece en `model_dump_json`).
 - **Verificación:** `run_checks.py` **TODO VERDE** (38 unit + 20 e2e).
 
+### ✅ T-031 — Ventana de gracia acotada en el caché de token
+
+> **Por qué:** la degradación elegante de T-005 (si Supabase cae, se honra la caché) era
+> **ilimitada**: `if cached: return cached[0]` sin tope temporal. Como `_validate_token` devuelve
+> `None` tanto si el IdP está caído como si el token fue **revocado**, un token revocado seguía
+> pasando indefinidamente mientras su entrada viviera en la caché.
+
+- **Acotado:** la gracia solo aplica dentro de una ventana `expiry + TOKEN_GRACE_SECONDS`
+  (`chordflow_token_grace`, default **300s**). Pasada esa ventana, aunque el IdP falle, se
+  responde **401** y se **purga** la entrada vieja. Exposición máxima de un token revocado:
+  TTL + gracia (≈6 min con los defaults), no "para siempre".
+- **Tests:** `test_token_en_cache_sobrevive_caida_de_supabase` actualizado (caché expirada hace 10s,
+  dentro de gracia → pasa) y **nuevo** `test_token_fuera_de_la_ventana_de_gracia_se_rechaza`
+  (expirada hace 1000s → 401 + entrada purgada).
+- **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 20 e2e).
+
 ---
 
 <a name="notas"></a>

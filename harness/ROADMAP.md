@@ -105,8 +105,9 @@
 - [x] **T-030** 🟡 **SRI** en el CDN de Supabase: versión fijada `@2.108.1/dist/umd/supabase.js` +
       `integrity` (sha384) + `crossorigin` en las 4 HTML. Verificado por el doctor (modo normal
       ejecuta `createClient`). ⚠️ subir versión = recalcular hash.
-- [ ] **T-031** 🟡 Degradación del caché de token (T-005) puede dejar pasar un token **revocado**
-      mientras dure la caché → acotar la ventana de gracia / invalidación.
+- [x] **T-031** 🟡 Ventana de gracia del caché de token **acotada** a `expiry + CHORDFLOW_TOKEN_GRACE`
+      (default 300s); pasada la ventana → 401 + purga. Exposición de token revocado: TTL+gracia, no
+      ilimitada. Tests `..._sobrevive_caida_de_supabase` (actualizado) + `..._fuera_de_la_ventana_de_gracia`.
 - [x] **T-032** 🟡 Auditado: la `service_role` key no se usa en código (Settings `extra=ignore` la
       descarta), no hay `.env` trackeado, el historial no la filtra, y `/config` solo da las 3 claves
       públicas. Guards `test_config_no_expone_service_role` + `test_settings_ignora_la_service_role_key`.

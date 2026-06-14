@@ -133,18 +133,22 @@ def test_validacion_de_token_se_cachea(monkeypatch):
 
 
 def test_token_en_cache_sobrevive_caida_de_supabase(monkeypatch):
-    """Con una entrada en caché, si Supabase 'cae' la request sigue pasando (T-005)."""
+    """Con una entrada en caché DENTRO de la ventana de gracia, si Supabase 'cae' la request
+    sigue pasando (T-005 + T-031)."""
+    import time as _time
+
     from src.services import auth
 
     monkeypatch.setattr(auth, "TEST_MODE", False)
+    monkeypatch.setattr(auth, "TOKEN_GRACE_SECONDS", 300)
     auth._token_cache.clear()
 
     # Primera validación OK → queda en caché
     monkeypatch.setattr(auth, "_validate_token", lambda _t: {"id": "u1"})
     assert auth.get_current_user("Bearer tok") == "u1"
 
-    # Supabase cae (devuelve None) y forzamos caché caducada: degradación elegante
-    auth._token_cache["tok"] = ("u1", 0.0)  # expirada
+    # Supabase cae (None). Caché expirada hace 10s → dentro de la gracia (300s): pasa.
+    auth._token_cache["tok"] = ("u1", _time.monotonic() - 10)
     monkeypatch.setattr(auth, "_validate_token", lambda _t: None)
     assert auth.get_current_user("Bearer tok") == "u1"
 
@@ -152,6 +156,29 @@ def test_token_en_cache_sobrevive_caida_de_supabase(monkeypatch):
     auth._token_cache.clear()
     with pytest.raises(Exception):
         auth.get_current_user("Bearer otro")
+
+
+def test_token_fuera_de_la_ventana_de_gracia_se_rechaza(monkeypatch):
+    """T-031: una entrada caducada MÁS ALLÁ de la ventana de gracia NO se honra aunque el IdP
+    falle → 401 (acota la exposición de un token revocado a TTL + gracia). Además se purga."""
+    import time as _time
+
+    from fastapi import HTTPException
+
+    from src.services import auth
+
+    monkeypatch.setattr(auth, "TEST_MODE", False)
+    monkeypatch.setattr(auth, "TOKEN_GRACE_SECONDS", 300)
+    monkeypatch.setattr(auth, "_validate_token", lambda _t: None)  # IdP caído / token revocado
+    auth._token_cache.clear()
+
+    # Expiró hace 1000s → muy por fuera de los 300s de gracia.
+    auth._token_cache["tok"] = ("u1", _time.monotonic() - 1000)
+    with pytest.raises(HTTPException) as exc:
+        auth.get_current_user("Bearer tok")
+    assert exc.value.status_code == 401
+    assert "tok" not in auth._token_cache  # la entrada vieja se purga
+    auth._token_cache.clear()
 
 
 def test_token_cache_tiene_cota_de_tamano(monkeypatch):

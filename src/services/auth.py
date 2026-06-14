@@ -26,6 +26,9 @@ TEST_USER_ID = "test-user-0000-0000-0000-000000000000"
 TOKEN_TTL_SECONDS = settings.chordflow_token_ttl
 # Cota dura para que la caché no crezca sin límite (memory leak ante muchos tokens).
 TOKEN_CACHE_MAX = settings.chordflow_token_cache_max
+# Ventana de gracia tras expirar (T-031): acota cuánto puede sobrevivir una entrada caducada
+# cuando la validación remota falla. Limita la exposición de un token revocado a TTL + gracia.
+TOKEN_GRACE_SECONDS = settings.chordflow_token_grace
 _token_cache: dict[str, tuple[str, float]] = {}
 # uvicorn ejecuta los endpoints sync en un threadpool → varios hilos tocan la caché a la
 # vez. Sin lock, iterar el dict mientras otro hilo inserta lanza "dictionary changed size
@@ -77,10 +80,13 @@ def get_current_user(authorization: str = Header(None)) -> str:
         _cache_set(token, user["id"], now)
         return user["id"]
 
-    # 3) Falló la validación remota: si teníamos una entrada (aunque caducada),
-    #    la usamos como degradación elegante mientras Supabase se recupera.
-    if cached:
-        logger.warning("Validación remota falló; usando caché previa del token (Supabase caído?)")
+    # 3) Falló la validación remota. Degradación elegante ACOTADA (T-031): solo aceptamos una
+    #    entrada caducada dentro de la ventana de gracia (TTL ya expirado + TOKEN_GRACE_SECONDS).
+    #    Pasada esa ventana, un token revocado deja de colarse → 401, y purgamos la entrada vieja.
+    if cached and now < cached[1] + TOKEN_GRACE_SECONDS:
+        logger.warning("Validación remota falló; usando caché en ventana de gracia (Supabase caído?)")
         return cached[0]
 
+    if cached:
+        _token_cache.pop(token, None)  # fuera de la gracia: no volver a honrarla
     raise HTTPException(status_code=401, detail="Token inválido o expirado")
