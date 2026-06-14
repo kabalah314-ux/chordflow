@@ -17,22 +17,22 @@
             </div>
             <div class="global-controls" style="display: flex; gap: 1rem;">
                 <div class="control-group">
-                    <button id="btn-bpm-down" class="icon-btn">-</button>
+                    <button id="btn-bpm-down" class="icon-btn" aria-label="Bajar BPM" title="Bajar BPM">-</button>
                     <div class="bpm-display">
                         <span id="bpm-value">120</span> <span class="label">BPM</span>
                     </div>
-                    <button id="btn-bpm-up" class="icon-btn">+</button>
+                    <button id="btn-bpm-up" class="icon-btn" aria-label="Subir BPM" title="Subir BPM">+</button>
                 </div>
                 <div class="control-group">
-                    <button id="btn-key-down" class="icon-btn" title="Bajar semitono">♭</button>
+                    <button id="btn-key-down" class="icon-btn" aria-label="Bajar semitono" title="Bajar semitono">♭</button>
                     <div class="bpm-display">
                         <span id="key-value">0</span> <span class="label">Tono</span>
                     </div>
-                    <button id="btn-key-up" class="icon-btn" title="Subir semitono">♯</button>
-                    <button id="btn-key-save" class="icon-btn" title="Guardar tono">💾</button>
+                    <button id="btn-key-up" class="icon-btn" aria-label="Subir semitono" title="Subir semitono">♯</button>
+                    <button id="btn-key-save" class="icon-btn" aria-label="Guardar tono" title="Guardar tono">💾</button>
                 </div>
-                <a href="library.html" class="primary-btn square" title="Biblioteca" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
-                <a href="editor.html" class="primary-btn square" title="Crear Partitura" style="text-decoration: none;">➕</a>
+                <a href="library.html" class="primary-btn square" aria-label="Ir a la biblioteca" title="Biblioteca" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
+                <a href="editor.html" class="primary-btn square" aria-label="Crear partitura" title="Crear Partitura" style="text-decoration: none;">➕</a>
             </div>
         </header>
 
@@ -46,9 +46,9 @@
         <!-- Bottom Bar: Playback Controls -->
         <footer class="glass-panel bottom-bar">
             <div class="playback-controls">
-                <button id="btn-metronome" class="primary-btn square" title="Metrónomo (clic por beat)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🥁</button>
-                <button id="btn-stop" class="primary-btn square">⏹</button>
-                <button id="btn-play-pause" class="primary-btn">▶ Play</button>
+                <button id="btn-metronome" class="primary-btn square" aria-label="Metrónomo (clic por beat)" title="Metrónomo (clic por beat)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🥁</button>
+                <button id="btn-stop" class="primary-btn square" aria-label="Detener">⏹</button>
+                <button id="btn-play-pause" class="primary-btn" aria-label="Reproducir o pausar (barra espaciadora)">▶ Play</button>
             </div>
             <div class="time-display">
                 <span id="current-beat-display">Beat: 0.0</span>
@@ -64,6 +64,6 @@
     <script src="sync_engine.js?v=7"></script>
     <script src="score_render.js?v=10"></script>
     <script src="chord_shapes.js?v=9"></script>
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
 </body>
 </html>

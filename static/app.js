@@ -81,6 +81,17 @@ elBtnStop.addEventListener('click', () => {
     document.getElementById('score-container').scrollTo({top: 0, behavior: 'smooth'});
 });
 
+// Atajo de teclado: la barra espaciadora alterna play/pausa (T-021). Se ignora si el foco
+// está en un campo de texto, para no romper la escritura.
+document.addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' && e.key !== ' ') return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    e.preventDefault();  // evita el scroll por defecto de la barra espaciadora
+    if (engine.state.status === 'playing') engine.pause();
+    else engine.play();
+});
+
 // Guardado automático del tempo (debounce): la canción recuerda el último BPM elegido.
 let bpmSaveTimer = null;
 function scheduleBpmSave() {

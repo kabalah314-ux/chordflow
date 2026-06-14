@@ -784,12 +784,23 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `app.js v10→v11` en `index.html`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 21 e2e).
 
+### ✅ T-021 — Accesibilidad: aria-label + atajo Espacio=play
+
+- **`aria-label`** en todos los botones de emoji/icono del reproductor (BPM ±, tono ♭♯💾, 📚, ➕,
+  🥁, ⏹, ▶) y en los botones de tarjeta de la biblioteca (✏️/🗑️, con el título de la canción).
+- **Atajo de teclado:** la **barra espaciadora** alterna play/pausa (`app.js`), ignorada si el foco
+  está en un input/textarea para no romper la escritura; `preventDefault` evita el scroll por defecto.
+- **Test:** `test_accesibilidad_aria_y_atajo_espacio` (e2e) — comprueba `aria-label` en varios botones
+  y que Espacio arranca la reproducción.
+- **Cache-busting:** `app.js v11→v12`, `library.js v11→v12`.
+- **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 22 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=10` (T-018), `chord_shapes.js?v=9`, `editor.js?v=10` (T-020), `app.js?v=11` (T-041); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=10` (T-018), `chord_shapes.js?v=9`, `editor.js?v=10` (T-020), `app.js?v=12` (T-041/T-021), `library.js?v=12` (T-021); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

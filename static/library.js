@@ -47,8 +47,8 @@ function renderGrid(songs) {
 
         card.innerHTML = `
             <div class="card-actions">
-                <button class="card-action-btn" data-act="edit" title="Editar">✏️</button>
-                <button class="card-action-btn danger" data-act="delete" title="Borrar">🗑️</button>
+                <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(song.title)}" title="Editar">✏️</button>
+                <button class="card-action-btn danger" data-act="delete" aria-label="Borrar ${escapeHtml(song.title)}" title="Borrar">🗑️</button>
             </div>
             <div class="card-main">
                 <h3 class="card-title">${escapeHtml(song.title)}</h3>

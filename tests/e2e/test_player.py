@@ -64,6 +64,23 @@ def test_play_avanza_el_beat(page, live_server, api):
     assert valor > 0.0, f"el beat no avanzó: {beat_txt}"
 
 
+def test_accesibilidad_aria_y_atajo_espacio(page, live_server, api):
+    """Los botones de emoji tienen aria-label y la barra espaciadora alterna play/pausa (T-021)."""
+    _crear_y_abrir(page, live_server, api)
+    # aria-label en botones de icono/emoji.
+    for sel, etiqueta in [("#btn-stop", "Detener"), ("#btn-key-save", "Guardar tono"),
+                          ("#btn-bpm-up", "Subir BPM")]:
+        assert page.get_attribute(sel, "aria-label") == etiqueta
+
+    # Atajo: barra espaciadora arranca la reproducción.
+    page.locator("#score-container").click()  # foco fuera de inputs
+    page.keyboard.press("Space")
+    page.wait_for_timeout(600)
+    page.keyboard.press("Space")  # pausar
+    valor = float(page.inner_text("#current-beat-display").split(":")[1].strip())
+    assert valor > 0.0, "la barra espaciadora no arrancó la reproducción"
+
+
 def test_transponer_cambia_los_acordes(page, live_server, api):
     _crear_y_abrir(page, live_server, api)
     acorde = page.locator(".chord-container, .chord-pill").first
