@@ -687,12 +687,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   (create con estructura anidada) y `test_put_no_deja_filas_huerfanas` (update la recrea sin fugas).
 - **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 18 e2e).
 
+### ✅ T-020 — Parser de acordes: regex que capta extensiones y alteraciones
+
+> **Por qué:** `CHORD_REGEX` tenía `(m|maj|...)?(\d)?` → **una sola** cualidad y **un solo** dígito.
+> No parseaba `add11`/`maj13` (2 cifras) y —pese a lo que decía su comentario— tampoco `Em7b5` ni
+> `A7sus4` (cualidad + nº + alteración encadenados). Al pegar de Ultimate Guitar/LaCuerda, esas
+> líneas no se detectaban como acordes y el emparejamiento letra↔acorde fallaba.
+
+- **Nuevo regex:** sufijo como **secuencia repetible** de tokens —cualidad (`maj|min|m|M|aug|dim|
+  sus|add|+|°|ø`) o número con alteración opcional (`[#b]?\d+`: `7`, `b5`, `#11`, `13`)— + bajo
+  opcional (`/G`, `/F#`). Cada token es no vacío → sin backtracking patológico.
+- **Cobertura:** `test_ischord_reconoce_acordes_extendidos` (e2e) — valida `add11/maj13/sus2/m7b5/
+  7sus4/C13/...` como acordes y descarta palabras normales (`Hola`, `Bad`, `Age`, `Casa`, ...).
+- **Cache-busting:** `editor.js v9→v10` en `editor.html` (único que lo referencia).
+- **Verificación:** `run_checks.py` **TODO VERDE** (36 unit + 19 e2e).
+
 ---
 
 <a name="notas"></a>
 ## 11. Notas técnicas recurrentes
 
-- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-13): `auth.js?v=11`, `util.js?v=1` (nuevo, T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=9`, `chord_shapes.js?v=9`; el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
+- **Cache-busting:** los `.html` referencian JS/CSS con `?v=N`. **Al cambiar un .js/.css hay que subir el número en TODOS los .html que lo usan**, o el navegador sirve la copia vieja. Versiones actuales (2026-06-14): `auth.js?v=11`, `util.js?v=1` (T-039), `library.js?v=11`, `app.js?v=10`, `score_render.js?v=9`, `chord_shapes.js?v=9`, `editor.js?v=10` (T-020); el resto en `v=9`. **`util.js` debe cargarse ANTES** que library/score_render/chord_shapes (define la global `escapeHtml`). (Pendiente T-022: automatizar con hash.)
 - **Secretos:** `.env` y `.env.local` están en `.gitignore`. La `service_role` key **nunca** debe ir al frontend ni a git.
 - **Arquitectura de render:** `score_render.js` es la única fuente de verdad del render de partituras (reproductor + vista previa del editor).
 - **Sincronización:** el motor (`sync_engine.js`) trabaja por **ids** de acorde, por eso transposición y diagramas no la afectan.

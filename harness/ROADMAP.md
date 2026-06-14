@@ -62,8 +62,9 @@
 - [ ] **T-017** 🟡 Reemplazar `alert()`/`confirm()` por toasts/modales (lenguaje glassmorphism).
 - [ ] **T-018** 🟡 **Transposición con bemoles correctos** (hoy siempre sostenidos: a Bb muestra A#).
 - [ ] **T-019** 🟡 **Auto-scroll anclado al acorde activo** (hoy mapeo lineal beat→píxel, se desfasa).
-- [ ] **T-020** 🟡 **Parser**: `CHORD_REGEX` solo capta un dígito (`(\d)?`) → no parsea `add11`,
-      `maj13`, `sus2`. Ampliar regex y cubrir con test.
+- [x] **T-020** 🟡 **Parser**: `CHORD_REGEX` reescrito (sufijo como secuencia repetible de
+      cualidad/nº+alteración + bajo) → ahora capta `add11`, `maj13`, `sus2`, `Em7b5`, `A7sus4`.
+      Test e2e `test_ischord_reconoce_acordes_extendidos`. `editor.js?v=10`.
 - [ ] **T-021** 🟡 Accesibilidad: `aria-label` en botones de emoji + atajos (Espacio=play).
 - [ ] **T-022** 🟡 Cache-busting automático (hash de contenido) en lugar de `?v=N` manual.
 

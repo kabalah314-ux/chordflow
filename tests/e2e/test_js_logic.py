@@ -24,6 +24,20 @@ def test_parser_detecta_acordes_y_secciones(js_page):
     assert "Am" in nombres and "C" in nombres
 
 
+def test_ischord_reconoce_acordes_extendidos(js_page):
+    """El parser reconoce acordes con extensiones de 2 cifras y alteraciones encadenadas
+    que el regex viejo NO captaba (T-020): add11, maj13, sus2, m7b5, 7sus4."""
+    validos = ["Am", "F#m7", "C#7", "G/B", "Bb", "Dmaj7", "Csus2", "Cadd9",
+               "Cadd11", "Cmaj13", "Em7b5", "A7sus4", "C/F#", "C13"]
+    for ch in validos:
+        assert js_page.evaluate("(c) => isChord(c)", ch) is True, f"{ch} debería ser acorde"
+
+    # Palabras normales que NO deben colarse como acordes.
+    no_validos = ["Hola", "Bad", "Age", "Casa", "Dios", "Feo"]
+    for w in no_validos:
+        assert js_page.evaluate("(c) => isChord(c)", w) is False, f"{w} no es acorde"
+
+
 def test_transpose_sube_y_baja_semitonos(js_page):
     assert js_page.evaluate("transposeChord('Am', 2)") == "Bm"
     assert js_page.evaluate("transposeChord('C', 1)") == "C#"

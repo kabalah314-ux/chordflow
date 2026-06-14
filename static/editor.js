@@ -5,8 +5,12 @@
  */
 
 // ─── Regex de acordes válidos ───────────────────────────────────────────────
-// Reconoce acordes tipo: Am, F#m7, C#7, G/B, Bb, Dmaj7, Em7b5, A7sus4, etc.
-const CHORD_REGEX = /^[A-G]([#b])?(m|maj|min|aug|dim|sus|add)?(\d)?(\/[A-G]([#b])?)?$/;
+// Reconoce acordes: Am, F#m7, C#7, G/B, Bb, Dmaj7, Em7b5, A7sus4, Cadd9, Csus2,
+// y los que el regex viejo NO captaba: extensiones de 2 cifras (Cadd11, Cmaj13) y
+// alteraciones encadenadas (Em7b5, A7sus4). El sufijo es una secuencia repetible de
+// tokens: cualidad (maj/min/m/M/aug/dim/sus/add) o nº con alteración opcional (7, b5, #11),
+// seguida de un bajo opcional (/G, /F#). Cada token es no vacío → sin backtracking patológico.
+const CHORD_REGEX = /^[A-G][#b]?(maj|min|aug|dim|sus|add|m|M|\+|°|ø|[#b]?\d+)*(\/[A-G][#b]?)?$/;
 
 /**
  * Determina si una sola palabra es un acorde.
