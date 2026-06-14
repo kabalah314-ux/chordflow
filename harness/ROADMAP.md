@@ -166,5 +166,6 @@
       (commit `5e14adf`); run_checks TODO VERDE (27 unit + 4 e2e).
 - [ ] **T-M04** 🟡 `MOLDE.md` → guía de uso del molde (cómo nace un proyecto nuevo desde él).
 - [ ] **T-M05** 🟢 (Opcional) `create_app.py` tipo cookiecutter que rellene los huecos solo.
-- [ ] **T-M06** 🟡 Criterio de molde estable: generar un proyecto vacío desde el molde y que
-      `python harness/doctor.py` quede **verde sin tocar nada**.
+- [x] **T-M06** 🟡 Criterio de molde estable **verificado**: `git archive` del molde → carpeta nueva
+      limpia (45 ficheros) → `run_checks.py` **TODO VERDE sin tocar nada** (doctor + ruff + 27 unit +
+      4 e2e). Anotado en `../app-skeleton/harness/MOLDE.md` (commit `31e450f`).

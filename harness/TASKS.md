@@ -17,14 +17,14 @@ _(ninguna)_
 
 La cola de críticos y la mayoría de los 🟠 altos están cerrados. Elegir de `ROADMAP.md`:
 
-1. **Fase M (molde)**: **T-M06** criterio de molde estable (copiar el esqueleto a una carpeta
-   nueva y que `doctor`/`run_checks` queden verdes sin tocar nada — ya pasa verde in situ). Luego
-   **T-M04** (guía de uso del molde) y **T-M05** (cookiecutter, opcional).
-2. **Integridad de datos (Alembic ya operativo)**: T-034 `owner_id NOT NULL`, T-035 `Line.type`
-   Enum/CHECK, T-036 `server_default` — vía migración batch.
+1. **Integridad de datos (Alembic ya operativo)**: T-034 `owner_id NOT NULL`, T-035 `Line.type`
+   Enum/CHECK, T-036 `server_default` — vía migración batch (agrupar en una sola migración).
+2. **Fase M (cierre)**: **T-M04** guía de uso del molde (en gran parte ya en README + MOLDE.md);
+   **T-M05** cookiecutter (🟢 opcional). El molde ya es estable y verificado (T-M06).
+3. **Calidad/UX restante**: T-023 GitHub Actions, T-017 toasts, T-020 parser regex, etc.
 
 > ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar. Ver CHECKLIST.
-> 🧬 El molde vive en el repo hermano `../app-skeleton` (commits `e02b1b0`, `5e14adf`).
+> 🧬 El molde vive en el repo hermano `../app-skeleton` (commits `e02b1b0`, `5e14adf`, `31e450f`).
 
 ---
 
@@ -47,9 +47,9 @@ T-025 `/health` liveness · T-039 `escapeHtml` consolidado en `util.js` · T-044
 molde (handler de errores global → cierra los 4 pilares) · T-043 auth desacoplada (provider enchufable).
 
 **Fase M (molde):** T-M01 inventario validado · T-M02 `app-skeleton/` creado · T-M03 docs
-plantilladas + prefijo env como una perilla (`env_prefix`). Todo en `../app-skeleton`.
+plantilladas + prefijo env como una perilla · T-M06 molde estable verificado (copia limpia verde).
 
 > Estado de calidad ChordFlow: 30 unit + 18 e2e en verde. Molde: 27 unit + 4 e2e en verde.
-> Git: 21+ commits. **Molde EXTRAÍDO y PLANTILLADO** en `../app-skeleton`. Pendiente del molde:
-> T-M06 (criterio de molde estable), T-M04 (guía de uso), T-M05 (cookiecutter, opcional).
+> Git: 22+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. Pendiente
+> del molde: T-M04 (guía de uso, casi cubierta), T-M05 (cookiecutter, opcional).
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.

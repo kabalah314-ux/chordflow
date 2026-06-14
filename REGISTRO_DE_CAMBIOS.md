@@ -619,6 +619,19 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   sustituciones (nombre, prefijo, recurso `Item`).
 - **Verificación:** `run_checks.py` del esqueleto **TODO VERDE** (27 unit + 4 e2e).
 
+### ✅ T-M06 — Criterio de molde estable verificado (prueba de copia real)
+
+> **Por qué:** la garantía de fondo del molde es que un proyecto recién nacido de él arranque verde
+> sin tocar nada. Hasta ahora el esqueleto pasaba verde *in situ*; faltaba la prueba con una **copia
+> fresca**, que es como lo usaría un proyecto nuevo.
+
+- **Prueba:** `git archive HEAD` del molde → extraído a una carpeta nueva y limpia (45 ficheros,
+  **sin** `.git`/`__pycache__`/`*.db`/logs, confirmado) → `python harness/run_checks.py` ahí **sin
+  modificar nada**.
+- **Resultado:** **TODO VERDE** — doctor (10/10) + ruff + 27 unit + 4 e2e. El molde es estable.
+  Carpeta de prueba eliminada tras verificar. Anotado en `../app-skeleton/harness/MOLDE.md`
+  (commit `31e450f`).
+
 ---
 
 <a name="notas"></a>

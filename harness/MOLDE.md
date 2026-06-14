@@ -6,8 +6,9 @@
 > Estado: **MOLDE EXTRAÍDO Y PLANTILLADO** (T-M02 + T-M03, 2026-06-13). El esqueleto vive en el
 > repo hermano `../app-skeleton` (commits `e02b1b0`, `5e14adf`) con recurso `Item`; docs con huecos
 > `{{...}}` y prefijo de env como una sola perilla (`env_prefix`). `run_checks` TODO VERDE recién
-> copiado (doctor + ruff + 27 unit + 4 e2e). Inventario validado en T-M01. Pendiente: T-M06
-> (criterio de molde estable), T-M04 (guía de uso), T-M05 (cookiecutter).
+> copiado (doctor + ruff + 27 unit + 4 e2e). Inventario validado en T-M01. **Molde estable
+> VERIFICADO** (T-M06): copia limpia vía `git archive` → run_checks TODO VERDE sin tocar nada.
+> Pendiente: T-M04 (guía de uso, casi cubierta por README+MOLDE), T-M05 (cookiecutter, opcional).
 
 ---
 
