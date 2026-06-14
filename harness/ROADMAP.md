@@ -68,7 +68,9 @@
 - [ ] **T-022** 🟡 Cache-busting automático (hash de contenido) en lugar de `?v=N` manual.
 
 ## Fase 4 — CI / profesionalización
-- [ ] **T-023** 🟠 **GitHub Actions**: correr `python harness/run_checks.py` en cada push/PR.
+- [x] **T-023** 🟠 **GitHub Actions** (`.github/workflows/ci.yml`): Python 3.12 → deps + playwright
+      chromium → `run_checks.py` en cada push/PR. CI crea `.env` dummy (secretos gitignoreados; modo
+      test no usa Supabase). Verificado en local con entorno CI simulado; se activa al publicar en GitHub.
 - [x] **T-024** 🟡 **Validación de rangos en schemas** con `Field(...)`: `bpm` 20–400, `year` 0–3000,
       compás 1–32, `capo` 0–24, `title` 1–255. Test `test_validacion_de_rangos` (422).
 - [x] **T-025** 🟡 **Endpoint `/health`** (liveness) → `{"status":"ok"}`, sin deps ni auth,

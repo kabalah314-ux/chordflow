@@ -632,6 +632,23 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   Carpeta de prueba eliminada tras verificar. Anotado en `../app-skeleton/harness/MOLDE.md`
   (commit `31e450f`).
 
+### ✅ T-023 — GitHub Actions (CI en cada push/PR)
+
+> **Por qué:** profesionaliza el repo — la "definición de terminado" (`run_checks.py`) deja de
+> depender de que alguien la corra a mano; CI la ejecuta en cada push y PR.
+
+- **`.github/workflows/ci.yml`:** Ubuntu + Python 3.12 (cache pip) → instala `requirements` +
+  `requirements-dev` → `playwright install --with-deps chromium` → `python harness/run_checks.py`
+  (doctor + ruff + unit + e2e). Timeout 20 min.
+- **Gotcha del doctor en CI:** el doctor exige `.env`/`.env.local` con claves de Supabase
+  presentes, pero los secretos están gitignoreados. Como los tests corren en **modo test** (no
+  llaman a Supabase) y el 401-sin-token y el smoke no dependen del IdP real, el workflow crea
+  `.env`/`.env.local` con valores **placeholder** antes de correr los checks.
+- **Verificación:** simulé el entorno de CI en local (respaldé mis `.env` reales, los reemplacé por
+  los dummy del workflow, corrí el doctor → **verde 10/10** incluido el smoke de navegador, y
+  restauré los reales). YAML validado (`yaml.safe_load`: 1 job, 6 steps). La ejecución real en
+  GitHub Actions se activará al publicar el repo (hoy no hay remoto configurado).
+
 ---
 
 <a name="notas"></a>

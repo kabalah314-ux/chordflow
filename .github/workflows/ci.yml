@@ -1,0 +1,41 @@
+name: CI
+
+# Corre toda la verificación de calidad (doctor + ruff + unit + e2e) en cada push y PR.
+# Es la misma "definición de terminado" que en local: harness/run_checks.py.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Instalar navegador de Playwright
+        run: python -m playwright install --with-deps chromium
+
+      - name: Crear .env dummy (CI no tiene secretos commiteados)
+        # El doctor exige .env/.env.local con claves de Supabase presentes. En CI no hay
+        # secretos en el repo y los tests corren en modo test (no llaman a Supabase), así que
+        # bastan valores placeholder: el 401 sin token y el smoke no dependen del IdP real.
+        run: |
+          printf 'LOG_LEVEL=INFO\n' > .env
+          printf 'SUPABASE_URL=https://dummy.supabase.co\nSUPABASE_ANON_KEY=dummy-anon-key-for-ci\n' > .env.local
+
+      - name: Verificación de calidad (doctor + ruff + unit + e2e)
+        run: python harness/run_checks.py

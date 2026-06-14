@@ -21,7 +21,7 @@ La cola de críticos y la mayoría de los 🟠 altos están cerrados. Elegir de 
    Enum/CHECK, T-036 `server_default` — vía migración batch (agrupar en una sola migración).
 2. **Fase M (cierre)**: **T-M04** guía de uso del molde (en gran parte ya en README + MOLDE.md);
    **T-M05** cookiecutter (🟢 opcional). El molde ya es estable y verificado (T-M06).
-3. **Calidad/UX restante**: T-023 GitHub Actions, T-017 toasts, T-020 parser regex, etc.
+3. **Calidad/UX restante**: T-017 toasts, T-020 parser regex, T-040 sync, T-038 refactor, etc.
 
 > ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar. Ver CHECKLIST.
 > 🧬 El molde vive en el repo hermano `../app-skeleton` (commits `e02b1b0`, `5e14adf`, `31e450f`).
@@ -49,7 +49,9 @@ molde (handler de errores global → cierra los 4 pilares) · T-043 auth desacop
 **Fase M (molde):** T-M01 inventario validado · T-M02 `app-skeleton/` creado · T-M03 docs
 plantilladas + prefijo env como una perilla · T-M06 molde estable verificado (copia limpia verde).
 
+**Fase 4 (CI):** T-023 GitHub Actions (`.github/workflows/ci.yml`, run_checks en cada push/PR).
+
 > Estado de calidad ChordFlow: 30 unit + 18 e2e en verde. Molde: 27 unit + 4 e2e en verde.
-> Git: 22+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. Pendiente
-> del molde: T-M04 (guía de uso, casi cubierta), T-M05 (cookiecutter, opcional).
+> Git: 23+ commits. **Molde EXTRAÍDO, PLANTILLADO y VERIFICADO** en `../app-skeleton`. CI listo
+> (se activa al publicar en GitHub). Pendiente molde: T-M04 (casi cubierta), T-M05 (opcional).
 > Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.
