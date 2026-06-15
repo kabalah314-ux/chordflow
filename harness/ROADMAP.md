@@ -164,8 +164,15 @@
       `Settings` pydantic-settings (T-016). README/plantillas del molde → se materializan en T-M02.
 
 ## Fase 5 — Diferenciación de producto
-- [ ] 🟢 PWA + offline · 🟢 Setlists/repertorios · 🟢 Export PDF · 🟢 UI de tablaturas
-      (`TabLine` ya modelado) · 🟢 Responsive/tablet · 🟢 Migrar SQLite → Postgres/Supabase.
+- [x] 🟢 **Responsive móvil/tablet** — media queries (820/480px); barras envuelven, editor/formularios
+      apilados, partitura con scroll-x, targets táctiles. Test `test_responsive_pwa` (sin overflow).
+- [x] 🟢 **PWA instalable** — manifest + iconos 192/512 + service worker (API no cacheada, HTML
+      network-first, estáticos cache-first por hash). Registrado en `auth.js`.
+- [x] 🟢 **Export PDF** — botón en el reproductor → `window.print()` + `@media print` (solo la
+      partitura, B/N). Test `test_export_pdf_oculta_controles`.
+- [x] 🟢 **Migrar SQLite → Postgres/Supabase** — hecho en Fase 6 (Paso 2).
+- [ ] 🟢 **Setlists/repertorios** — pendiente (feature grande: entidad + CRUD + UI + reproducir en orden).
+- [ ] 🟢 **UI de tablaturas** (`TabLine` ya modelado) — pendiente (editor + render de tabs).
 - [x] **T-045** 🟢 **Importar desde URL con IA** — **EN VIVO y verificado**. `POST /import/` (auth):
       lee la página (lector **Jina**, con fallback a **descarga directa + limpieza HTML** cuando Jina
       se rate-limitea desde datacenter) y una **IA gratuita por OpenRouter** (`openai/gpt-oss-120b:free`,
