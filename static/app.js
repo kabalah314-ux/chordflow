@@ -89,6 +89,11 @@ elBtnStop.addEventListener('click', () => {
     document.getElementById('score-container').scrollTo({top: 0, behavior: 'smooth'});
 });
 
+// Exportar a PDF: imprime la partitura actual (con su transposición) → "Guardar como PDF" del
+// navegador. Los estilos @media print muestran solo la partitura en blanco/negro (Fase 5).
+const elBtnPrint = document.getElementById('btn-print');
+if (elBtnPrint) elBtnPrint.addEventListener('click', () => window.print());
+
 // Atajo de teclado: la barra espaciadora alterna play/pausa (T-021). Se ignora si el foco
 // está en un campo de texto, para no romper la escritura.
 document.addEventListener('keydown', (e) => {

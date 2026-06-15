@@ -125,6 +125,21 @@ def test_autoscroll_mantiene_visible_el_acorde_activo(page, live_server, api):
     assert page.evaluate("document.getElementById('score-container').scrollTop") > 0
 
 
+def test_export_pdf_oculta_controles(page, live_server, api):
+    """El botón de PDF existe y, en media 'print', se ocultan los controles y la partitura
+    queda visible (Fase 5). No imprime de verdad; emula el media print para validar el CSS."""
+    _crear_y_abrir(page, live_server, api, title="Cancion PDF")
+    assert page.locator("#btn-print").count() == 1
+
+    page.emulate_media(media="print")
+    page.wait_for_timeout(150)
+    # La barra inferior de controles se oculta al imprimir...
+    assert page.locator(".bottom-bar").is_visible() is False
+    # ...y la partitura sigue visible.
+    assert page.locator("#score-content").is_visible() is True
+    page.emulate_media(media="screen")
+
+
 def test_transponer_cambia_los_acordes(page, live_server, api):
     _crear_y_abrir(page, live_server, api)
     acorde = page.locator(".chord-container, .chord-pill").first

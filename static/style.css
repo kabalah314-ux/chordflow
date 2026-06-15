@@ -432,6 +432,27 @@ button {
     #btn-play-pause { flex: 1; }   /* Play ocupa el ancho disponible */
 }
 
+/* ─── Impresión / Export PDF (Fase 5): solo la partitura, en blanco y negro ── */
+@media print {
+    body, #app { background: #fff !important; color: #000 !important; height: auto !important;
+        display: block !important; overflow: visible !important; }
+    /* Ocultar controles; conservar el título de la canción como cabecera */
+    .global-controls, .bottom-bar, .scroll-anchor, #btn-print { display: none !important; }
+    .top-bar { height: auto !important; padding: 0 0 0.5rem !important; border-bottom: 1px solid #ccc;
+        background: #fff !important; box-shadow: none !important; }
+    .song-info h1 { color: #000 !important; font-size: 1.4rem; }
+    .song-info h2 { color: #444 !important; }
+    /* Partitura completa, sin scroll */
+    #score-container { overflow: visible !important; height: auto !important; padding: 0.5rem 0 !important;
+        background: #fff !important; }
+    .section-name { color: #000 !important; }
+    .line-lyric, .line-chord-only { color: #000 !important; }
+    .chord-container, .chord-pill { color: #1a5fb4 !important; font-weight: 700; }
+    .chord-container.active, .chord-pill.active { color: #1a5fb4 !important; background: none !important; }
+    /* Evitar cortar secciones entre páginas */
+    .section-block { break-inside: avoid; page-break-inside: avoid; }
+}
+
 .form-row {
     display: flex;
     gap: 1.5rem;
