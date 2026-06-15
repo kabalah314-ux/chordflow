@@ -58,7 +58,9 @@ class Settings(BaseSettings):
     # El modelo es configurable porque qué modelos son gratis cambia con el tiempo; por
     # defecto uno gratuito (sufijo ":free"). La página se obtiene vía el lector Jina.
     openrouter_api_key: str | None = None
-    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
+    # Modelo gratuito por defecto (verificado funcionando). Si deja de estar gratis/disponible,
+    # cambiar por env var OPENROUTER_MODEL a otro `:free` (ver openrouter.ai/models).
+    openrouter_model: str = "openai/gpt-oss-120b:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     # Lector que renderiza JS/sortea anti-bot y devuelve texto limpio (prefijo de URL).
     chordflow_reader_url: str = "https://r.jina.ai/"
