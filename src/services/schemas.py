@@ -136,3 +136,42 @@ class SongSummary(SongBase):
     section_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ── Setlists / repertorios (Fase 5) ──────────────────────────────────────────
+class SetlistCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    song_ids: List[str] = []  # canciones en el orden deseado
+
+
+class SetlistUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    song_ids: Optional[List[str]] = None  # si viene, reemplaza la lista/orden completo
+
+
+class SetlistItemOut(BaseModel):
+    song_id: str
+    position: int
+    title: str
+    artist: Optional[str] = None
+    bpm: Optional[int] = None
+
+
+class SetlistResponse(BaseModel):
+    id: str
+    name: str
+    owner_id: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    items: List[SetlistItemOut] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SetlistSummary(BaseModel):
+    id: str
+    name: str
+    song_count: int = 0
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

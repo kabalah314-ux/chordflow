@@ -1,0 +1,184 @@
+/**
+ * setlists.js — Repertorios: crear, ver, reproducir en orden y borrar (Fase 5).
+ */
+const elGrid = document.getElementById('setlist-grid');
+const elDetail = document.getElementById('setlist-detail');
+const elBtnNew = document.getElementById('btn-new-setlist');
+
+elBtnNew.addEventListener('click', openCreate);
+
+function showGrid() { elDetail.style.display = 'none'; elGrid.style.display = ''; }
+function showDetail() { elGrid.style.display = 'none'; elDetail.style.display = ''; }
+
+// ─── Lista de repertorios ─────────────────────────────────────────────────────
+async function loadSetlists() {
+    showGrid();
+    try {
+        const res = await apiFetch('/setlists/');
+        if (!res.ok) throw new Error('http');
+        const setlists = await res.json();
+        if (!setlists.length) {
+            elGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🎼</div>
+                <h3>Aún no tienes repertorios</h3>
+                <p>Crea uno para agrupar canciones y tocarlas en orden en tus bolos.</p></div>`;
+            return;
+        }
+        elGrid.innerHTML = setlists.map(sl => `
+            <div class="song-card" data-id="${escapeHtml(sl.id)}">
+                <div class="card-actions">
+                    <button class="card-action-btn danger" data-act="del" aria-label="Borrar ${escapeHtml(sl.name)}" title="Borrar">🗑️</button>
+                </div>
+                <div class="card-main" data-act="open" style="cursor:pointer;">
+                    <h3 class="card-title">${escapeHtml(sl.name)}</h3>
+                    <p class="card-artist">${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}</p>
+                </div>
+            </div>`).join('');
+        elGrid.querySelectorAll('.song-card').forEach(card => {
+            const id = card.dataset.id;
+            card.querySelector('[data-act="open"]').addEventListener('click', () => openSetlist(id));
+            card.querySelector('[data-act="del"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const name = card.querySelector('.card-title').textContent;
+                deleteSetlist(id, name);
+            });
+        });
+    } catch (e) {
+        elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudieron cargar los repertorios.</p>`;
+    }
+}
+
+async function deleteSetlist(id, name) {
+    const ok = await confirmModal(`¿Borrar el repertorio "${name}"?`, { okText: 'Borrar' });
+    if (!ok) return;
+    try {
+        const res = await apiFetch(`/setlists/${id}`, { method: 'DELETE' });
+        if (!res.ok && res.status !== 204) throw new Error('http');
+        loadSetlists();
+    } catch (e) { toast('No se pudo borrar el repertorio.', 'error'); }
+}
+
+// ─── Crear repertorio ─────────────────────────────────────────────────────────
+async function openCreate() {
+    showDetail();
+    elDetail.innerHTML = `<p class="loading-text">Cargando tus canciones…</p>`;
+    let songs = [];
+    try {
+        const res = await apiFetch('/songs/');
+        songs = await res.json();
+    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ Error cargando canciones.</p>'; return; }
+
+    const selected = []; // ids en orden
+    elDetail.innerHTML = `
+        <div class="setlist-editor">
+            <a href="#" id="sl-back" class="back-link">← Volver</a>
+            <h3>Nuevo repertorio</h3>
+            <input type="text" id="sl-name" class="search-box" placeholder="Nombre del repertorio (p. ej. Bolo sábado)">
+            <div class="setlist-cols">
+                <div>
+                    <h4>Canciones disponibles</h4>
+                    <ul id="sl-available" class="setlist-list"></ul>
+                </div>
+                <div>
+                    <h4>En el repertorio (en orden)</h4>
+                    <ul id="sl-selected" class="setlist-list"></ul>
+                </div>
+            </div>
+            <div class="form-actions"><button id="sl-save" class="primary-btn">💾 Crear repertorio</button></div>
+        </div>`;
+    document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); loadSetlists(); });
+
+    const elAvail = document.getElementById('sl-available');
+    const elSel = document.getElementById('sl-selected');
+    const byId = Object.fromEntries(songs.map(s => [s.id, s]));
+
+    function renderAvail() {
+        elAvail.innerHTML = songs.map(s => `
+            <li><button class="setlist-item-btn" data-id="${escapeHtml(s.id)}" ${selected.includes(s.id) ? 'disabled' : ''}>
+                ➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('')
+            || '<li><small>No tienes canciones todavía.</small></li>';
+        elAvail.querySelectorAll('button[data-id]').forEach(b =>
+            b.addEventListener('click', () => { selected.push(b.dataset.id); renderAll(); }));
+    }
+    function renderSel() {
+        elSel.innerHTML = selected.map((id, i) => `
+            <li><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
+                <button class="setlist-item-btn danger" data-rm="${escapeHtml(id)}" aria-label="Quitar">✕</button></li>`).join('')
+            || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
+        elSel.querySelectorAll('button[data-rm]').forEach(b =>
+            b.addEventListener('click', () => {
+                const idx = selected.indexOf(b.dataset.rm); if (idx > -1) selected.splice(idx, 1); renderAll();
+            }));
+    }
+    function renderAll() { renderAvail(); renderSel(); }
+    renderAll();
+
+    document.getElementById('sl-save').addEventListener('click', async () => {
+        const name = document.getElementById('sl-name').value.trim();
+        if (!name) { toast('Pon un nombre al repertorio.', 'error'); return; }
+        try {
+            const res = await apiFetch('/setlists/', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, song_ids: selected })
+            });
+            if (!res.ok) throw new Error('http');
+            toast('Repertorio creado.', 'success');
+            loadSetlists();
+        } catch (e) { toast('No se pudo crear el repertorio.', 'error'); }
+    });
+}
+
+// ─── Ver / reproducir un repertorio ───────────────────────────────────────────
+async function openSetlist(id) {
+    showDetail();
+    elDetail.innerHTML = `<p class="loading-text">Cargando…</p>`;
+    let sl;
+    try {
+        const res = await apiFetch(`/setlists/${id}`);
+        if (!res.ok) throw new Error('http');
+        sl = await res.json();
+    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ No se pudo abrir el repertorio.</p>'; return; }
+
+    const rows = sl.items.map((it, i) => `
+        <li class="setlist-song" data-id="${escapeHtml(it.song_id)}" data-pos="${i}">
+            <span class="sl-num">${i + 1}</span>
+            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small></span>
+            <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
+            <button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">✕</button>
+        </li>`).join('') || '<li><small>Este repertorio está vacío. Edítalo para añadir canciones.</small></li>';
+
+    elDetail.innerHTML = `
+        <div class="setlist-editor">
+            <a href="#" id="sl-back" class="back-link">← Volver</a>
+            <div class="setlist-detail-head">
+                <h3>${escapeHtml(sl.name)}</h3>
+                ${sl.items.length ? `<button id="sl-playall" class="primary-btn">▶ Reproducir todo</button>` : ''}
+            </div>
+            <ul class="setlist-list">${rows}</ul>
+        </div>`;
+    document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); loadSetlists(); });
+
+    const playAt = (songId, pos) => {
+        window.location.href = `index.html?songId=${encodeURIComponent(songId)}&setlist=${encodeURIComponent(id)}&pos=${pos}`;
+    };
+    const playAll = document.getElementById('sl-playall');
+    if (playAll) playAll.addEventListener('click', () => playAt(sl.items[0].song_id, 0));
+
+    elDetail.querySelectorAll('.setlist-song').forEach(li => {
+        const songId = li.dataset.id, pos = parseInt(li.dataset.pos, 10);
+        li.querySelector('[data-act="play"]').addEventListener('click', () => playAt(songId, pos));
+        li.querySelector('[data-act="rm"]').addEventListener('click', async () => {
+            const nuevos = sl.items.filter(x => x.song_id !== songId).map(x => x.song_id);
+            try {
+                const res = await apiFetch(`/setlists/${id}`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ song_ids: nuevos })
+                });
+                if (!res.ok) throw new Error('http');
+                openSetlist(id);
+            } catch (e) { toast('No se pudo quitar la canción.', 'error'); }
+        });
+    });
+}
+
+// ─── Logout opcional reutilizando auth ───────────────────────────────────────
+(async () => { await requireAuth(); loadSetlists(); })();

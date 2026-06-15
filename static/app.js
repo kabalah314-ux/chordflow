@@ -94,6 +94,36 @@ elBtnStop.addEventListener('click', () => {
 const elBtnPrint = document.getElementById('btn-print');
 if (elBtnPrint) elBtnPrint.addEventListener('click', () => window.print());
 
+// Barra de repertorio: si se llega con ?setlist=<id>, muestra anterior/siguiente y la posición.
+async function setupSetlistNav() {
+    const params = new URLSearchParams(window.location.search);
+    const setlistId = params.get('setlist');
+    const elNav = document.getElementById('setlist-nav');
+    if (!setlistId || !elNav) return;
+    try {
+        const res = await apiFetch(`/setlists/${setlistId}`);
+        if (!res.ok) return;
+        const sl = await res.json();
+        const ids = sl.items.map(i => i.song_id);
+        const curId = params.get('songId');
+        let pos = parseInt(params.get('pos'), 10);
+        if (isNaN(pos) || ids[pos] !== curId) pos = ids.indexOf(curId);  // recalcular si no cuadra
+        if (pos < 0) return;
+        const go = (p) => { window.location.href =
+            `index.html?songId=${encodeURIComponent(ids[p])}&setlist=${encodeURIComponent(setlistId)}&pos=${p}`; };
+        const prevDis = pos <= 0 ? 'disabled' : '';
+        const nextDis = pos >= ids.length - 1 ? 'disabled' : '';
+        elNav.innerHTML = `
+            <button id="sl-prev" class="secondary-btn" ${prevDis} aria-label="Canción anterior">◀</button>
+            <span class="sl-nav-label">🎼 ${escapeHtml(sl.name)} · ${pos + 1}/${ids.length}</span>
+            <button id="sl-next" class="secondary-btn" ${nextDis} aria-label="Siguiente canción">▶</button>`;
+        elNav.style.display = 'flex';
+        const p = document.getElementById('sl-prev'); if (p && !prevDis) p.addEventListener('click', () => go(pos - 1));
+        const n = document.getElementById('sl-next'); if (n && !nextDis) n.addEventListener('click', () => go(pos + 1));
+    } catch (e) { /* sin barra si falla */ }
+}
+setupSetlistNav();
+
 // Atajo de teclado: la barra espaciadora alterna play/pausa (T-021). Se ignora si el foco
 // está en un campo de texto, para no romper la escritura.
 document.addEventListener('keydown', (e) => {

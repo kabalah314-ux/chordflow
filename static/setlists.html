@@ -7,36 +7,32 @@
     <meta name="theme-color" content="#0f0f14">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>ChordFlow — Biblioteca</title>
+    <title>ChordFlow — Repertorios</title>
     <link rel="stylesheet" href="style.css?v=847d58c2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="app">
-        <!-- Top Bar -->
         <header class="glass-panel top-bar">
             <div class="song-info">
-                <h1>ChordFlow</h1>
-                <h2>Tu biblioteca de partituras</h2>
+                <h1>🎼 Repertorios</h1>
+                <h2>Agrupa canciones y tócalas en orden</h2>
             </div>
             <div class="global-controls" style="display:flex; align-items:center; gap:1rem;">
-                <a href="setlists.html" class="primary-btn" title="Repertorios" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🎼 Repertorios</a>
-                <a href="editor.html" class="primary-btn" title="Crear Partitura" style="text-decoration: none;">➕ Nueva Partitura</a>
-                <div class="user-box">
-                    <span id="user-email" class="user-email"></span>
-                    <button id="btn-logout" class="icon-btn" title="Cerrar sesión">⎋</button>
-                </div>
+                <a href="library.html" class="primary-btn square" title="Biblioteca" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
+                <button id="btn-new-setlist" class="primary-btn">➕ Nuevo repertorio</button>
             </div>
         </header>
 
-        <!-- Main Content: Song Library -->
         <main id="library-container">
             <div class="library-content">
-                <input type="search" id="search-input" class="search-box" placeholder="🔍 Buscar por título o artista...">
-                <div id="song-grid" class="song-grid">
-                    <!-- Cards inyectadas dinámicamente -->
-                    <p class="loading-text">Cargando canciones...</p>
+                <!-- Vista lista de repertorios -->
+                <div id="setlist-grid" class="song-grid">
+                    <p class="loading-text">Cargando repertorios…</p>
                 </div>
+
+                <!-- Vista detalle de un repertorio (oculta por defecto) -->
+                <div id="setlist-detail" style="display:none;"></div>
             </div>
         </main>
     </div>
@@ -46,6 +42,6 @@
             crossorigin="anonymous"></script>
     <script src="auth.js?v=f9a03bd3"></script>
     <script src="util.js?v=eb457792"></script>
-    <script src="library.js?v=701ac378"></script>
+    <script src="setlists.js?v=422db875"></script>
 </body>
 </html>

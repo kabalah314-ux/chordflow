@@ -126,3 +126,35 @@ class TabLine(Base):
     fret_sequence = Column(JSON) # Array of objects: beat, fret, technique, duration
 
     line = relationship("Line", back_populates="tab_strings")
+
+
+class Setlist(Base):
+    """Repertorio: lista ordenada de canciones del usuario para tocar en directo (Fase 5)."""
+
+    __tablename__ = "setlists"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    name = Column(String(255), nullable=False)
+    owner_id = Column(String(36), nullable=False, index=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (como Song)
+
+    items = relationship("SetlistItem", back_populates="setlist",
+                         cascade="all, delete-orphan", order_by="SetlistItem.position")
+
+
+class SetlistItem(Base):
+    """Una entrada (canción en una posición) dentro de un repertorio."""
+
+    __tablename__ = "setlist_items"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    setlist_id = Column(String(36), ForeignKey("setlists.id", ondelete="CASCADE"),
+                        nullable=False, index=True)
+    song_id = Column(String(36), ForeignKey("songs.id", ondelete="CASCADE"),
+                     nullable=False, index=True)
+    position = Column(Integer, nullable=False)  # orden dentro del repertorio (0,1,2…)
+
+    setlist = relationship("Setlist", back_populates="items")
+    song = relationship("Song")
