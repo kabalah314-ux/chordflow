@@ -53,6 +53,18 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     chordflow_log_stdout: bool = False
 
+    # ── Importar desde URL con IA (T-045) ───────────────────────────────────
+    # Proveedor: OpenRouter (compatible OpenAI). Clave gratuita en openrouter.ai → Keys.
+    # El modelo es configurable porque qué modelos son gratis cambia con el tiempo; por
+    # defecto uno gratuito (sufijo ":free"). La página se obtiene vía el lector Jina.
+    openrouter_api_key: str | None = None
+    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    # Lector que renderiza JS/sortea anti-bot y devuelve texto limpio (prefijo de URL).
+    chordflow_reader_url: str = "https://r.jina.ai/"
+    # Tope de caracteres de la página enviados a la IA (acota tokens/coste/latencia).
+    chordflow_import_max_chars: int = 12000
+
     @property
     def allowed_origins_list(self) -> list[str]:
         """`chordflow_allowed_origins` partido en lista, sin vacíos."""

@@ -19,3 +19,5 @@ logs/
 # IDEs
 .vscode/
 .idea/
+
+.vercel

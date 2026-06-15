@@ -843,6 +843,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `sync_engine.js v7→v8`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 26 e2e).
 
+### 🟡 T-045 — Importar partitura desde URL con IA (implementado; pendiente clave + deploy)
+
+> **Por qué:** que el usuario pegue un enlace y la app saque la partitura sola. Decisión del usuario:
+> proveedor de IA **gratuito** (OpenRouter, tarea simple) + lector **Jina** para sortear JS/anti-bot.
+
+- **Backend:** `src/services/importer.py` (lector Jina `r.jina.ai` por urllib → texto; OpenRouter
+  chat/completions por urllib → partitura en el formato del editor). `src/api/import_router.py`:
+  `POST /import/` con auth, `HttpUrl` (422 si inválida), errores → 502 con mensaje de usuario.
+- **Config (T-016):** `OPENROUTER_API_KEY` (gratis), `OPENROUTER_MODEL` (default
+  `meta-llama/llama-3.3-free`), `OPENROUTER_BASE_URL`, `CHORDFLOW_READER_URL`,
+  `CHORDFLOW_IMPORT_MAX_CHARS` (tope de tokens). Sin nuevas deps (todo por urllib stdlib).
+- **Frontend:** input de URL + botón "Importar con IA" en el editor → `apiFetch('/import/')` →
+  rellena el textarea + vista previa + toast. El usuario revisa antes de guardar.
+- **Tests:** `tests/unit/test_import.py` (IA mockeada: 200, 422 URL inválida, 502 error, 401 sin
+  token) + e2e `test_importar_desde_url_rellena_el_editor` (ruta `/import/` mockeada con Playwright).
+- **Verificación:** `run_checks.py` **TODO VERDE** (44 unit + 24 e2e) con la IA mockeada. **Pendiente:**
+  poner `OPENROUTER_API_KEY` real (local + Vercel) y probar con un enlace de verdad.
+
 ### ✅ T-022 — Cache-busting automático por hash de contenido
 
 > **Por qué:** el `?v=N` manual obligaba a recordar subir el número en **todos** los `.html` al tocar

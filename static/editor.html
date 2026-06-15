@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nueva Partitura - ChordFlow Editor</title>
-    <link rel="stylesheet" href="style.css?v=a484e174">
+    <link rel="stylesheet" href="style.css?v=8bdb4326">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -39,9 +39,18 @@
                         </div>
                     </div>
                     
+                    <div class="input-group mt-2" style="margin-bottom: 0.75rem;">
+                        <label for="import-url">✨ Importar desde un enlace (con IA)</label>
+                        <div class="import-row">
+                            <input type="url" id="import-url" placeholder="Pega el enlace de Ultimate Guitar, LaCuerda…" autocomplete="off">
+                            <button type="button" id="btn-import" class="secondary-btn">Importar con IA</button>
+                        </div>
+                        <p class="help-text" id="import-msg">La IA lee la página y rellena la letra y los acordes abajo. Revísalo antes de guardar.</p>
+                    </div>
+
                     <div class="input-group mt-2" style="margin-bottom: 0.5rem;">
                         <label for="raw-text">Letra y Acordes *</label>
-                        <p class="help-text">Pega la canción directamente desde <strong>Ultimate Guitar</strong>, <strong>LaCuerda.net</strong> o cualquier web de partituras. Detecta solo los acordes sobre la letra. <strong>La vista previa de la derecha te muestra cómo quedará.</strong></p>
+                        <p class="help-text">O pega la canción directamente desde <strong>Ultimate Guitar</strong>, <strong>LaCuerda.net</strong> o cualquier web de partituras. Detecta solo los acordes sobre la letra. <strong>La vista previa de la derecha te muestra cómo quedará.</strong></p>
                     </div>
                     <div class="editor-split">
                         <textarea id="raw-text" required style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6; white-space: pre;" placeholder="Intro:&#10;: F#m : C#7 : D :&#10;&#10;Verso 1:&#10;        Am          F&#10;Today is gonna be the day&#10;        C           G&#10;That they throw it back to you" rows="18"></textarea>
@@ -67,6 +76,6 @@
     <script src="auth.js?v=44bec50e"></script>
     <script src="util.js?v=eb457792"></script>
     <script src="score_render.js?v=d66bbc20"></script>
-    <script src="editor.js?v=cac56428"></script>
+    <script src="editor.js?v=9682a7ca"></script>
 </body>
 </html>

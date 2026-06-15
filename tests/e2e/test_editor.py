@@ -2,11 +2,32 @@
 E2E del editor: la vista previa renderiza al pegar (E1) y guardar redirige (E2).
 """
 
+import json
+
 import pytest
 
 from tests.conftest import SAMPLE_RAW, wipe_songs
 
 pytestmark = pytest.mark.e2e
+
+
+def test_importar_desde_url_rellena_el_editor(page, live_server):
+    """El botón 'Importar con IA' llama a /import y rellena el textarea + la vista previa
+    (T-045). Mockeamos la respuesta del backend con Playwright para no depender de la IA real."""
+    page.goto(live_server + "/static/editor.html", wait_until="networkidle")
+
+    raw = "Verso:\nAm        C\nHola mundo de prueba"
+    page.route("**/import/", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body=json.dumps({"raw_text": raw})))
+
+    page.fill("#import-url", "https://www.lacuerda.net/cualquier-cancion")
+    page.click("#btn-import")
+
+    page.wait_for_function("document.getElementById('raw-text').value.includes('Hola mundo')",
+                           timeout=8000)
+    page.wait_for_selector("#preview-content .chord-container, #preview-content .chord-pill",
+                           timeout=8000)
 
 
 def test_preview_renderiza_secciones_y_acordes(page, live_server):

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from .api.import_router import router as import_router
 from .api.songs_router import router as songs_router
 from .services.auth import SUPABASE_ANON_KEY, SUPABASE_URL, TEST_MODE
 from .services.config import settings
@@ -76,6 +77,7 @@ app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 # Incluir routers
 app.include_router(songs_router)
+app.include_router(import_router)
 
 @app.get("/")
 def read_root():

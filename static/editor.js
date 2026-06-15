@@ -359,6 +359,38 @@ function updatePreview() {
 
 elRawText.addEventListener('input', updatePreview);
 
+// ─── Importar desde URL con IA (T-045) ────────────────────────────────────────
+const elImportUrl = document.getElementById('import-url');
+const elBtnImport = document.getElementById('btn-import');
+
+if (elBtnImport) elBtnImport.addEventListener('click', async () => {
+    const url = elImportUrl.value.trim();
+    if (!url) { toast('Pega primero un enlace.', 'error'); return; }
+    const labelOriginal = elBtnImport.textContent;
+    elBtnImport.disabled = true;
+    elBtnImport.textContent = 'Importando…';
+    try {
+        const res = await apiFetch('/import/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            toast(data.detail || 'No se pudo importar el enlace.', 'error');
+            return;
+        }
+        elRawText.value = data.raw_text || '';
+        updatePreview();
+        toast('Partitura importada. Revísala antes de guardar.', 'success');
+    } catch (err) {
+        toast('Error de red al importar.', 'error');
+    } finally {
+        elBtnImport.disabled = false;
+        elBtnImport.textContent = labelOriginal;
+    }
+});
+
 // ─── Formulario ─────────────────────────────────────────────────────────────
 document.getElementById('song-form').addEventListener('submit', async (e) => {
     e.preventDefault();
