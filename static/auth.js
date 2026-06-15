@@ -102,3 +102,10 @@ async function apiFetch(url, opts = {}) {
     }
     return res;
 }
+
+// ─── PWA: registrar el service worker (instalable + carga offline del shell) ──
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js').catch(() => { /* sin SW: la app va igual */ });
+    });
+}

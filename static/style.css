@@ -388,10 +388,48 @@ button {
     padding: 2rem 1rem;
 }
 
-/* Responsive: apilar en pantallas estrechas */
-@media (max-width: 720px) {
+/* ─── Responsive: móvil y tablet (Fase 5) ─────────────────────────────────── */
+@media (max-width: 820px) {
+    /* Barras superior/inferior: que respiren y envuelvan en vez de desbordar */
+    .top-bar, .bottom-bar {
+        padding: 0.6rem 0.9rem;
+        height: auto;
+        min-height: 64px;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+    .song-info h1 { font-size: 1.15rem; }
+    .song-info h2 { font-size: 0.8rem; }
+    .global-controls { flex-wrap: wrap; gap: 0.5rem !important; }
+    .control-group { gap: 0.5rem; padding: 0.4rem 0.5rem; }
+    .playback-controls { gap: 0.6rem; flex-wrap: wrap; }
+    .time-display { width: auto; }
+
+    /* Partitura: más aire y scroll horizontal para no romper la alineación de acordes */
+    #score-container { padding: 1rem 0.8rem; }
+    #score-content { overflow-x: auto; }
+
+    /* Editor: todo en una columna y a lo ancho */
+    #editor-container { padding: 1rem 0.7rem; }
+    .editor-content { padding: 1.1rem; }
     .editor-split { flex-direction: column; }
-    .preview-content { max-height: 40vh; }
+    .preview-content { max-height: 45vh; }
+    .form-row { flex-direction: column; gap: 0; }
+    .import-row { flex-direction: column; align-items: stretch; }
+    .import-row .secondary-btn { width: 100%; }
+
+    /* Login centrado y cómodo */
+    .login-card { padding: 1.5rem; }
+
+    /* Targets táctiles algo mayores */
+    .icon-btn, .primary-btn.square { min-width: 44px; min-height: 44px; }
+}
+
+/* Móvil estrecho */
+@media (max-width: 480px) {
+    .song-grid { grid-template-columns: 1fr; }
+    .top-bar .song-info h1 { font-size: 1.05rem; }
+    #btn-play-pause { flex: 1; }   /* Play ocupa el ancho disponible */
 }
 
 .form-row {
