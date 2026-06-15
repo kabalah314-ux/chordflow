@@ -171,7 +171,9 @@
 - [x] 🟢 **Export PDF** — botón en el reproductor → `window.print()` + `@media print` (solo la
       partitura, B/N). Test `test_export_pdf_oculta_controles`.
 - [x] 🟢 **Migrar SQLite → Postgres/Supabase** — hecho en Fase 6 (Paso 2).
-- [ ] 🟢 **Setlists/repertorios** — pendiente (feature grande: entidad + CRUD + UI + reproducir en orden).
+- [x] 🟢 **Setlists/repertorios** — `Setlist`+`SetlistItem` (migración `3684ab6335e8`), API `/setlists`
+      (CRUD, soft delete, filtra ajenas/borradas), página `setlists.html` (crear/ordenar/ver/borrar) y
+      barra **anterior/siguiente** en el reproductor (`?setlist=&pos=`). Tests unit+e2e. EN VIVO.
 - [ ] 🟢 **UI de tablaturas** (`TabLine` ya modelado) — pendiente (editor + render de tabs).
 - [x] **T-045** 🟢 **Importar desde URL con IA** — **EN VIVO y verificado**. `POST /import/` (auth):
       lee la página (lector **Jina**, con fallback a **descarga directa + limpieza HTML** cuando Jina
