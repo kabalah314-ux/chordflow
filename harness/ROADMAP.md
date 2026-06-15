@@ -179,8 +179,11 @@
 ## Fase 6 — Despliegue (Supabase + Vercel)
 - [x] **Paso 1** — Proyecto Supabase nuevo (`fwynfifvtthtpzpejfhb`) + login real verificado
       (registro/login navegador + `/songs/` 200 autenticado). Claves nuevas `sb_publishable_`/`sb_secret_`.
-- [ ] **Paso 2** — Migrar BD SQLite → **Postgres de Supabase** (`DATABASE_URL` + ajustar Alembic;
-      `render_as_batch` es de SQLite). Necesario para persistir datos en serverless.
+- [x] **Paso 2** — BD en **Postgres de Supabase** verificada: driver `psycopg2`, `render_as_batch`
+      solo SQLite, `pool_pre_ping`. Esquema creado (`create_all` + `alembic stamp head`) en
+      eu-central-1; CRUD de la app verde contra Postgres. Bugs de portabilidad corregidos
+      (bool `false`, `%` en env.py, TEST_USER_ID 36 chars). Pooler sesión 5432 (migraciones) /
+      transacción 6543 (runtime serverless). Falta: poner `DATABASE_URL` en Vercel (Paso 3).
 - [ ] **Paso 3** — Desplegar en **Vercel**: entrypoint ASGI/`vercel.json`, env vars, CORS al dominio
       real, repo en GitHub (hoy no hay remoto configurado).
 
