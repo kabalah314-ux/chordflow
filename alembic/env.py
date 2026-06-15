@@ -37,6 +37,10 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+# `render_as_batch` recrea tablas: imprescindible en SQLite (no soporta la mayoría de ALTER),
+# pero innecesario y contraproducente en Postgres (que sí hace ALTER nativo). Solo para SQLite.
+RENDER_AS_BATCH = DATABASE_URL.startswith("sqlite")
+
 
 def run_migrations_offline() -> None:
     """Genera el SQL sin conectar (modo --sql)."""
@@ -45,7 +49,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=True,
+        render_as_batch=RENDER_AS_BATCH,
         compare_type=True,
     )
     with context.begin_transaction():
@@ -65,7 +69,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            render_as_batch=True,
+            render_as_batch=RENDER_AS_BATCH,
             compare_type=True,
         )
         with context.begin_transaction():

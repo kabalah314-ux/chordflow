@@ -12,9 +12,16 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = settings.database_url
 
 # Si se usa SQLite, se requieren argumentos adicionales para evitar errores en hilos múltiples
-engine_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+_is_sqlite = DATABASE_URL.startswith("sqlite")
+engine_args = {"check_same_thread": False} if _is_sqlite else {}
 
-engine = create_engine(DATABASE_URL, connect_args=engine_args)
+# En Postgres gestionado (Supabase) / detrás de un pooler, `pool_pre_ping` descarta conexiones
+# muertas antes de usarlas (evita errores tras cierres del pooler o reinicios). En SQLite no aplica.
+engine_kwargs = {"connect_args": engine_args}
+if not _is_sqlite:
+    engine_kwargs["pool_pre_ping"] = True
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 
 # SQLite no fuerza las foreign keys por defecto: hay que activarlo por conexión.
 # Defensa en profundidad contra filas huérfanas (ver T-003).
