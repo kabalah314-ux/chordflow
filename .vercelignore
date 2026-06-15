@@ -1,0 +1,15 @@
+# No subir a Vercel lo que no hace falta en runtime (tests, harness, migraciones, dev).
+tests/
+harness/
+alembic/
+alembic.ini
+requirements-dev.txt
+logs/
+*.db
+*.sqlite3
+.git/
+.github/
+__pycache__/
+REGISTRO_DE_CAMBIOS.md
+GUIA_MAESTRA.md
+directives/

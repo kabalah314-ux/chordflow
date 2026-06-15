@@ -24,11 +24,17 @@ def setup_logging() -> None:
     level = getattr(logging, settings.log_level.upper(), logging.INFO)
 
     formatter = logging.Formatter(LOG_FORMAT)
+    handler: logging.Handler
     if settings.chordflow_log_stdout:
-        handler: logging.Handler = logging.StreamHandler(sys.stdout)
+        handler = logging.StreamHandler(sys.stdout)
     else:
-        os.makedirs("logs", exist_ok=True)
-        handler = logging.FileHandler("logs/app.log", encoding="utf-8")
+        # Fallback robusto: si el filesystem es de solo lectura (serverless como Vercel) y no se
+        # puede crear/abrir el fichero, caemos a stdout en vez de reventar al arrancar.
+        try:
+            os.makedirs("logs", exist_ok=True)
+            handler = logging.FileHandler("logs/app.log", encoding="utf-8")
+        except OSError:
+            handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
 
     root = logging.getLogger()

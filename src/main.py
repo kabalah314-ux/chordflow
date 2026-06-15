@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,8 +17,13 @@ from .services.logging_config import setup_logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# Inicializar Base de Datos
-Base.metadata.create_all(bind=engine)
+# Inicializar el esquema (idempotente: solo crea lo que falte). En serverless el esquema ya
+# existe (creado/migrado aparte), así que envolvemos en try/except: un parpadeo de la BD al
+# importar NO debe tumbar toda la función; los errores reales se verán por petición.
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:  # noqa: BLE001
+    logger.warning(f"create_all al arrancar no se pudo completar (¿BD no disponible?): {e}")
 
 app = FastAPI(
     title="ChordFlow API",
@@ -62,8 +68,11 @@ async def add_security_headers(request, call_next):
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     return response
 
-# Montar carpeta de archivos estáticos (Frontend)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Montar carpeta de archivos estáticos (Frontend). Ruta ABSOLUTA (relativa a la raíz del repo,
+# = padre de src/) para que funcione tanto en local como en serverless (Vercel), donde el CWD
+# no es la raíz del proyecto.
+_STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 # Incluir routers
 app.include_router(songs_router)
