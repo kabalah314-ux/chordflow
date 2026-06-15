@@ -1,4 +1,7 @@
 # No subir a Vercel lo que no hace falta en runtime (tests, harness, migraciones, dev).
+# pyproject.toml es solo config de ruff/pytest/black (sin tabla [project]); si Vercel lo ve,
+# su builder con `uv` intenta lockearlo y falla. Sin él, usa requirements.txt (lo que queremos).
+pyproject.toml
 tests/
 harness/
 alembic/
