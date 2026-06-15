@@ -166,14 +166,12 @@
 ## Fase 5 — Diferenciación de producto
 - [ ] 🟢 PWA + offline · 🟢 Setlists/repertorios · 🟢 Export PDF · 🟢 UI de tablaturas
       (`TabLine` ya modelado) · 🟢 Responsive/tablet · 🟢 Migrar SQLite → Postgres/Supabase.
-- [~] **T-045** 🟢 **Importar desde URL con IA** (implementado; falta verificación con clave real +
-      deploy). Endpoint `POST /import/` (auth): lee la página con el **lector Jina** (renderiza JS) y
-      una **IA por OpenRouter** (modelo **gratuito**, `OPENROUTER_MODEL`, default
-      `meta-llama/llama-3.3-70b-instruct:free`) extrae la partitura en el formato del editor →
-      precarga el textarea (revisión antes de guardar). `importer.py` + `import_router.py` +
-      botón en el editor. Tests: `test_import.py` (IA mockeada) + e2e `test_importar_desde_url_*`
-      (ruta mockeada). **Pendiente:** `OPENROUTER_API_KEY` (gratis, openrouter.ai) en `.env.local`
-      y en Vercel, y prueba en vivo con un enlace real.
+- [x] **T-045** 🟢 **Importar desde URL con IA** — **EN VIVO y verificado**. `POST /import/` (auth):
+      lee la página (lector **Jina**, con fallback a **descarga directa + limpieza HTML** cuando Jina
+      se rate-limitea desde datacenter) y una **IA gratuita por OpenRouter** (`openai/gpt-oss-120b:free`,
+      configurable) extrae la partitura en el formato del editor → precarga el textarea. `importer.py`
+      + `import_router.py` + botón en el editor. Tests `test_import.py` + e2e. Verificado en producción
+      con CifraClub y e-chords (UG bloquea por Cloudflare incluso vía Jina). Coste 0.
 - [ ] **T-046** 🟢 **Login con Google**: configurar OAuth (credenciales en Google Cloud + activar el
       provider Google en Supabase con el redirect URI del proyecto). El botón ya existe en el front.
 - [ ] **T-047** 🟢 **Personalizar emails de auth** (Supabase → Email Templates: marca ChordFlow) y

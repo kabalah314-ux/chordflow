@@ -843,7 +843,17 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 - **Cache-busting:** `sync_engine.js v7→v8`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 26 e2e).
 
-### 🟡 T-045 — Importar partitura desde URL con IA (implementado; pendiente clave + deploy)
+### ✅ T-045 — Importar partitura desde URL con IA (EN VIVO, verificado)
+
+> Estado final: **funcionando en producción** (https://chordflow-ecru.vercel.app). Modelo gratuito
+> `openai/gpt-oss-120b:free` (el llama-3.3 free estaba saturado upstream). **Gotcha del deploy:** el
+> lector Jina sin key se rate-limitea desde las IPs de datacenter de Vercel (devolvía "sin partitura")
+> → añadido **fallback de descarga directa + limpieza de HTML** en `fetch_page_text`, que sí funciona
+> desde Vercel. `OPENROUTER_API_KEY`/`OPENROUTER_MODEL` en `.env.local` y en Vercel (producción).
+> Verificado en vivo con CifraClub y e-chords; Ultimate Guitar bloquea por Cloudflare (avisado en la UI).
+> (Detalle de implementación abajo.)
+
+### T-045 (detalle de implementación)
 
 > **Por qué:** que el usuario pegue un enlace y la app saque la partitura sola. Decisión del usuario:
 > proveedor de IA **gratuito** (OpenRouter, tarea simple) + lector **Jina** para sortear JS/anti-bot.
