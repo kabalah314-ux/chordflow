@@ -64,8 +64,11 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     # Lector que renderiza JS/sortea anti-bot y devuelve texto limpio (prefijo de URL).
     chordflow_reader_url: str = "https://r.jina.ai/"
+    # API key de Jina (opcional, gratis en jina.ai): mejora la fiabilidad del lector desde IPs de
+    # datacenter (Vercel). Sin ella, el lector se rate-limitea y se usa el fallback de descarga directa.
+    jina_api_key: str | None = None
     # Tope de caracteres de la página enviados a la IA (acota tokens/coste/latencia).
-    chordflow_import_max_chars: int = 12000
+    chordflow_import_max_chars: int = 16000
 
     @property
     def allowed_origins_list(self) -> list[str]:

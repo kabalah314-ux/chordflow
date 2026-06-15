@@ -14,15 +14,19 @@ No usa SDKs externos: ambas llamadas (lector + OpenRouter) van por urllib (stdli
 `auth_provider.py`. La clave de OpenRouter es gratuita y va en `.env.local` (nunca al frontend).
 """
 
+import html
 import json
 import logging
+import re
 import urllib.error
-import urllib.parse
 import urllib.request
 
 from .config import settings
 
 logger = logging.getLogger(__name__)
+
+_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+       "(KHTML, like Gecko) Chrome/124 Safari/537.36")
 
 
 class ImportError_(Exception):
@@ -51,20 +55,68 @@ def _http_post_json(url: str, payload: dict, headers: dict, timeout: float = 45.
         return json.loads(resp.read())
 
 
+def _looks_blocked(text: str) -> bool:
+    """Heurística: ¿la respuesta del lector es un muro anti-bot / error / vacío, no contenido?"""
+    if len(text.strip()) < 200:
+        return True
+    head = text[:400].lower()
+    señales = ("just a moment", "error 403", "error 404", "error 429", "forbidden",
+               "rate limit", "captcha", "are you a robot", "enable javascript")
+    return any(s in head for s in señales)
+
+
+def _html_to_text(html_doc: str) -> str:
+    """Convierte HTML crudo en texto legible: quita script/style, sustituye tags por saltos de
+    línea/espacios, desescapa entidades y colapsa el exceso de líneas en blanco."""
+    html_doc = re.sub(r"(?is)<(script|style|noscript|head)\b.*?</\1>", " ", html_doc)
+    html_doc = re.sub(r"(?i)<(br|/p|/div|/li|/h[1-6]|/tr)\s*>", "\n", html_doc)
+    text = re.sub(r"(?s)<[^>]+>", "", html_doc)        # quitar el resto de tags
+    text = html.unescape(text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n[ \t]+", "\n", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def _fetch_via_jina(url: str) -> str:
+    headers = {"User-Agent": "ChordFlow/1.0", "Accept": "text/plain"}
+    if settings.jina_api_key:  # con key, fiable también desde datacenter (Vercel)
+        headers["Authorization"] = f"Bearer {settings.jina_api_key}"
+    req = urllib.request.Request(settings.chordflow_reader_url + url, headers=headers)
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read().decode("utf-8", "replace").strip()
+
+
+def _fetch_direct(url: str) -> str:
+    """Descarga directa de la página y limpieza de HTML a texto (fallback si Jina falla)."""
+    req = urllib.request.Request(url, headers={"User-Agent": _UA})
+    with urllib.request.urlopen(req, timeout=25) as resp:
+        raw = resp.read().decode("utf-8", "replace")
+    return _html_to_text(raw)
+
+
 def fetch_page_text(url: str) -> str:
-    """Descarga el contenido legible de la página vía el lector (Jina). Devuelve texto plano,
-    truncado a `chordflow_import_max_chars` para acotar tokens. Lanza ImportError_ si falla."""
-    reader = settings.chordflow_reader_url + url
+    """Obtiene el contenido legible de la página. Primero el lector Jina (texto limpio); si viene
+    bloqueado/rate-limited (típico desde IPs de datacenter sin key), cae a descarga directa +
+    limpieza de HTML. Trunca a `chordflow_import_max_chars`. Lanza ImportError_ si todo falla."""
+    text = ""
     try:
-        req = urllib.request.Request(reader, headers={"User-Agent": "ChordFlow/1.0"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            text = resp.read().decode("utf-8", "replace")
+        text = _fetch_via_jina(url)
     except Exception as e:  # noqa: BLE001
-        logger.warning(f"No se pudo leer la página {url}: {e}")
-        raise ImportError_("No se pudo leer esa página. Prueba con otro enlace o pega el texto.")
-    text = text.strip()
-    if not text:
-        raise ImportError_("La página no devolvió contenido legible.")
+        logger.warning(f"Lector Jina falló para {url}: {e}")
+
+    if not text or _looks_blocked(text):
+        logger.info(f"Jina no usable para {url}; probando descarga directa")
+        try:
+            direct = _fetch_direct(url)
+            if direct and not _looks_blocked(direct):
+                text = direct
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Descarga directa falló para {url}: {e}")
+
+    if not text or _looks_blocked(text):
+        raise ImportError_("No se pudo leer esa página (puede bloquear bots). "
+                           "Prueba con CifraClub/LaCuerda o pega el texto manualmente.")
     return text[: settings.chordflow_import_max_chars]
 
 
