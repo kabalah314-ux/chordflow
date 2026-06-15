@@ -184,8 +184,13 @@
       eu-central-1; CRUD de la app verde contra Postgres. Bugs de portabilidad corregidos
       (bool `false`, `%` en env.py, TEST_USER_ID 36 chars). Pooler sesión 5432 (migraciones) /
       transacción 6543 (runtime serverless). Falta: poner `DATABASE_URL` en Vercel (Paso 3).
-- [ ] **Paso 3** — Desplegar en **Vercel**: entrypoint ASGI/`vercel.json`, env vars, CORS al dominio
-      real, repo en GitHub (hoy no hay remoto configurado).
+- [x] **Paso 3** — **Desplegado en Vercel** ✅ https://chordflow-ecru.vercel.app (repo
+      github.com/kabalah314-ux/chordflow, privado). `api/index.py` (ASGI) + `vercel.json`
+      (@vercel/python, includeFiles static/**) + `.vercelignore` (excluye pyproject.toml→usa
+      requirements.txt). Env vars de producción (DATABASE_URL pooler 6543, SUPABASE_URL/ANON_KEY,
+      CHORDFLOW_LOG_STDOUT=1). Verificado en vivo: /health, /config, estáticos, 401 sin token, y
+      **login real + crear/leer canción (Vercel→Postgres) 201**. Pendiente opcional: dominio propio
+      + `CHORDFLOW_ALLOWED_ORIGINS` al dominio.
 
 ---
 
