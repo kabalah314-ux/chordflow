@@ -98,12 +98,27 @@ entorno; en producción está apagado y el comportamiento es el normal.
   prueba sin llamar a Supabase. `/config` expone `test_mode: true`.
 - Frontend: `auth.js` lee `/config`; si `test_mode`, devuelve una sesión de prueba y no
   usa el SDK de Supabase (login, guards y `apiFetch` funcionan igual).
-- Usuario de prueba: `id = test-user-0000-0000-0000-000000000000`.
+- Usuario de prueba: `id = 00000000-0000-0000-0000-000000000000` (UUID nil, 36 chars: cabe en
+  `VARCHAR(36)` también en Postgres).
 
 El harness (`doctor.py`, `conftest.py`) arranca el servidor con este flag y una **BD
 temporal** (`DATABASE_URL` apuntando a un sqlite desechable), nunca tocando `chordflow.db`.
 
 ⚠️ **El modo test JAMÁS debe activarse en producción.** Es solo para tests locales/CI.
+
+---
+
+## 5.bis Despliegue (EN PRODUCCIÓN)
+
+La app está **en vivo**: https://chordflow-ecru.vercel.app — **Vercel** (`api/index.py` ASGI +
+`vercel.json`) + **Supabase** (auth) + **Postgres de Supabase** (BD). Repo GitHub privado
+`kabalah314-ux/chordflow` rama `main` → **auto-deploy en cada push**. Local sigue en **SQLite**
+(sin `DATABASE_URL` en `.env.local`); producción usa Postgres vía env vars de Vercel.
+
+- Migraciones a Postgres: aplicar con el **pooler de sesión** (puerto 5432); el runtime usa el de
+  **transacción** (6543). La conexión directa `db.<ref>.supabase.co` es IPv6-only y no resuelve.
+- `OPENROUTER_API_KEY`/`OPENROUTER_MODEL` (importar con IA), `OPENROUTER_MODEL` gratuito configurable.
+- Detalle y estado en `REGISTRO_DE_CAMBIOS.md` §"Estado actual" y en `harness/TASKS.md`.
 
 ---
 
@@ -116,10 +131,17 @@ temporal** (`DATABASE_URL` apuntando a un sqlite desechable), nunca tocando `cho
 | Qué flujos deben funcionar siempre | `harness/CHECKLIST_E2E.md` |
 | Comprobar que todo arranca | `harness/doctor.py` |
 | Correr toda la calidad | `harness/run_checks.py` |
-| Endpoints | `src/api/songs_router.py` |
+| Endpoints (canciones) | `src/api/songs_router.py` |
+| Endpoints (repertorios) | `src/api/setlists_router.py` |
+| Importar desde URL con IA | `src/api/import_router.py` + `src/services/importer.py` |
 | Tablas / columnas | `src/services/models.py` |
 | Validación / forma JSON | `src/services/schemas.py` |
+| Config validada (env) | `src/services/config.py` |
 | Reproducción / sincronización | `static/sync_engine.js` |
 | Render del player + preview | `static/score_render.js` |
-| Parser de importación | `static/editor.js` |
-| Auth (front) | `static/auth.js` / Auth (back) `src/services/auth.py` |
+| Parser de importación / editor | `static/editor.js` |
+| Repertorios (front) | `static/setlists.html` / `static/setlists.js` |
+| Cache-busting (hash) | `harness/cachebust.py` (ejecutar tras tocar js/css) |
+| PWA | `static/manifest.json` / `static/sw.js` |
+| Auth (front) | `static/auth.js` / Auth (back) `src/services/auth.py` + `auth_provider.py` |
+| Despliegue (Vercel) | `vercel.json` / `api/index.py` / `.vercelignore` |

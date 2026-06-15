@@ -3,7 +3,18 @@
 > Una tarea activa a la vez (recomendado). Al cerrarla, moverla a "Hechas".
 > Abrir tareas nuevas copiando `templates/TASK_TEMPLATE.md`.
 > Backlog completo y priorizado en `ROADMAP.md`. Diseño del molde en `MOLDE.md`.
-> **Última sincronización: 2026-06-13.**
+> **Última sincronización: 2026-06-15.**
+
+---
+
+## 🚀 EN PRODUCCIÓN: https://chordflow-ecru.vercel.app
+
+La app está **desplegada y en vivo** (Vercel + Supabase auth + Postgres). Repo GitHub privado
+`kabalah314-ux/chordflow` (rama `main`, auto-deploy en cada push). Cuenta de prueba:
+`oscarcon314@gmail.com` / `Chordflow2026!`. Detalle en REGISTRO §"Estado actual".
+
+CLIs ya logueadas en la máquina: `gh` y `vercel` (ambas `kabalah314-ux`). Secretos en `.env.local`
+(gitignored): Supabase, `DATABASE_URL` Postgres, `OPENROUTER_API_KEY`.
 
 ---
 
@@ -13,15 +24,23 @@ _(ninguna)_
 
 ---
 
-## ▶️ Siguiente recomendado
+## ▶️ Siguiente recomendado (para el próximo hilo)
 
-🎉 **No quedan tareas pendientes en el ROADMAP** (T-001…T-044 + T-M01…T-M06 cerradas). Lo único
-abierto es la **Fase 5 — Diferenciación de producto** (features 🟢: PWA/offline, setlists, export
-PDF, UI de tablaturas, responsive, migrar a Postgres), que son ampliaciones, no deuda.
+Toda la deuda de calidad (T-001…T-047 salvo las 3 de abajo) y el despliegue están cerrados. Quedan:
 
-> ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar. Ver CHECKLIST.
-> 🧬 El molde vive en el repo hermano `../app-skeleton` (extraído, plantillado, verificado +
-> generador `create_app.py`).
+1. 🟢 **Tablaturas** (UI de `TabLine`, ya modelado): editor para meter tabs + render en la partitura.
+   Es la última feature grande de Fase 5. Autónoma (código → test → deploy).
+2. 🔵 **T-046 Login con Google** — requiere acción del usuario: crear OAuth en Google Cloud + activar
+   el provider en Supabase (redirect `https://fwynfifvtthtpzpejfhb.supabase.co/auth/v1/callback`).
+   El botón ya está en el front. Pasos en `ROADMAP.md`.
+3. ✉️ **T-047 Emails con marca** — Supabase → Authentication → Email Templates (acción del usuario).
+4. 🛠️ **Pulir detalles** (lo que pidió el usuario tras las features): repaso fino de UX/textos/estados.
+
+> ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar.
+> ⚠️ Seguridad: rotar `sb_secret_` y contraseña de Postgres (compartidas en chat).
+> 🧬 El molde vive en el repo hermano `../app-skeleton` (extraído, plantillado, verificado + cookiecutter).
+> 🤖 Importar con IA usa OpenRouter gratuito (`OPENROUTER_MODEL`); si el modelo se satura, cambiarlo
+> por otro `:free` en las env vars de Vercel.
 
 ---
 
@@ -61,7 +80,12 @@ de gracia del caché de token acotada (TTL+gracia, no ilimitada).
 automático por hash. **Sync:** T-019 auto-scroll anclado · T-040 findActiveChord casos borde.
 **Molde (Fase M completa):** T-M01..M06 + guía de uso + generador `create_app.py`.
 
-> Estado de calidad ChordFlow: 40 unit + 26 e2e en verde. Molde: 29 unit + 4 e2e en verde.
-> Git: 38+ commits. **ROADMAP AL 100%** (toda la deuda de calidad cerrada). El molde vive en
-> `../app-skeleton` (extraído, plantillado, verificado + cookiecutter). Solo queda Fase 5 (features).
-> Flakiness e2e (T-042) resuelta. Alembic (T-011) operativo; T-033 (cascade DB) ya cerrado.
+**Fase 6 (despliegue):** Paso 1 Supabase · Paso 2 Postgres · Paso 3 Vercel — **app en vivo**.
+
+**Fase 5 (producto, EN VIVO):** T-045 importar desde URL con IA (OpenRouter gratuito + Jina) ·
+responsive móvil/tablet · PWA instalable · export PDF · **setlists/repertorios** (CRUD + reproducir
+en orden con barra ◀▶ en el reproductor).
+
+> Estado de calidad ChordFlow: ~49 unit + ~30 e2e en verde (algunas parametrizadas). Alembic head
+> `3684ab6335e8` (local + Postgres producción). **App desplegada y verificada en vivo.**
+> Pendiente: Tablaturas (🟢), Google login (🔵 acción usuario), emails con marca (✉️), pulir detalles.

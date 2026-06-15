@@ -2,9 +2,32 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-06-06
+> Última actualización: 2026-06-15
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🚀 Estado actual (2026-06-15) — EN PRODUCCIÓN
+
+**La app está desplegada y en vivo: https://chordflow-ecru.vercel.app**
+
+- **Despliegue (Fase 6):** repo GitHub privado `kabalah314-ux/chordflow` (rama `main`, auto-deploy en
+  cada push) · **Vercel** (`api/index.py` ASGI + `vercel.json` + `.vercelignore`) · **Supabase** para
+  auth (proyecto `fwynfifvtthtpzpejfhb`, claves nuevas `sb_publishable_/sb_secret_`) · **Postgres de
+  Supabase** como BD (pooler eu-central-1; local sigue en SQLite). Env vars en Vercel: `DATABASE_URL`
+  (pooler 6543), `SUPABASE_URL/ANON_KEY`, `CHORDFLOW_LOG_STDOUT=1`, `OPENROUTER_API_KEY/MODEL`.
+  Login real verificado; cuenta de prueba `oscarcon314@gmail.com` / `Chordflow2026!`.
+- **Features de producto (Fase 5) EN VIVO:** importar desde URL con IA (T-045, OpenRouter gratuito
+  `openai/gpt-oss-120b:free` + lector Jina con fallback a descarga directa), responsive móvil/tablet,
+  PWA instalable (manifest+SW), export PDF (impresión), y **setlists/repertorios** (crear/ordenar/
+  reproducir en orden con barra ◀▶ en el reproductor).
+- **Calidad:** `run_checks.py` TODO VERDE (~49 unit + ~30 e2e). Migraciones Alembic al día (head
+  `3684ab6335e8`) en local y en la Postgres de producción.
+- **Pendiente (siguiente hilo):** 🟢 **Tablaturas** (UI de `TabLine`) · 🔵 **T-046 Google login**
+  (requiere crear OAuth en Google Cloud + activar en Supabase — pasos en el ROADMAP) · ✉️ **T-047
+  emails con marca** (Supabase Email Templates). Detalle de cada feature más abajo (Fase 5/6 y T-045).
+- ⚠️ **Seguridad:** rotar la `sb_secret_` y la contraseña de Postgres (se compartieron en chat).
 
 ---
 
@@ -842,6 +865,49 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   `test_findactivechord_casos_borde` (reset/avance/persistencia) y `test_findactivechord_empate_de_inicio`.
 - **Cache-busting:** `sync_engine.js v7→v8`.
 - **Verificación:** `run_checks.py` **TODO VERDE** (39 unit + 26 e2e).
+
+### ✅ Fase 6 — Despliegue (Supabase + Postgres + Vercel)
+
+> **Paso 1 (Supabase):** proyecto nuevo `fwynfifvtthtpzpejfhb` (el anterior fue borrado → DNS NXDOMAIN).
+> Claves nuevas de Supabase (`sb_publishable_` pública / `sb_secret_` secreta, no usada por la app).
+> Login real verificado (registro + login navegador + `/songs/` 200). Confirmación de email: el alta
+> por web requiere confirmar (o desactivar "Confirm email" en el panel); las cuentas existentes se
+> pueden confirmar vía admin API.
+> **Paso 2 (Postgres):** `psycopg2-binary`; `render_as_batch` solo en SQLite; `pool_pre_ping` en
+> Postgres; `env.py` escapa `%` (passwords con caracteres especiales). Esquema creado con `create_all`
+> + `alembic stamp/upgrade`. **2 bugs de portabilidad corregidos:** `is_public` server_default `0`→
+> `false` (Postgres rechaza int en boolean) y `TEST_USER_ID` 37→36 chars (cabe en VARCHAR(36)). Conexión
+> por **pooler** (la directa `db.<ref>` es IPv6-only y no resuelve): host `aws-1-eu-central-1.pooler.
+> supabase.com`, user `postgres.<ref>`, 5432 sesión (migraciones) / 6543 transacción (runtime).
+> **Paso 3 (Vercel):** `api/index.py` (reutiliza `src.main:app`), `vercel.json` (@vercel/python +
+> includeFiles static/**), `.vercelignore` (excluye tests/harness/alembic/pyproject — su `uv` peta
+> sin `[project]`). `main.py`: ruta de `static/` ABSOLUTA + `create_all` en try/except. `logging_config`:
+> fallback a stdout si el FS es de solo lectura. Verificado en vivo: login + CRUD (Vercel→Postgres).
+
+### ✅ Fase 5 — Responsive + PWA + Export PDF
+
+- **Responsive móvil/tablet:** media queries 820/480px en `style.css` — barras superior/inferior
+  envuelven, editor y formularios se apilan, partitura con scroll horizontal, targets táctiles ≥44px,
+  rejilla a 1 columna en móvil. Test `test_responsive_pwa::test_sin_scroll_horizontal_en_movil` (4 páginas).
+- **PWA instalable:** `manifest.json` + iconos 192/512 (`static/icons/`) + `sw.js` (service worker:
+  API nunca cacheada, HTML network-first, estáticos cache-first porque van con hash de T-022).
+  Registrado en `auth.js`; `<link rel=manifest>`+theme-color+apple-touch-icon en las 4 HTML.
+- **Export PDF:** botón 🖨️ en el reproductor → `window.print()` + `@media print` (solo la partitura
+  en B/N, sin controles, sin cortar secciones entre páginas). Respeta la transposición actual.
+  Test `test_player::test_export_pdf_oculta_controles` (emula media print).
+
+### ✅ Fase 5 — Setlists / repertorios
+
+- **Modelos:** `Setlist` (name, owner_id NOT NULL, timestamps, soft delete) + `SetlistItem`
+  (setlist_id/song_id FK ondelete CASCADE, position). Migración `3684ab6335e8` (alembic check limpio).
+- **API `/setlists/`** (auth, owner-filtered): list (con `song_count`), create (valida que las
+  `song_ids` sean del usuario y no borradas, preservando orden), get (omite canciones borradas),
+  patch (renombrar / reemplazar+reordenar canciones), delete (soft).
+- **Frontend:** `setlists.html`+`setlists.js` (crear con selección ordenada, ver, quitar canción,
+  borrar) + enlace **🎼 Repertorios** en la biblioteca. **Reproductor:** barra `#setlist-nav` con
+  anterior/siguiente y posición cuando se abre con `?setlist=&pos=`.
+- **Tests:** `test_setlists.py` (unit: CRUD, filtrado de ajenas/borradas, soft delete, 401) +
+  `test_setlists_ui.py` (e2e: crear con canciones y verlo). Verificado EN VIVO (Vercel→Postgres).
 
 ### ✅ T-045 — Importar partitura desde URL con IA (EN VIVO, verificado)
 
