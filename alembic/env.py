@@ -30,7 +30,10 @@ config = context.config
 
 # URL: prioridad a DATABASE_URL del entorno; mismo default que la app.
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./chordflow.db")
-config.set_main_option("sqlalchemy.url", DATABASE_URL)
+# `set_main_option` pasa el valor por ConfigParser, que trata `%` como interpolación. Una URL de
+# Postgres con caracteres especiales en la contraseña (p. ej. `%21` = `!`) reventaría. Escapamos
+# `%`→`%%`; los run paths usan DATABASE_URL directamente, así que esto es solo para registro/compat.
+config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

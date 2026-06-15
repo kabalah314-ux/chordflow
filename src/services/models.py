@@ -52,7 +52,9 @@ class Song(Base):
     # owner_id NOT NULL (T-034): la auth es obligatoria y el router siempre lo asigna; lo
     # blindamos a nivel de esquema para que ninguna fila pueda quedar sin dueño.
     owner_id = Column(String(36), nullable=False, index=True)
-    is_public = Column(Boolean, default=False, server_default=text("0"))
+    # server_default agnóstico: 'false' es válido en Postgres y SQLite (3.23+). Un '0' literal
+    # lo rechaza Postgres en una columna boolean (DatatypeMismatch). Visto al migrar a Postgres.
+    is_public = Column(Boolean, default=False, server_default=text("false"))
     source_type = Column(String(32))
     source_file_path = Column(Text)
     tags = Column(JSON)

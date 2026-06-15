@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT))
 os.environ["CHORDFLOW_TEST_MODE"] = "1"
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_unit.db")
 
-TEST_USER_ID = "test-user-0000-0000-0000-000000000000"
+TEST_USER_ID = "00000000-0000-0000-0000-000000000000"
 
 # Texto de ejemplo para sembrar canciones desde el editor/parser.
 SAMPLE_RAW = """Verso 1:

@@ -18,7 +18,7 @@ _provider = build_auth_provider(settings)
 # Modo test: SOLO para tests automatizados / CI. Si está activo, se salta la
 # validación con Supabase y se usa un usuario de prueba fijo. NUNCA en producción.
 TEST_MODE = settings.chordflow_test_mode
-TEST_USER_ID = "test-user-0000-0000-0000-000000000000"
+TEST_USER_ID = "00000000-0000-0000-0000-000000000000"
 
 # Caché de validación de token: evita llamar a Supabase en cada request (latencia)
 # y permite que la app siga funcionando si Supabase está temporalmente caído (T-005).

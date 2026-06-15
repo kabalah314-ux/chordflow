@@ -18,7 +18,7 @@ async function getConfig() {
 // Sesión de prueba usada solo cuando el backend está en modo test.
 const TEST_SESSION = {
     access_token: 'test-token',
-    user: { id: 'test-user-0000-0000-0000-000000000000', email: 'test@chordflow.local' }
+    user: { id: '00000000-0000-0000-0000-000000000000', email: 'test@chordflow.local' }
 };
 
 // Crea (una vez) el cliente de Supabase con la config pública del backend
