@@ -166,9 +166,15 @@
 ## Fase 5 — Diferenciación de producto
 - [ ] 🟢 PWA + offline · 🟢 Setlists/repertorios · 🟢 Export PDF · 🟢 UI de tablaturas
       (`TabLine` ya modelado) · 🟢 Responsive/tablet · 🟢 Migrar SQLite → Postgres/Supabase.
-- [ ] **T-045** 🟢 **Importar desde URL**: pegar un link (LaCuerda.net primero; UG es difícil por
-      JS+anti-bot) → backend descarga la página, extrae el bloque de acordes y lo precarga en el
-      editor (que ya parsea texto). Por-sitio + heurística genérica. Ojo a ToS de las webs origen.
+- [ ] **T-045** 🟢 **Importar desde URL con IA**: usuario pega un link → el backend obtiene el
+      contenido de la página y una **IA (Claude API)** extrae y devuelve la partitura ya en texto →
+      precarga el editor (que ya parsea texto). Ventaja sobre el scraping por-sitio: una sola
+      implementación vale para cualquier web. Requiere API key de Claude + obtener el contenido (sitios
+      con anti-bot pueden requerir un fetch con render). Ojo a ToS de las webs origen.
+- [ ] **T-046** 🟢 **Login con Google**: configurar OAuth (credenciales en Google Cloud + activar el
+      provider Google en Supabase con el redirect URI del proyecto). El botón ya existe en el front.
+- [ ] **T-047** 🟢 **Personalizar emails de auth** (Supabase → Email Templates: marca ChordFlow) y
+      afinar los mensajes propios del front (`login.js`).
 
 ## Fase 6 — Despliegue (Supabase + Vercel)
 - [x] **Paso 1** — Proyecto Supabase nuevo (`fwynfifvtthtpzpejfhb`) + login real verificado
