@@ -165,10 +165,10 @@ def main():
             status, body = http_get(base + "/config")
             return (status == 200 and "test_mode" in body, f"HTTP {status}")
 
-        @check("GET / redirige a la biblioteca")
+        @check("GET / redirige al inicio (app shell)")
         def _():
             status, body = http_get(base + "/")
-            # urllib sigue la redirección → acabamos en library.html (200)
+            # urllib sigue la redirección → acabamos en app.html (200)
             return (status == 200, f"HTTP {status}")
 
         @check("Seguridad: GET /songs/ sin token → 401")

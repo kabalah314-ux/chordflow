@@ -1,0 +1,325 @@
+/* ============================================================================
+   BandFlow — Sistema de diseño (T-073, Fase 13)
+   ----------------------------------------------------------------------------
+   Fundación visual del giro V2. Define UNA sola fuente de tokens + componentes
+   base reutilizables por el app shell (T-074) y el espacio de banda (T-075).
+
+   Reglas:
+   - Self-contained: usa el prefijo `bf-` en sus clases para NO colisionar con
+     `style.css` (el player y las páginas actuales siguen intactos hasta el reskin
+     de T-081). La joya (`sync_engine.js`/`score_render.js`) no se toca.
+   - Todo el aspecto vive en TOKENS (variables CSS). Cuando lleguen los diseños de
+     Claude Design, se reescriben los tokens y los componentes se actualizan solos.
+   - Tema oscuro por defecto (uso de escenario); tema claro vía
+     `:root[data-theme="light"]`.
+   ========================================================================== */
+
+/* Fuentes BandFlow (Fase A): IBM Plex Sans (UI) + IBM Plex Mono (datos/acordes/importes).
+   El design-system es autocontenido: las fuentes viajan con él allá donde se enlace. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root {
+  /* Superficies (oscuro por defecto) — paleta BandFlow (Fase A, spec §2.1) */
+  --bf-bg:            #0d0d10;   /* fondo de la app */
+  --bf-surface:       #16161b;   /* paneles / sidebar */
+  --bf-surface-2:     #1c1c23;   /* cards, inputs */
+  --bf-surface-3:     #23232c;   /* activo / badges key */
+  --bf-border:        rgba(255, 255, 255, 0.08);
+  --bf-border-strong: rgba(255, 255, 255, 0.15);
+  --bf-hover:         rgba(255, 255, 255, 0.05);   /* hover de filas / items */
+
+  /* Texto */
+  --bf-text:        #ededf1;
+  --bf-text-muted:  #9a9aa6;
+  --bf-text-faint:  #6a6a76;
+
+  /* Marca / acento (token único: swap aquí para recolorar toda la app) */
+  --bf-primary:        #ff6b4a;   /* naranja coral BandFlow */
+  --bf-primary-hover:  #ff7d5f;
+  --bf-primary-contrast: #0d0d10;
+  --bf-on-primary:     #ffffff;
+  --bf-accent-weak:    rgba(255, 107, 74, 0.16);   /* fondo translúcido del acento */
+
+  /* Estados semánticos (+ variante translúcida -weak para fondos) */
+  --bf-success: #2dd4a7;  --bf-success-weak: rgba(45, 212, 167, 0.15);
+  --bf-danger:  #ff5d6c;  --bf-danger-weak:  rgba(255, 93, 108, 0.15);
+  --bf-warning: #f5c518;  --bf-warning-weak: rgba(245, 197, 24, 0.15);
+  --bf-info:    #60a5fa;  /* propio del proyecto: el prototipo BandFlow no lo define */
+
+  /* Badges de rol (capa propia; admin alineado al warning de la paleta) */
+  --bf-role-admin:  #f5c518;
+  --bf-role-member: #60a5fa;
+  --bf-role-guest:  #9a9aa6;
+
+  /* Tipografía — IBM Plex (UI + mono), identidad BandFlow */
+  --bf-font-ui:    'IBM Plex Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --bf-font-mono:  'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bf-fs-xs:   0.75rem;
+  --bf-fs-sm:   0.875rem;
+  --bf-fs-base: 1rem;
+  --bf-fs-lg:   1.125rem;
+  --bf-fs-xl:   1.375rem;
+  --bf-fs-2xl:  1.75rem;
+  --bf-fw-regular: 400;
+  --bf-fw-medium:  500;
+  --bf-fw-semibold: 600;
+  --bf-fw-bold:    700;   /* el prototipo BandFlow carga hasta 700 */
+
+  /* Espaciado (escala de 4px) */
+  --bf-space-1: 0.25rem;
+  --bf-space-2: 0.5rem;
+  --bf-space-3: 0.75rem;
+  --bf-space-4: 1rem;
+  --bf-space-5: 1.5rem;
+  --bf-space-6: 2rem;
+  --bf-space-8: 3rem;
+
+  /* Radios */
+  --bf-radius-sm:  6px;
+  --bf-radius:     10px;
+  --bf-radius-lg:  16px;
+  --bf-radius-full: 999px;
+
+  /* Sombras (BandFlow: borde fino + elevación amplia; spec §2.4) */
+  --bf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --bf-shadow:    0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 28px rgba(0, 0, 0, 0.35);
+  --bf-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+
+  /* Layout del shell */
+  --bf-sidebar-w: 252px;
+  --bf-topbar-h:  64px;
+
+  /* Transiciones */
+  --bf-transition: 160ms ease;
+}
+
+/* Tema claro: solo redefine tokens, los componentes no cambian */
+:root[data-theme="light"] {
+  --bf-bg:        #f5f5f2;   /* hueso cálido, no azul-grisáceo */
+  --bf-surface:   #ffffff;
+  --bf-surface-2: #fafaf8;
+  --bf-surface-3: #f0f0ec;
+  --bf-border:        rgba(20, 20, 30, 0.10);
+  --bf-border-strong: rgba(20, 20, 30, 0.18);
+  --bf-hover:         rgba(20, 20, 30, 0.04);
+  --bf-text:        #1a1a20;
+  --bf-text-muted:  #5d5d68;
+  --bf-text-faint:  #8c8c96;
+  /* Acento en claro: coral algo más saturado/oscuro */
+  --bf-primary:       #ee5530;
+  --bf-primary-hover: #d6471f;
+  --bf-accent-weak:   rgba(238, 85, 48, 0.12);
+  /* Estados en claro */
+  --bf-success: #11a37a;  --bf-success-weak: rgba(17, 163, 122, 0.13);
+  --bf-danger:  #e0364a;  --bf-danger-weak:  rgba(224, 54, 74, 0.12);
+  --bf-warning: #c08f00;  --bf-warning-weak: rgba(192, 143, 0, 0.14);
+  --bf-shadow-sm: 0 1px 2px rgba(20, 20, 30, 0.06);
+  --bf-shadow:    0 1px 2px rgba(20, 20, 30, 0.06), 0 10px 30px rgba(20, 20, 30, 0.08);
+  --bf-shadow-lg: 0 12px 40px rgba(20, 20, 30, 0.12);
+}
+
+/* ── Tipografía base de utilidad (scoped a .bf-*, no afecta a otras páginas) ─ */
+.bf-h1 { font-size: var(--bf-fs-2xl); font-weight: var(--bf-fw-bold); line-height: 1.2; }
+.bf-h2 { font-size: var(--bf-fs-xl); font-weight: var(--bf-fw-semibold); line-height: 1.25; }
+.bf-h3 { font-size: var(--bf-fs-lg); font-weight: var(--bf-fw-semibold); }
+.bf-muted { color: var(--bf-text-muted); }
+.bf-faint { color: var(--bf-text-faint); }
+
+/* ── Botones ────────────────────────────────────────────────────────────── */
+.bf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bf-space-2);
+  padding: 0.55rem 1rem;
+  font-family: var(--bf-font-ui);
+  font-size: var(--bf-fs-sm);
+  font-weight: var(--bf-fw-semibold);
+  line-height: 1;
+  color: var(--bf-text);
+  background: var(--bf-surface-2);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  cursor: pointer;
+  transition: background var(--bf-transition), border-color var(--bf-transition),
+              transform var(--bf-transition);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.bf-btn:hover { background: var(--bf-surface-3); border-color: var(--bf-border-strong); }
+.bf-btn:active { transform: translateY(1px); }
+.bf-btn:focus-visible { outline: 2px solid var(--bf-primary); outline-offset: 2px; }
+
+.bf-btn--primary {
+  background: var(--bf-primary);
+  border-color: transparent;
+  color: var(--bf-on-primary);
+}
+.bf-btn--primary:hover { background: var(--bf-primary-hover); }
+
+.bf-btn--ghost { background: transparent; border-color: transparent; }
+.bf-btn--ghost:hover { background: var(--bf-surface-2); }
+
+.bf-btn--danger { color: var(--bf-danger); border-color: var(--bf-border); }
+.bf-btn--danger:hover { background: rgba(248, 113, 113, 0.12); border-color: var(--bf-danger); }
+
+.bf-btn--sm { padding: 0.35rem 0.65rem; font-size: var(--bf-fs-xs); }
+.bf-btn--icon { padding: 0.5rem; width: 38px; height: 38px; }
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.bf-card {
+  background: var(--bf-surface-2);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius-lg);
+  padding: var(--bf-space-5);
+  box-shadow: var(--bf-shadow-sm);
+}
+.bf-card--interactive { cursor: pointer; transition: border-color var(--bf-transition),
+                        transform var(--bf-transition), box-shadow var(--bf-transition); }
+.bf-card--interactive:hover {
+  border-color: var(--bf-border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--bf-shadow);
+}
+
+/* ── Inputs ─────────────────────────────────────────────────────────────── */
+.bf-input, .bf-select, .bf-textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-family: var(--bf-font-ui);
+  font-size: var(--bf-fs-sm);
+  color: var(--bf-text);
+  background: var(--bf-surface);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  transition: border-color var(--bf-transition), box-shadow var(--bf-transition);
+}
+.bf-input::placeholder, .bf-textarea::placeholder { color: var(--bf-text-faint); }
+.bf-input:focus, .bf-select:focus, .bf-textarea:focus {
+  outline: none;
+  border-color: var(--bf-primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.18);
+}
+.bf-label { display: block; font-size: var(--bf-fs-xs); font-weight: var(--bf-fw-semibold);
+            color: var(--bf-text-muted); margin-bottom: var(--bf-space-2); }
+
+/* ── Badges (rol, estado) ───────────────────────────────────────────────── */
+.bf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bf-space-1);
+  padding: 0.2rem 0.55rem;
+  font-size: var(--bf-fs-xs);
+  font-weight: var(--bf-fw-semibold);
+  border-radius: var(--bf-radius-full);
+  background: var(--bf-surface-3);
+  color: var(--bf-text-muted);
+  text-transform: capitalize;
+}
+.bf-badge--admin  { background: rgba(251, 191, 36, 0.15); color: var(--bf-role-admin); }
+.bf-badge--member { background: rgba(96, 165, 250, 0.15); color: var(--bf-role-member); }
+.bf-badge--guest  { background: rgba(154, 163, 178, 0.15); color: var(--bf-role-guest); }
+
+/* ── Avatar ─────────────────────────────────────────────────────────────── */
+.bf-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--bf-radius-full);
+  background: var(--bf-surface-3);
+  color: var(--bf-text);
+  font-weight: var(--bf-fw-bold);
+  font-size: var(--bf-fs-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.bf-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.bf-avatar--lg { width: 56px; height: 56px; font-size: var(--bf-fs-lg); }
+
+/* ── Tabs (pestañas del espacio de banda) ──────────────────────────────── */
+.bf-tabs {
+  display: flex;
+  gap: var(--bf-space-1);
+  border-bottom: 1px solid var(--bf-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bf-tabs::-webkit-scrollbar { display: none; }
+.bf-tab {
+  padding: 0.7rem 1rem;
+  font-size: var(--bf-fs-sm);
+  font-weight: var(--bf-fw-medium);
+  color: var(--bf-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--bf-transition), border-color var(--bf-transition);
+}
+.bf-tab:hover { color: var(--bf-text); }
+.bf-tab[aria-selected="true"] { color: var(--bf-primary); border-bottom-color: var(--bf-primary); }
+
+/* ── Lista ──────────────────────────────────────────────────────────────── */
+.bf-list { display: flex; flex-direction: column; gap: var(--bf-space-2); }
+.bf-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--bf-space-3);
+  padding: var(--bf-space-3) var(--bf-space-4);
+  background: var(--bf-surface-2);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+}
+
+/* ── nav-item (elemento del lateral) ───────────────────────────────────── */
+.bf-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--bf-space-3);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--bf-radius);
+  color: var(--bf-text-muted);
+  font-size: var(--bf-fs-sm);
+  font-weight: var(--bf-fw-medium);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--bf-transition), color var(--bf-transition);
+}
+.bf-nav-item:hover { background: var(--bf-surface-2); color: var(--bf-text); }
+.bf-nav-item[aria-current="page"] { background: var(--bf-surface-3); color: var(--bf-text); }
+.bf-nav-item .bf-nav-icon { font-size: 1.1rem; width: 1.3rem; text-align: center; }
+
+/* ── Banner de banda (contexto BANDA, T-075) ───────────────────────────── */
+.bf-band-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--bf-space-4);
+  padding: var(--bf-space-4) var(--bf-space-5);
+  background: linear-gradient(135deg, var(--bf-surface-2), var(--bf-surface));
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius-lg);
+}
+.bf-band-banner__name { font-size: var(--bf-fs-xl); font-weight: var(--bf-fw-bold); }
+.bf-band-banner__meta { color: var(--bf-text-muted); font-size: var(--bf-fs-sm); }
+
+/* ── Saldo (finanzas) ───────────────────────────────────────────────────── */
+.bf-amount--positive { color: var(--bf-success); font-weight: var(--bf-fw-semibold); }
+.bf-amount--negative { color: var(--bf-danger);  font-weight: var(--bf-fw-semibold); }
+
+/* ── Utilidades mínimas ─────────────────────────────────────────────────── */
+.bf-stack   { display: flex; flex-direction: column; gap: var(--bf-space-4); }
+.bf-row     { display: flex; align-items: center; gap: var(--bf-space-3); }
+.bf-row--between { display: flex; align-items: center; justify-content: space-between;
+                   gap: var(--bf-space-3); }
+.bf-grow    { flex: 1; }
+.bf-wrap    { flex-wrap: wrap; }
+.bf-hidden  { display: none !important; }
+
+/* ── Animaciones (foundation BandFlow, spec §2.6) ───────────────────────── */
+@keyframes bf-fade  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes bf-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+@keyframes bf-eq    { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }

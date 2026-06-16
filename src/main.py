@@ -6,7 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from .api.band_setlists_router import router as band_setlists_router
+from .api.band_songs_router import router as band_songs_router
+from .api.bands_router import router as bands_router
+from .api.events_router import router as events_router
+from .api.finance_router import router as finance_router
 from .api.import_router import router as import_router
+from .api.invites_router import router as invites_router
+from .api.me_router import router as me_router
+from .api.messages_router import router as messages_router
+from .api.profile_router import router as profile_router
 from .api.setlists_router import router as setlists_router
 from .api.songs_router import router as songs_router
 from .services.auth import SUPABASE_ANON_KEY, SUPABASE_URL, TEST_MODE
@@ -80,11 +89,20 @@ app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 app.include_router(songs_router)
 app.include_router(import_router)
 app.include_router(setlists_router)
+app.include_router(bands_router)
+app.include_router(invites_router)
+app.include_router(profile_router)
+app.include_router(band_songs_router)
+app.include_router(band_setlists_router)
+app.include_router(events_router)
+app.include_router(finance_router)
+app.include_router(messages_router)
+app.include_router(me_router)
 
 @app.get("/")
 def read_root():
-    # La biblioteca es la pantalla de entrada de la app
-    return RedirectResponse(url="/static/library.html")
+    # El inicio (app shell de BandFlow) es la pantalla de entrada (T-074).
+    return RedirectResponse(url="/static/app.html")
 
 
 @app.get("/health")

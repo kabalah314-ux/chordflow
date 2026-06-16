@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0d0d10">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>BandFlow — Banda</title>
+    <!-- style.css + Inter: estilan el contenido reusado de bands.js (listas, botones) y los
+         modales de util.js. design-system.css + shell.css: shell, banner y pestañas (bf-*). -->
+    <link rel="stylesheet" href="style.css?v=13dca123">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css?v=c6ff2c13">
+    <link rel="stylesheet" href="shell.css?v=f583ba6a">
+</head>
+<body>
+    <div class="bf-shell">
+        <main class="bf-shell-main">
+            <div id="band-space" class="bf-page">
+                <p class="bf-muted">Cargando banda…</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.js"
+            integrity="sha384-EjUdIVmzWliPzdzhxZ9ZoO0etXLKWuUPUftAGxP6qH6Lm4oLwoLaJR0Ba4pIDiDL"
+            crossorigin="anonymous"></script>
+    <script src="auth.js?v=55a0092d"></script>
+    <script src="util.js?v=c0e1df98"></script>
+    <script src="shell.js?v=560591df"></script>
+    <script src="bands.js?v=b67a5200"></script>
+    <script src="band.js?v=773892f2"></script>
+</body>
+</html>

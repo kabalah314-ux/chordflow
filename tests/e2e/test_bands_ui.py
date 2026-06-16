@@ -1,0 +1,188 @@
+"""
+E2E del núcleo de banda (Fase 7, T-055): crear banda, verme como Admin con mi nombre de perfil,
+generar enlace de invitación y previsualizarlo; y editar el perfil.
+"""
+
+import pytest
+
+from tests.conftest import sample_song_payload
+
+pytestmark = pytest.mark.e2e
+
+
+def test_crear_banda_ver_miembro_y_generar_invitacion(page, live_server, api):
+    # Mi perfil con nombre real → debe verse en la lista de miembros (no el UUID)
+    api.put("/profile/me", json={"display_name": "Oscar E2E"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+
+    # Crear banda vía promptModal
+    page.click("#btn-new-band")
+    page.wait_for_selector('.modal-overlay input[data-act="input"]', timeout=8000)
+    page.fill('.modal-overlay input[data-act="input"]', "Banda E2E")
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # Crear banda lleva al espacio de banda (band.html) con su banner
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.wait_for_selector(".bf-band-banner", timeout=8000)
+    banner = page.inner_text(".bf-band-banner")
+    assert "Banda E2E" in banner
+    assert "Admin" in banner                # soy admin (creador)
+
+    # Miembros: mi nombre real, no el UUID
+    page.click('.bf-tab[data-tab="miembros"]')
+    assert "Oscar E2E" in page.inner_text('.bs-panel[data-panel="miembros"]')
+
+    # Generar invitación → modal con el enlace join.html?code=
+    page.click("#bs-invite")
+    page.wait_for_selector(".modal-overlay input.search-box", timeout=8000)
+    link = page.input_value(".modal-overlay input.search-box")
+    assert "join.html?code=" in link
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # Previsualizar el enlace de invitación: muestra el nombre de la banda y es válida
+    code = link.split("code=", 1)[1]
+    page.goto(live_server + f"/static/join.html?code={code}", wait_until="networkidle")
+    page.wait_for_selector("#join-accept", timeout=8000)
+    assert "Banda E2E" in page.inner_text("#join-box")
+
+
+def test_join_sin_codigo_ofrece_salida(page, live_server, api):
+    # Abrir join.html sin ?code= no debe dejar al usuario atrapado: muestra el aviso
+    # y un enlace explícito de salida hacia "Mis bandas" (coherencia de navegación).
+    page.goto(live_server + "/static/join.html", wait_until="networkidle")
+    page.wait_for_selector('#join-box a[href="bands.html"]', timeout=8000)
+    assert "Enlace inválido" in page.inner_text("#join-box")
+    assert "Ir a mis bandas" in page.inner_text("#join-box")
+
+
+def test_volver_a_la_lista_muestra_la_banda(page, live_server, api):
+    # Crea una banda por API y comprueba que aparece en la rejilla "Mis bandas"
+    api.post("/bands/", json={"name": "Banda Listada"})
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    assert "Banda Listada" in page.inner_text("#bands-grid")
+
+
+def test_copiar_cancion_personal_al_repertorio_de_banda(page, live_server, api):
+    # Una canción personal y una banda (vía API, como TEST_USER admin)
+    api.post("/songs/", json=sample_song_payload(title="Tema Personal"))
+    api.post("/bands/", json={"name": "Banda Repertorio"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    # Abrir la banda "Banda Repertorio" → band.html, pestaña Repertorio
+    page.click('.song-card:has-text("Banda Repertorio") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="repertorio"]')
+    page.wait_for_selector("#b-add-song", timeout=8000)
+
+    # Copiar del repertorio personal
+    page.click("#b-add-song")
+    page.wait_for_selector("#copy-list button[data-id]", timeout=8000)
+    page.click('#copy-list button:has-text("Tema Personal")')
+
+    # La canción aparece en el repertorio de la banda
+    page.wait_for_selector('#b-repertoire .setlist-song', timeout=8000)
+    assert "Tema Personal" in page.inner_text("#b-repertoire")
+
+
+def test_crear_setlist_de_banda_desde_la_ui(page, live_server, api):
+    # Banda con una canción en el repertorio (vía API como admin)
+    bid = api.post("/bands/", json={"name": "Banda Con Setlist"}).json()["id"]
+    api.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="Cancion Repertorio"))
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Con Setlist") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="setlists"]')
+    page.wait_for_selector("#b-new-setlist", timeout=8000)
+
+    # Crear setlist desde el repertorio
+    page.click("#b-new-setlist")
+    page.wait_for_selector("#sl-name", timeout=8000)
+    page.fill("#sl-name", "Bolo UI")
+    page.click('#sl-available button[data-id]')          # añadir la canción
+    page.wait_for_function("document.querySelectorAll('#sl-selected li button[data-rm]').length === 1",
+                           timeout=5000)
+    page.click("#sl-save")
+
+    # Vuelve a la ficha y el setlist aparece
+    page.wait_for_selector("#b-setlists .setlist-song", timeout=8000)
+    assert "Bolo UI" in page.inner_text("#b-setlists")
+
+
+def test_crear_evento_y_marcar_asistencia_en_la_ui(page, live_server, api):
+    api.post("/bands/", json={"name": "Banda Agenda UI"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Agenda UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    page.wait_for_selector("#b-new-event", timeout=8000)
+
+    # Crear un ensayo con fecha futura
+    page.click("#b-new-event")
+    page.wait_for_selector("#ev-title", timeout=8000)
+    page.fill("#ev-title", "Ensayo UI")
+    page.fill("#ev-date", "2027-01-15T20:00")
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # Aparece en la agenda y puedo marcar "Voy"
+    page.wait_for_selector('#b-agenda .setlist-song', timeout=8000)
+    assert "Ensayo UI" in page.inner_text("#b-agenda")
+    page.click('#b-agenda .setlist-song:has-text("Ensayo UI") button[data-att="yes"]')
+    page.wait_for_selector('#b-agenda .setlist-song button[data-att="yes"].active', timeout=8000)
+
+
+def test_registrar_movimiento_y_ver_saldos_en_la_ui(page, live_server, api):
+    api.post("/bands/", json={"name": "Banda Finanzas UI"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Finanzas UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="finanzas"]')
+    page.wait_for_selector("#b-new-tx", timeout=8000)
+
+    # Registrar un gasto de 100 € pagado por mí (único miembro → me lo debo a mí, saldo 0)
+    page.click("#b-new-tx")
+    page.wait_for_selector("#tx-amount", timeout=8000)
+    page.fill("#tx-desc", "Local de ensayo")
+    page.fill("#tx-amount", "100")
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # El movimiento aparece en la lista de finanzas
+    page.wait_for_selector('#b-tx-list .setlist-song', timeout=8000)
+    assert "Local de ensayo" in page.inner_text("#b-finance")
+
+
+def test_enviar_mensaje_en_el_chat_de_banda(page, live_server, api):
+    api.post("/bands/", json={"name": "Banda Chat UI"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Chat UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="chat"]')
+    page.wait_for_selector("#chat-input", timeout=8000)
+
+    page.fill("#chat-input", "Hola equipo desde la UI")
+    page.click("#chat-send")
+
+    page.wait_for_selector('#b-chat .setlist-song', timeout=8000)
+    assert "Hola equipo desde la UI" in page.inner_text("#b-chat")
+
+
+def test_editar_perfil_persiste(page, live_server, api):
+    page.goto(live_server + "/static/profile.html", wait_until="networkidle")
+    page.wait_for_selector("#pf-name", timeout=8000)
+    page.fill("#pf-name", "Nombre Guardado")
+    page.fill("#pf-inst", "guitarra, voz")
+    page.click("#pf-save")
+    # Recargar y comprobar persistencia
+    page.goto(live_server + "/static/profile.html", wait_until="networkidle")
+    page.wait_for_selector("#pf-name", timeout=8000)
+    assert page.input_value("#pf-name") == "Nombre Guardado"

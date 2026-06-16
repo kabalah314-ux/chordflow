@@ -28,7 +28,7 @@ def test_pwa_assets_servidos(api):
     """manifest.json, sw.js e iconos se sirven (200)."""
     m = api.get("/static/manifest.json")
     assert m.status_code == 200
-    assert m.json()["name"] == "ChordFlow"
+    assert m.json()["name"] == "BandFlow"   # rebranding T-082
     assert api.get("/static/sw.js").status_code == 200
     assert api.get("/static/icons/icon-192.png").status_code == 200
 

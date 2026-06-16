@@ -8,7 +8,15 @@ from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
 from ..services.db import get_db
-from ..services.models import ChordMarker, Line, Section, Song, TabLine, _utcnow
+from ..services.models import (
+    BandMembership,
+    ChordMarker,
+    Line,
+    Section,
+    Song,
+    TabLine,
+    _utcnow,
+)
 from ..services.schemas import SongCreate, SongResponse, SongSummary, SongUpdate
 
 logger = logging.getLogger(__name__)
@@ -17,6 +25,47 @@ router = APIRouter(
     prefix="/songs",
     tags=["songs"]
 )
+
+
+def _active_membership(db: Session, band_id: str, user_id: str):
+    """Pertenencia ACTIVA del usuario en la banda (o None)."""
+    return (
+        db.query(BandMembership)
+        .filter(
+            BandMembership.band_id == band_id,
+            BandMembership.user_id == user_id,
+            BandMembership.status == "active",
+        )
+        .first()
+    )
+
+
+def _get_song_authorized(db: Session, song_id: str, user_id: str, *, write: bool) -> Song:
+    """Obtiene una canción aplicando la autorización correcta según sea personal o de banda:
+
+    - **Personal** (`band_id IS NULL`): debe ser del propio usuario (`owner_id`), si no → 404.
+    - **De banda** (`band_id`): el usuario debe ser **miembro activo** (si no → 404, no se revela
+      su existencia). Para **escritura**, además, un `guest` no puede editar el repertorio → 403.
+
+    Mantiene intacto el comportamiento de las canciones personales (mismo 404 que antes) y abre el
+    acceso compartido al repertorio de banda sin filtrar datos entre bandas (regla de oro)."""
+    song = (
+        db.query(Song)
+        .filter(Song.id == song_id, Song.deleted_at.is_(None))
+        .first()
+    )
+    if song is None:
+        raise HTTPException(status_code=404, detail="Canción no encontrada")
+    if song.band_id is None:
+        if song.owner_id != user_id:
+            raise HTTPException(status_code=404, detail="Canción no encontrada")
+    else:
+        membership = _active_membership(db, song.band_id, user_id)
+        if membership is None:
+            raise HTTPException(status_code=404, detail="Canción no encontrada")
+        if write and membership.role == "guest":
+            raise HTTPException(status_code=403, detail="Un invitado no puede editar el repertorio")
+    return song
 
 
 def _append_sections(db_song: Song, sections) -> None:
@@ -44,8 +93,11 @@ def get_songs(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500),
     (metadatos + section_count, SIN la estructura anidada) para evitar el N+1 de
     serializar toda la jerarquía por canción (T-010). T-037: skip/limit acotados."""
     try:
+        # Solo canciones PERSONALES (band_id IS NULL). Las del repertorio de banda se listan en
+        # /bands/{id}/songs; aquí no deben aparecer aunque su owner_id sea el usuario (decisión §7).
         songs = (db.query(Song)
-                 .filter(Song.deleted_at.is_(None), Song.owner_id == user_id)
+                 .filter(Song.deleted_at.is_(None), Song.owner_id == user_id,
+                         Song.band_id.is_(None))
                  .offset(skip).limit(limit).all())
         if not songs:
             return []
@@ -69,13 +121,12 @@ def get_songs(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500),
 @router.get("/{song_id}", response_model=SongResponse)
 def get_song(song_id: str, db: Session = Depends(get_db),
              user_id: str = Depends(get_current_user)):
-    """Obtiene el detalle completo de una canción del usuario."""
+    """Obtiene el detalle completo de una canción (personal del usuario o del repertorio de una
+    banda de la que es miembro). Es la ruta que usa el reproductor (la joya)."""
     try:
-        song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
-                                      Song.deleted_at.is_(None)).first()
-        if not song:
-            raise HTTPException(status_code=404, detail="Canción no encontrada")
-        return song
+        return _get_song_authorized(db, song_id, user_id, write=False)
+    except HTTPException:
+        raise
     except SQLAlchemyError as e:
         logger.error(f"Error recuperando canción {song_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error interno de base de datos")
@@ -111,10 +162,7 @@ def update_song(song_id: str, song_update: SongCreate, db: Session = Depends(get
                 user_id: str = Depends(get_current_user)):
     """Actualiza una canción existente recreando su estructura (Fase 1 simplificada)."""
     try:
-        db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
-                                        Song.deleted_at.is_(None)).first()
-        if not db_song:
-            raise HTTPException(status_code=404, detail="Canción no encontrada")
+        db_song = _get_song_authorized(db, song_id, user_id, write=True)
 
         # Eliminar las secciones existentes vía ORM para que el cascade
         # `delete-orphan` borre también sus lines/chords/tab_lines. (Un bulk
@@ -154,10 +202,7 @@ def patch_song(song_id: str, song_update: SongUpdate, db: Session = Depends(get_
     """Actualiza parcialmente los metadatos de una canción (p. ej. el tempo) sin
     recrear su estructura. Ligero: solo aplica los campos enviados."""
     try:
-        db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
-                                        Song.deleted_at.is_(None)).first()
-        if not db_song:
-            raise HTTPException(status_code=404, detail="Canción no encontrada")
+        db_song = _get_song_authorized(db, song_id, user_id, write=True)
 
         update_data = song_update.model_dump(exclude_unset=True)
         for key, value in update_data.items():
@@ -181,10 +226,7 @@ def delete_song(song_id: str, db: Session = Depends(get_db),
     desaparece de la app pero la fila (y su estructura) se conserva en la BD —
     recuperable y auditable. Un segundo DELETE sobre una canción ya borrada → 404."""
     try:
-        db_song = db.query(Song).filter(Song.id == song_id, Song.owner_id == user_id,
-                                         Song.deleted_at.is_(None)).first()
-        if not db_song:
-            raise HTTPException(status_code=404, detail="Canción no encontrada")
+        db_song = _get_song_authorized(db, song_id, user_id, write=True)
 
         db_song.deleted_at = _utcnow()
         db.commit()

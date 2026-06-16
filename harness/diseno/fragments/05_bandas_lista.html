@@ -1,0 +1,34 @@
+<!-- ============ BANDAS ============ -->
+      <sc-if value="{{is.bandas}}" hint-placeholder-val="">
+        <div style="max-width:1080px;margin:0 auto;padding:32px 38px 60px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+            <div>
+              <h1 style="font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px">Bandas</h1>
+              <p style="color:var(--text-muted);margin:0;font-size:15px">Entra en una banda para gestionarla.</p>
+            </div>
+            <button style="display:flex;align-items:center;gap:7px;padding:10px 15px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer" style-hover="filter:brightness(1.07)"><i data-lucide="plus" style="width:16px;height:16px"></i>Nueva banda</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px">
+            <sc-for list="{{bandsView}}" as="b" hint-placeholder-count="3">
+              <div onclick="{{b.enter}}" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:border-color .15s" style-hover="border-color:var(--border-strong)">
+                <div style="height:64px;background:{{b.gradient}};position:relative">
+                  <div style="position:absolute;bottom:-22px;left:18px;width:52px;height:52px;border-radius:13px;background:{{b.color}};border:3px solid var(--surface);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:17px">{{b.initials}}</div>
+                </div>
+                <div style="padding:30px 18px 18px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                    <span style="font-weight:700;font-size:16.5px">{{b.name}}</span>
+                    <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:{{b.roleBg}};color:{{b.roleColor}}">{{b.roleLabel}}</span>
+                  </div>
+                  <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">{{b.genre}} · {{b.members}} miembros</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-muted)"><i data-lucide="music" style="width:15px;height:15px;color:var(--text-faint)"></i>{{b.instrument}}</div>
+                    <span style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--accent);font-weight:600">Entrar <i data-lucide="chevron-right" style="width:15px;height:15px"></i></span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      

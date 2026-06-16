@@ -10,8 +10,10 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
+    UniqueConstraint,
     text,
 )
 from sqlalchemy.orm import relationship
@@ -21,6 +23,21 @@ from .db import Base
 # Valores permitidos para Line.type. Fuente única para el CHECK de BD (T-035) y la validación
 # de schema (Literal en schemas.py).
 LINE_TYPES = ("lyric", "tab", "chord_only", "comment", "spacer")
+
+# Giro V2 (SaaS de banda) — fuentes únicas para los CHECK de BD y la validación de schema.
+# Roles dentro de una banda (matriz de permisos §C.2 de la guía funcional).
+BAND_ROLES = ("admin", "member", "guest")
+# Estado de pertenencia: 'left' = baja blanda (la fila permanece para el histórico, §Área 8).
+MEMBERSHIP_STATUSES = ("active", "left")
+# Agenda (Fase 10). Tipo de evento; el setlist solo se adjunta a 'concert'.
+EVENT_TYPES = ("rehearsal", "concert", "other")
+# Estado/pipeline del evento (§C.4.1 #1): lead/contacted/negotiating = pipeline de booking (solo
+# 'concert', se explota en Fase 14); rehearsal/other nacen en 'confirmed'.
+EVENT_STATUSES = ("lead", "contacted", "negotiating", "confirmed", "done", "cancelled")
+# Asistencia a un evento (§Área 2 #16).
+ATTENDANCE_STATUSES = ("yes", "no", "maybe")
+# Finanzas (Fase 11). Tipo de movimiento.
+TRANSACTION_TYPES = ("expense", "income")
 
 
 def _utcnow():
@@ -52,6 +69,12 @@ class Song(Base):
     # owner_id NOT NULL (T-034): la auth es obligatoria y el router siempre lo asigna; lo
     # blindamos a nivel de esquema para que ninguna fila pueda quedar sin dueño.
     owner_id = Column(String(36), nullable=False, index=True)
+    # band_id (giro V2, Fase 8): NULL = canción personal (espacio de `owner_id`); con valor =
+    # está en el repertorio de esa banda (visible/editable por sus miembros). Las canciones de
+    # banda son COPIAS (decisión §7), así cada banda tiene su versión sin afectar a la personal.
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     # server_default agnóstico: 'false' es válido en Postgres y SQLite (3.23+). Un '0' literal
     # lo rechaza Postgres en una columna boolean (DatatypeMismatch). Visto al migrar a Postgres.
     is_public = Column(Boolean, default=False, server_default=text("false"))
@@ -136,6 +159,11 @@ class Setlist(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     name = Column(String(255), nullable=False)
     owner_id = Column(String(36), nullable=False, index=True)
+    # band_id (giro V2, Fase 9): NULL = setlist personal; con valor = setlist de esa banda
+    # (sacado de su repertorio, reutilizable). Las personales no se tocan.
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (como Song)
@@ -155,6 +183,286 @@ class SetlistItem(Base):
     song_id = Column(String(36), ForeignKey("songs.id", ondelete="CASCADE"),
                      nullable=False, index=True)
     position = Column(Integer, nullable=False)  # orden dentro del repertorio (0,1,2…)
+    # note (giro V2, Fase 9): apunte por canción en el setlist ("aquí hablo al público",
+    # "cambio de guitarra"). Área 3 #27. Visible en el modo concierto.
+    note = Column(Text, nullable=True)
 
     setlist = relationship("Setlist", back_populates="items")
     song = relationship("Song")
+
+
+# ── Giro V2 — Núcleo de identidad de banda (Fase 7, T-048) ────────────────────
+# Todo aditivo: tablas nuevas, no toca lo existente. Convenciones §C.4.3 de
+# GUIA_MAESTRA_V2_FUNCIONAL.md (índice band_id, timestamps UTC, soft-delete donde hay
+# histórico, CHECK como en Line.type). Song.band_id/Setlist.band_id NO entran aquí (Fases 8/9).
+
+
+class MusicianProfile(Base):
+    """Perfil del músico. `id` = user_id de Supabase (no se genera): permite mostrar
+    nombres reales en vez de UUIDs en miembros, finanzas, asistencia, etc. (§4.1)."""
+
+    __tablename__ = "musician_profiles"
+
+    id = Column(String(36), primary_key=True)  # = user_id de Supabase
+    display_name = Column(String(255))
+    instruments = Column(JSON)  # ["guitarra", "voz", ...]
+    avatar_url = Column(String(512))
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class Band(Base):
+    """Banda (tenant). De ella cuelga todo el giro multi-tenant. Soft-delete (tiene
+    histórico/valor, §C.4.3)."""
+
+    __tablename__ = "bands"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    avatar_url = Column(String(512))
+    created_by = Column(String(36), nullable=False, index=True)  # user_id del creador (→ admin)
+    # Una sola divisa por banda (§C.4.3). Sin multi-divisa en v1. Default EUR.
+    currency = Column(String(3), nullable=False, default="EUR", server_default=text("'EUR'"))
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (como Song)
+
+    memberships = relationship(
+        "BandMembership", back_populates="band", cascade="all, delete-orphan"
+    )
+    invites = relationship(
+        "BandInvite", back_populates="band", cascade="all, delete-orphan"
+    )
+
+
+class BandMembership(Base):
+    """Pertenencia músico↔banda con rol. Único (band_id, user_id). Baja blanda:
+    status='left' + left_at (la fila permanece para el histórico, §Área 8)."""
+
+    __tablename__ = "band_memberships"
+    __table_args__ = (
+        UniqueConstraint("band_id", "user_id", name="uq_membership_band_user"),
+        CheckConstraint(
+            "role IN (" + ", ".join(f"'{r}'" for r in BAND_ROLES) + ")",
+            name="ck_membership_role",
+        ),
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in MEMBERSHIP_STATUSES) + ")",
+            name="ck_membership_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(String(36), nullable=False, index=True)
+    role = Column(String(16), nullable=False, default="member", server_default=text("'member'"))
+    instrument = Column(String(64))  # instrumento en ESTA banda (opcional)
+    status = Column(
+        String(16), nullable=False, default="active", server_default=text("'active'")
+    )
+    left_at = Column(DateTime, nullable=True)  # cuándo causó baja (baja blanda)
+    joined_at = Column(DateTime, default=_utcnow)
+
+    band = relationship("Band", back_populates="memberships")
+
+
+class BandInvite(Base):
+    """Invitación por código/enlace para unirse a una banda (§8). No depende de emails."""
+
+    __tablename__ = "band_invites"
+    __table_args__ = (
+        CheckConstraint(
+            "role_to_grant IN (" + ", ".join(f"'{r}'" for r in BAND_ROLES) + ")",
+            name="ck_invite_role",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    code = Column(String(64), nullable=False, unique=True, index=True)  # token del enlace
+    created_by = Column(String(36), nullable=False)  # user_id del admin que la generó
+    role_to_grant = Column(
+        String(16), nullable=False, default="member", server_default=text("'member'")
+    )
+    expires_at = Column(DateTime, nullable=True)  # caducidad opcional
+    max_uses = Column(Integer, nullable=True)  # nº máximo de usos (null = ilimitado)
+    used_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    created_at = Column(DateTime, default=_utcnow)
+
+    band = relationship("Band", back_populates="invites")
+
+
+# ── Giro V2 — Agenda: eventos (Fase 10, Áreas 2 y 3) ──────────────────────────
+
+
+class Event(Base):
+    """Evento de la banda: ensayo, concierto u otro. Hub de la operativa (agenda/booking).
+    El setlist solo se adjunta a conciertos. Soft-delete (tiene histórico, §C.4.3)."""
+
+    __tablename__ = "events"
+    __table_args__ = (
+        CheckConstraint(
+            "type IN (" + ", ".join(f"'{t}'" for t in EVENT_TYPES) + ")",
+            name="ck_events_type",
+        ),
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in EVENT_STATUSES) + ")",
+            name="ck_events_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    type = Column(String(16), nullable=False)  # rehearsal | concert | other
+    title = Column(String(255), nullable=False)
+    starts_at = Column(DateTime, nullable=True)  # fecha/hora de inicio
+    ends_at = Column(DateTime, nullable=True)
+    location = Column(String(255))  # lugar libre (ensayo/otro); el concierto usará Venue más tarde
+    notes = Column(Text)
+    status = Column(
+        String(16), nullable=False, default="confirmed", server_default=text("'confirmed'")
+    )
+    # Solo concierto: setlist adjunto (SET NULL si se borra el setlist; los setlists son soft-delete).
+    setlist_id = Column(String(36), ForeignKey("setlists.id", ondelete="SET NULL"), nullable=True)
+    created_by = Column(String(36), nullable=False)  # admin que lo creó
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+    attendance = relationship(
+        "EventAttendance", back_populates="event", cascade="all, delete-orphan"
+    )
+
+
+class EventAttendance(Base):
+    """Confirmación de asistencia de un miembro a un evento (voy / no voy / quizás)."""
+
+    __tablename__ = "event_attendance"
+    __table_args__ = (
+        UniqueConstraint("event_id", "user_id", name="uq_attendance_event_user"),
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in ATTENDANCE_STATUSES) + ")",
+            name="ck_attendance_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    event_id = Column(
+        String(36), ForeignKey("events.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(String(36), nullable=False, index=True)
+    status = Column(String(8), nullable=False)  # yes | no | maybe
+    responded_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    event = relationship("Event", back_populates="attendance")
+
+
+# ── Giro V2 — Finanzas con división (Fase 11, Áreas 4/6) ──────────────────────
+# Modelo Splitwise: cada movimiento tiene quién pagó/cobró y un reparto cuyas partes suman el total.
+# Dinero en Decimal(10,2), una divisa por banda (§C.4.3). El "fondo" es un participante virtual
+# (flags paid_by_fund / to_fund), no una tabla aparte. Financieros nunca se borran físicamente
+# (soft delete). El cálculo de saldos vive en UN solo servicio (services/balances.py) con tests
+# que cuadran a cero.
+
+
+class Transaction(Base):
+    """Movimiento: gasto o ingreso. `paid_by` adelantó (gasto) o cobró (ingreso) el dinero;
+    `paid_by_fund` = lo puso/recibió el fondo común. Ligable a un evento (caché del bolo)."""
+
+    __tablename__ = "transactions"
+    __table_args__ = (
+        CheckConstraint(
+            "type IN (" + ", ".join(f"'{t}'" for t in TRANSACTION_TYPES) + ")",
+            name="ck_transactions_type",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    type = Column(String(8), nullable=False)  # expense | income
+    description = Column(String(255))
+    amount = Column(Numeric(10, 2), nullable=False)
+    date = Column(DateTime, default=_utcnow)
+    category = Column(String(64))
+    paid_by = Column(String(36), nullable=True)  # user_id (null si lo puso/recibió el fondo)
+    paid_by_fund = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    event_id = Column(String(36), ForeignKey("events.id", ondelete="SET NULL"), nullable=True)
+    created_by = Column(String(36), nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (financiero: nunca duro)
+
+    splits = relationship(
+        "TransactionSplit", back_populates="transaction", cascade="all, delete-orphan"
+    )
+
+
+class TransactionSplit(Base):
+    """Parte del reparto de un movimiento. `to_fund` = esta parte se asigna al fondo común.
+    La suma de las partes = `amount` del movimiento (invariante, lo garantiza el endpoint)."""
+
+    __tablename__ = "transaction_splits"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    transaction_id = Column(
+        String(36), ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(String(36), nullable=True, index=True)  # null si to_fund
+    share_amount = Column(Numeric(10, 2), nullable=False)
+    to_fund = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+
+    transaction = relationship("Transaction", back_populates="splits")
+
+
+class Settlement(Base):
+    """Liquidación: pago real que ajusta los saldos ("Ana paga a Juan 30 €"). `to_fund` = el pago
+    va al fondo común."""
+
+    __tablename__ = "settlements"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    from_user_id = Column(String(36), nullable=False)  # quién paga
+    to_user_id = Column(String(36), nullable=True)  # a quién (null si to_fund)
+    to_fund = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    amount = Column(Numeric(10, 2), nullable=False)
+    date = Column(DateTime, default=_utcnow)
+    note = Column(String(255))
+    created_by = Column(String(36), nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (financiero)
+
+
+# ── Giro V2 — Comunicación: mensajes (Fase 12, Área 7) ────────────────────────
+
+
+class Message(Base):
+    """Mensaje de la banda. `event_id` NULL = chat general; con valor = hilo de ese evento.
+    `is_pinned` (lo fija un admin) = nota importante; aparecen arriba. Soft delete."""
+
+    __tablename__ = "messages"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # NULL = chat general; con valor = hilo del evento (comentarios puedo/no puedo, etc.).
+    event_id = Column(
+        String(36), ForeignKey("events.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    author_id = Column(String(36), nullable=False)
+    body = Column(Text, nullable=False)
+    is_pinned = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    created_at = Column(DateTime, default=_utcnow)
+    edited_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete

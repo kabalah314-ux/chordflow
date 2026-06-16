@@ -1,0 +1,129 @@
+/**
+ * shell.js — App shell de BandFlow (T-074, Fase 13, contexto TÚ).
+ *
+ * Inyecta el lateral fijo (marca + eyebrow "TÚ" + navegación + perfil + toggle de tema)
+ * en cualquier página que contenga un contenedor `.bf-shell` con su `<main class="bf-shell-main">`.
+ * Requiere haber cargado antes auth.js (requireAuth/apiFetch/signOut) y util.js (toast).
+ *
+ * El contexto BANDA (banner + pestañas) y el dashboard de Inicio llegan en T-075/T-076.
+ */
+(function () {
+    // ── Tema (usa data-theme, que es lo que lee design-system.css) ──────────────
+    const THEME_KEY = 'bf-theme';
+    function currentTheme() { return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark'; }
+    function applyTheme(theme) {
+        if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+        else document.documentElement.removeAttribute('data-theme');
+        const icon = document.getElementById('bf-theme-icon');
+        const label = document.getElementById('bf-theme-label');
+        // El botón ofrece el tema CONTRARIO al activo.
+        if (icon) icon.textContent = theme === 'light' ? '🌙' : '☀️';
+        if (label) label.textContent = theme === 'light' ? 'Modo oscuro' : 'Modo claro';
+    }
+    function toggleTheme() {
+        const next = currentTheme() === 'light' ? 'dark' : 'light';
+        localStorage.setItem(THEME_KEY, next);
+        applyTheme(next);
+    }
+    // Aplicar cuanto antes para minimizar el parpadeo.
+    applyTheme(currentTheme());
+
+    // ── Navegación (contexto TÚ). `soon`: página aún no construida (T-076..T-080). ──
+    const NAV = [
+        { label: 'Inicio',     icon: '🏠', href: 'app.html' },
+        { label: 'Biblioteca', icon: '📚', href: 'library.html' },
+        { label: 'Agenda',     icon: '📅', href: 'agenda.html' },
+        { label: 'Finanzas',   icon: '💶', href: 'finanzas.html' },
+        { label: 'Chat',       icon: '💬', href: 'chat.html' },
+        { label: 'Bandas',     icon: '🎸', href: 'bands.html' },
+        { label: 'Perfil',     icon: '👤', href: 'profile.html' },
+    ];
+
+    function currentPage() {
+        return (location.pathname.split('/').pop() || 'app.html').toLowerCase();
+    }
+
+    function navItemHtml(n, here) {
+        const inner = `<span class="bf-nav-icon">${n.icon}</span><span>${escapeHtml(n.label)}</span>`;
+        if (n.soon) {
+            return `<button class="bf-nav-item" data-soon data-label="${escapeHtml(n.label)}">
+                ${inner}<span class="bf-nav-soon">Pronto</span></button>`;
+        }
+        const active = n.href === here ? ' aria-current="page"' : '';
+        return `<a class="bf-nav-item" href="${n.href}"${active}>${inner}</a>`;
+    }
+
+    function buildSidebar() {
+        const here = currentPage();
+        const aside = document.createElement('aside');
+        aside.className = 'bf-sidebar';
+        aside.innerHTML = `
+            <a class="bf-brand" href="app.html" aria-label="BandFlow — inicio">
+                <span class="bf-brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="bf-brand-name">BandFlow</span>
+            </a>
+            <div class="bf-eyebrow">Tú</div>
+            <nav class="bf-sidebar-nav" aria-label="Navegación principal">
+                ${NAV.map(n => navItemHtml(n, here)).join('')}
+            </nav>
+            <div class="bf-sidebar-foot">
+                <a class="bf-profile-card" href="profile.html" title="Mi perfil">
+                    <span class="bf-avatar" id="bf-prof-initials">··</span>
+                    <span class="bf-profile-meta">
+                        <span class="bf-profile-name" id="bf-prof-name">Tú</span>
+                        <span class="bf-profile-sub">Mi perfil</span>
+                    </span>
+                    <span style="margin-left:auto;color:var(--bf-text-faint)" aria-hidden="true">⚙️</span>
+                </a>
+                <button class="bf-theme-toggle" id="bf-theme-btn" type="button">
+                    <span id="bf-theme-icon" aria-hidden="true">☀️</span><span id="bf-theme-label">Modo claro</span>
+                </button>
+            </div>`;
+        return aside;
+    }
+
+    function initialsFrom(name) {
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return null;
+        return parts.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    }
+
+    async function loadProfile() {
+        try {
+            const res = await apiFetch('/profile/me');
+            if (!res.ok) return;
+            const me = await res.json();
+            const name = (me.display_name || '').trim();
+            if (name) {
+                const elName = document.getElementById('bf-prof-name');
+                const elIni = document.getElementById('bf-prof-initials');
+                if (elName) elName.textContent = name;
+                const ini = initialsFrom(name);
+                if (elIni && ini) elIni.textContent = ini;
+            }
+        } catch (e) { /* perfil opcional: el shell funciona sin nombre */ }
+    }
+
+    async function mount() {
+        const shell = document.querySelector('.bf-shell');
+        if (!shell) return;                 // página sin shell: no hacemos nada
+        if (!(await requireAuth())) return; // sin sesión → requireAuth ya redirige a login
+
+        const aside = buildSidebar();
+        shell.insertBefore(aside, shell.firstChild);
+
+        // Aplicar el tema otra vez ahora que existen el icono/label del botón.
+        applyTheme(currentTheme());
+        document.getElementById('bf-theme-btn').addEventListener('click', toggleTheme);
+
+        // Items "Pronto": avisan en vez de llevar a un 404.
+        aside.querySelectorAll('.bf-nav-item[data-soon]').forEach(btn =>
+            btn.addEventListener('click', () =>
+                toast(`${btn.dataset.label}: próximamente.`, 'info')));
+
+        loadProfile();
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+    else mount();
+})();

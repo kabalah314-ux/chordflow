@@ -1,0 +1,24 @@
+<!-- ============ BANDA · SETLIST ============ -->
+      <sc-if value="{{is.bSetlist}}" hint-placeholder-val="">
+        <div style="max-width:680px;margin:0 auto;padding:32px 38px 60px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px">
+            <h1 style="font-size:24px;font-weight:700;margin:0">Setlist · Sala Apolo</h1>
+            <span style="font-size:13px;color:var(--text-muted);font-family:'IBM Plex Mono'">{{setlistTotal}}</span>
+          </div>
+          <p style="color:var(--text-muted);margin:0 0 20px;font-size:14.5px">Arrastra para reordenar el orden del bolo.</p>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+            <sc-for list="{{setlistView}}" as="x" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border)">
+                <i data-lucide="grip-vertical" style="width:16px;height:16px;color:var(--text-faint);cursor:grab"></i>
+                <span style="font-family:'IBM Plex Mono';font-size:14px;color:var(--text-faint);font-weight:600">{{x.num}}</span>
+                <div style="flex:1;font-weight:600;font-size:15px">{{x.title}}</div>
+                <span style="font-family:'IBM Plex Mono';font-size:12px;padding:2px 7px;border-radius:6px;background:var(--surface-3);color:var(--text-muted);font-weight:600">{{x.key}}</span>
+                <span style="font-family:'IBM Plex Mono';font-size:13px;color:var(--text-muted);min-width:38px;text-align:right">{{x.dur}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <button style="margin-top:16px;display:flex;align-items:center;gap:7px;padding:10px 15px;border-radius:10px;border:1px dashed var(--border-strong);background:transparent;color:var(--text-muted);font-weight:600;font-size:14px;cursor:pointer;width:100%;justify-content:center" style-hover="background:var(--hover)"><i data-lucide="plus" style="width:16px;height:16px"></i>Añadir canción al setlist</button>
+        </div>
+      </sc-if>
+
+      

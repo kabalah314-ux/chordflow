@@ -1,0 +1,19 @@
+<!-- ============ BANDA · AJUSTES ============ -->
+      <sc-if value="{{is.bAjustes}}" hint-placeholder-val="">
+        <div style="max-width:680px;margin:0 auto;padding:32px 38px 60px">
+          <h1 style="font-size:24px;font-weight:700;margin:0 0 22px">Ajustes de la banda</h1>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px">
+            <label style="display:block;font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:7px">Nombre de la banda</label>
+            <input value="{{currentBand.name}}" style="width:100%;padding:11px 13px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;color:var(--text);font-size:14.5px;outline:none;margin-bottom:16px" style-focus="border-color:var(--accent)">
+            <label style="display:block;font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:7px">Género</label>
+            <input value="{{currentBand.genre}}" style="width:100%;padding:11px 13px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;color:var(--text);font-size:14.5px;outline:none" style-focus="border-color:var(--accent)">
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--danger-weak);border-radius:14px;padding:22px">
+            <div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:4px">Zona peligrosa</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Eliminar la banda borra su repertorio, agenda y finanzas. No se puede deshacer.</div>
+            <button style="padding:9px 15px;border-radius:10px;border:1px solid var(--danger);background:var(--danger-weak);color:var(--danger);font-weight:600;font-size:13.5px;cursor:pointer">Eliminar banda</button>
+          </div>
+        </div>
+      </sc-if>
+
+      

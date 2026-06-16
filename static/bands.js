@@ -1,0 +1,708 @@
+/**
+ * bands.js — Mis bandas: listar, crear, ver detalle (miembros) e invitar por código (Fase 7).
+ * El reproductor/repertorio de banda llega en fases posteriores; aquí está el núcleo de identidad.
+ */
+const elGrid = document.getElementById('bands-grid');
+const elDetail = document.getElementById('band-detail');
+// `band.html` reutiliza las funciones de sección de este archivo (loadRepertoire, loadAgenda,
+// loadFinance, initChat…) pero NO tiene la rejilla ni el botón "nueva banda": guardamos el init.
+const _btnNewBand = document.getElementById('btn-new-band');
+if (_btnNewBand) _btnNewBand.addEventListener('click', createBand);
+
+function showGrid() { elDetail.style.display = 'none'; elGrid.style.display = ''; }
+function showDetail() { elGrid.style.display = 'none'; elDetail.style.display = ''; }
+
+const ROLE_LABEL = { admin: 'Admin', member: 'Miembro', guest: 'Invitado' };
+
+// ─── Lista de bandas ──────────────────────────────────────────────────────────
+async function loadBands() {
+    if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
+    showGrid();
+    try {
+        const res = await apiFetch('/bands/');
+        if (!res.ok) throw new Error('http');
+        const bands = await res.json();
+        if (!bands.length) {
+            elGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🎸</div>
+                <h3>Aún no estás en ninguna banda</h3>
+                <p>Crea una banda para compartir repertorio, agenda y cuentas, o pide a un admin que te pase un enlace de invitación.</p></div>`;
+            return;
+        }
+        elGrid.innerHTML = bands.map(b => `
+            <div class="song-card" data-id="${escapeHtml(b.id)}">
+                <div class="card-main" data-act="open" style="cursor:pointer;">
+                    <h3 class="card-title">${escapeHtml(b.name)}</h3>
+                    <p class="card-artist">${ROLE_LABEL[b.role] || escapeHtml(b.role)} · ${b.member_count} ${b.member_count === 1 ? 'miembro' : 'miembros'}</p>
+                </div>
+            </div>`).join('');
+        // La ficha de banda vive ahora en band.html (espacio de banda con pestañas, T-075).
+        elGrid.querySelectorAll('.song-card').forEach(card =>
+            card.querySelector('[data-act="open"]').addEventListener('click',
+                () => { window.location.href = `band.html?id=${encodeURIComponent(card.dataset.id)}`; }));
+    } catch (e) {
+        elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudieron cargar las bandas.</p>`;
+    }
+}
+
+// ─── Crear banda ──────────────────────────────────────────────────────────────
+async function createBand() {
+    const name = await promptModal('¿Cómo se llama tu banda?', { okText: 'Crear', placeholder: 'Nombre de la banda' });
+    if (!name) return;
+    try {
+        const res = await apiFetch('/bands/', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        if (!res.ok) throw new Error('http');
+        const band = await res.json();
+        toast('Banda creada.', 'success');
+        window.location.href = `band.html?id=${encodeURIComponent(band.id)}`;
+    } catch (e) { toast('No se pudo crear la banda.', 'error'); }
+}
+
+// ─── Detalle de una banda ─────────────────────────────────────────────────────
+async function openBand(id) {
+    showDetail();
+    elDetail.innerHTML = `<p class="loading-text">Cargando…</p>`;
+    let band, members;
+    try {
+        const [rb, rm] = await Promise.all([apiFetch(`/bands/${id}`), apiFetch(`/bands/${id}/members`)]);
+        if (!rb.ok || !rm.ok) throw new Error('http');
+        band = await rb.json();
+        members = await rm.json();
+    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ No se pudo abrir la banda.</p>'; return; }
+
+    const active = members.filter(m => m.status === 'active');
+    const left = members.filter(m => m.status === 'left');
+    const iAmAdmin = active.some(m => m.role === 'admin' && m.is_me);
+
+    const memberRow = (m) => `
+        <li class="setlist-song">
+            <span class="sl-title">${escapeHtml(m.display_name || m.user_id)} <small>${ROLE_LABEL[m.role] || escapeHtml(m.role)}${m.instrument ? ' · ' + escapeHtml(m.instrument) : ''}</small></span>
+        </li>`;
+
+    const iAmGuest = active.some(m => m.is_me && m.role === 'guest');
+
+    elDetail.innerHTML = `
+        <div class="setlist-editor">
+            <a href="#" id="b-back" class="back-link">← Volver</a>
+            <div class="setlist-detail-head">
+                <h3>${escapeHtml(band.name)}</h3>
+                <span style="display:flex; gap:0.5rem;">
+                    <a href="band.html?id=${encodeURIComponent(id)}" class="primary-btn" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);" title="Nueva vista de banda (pestañas)">🎛️ Nueva vista</a>
+                    ${iAmAdmin ? `<button id="b-invite" class="primary-btn">🔗 Invitar por enlace</button>` : ''}
+                </span>
+            </div>
+            ${band.description ? `<p class="card-artist">${escapeHtml(band.description)}</p>` : ''}
+            <h4>Miembros (${active.length})</h4>
+            <ul class="setlist-list">${active.map(memberRow).join('')}</ul>
+            ${left.length ? `<h4>Antiguos miembros</h4><ul class="setlist-list">${left.map(memberRow).join('')}</ul>` : ''}
+
+            <div class="setlist-detail-head" style="margin-top:1.5rem;">
+                <h4>📚 Repertorio</h4>
+                ${iAmGuest ? '' : `<button id="b-add-song" class="primary-btn">➕ Copiar de mis partituras</button>`}
+            </div>
+            <ul class="setlist-list" id="b-repertoire"><li><small>Cargando…</small></li></ul>
+
+            <div class="setlist-detail-head" style="margin-top:1.5rem;">
+                <h4>🎵 Setlists</h4>
+                ${iAmGuest ? '' : `<button id="b-new-setlist" class="primary-btn">➕ Nuevo setlist</button>`}
+            </div>
+            <ul class="setlist-list" id="b-setlists"><li><small>Cargando…</small></li></ul>
+
+            <div class="setlist-detail-head" style="margin-top:1.5rem;">
+                <h4>📅 Agenda</h4>
+                ${iAmAdmin ? `<button id="b-new-event" class="primary-btn">➕ Nuevo evento</button>` : ''}
+            </div>
+            <div id="b-agenda"><p class="loading-text">Cargando…</p></div>
+
+            <div class="setlist-detail-head" style="margin-top:1.5rem;">
+                <h4>💶 Finanzas</h4>
+                ${iAmAdmin ? `<span style="display:flex; gap:0.5rem;">
+                    <button id="b-new-tx" class="primary-btn">➕ Movimiento</button>
+                    <button id="b-settle" class="primary-btn" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">💸 Liquidar</button>
+                </span>` : ''}
+            </div>
+            <div id="b-finance"><p class="loading-text">Cargando…</p></div>
+
+            <div class="setlist-detail-head" style="margin-top:1.5rem;"><h4>💬 Chat</h4></div>
+            <div id="b-chat"></div>
+            <div class="import-row" style="margin-top:0.6rem;">
+                <input type="text" id="chat-input" class="search-box" placeholder="Escribe un mensaje…" maxlength="4000">
+                <button id="chat-send" class="primary-btn">Enviar</button>
+            </div>
+        </div>`;
+    document.getElementById('b-back').addEventListener('click', (e) => { e.preventDefault(); loadBands(); });
+    const btnInvite = document.getElementById('b-invite');
+    if (btnInvite) btnInvite.addEventListener('click', () => generateInvite(id));
+    const btnAdd = document.getElementById('b-add-song');
+    if (btnAdd) btnAdd.addEventListener('click', () => copyFromPersonal(id));
+    const btnNewSL = document.getElementById('b-new-setlist');
+    if (btnNewSL) btnNewSL.addEventListener('click', () => newBandSetlist(id));
+    const btnNewEv = document.getElementById('b-new-event');
+    if (btnNewEv) btnNewEv.addEventListener('click', () => newEvent(id));
+    const btnNewTx = document.getElementById('b-new-tx');
+    if (btnNewTx) btnNewTx.addEventListener('click', () => newTransaction(id, active));
+    const btnSettle = document.getElementById('b-settle');
+    if (btnSettle) btnSettle.addEventListener('click', () => newSettlement(id, active));
+
+    loadRepertoire(id, !iAmGuest);
+    loadBandSetlists(id, !iAmGuest);
+    loadAgenda(id, iAmAdmin);
+    loadFinance(id, iAmAdmin);
+    initChat(id, iAmAdmin);
+}
+
+// ─── Chat de banda (Fase 12) ──────────────────────────────────────────────────
+let chatTimer = null;
+
+function initChat(bandId, iAmAdmin) {
+    if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
+    const input = document.getElementById('chat-input');
+    const send = document.getElementById('chat-send');
+    const doSend = async () => {
+        const body = input.value.trim();
+        if (!body) return;
+        input.value = '';
+        try {
+            const res = await apiFetch(`/bands/${bandId}/messages/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ body })
+            });
+            if (!res.ok) throw new Error('http');
+            loadChat(bandId, iAmAdmin);
+        } catch (e) { toast('No se pudo enviar el mensaje.', 'error'); input.value = body; }
+    };
+    if (send) send.addEventListener('click', doSend);
+    if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSend(); });
+    loadChat(bandId, iAmAdmin);
+    // Refresco periódico simple (tiempo real más adelante). Se detiene si salimos de la ficha.
+    chatTimer = setInterval(() => {
+        if (!document.getElementById('b-chat')) { clearInterval(chatTimer); chatTimer = null; return; }
+        loadChat(bandId, iAmAdmin);
+    }, 6000);
+}
+
+async function loadChat(bandId, iAmAdmin) {
+    const el = document.getElementById('b-chat');
+    if (!el) return;
+    let msgs;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/messages/`);
+        if (!res.ok) throw new Error('http');
+        msgs = await res.json();
+    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar el chat.</p>'; return; }
+
+    if (!msgs.length) { el.innerHTML = '<p class="loading-text">Aún no hay mensajes. ¡Rompe el hielo!</p>'; return; }
+    el.innerHTML = `<ul class="setlist-list">${msgs.map(m => `
+        <li class="setlist-song ${m.is_pinned ? 'msg-pinned' : ''}" data-id="${escapeHtml(m.id)}">
+            <span class="sl-title">${m.is_pinned ? '📌 ' : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: ${escapeHtml(m.body)}
+                ${m.edited_at ? '<small>(editado)</small>' : ''}</span>
+            <span class="msg-actions">
+                ${iAmAdmin ? `<button class="setlist-item-btn" data-act="pin" title="${m.is_pinned ? 'Desfijar' : 'Fijar como nota'}">${m.is_pinned ? '📌' : '📍'}</button>` : ''}
+                ${(m.is_mine || iAmAdmin) ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar" title="Borrar">🗑️</button>` : ''}
+            </span>
+        </li>`).join('')}</ul>`;
+
+    el.querySelectorAll('.setlist-song').forEach(li => {
+        const mid = li.dataset.id;
+        const pin = li.querySelector('[data-act="pin"]');
+        if (pin) pin.addEventListener('click', async () => {
+            const isPinned = li.classList.contains('msg-pinned');
+            try {
+                const res = await apiFetch(`/bands/${bandId}/messages/${mid}/pin`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_pinned: !isPinned })
+                });
+                if (!res.ok) throw new Error('http');
+                loadChat(bandId, iAmAdmin);
+            } catch (e) { toast('No se pudo fijar el mensaje.', 'error'); }
+        });
+        const del = li.querySelector('[data-act="del"]');
+        if (del) del.addEventListener('click', async () => {
+            const ok = await confirmModal('¿Borrar este mensaje?', { okText: 'Borrar' });
+            if (!ok) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/messages/${mid}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                loadChat(bandId, iAmAdmin);
+            } catch (e) { toast('No se pudo borrar el mensaje.', 'error'); }
+        });
+    });
+}
+
+// ─── Finanzas ─────────────────────────────────────────────────────────────────
+function fmtMoney(x) { return `${Number(x).toFixed(2)} €`; }
+
+async function loadFinance(bandId, iAmAdmin) {
+    const el = document.getElementById('b-finance');
+    if (!el) return;
+    let balances, txs;
+    try {
+        const [rb, rt] = await Promise.all([
+            apiFetch(`/bands/${bandId}/balances`), apiFetch(`/bands/${bandId}/transactions`)]);
+        if (!rb.ok || !rt.ok) throw new Error('http');
+        balances = await rb.json();
+        txs = await rt.json();
+    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudieron cargar las finanzas.</p>'; return; }
+
+    const balRows = balances.map(b => {
+        const v = Number(b.balance);
+        const cls = v > 0 ? 'bal-pos' : (v < 0 ? 'bal-neg' : '');
+        const label = v > 0 ? 'le deben' : (v < 0 ? 'debe' : 'al día');
+        return `<li class="setlist-song">
+            <span class="sl-title">${b.is_fund ? '🏦 ' : ''}${escapeHtml(b.display_name || b.participant)}</span>
+            <span class="${cls}">${fmtMoney(v)} <small>${label}</small></span></li>`;
+    }).join('') || '<li><small>Sin saldos.</small></li>';
+
+    const txRows = txs.map(t => `
+        <li class="setlist-song" data-id="${escapeHtml(t.id)}">
+            <span class="sl-title">${t.type === 'income' ? '➕' : '➖'} ${escapeHtml(t.description || (t.type === 'income' ? 'Ingreso' : 'Gasto'))}
+                <small>${fmtMoney(t.amount)}${t.category ? ' · ' + escapeHtml(t.category) : ''}</small></span>
+            ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar movimiento" title="Borrar">🗑️</button>` : ''}
+        </li>`).join('') || '<li><small>Sin movimientos todavía.</small></li>';
+
+    el.innerHTML = `
+        <h5>Saldos</h5><ul class="setlist-list">${balRows}</ul>
+        <h5>Movimientos</h5><ul class="setlist-list" id="b-tx-list">${txRows}</ul>`;
+
+    if (iAmAdmin) el.querySelectorAll('#b-tx-list .setlist-song').forEach(li => {
+        const del = li.querySelector('[data-act="del"]');
+        if (del) del.addEventListener('click', async () => {
+            const ok = await confirmModal('¿Borrar este movimiento?', { okText: 'Borrar' });
+            if (!ok) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/transactions/${li.dataset.id}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                loadFinance(bandId, iAmAdmin);
+            } catch (e) { toast('No se pudo borrar el movimiento.', 'error'); }
+        });
+    });
+}
+
+// Registrar movimiento (admin): tipo, descripción, importe, pagador. Reparto a partes iguales.
+async function newTransaction(bandId, members) {
+    const payerOptions = members.map(m => `<option value="${escapeHtml(m.user_id)}">${escapeHtml(m.display_name || m.user_id)}</option>`).join('')
+        + '<option value="__fund__">🏦 Fondo común</option>';
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+            <p class="modal-msg">Nuevo movimiento (reparto a partes iguales)</p>
+            <select id="tx-type" class="search-box">
+                <option value="expense">➖ Gasto</option>
+                <option value="income">➕ Ingreso</option>
+            </select>
+            <input type="text" id="tx-desc" class="search-box" placeholder="Descripción (p. ej. Local de ensayo)">
+            <input type="number" id="tx-amount" class="search-box" placeholder="Importe (€)" min="0.01" step="0.01">
+            <label class="field-label">¿Quién pagó/cobró?</label>
+            <select id="tx-payer" class="search-box">${payerOptions}</select>
+            <div class="modal-actions">
+                <button class="secondary-btn" data-act="cancel">Cancelar</button>
+                <button class="primary-btn" data-act="ok">Registrar</button>
+            </div>
+        </div>`;
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', async (e) => {
+        if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') { close(); return; }
+        if (e.target.getAttribute('data-act') !== 'ok') return;
+        const amount = parseFloat(overlay.querySelector('#tx-amount').value);
+        if (!(amount > 0)) { toast('Pon un importe válido.', 'error'); return; }
+        const payer = overlay.querySelector('#tx-payer').value;
+        const body = {
+            type: overlay.querySelector('#tx-type').value,
+            description: overlay.querySelector('#tx-desc').value.trim() || null,
+            amount: amount.toFixed(2),
+        };
+        if (payer === '__fund__') body.paid_by_fund = true; else body.paid_by = payer;
+        close();
+        try {
+            const res = await apiFetch(`/bands/${bandId}/transactions`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error('http');
+            toast('Movimiento registrado.', 'success');
+            loadFinance(bandId, true);
+        } catch (e) { toast('No se pudo registrar el movimiento.', 'error'); }
+    });
+    document.body.appendChild(overlay);
+}
+
+// Registrar liquidación (admin): de quién, a quién (o fondo), importe.
+async function newSettlement(bandId, members) {
+    const memberOpts = members.map(m => `<option value="${escapeHtml(m.user_id)}">${escapeHtml(m.display_name || m.user_id)}</option>`).join('');
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+            <p class="modal-msg">Registrar liquidación (pago real)</p>
+            <label class="field-label">Paga</label>
+            <select id="st-from" class="search-box">${memberOpts}</select>
+            <label class="field-label">Recibe</label>
+            <select id="st-to" class="search-box">${memberOpts}<option value="__fund__">🏦 Fondo común</option></select>
+            <input type="number" id="st-amount" class="search-box" placeholder="Importe (€)" min="0.01" step="0.01">
+            <div class="modal-actions">
+                <button class="secondary-btn" data-act="cancel">Cancelar</button>
+                <button class="primary-btn" data-act="ok">Registrar</button>
+            </div>
+        </div>`;
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', async (e) => {
+        if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') { close(); return; }
+        if (e.target.getAttribute('data-act') !== 'ok') return;
+        const amount = parseFloat(overlay.querySelector('#st-amount').value);
+        if (!(amount > 0)) { toast('Pon un importe válido.', 'error'); return; }
+        const from = overlay.querySelector('#st-from').value;
+        const to = overlay.querySelector('#st-to').value;
+        const body = { from_user_id: from, amount: amount.toFixed(2) };
+        if (to === '__fund__') body.to_fund = true; else body.to_user_id = to;
+        if (to !== '__fund__' && to === from) { toast('El que paga y el que recibe no pueden ser el mismo.', 'error'); return; }
+        close();
+        try {
+            const res = await apiFetch(`/bands/${bandId}/settlements`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error('http');
+            toast('Liquidación registrada.', 'success');
+            loadFinance(bandId, true);
+        } catch (e) { toast('No se pudo registrar la liquidación.', 'error'); }
+    });
+    document.body.appendChild(overlay);
+}
+
+// ─── Agenda (eventos) ─────────────────────────────────────────────────────────
+const EVENT_ICON = { rehearsal: '🎼', concert: '🎤', other: '📌' };
+const EVENT_TYPE_LABEL = { rehearsal: 'Ensayo', concert: 'Concierto', other: 'Otro' };
+const ATT_LABEL = { yes: '✅ Voy', maybe: '🤔 Quizás', no: '❌ No voy' };
+
+function fmtDate(iso) {
+    if (!iso) return 'Sin fecha';
+    const d = new Date(iso);
+    if (isNaN(d)) return 'Sin fecha';
+    return d.toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadAgenda(bandId, iAmAdmin) {
+    const el = document.getElementById('b-agenda');
+    if (!el) return;
+    let events;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/events/`);
+        if (!res.ok) throw new Error('http');
+        events = await res.json();
+    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar la agenda.</p>'; return; }
+
+    if (!events.length) {
+        el.innerHTML = '<p class="loading-text">Sin eventos. ' + (iAmAdmin ? 'Crea un ensayo o concierto.' : 'Un admin puede crear eventos.') + '</p>';
+        return;
+    }
+    const now = Date.now();
+    const upcoming = events.filter(e => e.starts_at && new Date(e.starts_at).getTime() >= now);
+    const past = events.filter(e => !e.starts_at || new Date(e.starts_at).getTime() < now);
+
+    const row = (e) => `
+        <li class="setlist-song" data-id="${escapeHtml(e.id)}">
+            <span class="sl-title">${EVENT_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
+                <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}${e.status === 'cancelled' ? ' · ❌ cancelado' : ''}</small></span>
+            <span class="att-buttons">
+                ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
+                ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">🗑️</button>` : ''}
+            </span>
+        </li>`;
+    el.innerHTML = `
+        ${upcoming.length ? `<h5>Próximos</h5><ul class="setlist-list">${upcoming.map(row).join('')}</ul>` : ''}
+        ${past.length ? `<h5>Pasados</h5><ul class="setlist-list">${past.map(row).join('')}</ul>` : ''}`;
+
+    el.querySelectorAll('.setlist-song').forEach(li => {
+        const eid = li.dataset.id;
+        li.querySelectorAll('[data-att]').forEach(b =>
+            b.addEventListener('click', () => setAttendance(bandId, eid, b.dataset.att, iAmAdmin)));
+        const del = li.querySelector('[data-act="del"]');
+        if (del) del.addEventListener('click', async () => {
+            const ok = await confirmModal('¿Borrar este evento?', { okText: 'Borrar' });
+            if (!ok) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/events/${eid}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                loadAgenda(bandId, iAmAdmin);
+            } catch (e) { toast('No se pudo borrar el evento.', 'error'); }
+        });
+    });
+}
+
+async function setAttendance(bandId, eventId, status, iAmAdmin) {
+    try {
+        const res = await apiFetch(`/bands/${bandId}/events/${eventId}/attendance`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (!res.ok) throw new Error('http');
+        loadAgenda(bandId, iAmAdmin);
+    } catch (e) { toast('No se pudo guardar tu asistencia.', 'error'); }
+}
+
+// Crear evento (solo admin): tipo, título, fecha y (si concierto) setlist opcional.
+async function newEvent(bandId) {
+    let setlists = [];
+    try { setlists = await (await apiFetch(`/bands/${bandId}/setlists/`)).json(); } catch (_) { setlists = []; }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+            <p class="modal-msg">Nuevo evento</p>
+            <select id="ev-type" class="search-box">
+                <option value="rehearsal">🎼 Ensayo</option>
+                <option value="concert">🎤 Concierto</option>
+                <option value="other">📌 Otro</option>
+            </select>
+            <input type="text" id="ev-title" class="search-box" placeholder="Título (p. ej. Ensayo jueves)">
+            <input type="datetime-local" id="ev-date" class="search-box">
+            <div id="ev-setlist-wrap" style="display:none;">
+                <select id="ev-setlist" class="search-box">
+                    <option value="">— Sin setlist —</option>
+                    ${setlists.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="secondary-btn" data-act="cancel">Cancelar</button>
+                <button class="primary-btn" data-act="ok">Crear</button>
+            </div>
+        </div>`;
+    const elType = overlay.querySelector('#ev-type');
+    const elSlWrap = overlay.querySelector('#ev-setlist-wrap');
+    elType.addEventListener('change', () => { elSlWrap.style.display = elType.value === 'concert' ? '' : 'none'; });
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', async (e) => {
+        if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') { close(); return; }
+        if (e.target.getAttribute('data-act') !== 'ok') return;
+        const title = overlay.querySelector('#ev-title').value.trim();
+        if (!title) { toast('Pon un título al evento.', 'error'); return; }
+        const type = elType.value;
+        const dateVal = overlay.querySelector('#ev-date').value;
+        const body = { type, title };
+        if (dateVal) body.starts_at = dateVal;
+        const slId = overlay.querySelector('#ev-setlist')?.value;
+        if (type === 'concert' && slId) body.setlist_id = slId;
+        close();
+        try {
+            const res = await apiFetch(`/bands/${bandId}/events/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error('http');
+            toast('Evento creado.', 'success');
+            loadAgenda(bandId, true);
+        } catch (e) { toast('No se pudo crear el evento.', 'error'); }
+    });
+    document.body.appendChild(overlay);
+}
+
+// ─── Setlists de la banda ─────────────────────────────────────────────────────
+async function loadBandSetlists(bandId, canEdit) {
+    const el = document.getElementById('b-setlists');
+    if (!el) return;
+    let setlists;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/setlists/`);
+        if (!res.ok) throw new Error('http');
+        setlists = await res.json();
+    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar los setlists.</small></li>'; return; }
+
+    if (!setlists.length) {
+        el.innerHTML = '<li><small>Sin setlists todavía. Crea uno con las canciones del repertorio.</small></li>';
+        return;
+    }
+    el.innerHTML = setlists.map(sl => `
+        <li class="setlist-song" data-id="${escapeHtml(sl.id)}">
+            <span class="sl-title">${escapeHtml(sl.name)} <small>${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}</small></span>
+            <button class="setlist-item-btn" data-act="play" title="Reproducir en orden">▶</button>
+            ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">🗑️</button>` : ''}
+        </li>`).join('');
+    el.querySelectorAll('.setlist-song').forEach(li => {
+        const sid = li.dataset.id;
+        li.querySelector('[data-act="play"]').addEventListener('click', () => playBandSetlist(bandId, sid));
+        const del = li.querySelector('[data-act="del"]');
+        if (del) del.addEventListener('click', async () => {
+            const ok = await confirmModal('¿Borrar este setlist?', { okText: 'Borrar' });
+            if (!ok) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/setlists/${sid}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                loadBandSetlists(bandId, canEdit);
+            } catch (e) { toast('No se pudo borrar el setlist.', 'error'); }
+        });
+    });
+}
+
+async function playBandSetlist(bandId, setlistId) {
+    try {
+        const res = await apiFetch(`/bands/${bandId}/setlists/${setlistId}`);
+        const sl = await res.json();
+        if (!sl.items || !sl.items.length) { toast('Ese setlist está vacío.', 'info'); return; }
+        const first = sl.items[0].song_id;
+        window.location.href = `index.html?songId=${encodeURIComponent(first)}&setlist=${encodeURIComponent(setlistId)}&pos=0`;
+    } catch (e) { toast('No se pudo abrir el setlist.', 'error'); }
+}
+
+// Editor de setlist de banda: elige del repertorio en orden y guarda.
+async function newBandSetlist(bandId, opts = {}) {
+    // Desacoplado (T-075 incr. 4): por defecto pinta en el detalle legacy y vuelve con openBand;
+    // band.html pasa su propio `container` y `onDone` para integrarlo en la pestaña Setlists.
+    const target = opts.container || elDetail;
+    const onDone = opts.onDone || (() => openBand(bandId));
+    let repertoire = [];
+    try {
+        const res = await apiFetch(`/bands/${bandId}/songs/`);
+        repertoire = await res.json();
+    } catch (e) { toast('No se pudo cargar el repertorio.', 'error'); return; }
+    if (!repertoire.length) { toast('Primero añade canciones al repertorio de la banda.', 'info'); return; }
+
+    const selected = [];
+    const byId = Object.fromEntries(repertoire.map(s => [s.id, s]));
+    target.innerHTML = `
+        <div class="setlist-editor">
+            <a href="#" id="sl-back" class="back-link">← Volver a la banda</a>
+            <h3>Nuevo setlist de banda</h3>
+            <input type="text" id="sl-name" class="search-box" placeholder="Nombre (p. ej. Bolo sábado)">
+            <div class="setlist-cols">
+                <div><h4>Repertorio</h4><ul id="sl-available" class="setlist-list"></ul></div>
+                <div><h4>En el setlist (en orden)</h4><ul id="sl-selected" class="setlist-list"></ul></div>
+            </div>
+            <div class="form-actions"><button id="sl-save" class="primary-btn">💾 Crear setlist</button></div>
+        </div>`;
+    document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); onDone(); });
+
+    const elAvail = document.getElementById('sl-available');
+    const elSel = document.getElementById('sl-selected');
+    function render() {
+        elAvail.innerHTML = repertoire.map(s => `
+            <li><button class="setlist-item-btn" data-id="${escapeHtml(s.id)}" ${selected.includes(s.id) ? 'disabled' : ''}>
+                ➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('');
+        elAvail.querySelectorAll('button[data-id]').forEach(b =>
+            b.addEventListener('click', () => { selected.push(b.dataset.id); render(); }));
+        elSel.innerHTML = selected.map((id, i) => `
+            <li><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
+                <button class="setlist-item-btn danger" data-rm="${escapeHtml(id)}" aria-label="Quitar">✕</button></li>`).join('')
+            || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
+        elSel.querySelectorAll('button[data-rm]').forEach(b =>
+            b.addEventListener('click', () => {
+                const i = selected.indexOf(b.dataset.rm); if (i > -1) selected.splice(i, 1); render();
+            }));
+    }
+    render();
+
+    document.getElementById('sl-save').addEventListener('click', async () => {
+        const name = document.getElementById('sl-name').value.trim();
+        if (!name) { toast('Pon un nombre al setlist.', 'error'); return; }
+        try {
+            const res = await apiFetch(`/bands/${bandId}/setlists/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, song_ids: selected })
+            });
+            if (!res.ok) throw new Error('http');
+            toast('Setlist creado.', 'success');
+            onDone();
+        } catch (e) { toast('No se pudo crear el setlist.', 'error'); }
+    });
+}
+
+// ─── Repertorio de la banda ───────────────────────────────────────────────────
+async function loadRepertoire(bandId, canEdit) {
+    const elRep = document.getElementById('b-repertoire');
+    if (!elRep) return;
+    let songs;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/songs/`);
+        if (!res.ok) throw new Error('http');
+        songs = await res.json();
+    } catch (e) { elRep.innerHTML = '<li><small>⚠️ No se pudo cargar el repertorio.</small></li>'; return; }
+
+    if (!songs.length) {
+        elRep.innerHTML = '<li><small>Repertorio vacío. Copia canciones de tus partituras.</small></li>';
+        return;
+    }
+    elRep.innerHTML = songs.map(s => `
+        <li class="setlist-song" data-id="${escapeHtml(s.id)}">
+            <span class="sl-title">${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></span>
+            <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
+            ${canEdit ? `<button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">✕</button>` : ''}
+        </li>`).join('');
+    elRep.querySelectorAll('.setlist-song').forEach(li => {
+        const sid = li.dataset.id;
+        li.querySelector('[data-act="play"]').addEventListener('click', () => {
+            window.location.href = `index.html?songId=${encodeURIComponent(sid)}`;
+        });
+        const rm = li.querySelector('[data-act="rm"]');
+        if (rm) rm.addEventListener('click', async () => {
+            const ok = await confirmModal('¿Quitar esta canción del repertorio de la banda?', { okText: 'Quitar' });
+            if (!ok) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/songs/${sid}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                loadRepertoire(bandId, canEdit);
+            } catch (e) { toast('No se pudo quitar la canción.', 'error'); }
+        });
+    });
+}
+
+// Copiar una canción personal al repertorio de la banda (decisión §7: por copia).
+async function copyFromPersonal(bandId) {
+    let songs = [];
+    try {
+        const res = await apiFetch('/songs/');
+        songs = await res.json();
+    } catch (e) { toast('No se pudieron cargar tus partituras.', 'error'); return; }
+    if (!songs.length) { toast('No tienes partituras personales para copiar.', 'info'); return; }
+
+    // Modal selector propio (no reutilizamos alertModal porque cierra al primer clic).
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+            <p class="modal-msg">Elige una canción para copiar al repertorio:</p>
+            <ul class="setlist-list" id="copy-list">${songs.map(s => `
+                <li><button class="setlist-item-btn" data-id="${escapeHtml(s.id)}">
+                    ➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('')}</ul>
+            <div class="modal-actions"><button class="secondary-btn" data-act="cancel">Cerrar</button></div>
+        </div>`;
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', async (e) => {
+        if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') { close(); return; }
+        const btn = e.target.closest('button[data-id]');
+        if (!btn) return;
+        close();
+        try {
+            const res = await apiFetch(`/bands/${bandId}/songs/copy`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ song_id: btn.dataset.id })
+            });
+            if (!res.ok) throw new Error('http');
+            toast('Canción copiada al repertorio.', 'success');
+            loadRepertoire(bandId, true);
+        } catch (e) { toast('No se pudo copiar la canción.', 'error'); }
+    });
+    document.body.appendChild(overlay);
+}
+
+// ─── Invitar por código ───────────────────────────────────────────────────────
+async function generateInvite(bandId) {
+    try {
+        const res = await apiFetch(`/bands/${bandId}/invites`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role_to_grant: 'member' })
+        });
+        if (!res.ok) throw new Error('http');
+        const inv = await res.json();
+        const link = `${location.origin}/static/join.html?code=${encodeURIComponent(inv.code)}`;
+        try { await navigator.clipboard.writeText(link); toast('Enlace copiado al portapapeles.', 'success'); }
+        catch (_) { /* clipboard puede fallar sin gesto/https */ }
+        await alertModal(`Comparte este enlace para que se unan a la banda:<br><br>
+            <input class="search-box" readonly value="${escapeHtml(link)}" onclick="this.select()">`, { okText: 'Hecho' });
+    } catch (e) { toast('No se pudo generar la invitación.', 'error'); }
+}
+
+// Auto-arranque SOLO en la lista de bandas (bands.html). En band.html lo gobierna band.js.
+if (elGrid) { (async () => { await requireAuth(); loadBands(); })(); }

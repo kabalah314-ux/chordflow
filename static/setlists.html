@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#0f0f14">
+    <meta name="theme-color" content="#0d0d10">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>ChordFlow — Repertorios</title>
-    <link rel="stylesheet" href="style.css?v=847d58c2">
+    <title>BandFlow — Repertorios</title>
+    <link rel="stylesheet" href="style.css?v=13dca123">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -19,6 +19,7 @@
                 <h2>Agrupa canciones y tócalas en orden</h2>
             </div>
             <div class="global-controls" style="display:flex; align-items:center; gap:1rem;">
+                <a href="app.html" class="primary-btn square" title="Inicio" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
                 <a href="library.html" class="primary-btn square" title="Biblioteca" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
                 <button id="btn-new-setlist" class="primary-btn">➕ Nuevo repertorio</button>
             </div>
@@ -40,8 +41,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.js"
             integrity="sha384-EjUdIVmzWliPzdzhxZ9ZoO0etXLKWuUPUftAGxP6qH6Lm4oLwoLaJR0Ba4pIDiDL"
             crossorigin="anonymous"></script>
-    <script src="auth.js?v=f9a03bd3"></script>
-    <script src="util.js?v=eb457792"></script>
+    <script src="auth.js?v=55a0092d"></script>
+    <script src="util.js?v=c0e1df98"></script>
     <script src="setlists.js?v=422db875"></script>
 </body>
 </html>

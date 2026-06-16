@@ -76,7 +76,7 @@ async function signInGoogle() {
     const sb = await getSupabase();
     return sb.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/static/library.html' }
+        options: { redirectTo: window.location.origin + '/static/app.html' }
     });
 }
 

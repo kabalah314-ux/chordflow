@@ -1,0 +1,75 @@
+<!-- ============ INICIO ============ -->
+      <sc-if value="{{is.inicio}}" hint-placeholder-val="">
+        <div style="max-width:1080px;margin:0 auto;padding:32px 38px 60px">
+          <div style="margin-bottom:26px">
+            <h1 style="font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px">Hola, Dani</h1>
+            <p style="color:var(--text-muted);margin:0;font-size:15px">Esto es lo que se mueve en tus {{counts.bands}} bandas.</p>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+              <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px">Balance total</div>
+              <div style="font-size:23px;font-weight:700;font-family:'IBM Plex Mono';color:{{net.color}}">{{net.text}}</div>
+              <div style="font-size:11.5px;color:var(--text-faint);margin-top:3px">{{net.sub}}</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+              <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px">Próximo bolo</div>
+              <div style="font-size:16px;font-weight:700">Sala Apolo</div>
+              <div style="font-size:11.5px;color:var(--accent);margin-top:3px;font-weight:600">Sáb 20 Jun · 22:30</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+              <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px">Mis bandas</div>
+              <div style="font-size:23px;font-weight:700">{{counts.bands}}</div>
+              <div style="font-size:11.5px;color:var(--text-faint);margin-top:3px">1 como admin</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+              <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px">Canciones</div>
+              <div style="font-size:23px;font-weight:700">{{counts.songs}}</div>
+              <div style="font-size:11.5px;color:var(--text-faint);margin-top:3px">{{counts.sheets}} con partitura</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:18px">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <h2 style="font-size:15px;font-weight:600;margin:0">Próximos eventos</h2>
+                <span onclick="{{goAgenda}}" style="font-size:13px;color:var(--accent);font-weight:600;cursor:pointer">Ver agenda</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{upcoming}}" as="e" hint-placeholder-count="3">
+                  <div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:14px">
+                    <div style="text-align:center;flex-shrink:0;width:46px">
+                      <div style="font-size:11px;color:var(--text-faint);font-weight:600;text-transform:uppercase">{{e.dow}}</div>
+                      <div style="font-size:21px;font-weight:700;line-height:1">{{e.day}}</div>
+                    </div>
+                    <div style="width:1px;height:34px;background:var(--border)"></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-weight:600;font-size:14.5px">{{e.title}}</div>
+                      <div style="font-size:12.5px;color:var(--text-muted)">{{e.time}} · {{e.place}}</div>
+                    </div>
+                    <span style="font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:20px;background:{{e.bandBg}};color:{{e.bandColor}};white-space:nowrap">{{e.bandName}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <h2 style="font-size:15px;font-weight:600;margin:0">Últimos mensajes</h2>
+                <span onclick="{{goChat}}" style="font-size:13px;color:var(--accent);font-weight:600;cursor:pointer">Ver chat</span>
+              </div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;overflow:hidden">
+                <sc-for list="{{convosView}}" as="c" hint-placeholder-count="3">
+                  <div onclick="{{goChat}}" style="display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer" style-hover="background:var(--hover)">
+                    <div style="width:34px;height:34px;border-radius:9px;background:{{c.color}};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:12px;flex-shrink:0">{{c.initials}}</div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{c.name}}</div>
+                      <div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{c.last}}</div>
+                    </div>
+                    <sc-if value="{{c.unread}}" hint-placeholder-val=""><span style="min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{c.unread}}</span></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      

@@ -48,6 +48,32 @@ def test_upgrade_head_crea_el_esquema(tmp_path, monkeypatch):
     assert {"ix_songs_owner_id", "ix_songs_deleted_at"}.issubset(indices_songs)
 
 
+def test_upgrade_crea_el_nucleo_de_banda(tmp_path, monkeypatch):
+    """T-048 (giro V2): la migración aditiva crea las 4 tablas de identidad de banda
+    con sus índices y el único (band_id, user_id). No toca lo existente."""
+    db = tmp_path / "mig_banda.db"
+    url = f"sqlite:///{db.as_posix()}"
+    monkeypatch.setenv("DATABASE_URL", url)
+
+    command.upgrade(_alembic_config(url), "head")
+
+    insp = inspect(create_engine(url))
+    tablas = set(insp.get_table_names())
+    nucleo_banda = {"musician_profiles", "bands", "band_memberships", "band_invites"}
+    assert nucleo_banda.issubset(tablas), f"faltan tablas: {nucleo_banda - tablas}"
+    # Las tablas existentes siguen ahí (aditivo, no destructivo).
+    assert TABLAS_ESPERADAS.issubset(tablas)
+
+    # Índices band_id (aislamiento/rendimiento, §C.4.3).
+    idx_membership = {ix["name"] for ix in insp.get_indexes("band_memberships")}
+    assert {"ix_band_memberships_band_id", "ix_band_memberships_user_id"}.issubset(idx_membership)
+    assert "ix_band_invites_band_id" in {ix["name"] for ix in insp.get_indexes("band_invites")}
+
+    # Único (band_id, user_id) en la pertenencia.
+    uniques = {uc["name"] for uc in insp.get_unique_constraints("band_memberships")}
+    assert "uq_membership_band_user" in uniques
+
+
 def test_migraciones_en_sync_con_los_modelos(tmp_path, monkeypatch):
     """Tras migrar, autogenerate no debe detectar diferencias contra los modelos.
     Guarda contra el drift esquema↔modelos (olvidar una migración)."""

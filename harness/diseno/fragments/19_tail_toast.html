@@ -1,0 +1,397 @@
+<!-- SCREENS-APPEND -->
+
+    </main>
+  </sc-if>
+
+  <!-- TOAST -->
+  <sc-if value="{{toast}}" hint-placeholder-val="">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);padding:11px 18px;border-radius:11px;box-shadow:var(--shadow);font-size:14px;font-weight:500;z-index:100;animation:bf-fade .25s ease;display:flex;align-items:center;gap:9px"><i data-lucide="check-circle-2" style="width:17px;height:17px;color:var(--success)"></i>{{toast}}</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#ff6b4a&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.sheetRef = React.createRef();
+    this.NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    this._total = 16;
+
+    this.bands = [
+      {id:'tarantula', name:'Los Tarántula', genre:'Rock', color:'#ff6b4a', role:'admin', instrument:'Guitarra', members:5, initials:'LT', myBal:180.5},
+      {id:'aurora', name:'Quinteto Aurora', genre:'Jazz', color:'#6f9bf5', role:'member', instrument:'Contrabajo', members:5, initials:'QA', myBal:-42},
+      {id:'vela', name:'Noche en Vela', genre:'Covers', color:'#2dd4a7', role:'guest', instrument:'Voz', members:4, initials:'NV', myBal:15},
+    ];
+    this.songs = [
+      {title:'Tormenta Seca', band:'tarantula', key:'Em', bpm:128, dur:'3:42', sheet:true},
+      {title:'Avenida Sur', band:'tarantula', key:'A', bpm:112, dur:'4:05', sheet:true},
+      {title:'Luz de Neón', band:'tarantula', key:'C#m', bpm:96, dur:'3:18', sheet:false},
+      {title:'Caminos', band:'aurora', key:'Bb', bpm:84, dur:'5:20', sheet:true},
+      {title:'Nocturno 3', band:'aurora', key:'Dm', bpm:72, dur:'6:10', sheet:true},
+      {title:'Brisa', band:'aurora', key:'F', bpm:100, dur:'4:48', sheet:false},
+      {title:'Volver a Empezar', band:'vela', key:'G', bpm:120, dur:'3:55', sheet:true},
+      {title:'Sin Ti', band:'vela', key:'D', bpm:90, dur:'4:12', sheet:false},
+      {title:'Estudio en Mi', band:null, key:'E', bpm:140, dur:'2:30', sheet:true},
+      {title:'Idea acústica', band:null, key:'Am', bpm:76, dur:'1:58', sheet:false},
+    ];
+    this.events = [
+      {title:'Ensayo general', band:'tarantula', type:'Ensayo', dow:'JUE', day:'18', date:'Jue 18 Jun', time:'19:00', place:'Local La Nave', rsvp:'yes'},
+      {title:'Concierto · Sala Apolo', band:'tarantula', type:'Bolo', dow:'SÁB', day:'20', date:'Sáb 20 Jun', time:'22:30', place:'Sala Apolo', rsvp:'yes'},
+      {title:'Ensayo de cuerdas', band:'aurora', type:'Ensayo', dow:'LUN', day:'22', date:'Lun 22 Jun', time:'18:00', place:'Estudio Aurora', rsvp:'maybe'},
+      {title:'Boda Martínez', band:'vela', type:'Bolo', dow:'SÁB', day:'27', date:'Sáb 27 Jun', time:'20:00', place:'Finca El Olivar', rsvp:'no'},
+      {title:'Grabación maqueta', band:'aurora', type:'Estudio', dow:'MAR', day:'30', date:'Mar 30 Jun', time:'11:00', place:'Estudio Brote', rsvp:'maybe'},
+    ];
+    this.convos = [
+      {band:'tarantula', last:'Nico: llevo yo el cableado', time:'12:04', unread:2},
+      {band:'aurora', last:'Tú: confirmo el ensayo del lunes', time:'Ayer', unread:0},
+      {band:'vela', last:'Marta: ¿alguien tiene la partitura?', time:'Lun', unread:1},
+    ];
+    this.baseMessages = [
+      {from:'Nico', me:false, text:'¿Local confirmado para el jueves?', time:'11:58', initials:'NR'},
+      {from:'Tú', me:true, text:'Sí, La Nave a las 19:00', time:'12:01', initials:'DV'},
+      {from:'Sara', me:false, text:'Genial, llevo el ampli nuevo', time:'12:02', initials:'SG'},
+      {from:'Nico', me:false, text:'llevo yo el cableado', time:'12:04', initials:'NR'},
+    ];
+    this.members = [
+      {name:'Dani Vega', role:'admin', instrument:'Guitarra', initials:'DV', me:true, color:'#ff6b4a'},
+      {name:'Nico Ramos', role:'member', instrument:'Batería', initials:'NR', color:'#6f9bf5'},
+      {name:'Sara Gil', role:'member', instrument:'Bajo', initials:'SG', color:'#2dd4a7'},
+      {name:'Iván Sol', role:'member', instrument:'Voz', initials:'IS', color:'#f5b94a'},
+      {name:'Lúa Prat', role:'guest', instrument:'Teclados', initials:'LP', color:'#c08cff'},
+    ];
+    this.bandMovs = [
+      {desc:'Caché · Sala Apolo', by:'Ingreso', date:'20 Jun', amount:600},
+      {desc:'Alquiler local junio', by:'La Nave', date:'01 Jun', amount:-160},
+      {desc:'Cuerdas y baquetas', by:'Nico', date:'05 Jun', amount:-48.5},
+      {desc:'Gasolina furgoneta', by:'Tú', date:'20 Jun', amount:-72},
+    ];
+    this.memberBals = [
+      {name:'Dani (Tú)', initials:'DV', color:'#ff6b4a', bal:95},
+      {name:'Nico Ramos', initials:'NR', color:'#6f9bf5', bal:-30},
+      {name:'Sara Gil', initials:'SG', color:'#2dd4a7', bal:12},
+      {name:'Iván Sol', initials:'IS', color:'#f5b94a', bal:-40},
+      {name:'Lúa Prat', initials:'LP', color:'#c08cff', bal:0},
+    ];
+    this.setlist = [
+      {title:'Avenida Sur', key:'A', dur:'4:05'},
+      {title:'Luz de Neón', key:'C#m', dur:'3:18'},
+      {title:'Tormenta Seca', key:'Em', dur:'3:42'},
+      {title:'Volver a Empezar', key:'G', dur:'3:55'},
+      {title:'Brisa', key:'F', dur:'4:48'},
+    ];
+    this.playerSong = {
+      title:'Tormenta Seca', band:'Los Tarántula', baseKey:'Em',
+      sections:[
+        {name:'Intro', lines:[ [{chord:'Em'},{chord:'G'},{chord:'D'},{chord:'C'}] ]},
+        {name:'Verso 1', lines:[
+          [{chord:'Em',text:'Camino solo bajo la '},{chord:'G',text:'tormenta seca,'}],
+          [{chord:'D',text:'el asfalto guarda '},{chord:'C',text:'lo que '},{chord:'Em',text:'fue.'}],
+        ]},
+        {name:'Estribillo', lines:[
+          [{chord:'C',text:'Y si la lluvia '},{chord:'G',text:'no llega,'}],
+          [{chord:'D',text:'gritaré tu '},{chord:'Em',text:'nombre otra '},{chord:'C',text:'vez.'}],
+        ]},
+        {name:'Verso 2', lines:[
+          [{chord:'Em',text:'Las luces de la '},{chord:'G',text:'avenida'}],
+          [{chord:'D',text:'dibujan donde '},{chord:'C',text:'estás.'}],
+        ]},
+        {name:'Puente', lines:[ [{chord:'Am'},{chord:'C'},{chord:'D'},{chord:'G'}] ]},
+      ],
+    };
+  }
+
+  state = {
+    theme:'dark', ctx:'you', route:'login', bandId:'tarantula', loginTab:'entrar',
+    libFilter:'todas', libQuery:'', agFilter:'todas',
+    playing:false, bpm:128, transpose:0, autoscroll:true, activeChord:0,
+    rsvp:{}, chatInput:'', messages:null, toast:null,
+  };
+
+  componentDidMount(){
+    if(this.props.defaultTheme && this.props.defaultTheme !== this.state.theme){ this.setState({theme:this.props.defaultTheme}); }
+    this.refreshIcons();
+    const loop = ()=>{
+      if(this.state.playing && this.state.autoscroll && this.sheetRef.current){ this.sheetRef.current.scrollTop += 0.45; }
+      this._raf = requestAnimationFrame(loop);
+    };
+    this._raf = requestAnimationFrame(loop);
+  }
+  componentDidUpdate(){ this.refreshIcons(); }
+  componentWillUnmount(){ if(this._timer) clearInterval(this._timer); if(this._raf) cancelAnimationFrame(this._raf); if(this._ti) clearTimeout(this._ti); }
+  refreshIcons(){ const run=(n)=>{ if(window.lucide){ window.lucide.createIcons(); } else if(n>0){ setTimeout(()=>run(n-1),120); } }; run(10); }
+
+  showToast(msg){ this.setState({toast:msg}); if(this._ti) clearTimeout(this._ti); this._ti=setTimeout(()=>this.setState({toast:null}),2200); }
+
+  // ---- navigation ----
+  go(key){ this.setState({route:key}); if(this.sheetRef && this.sheetRef.current) this.sheetRef.current.scrollTop=0; }
+  login(){ this.setState({route:'inicio', ctx:'you'}); }
+  enterBand(id){ this.setState({ctx:'band', bandId:id, route:'b-resumen'}); }
+  exitBand(){ this.setState({ctx:'you', route:'bandas'}); }
+  toggleTheme(){ this.setState(s=>({theme:s.theme==='dark'?'light':'dark'})); }
+
+  // ---- library ----
+  setLibFilter(f){ this.setState({libFilter:f}); }
+  onLibSearch(e){ this.setState({libQuery:e.target.value}); }
+
+  // ---- agenda ----
+  setAgFilter(f){ this.setState({agFilter:f}); }
+  setRsvp(title,val){ this.setState(s=>({rsvp:{...s.rsvp,[title]:val}})); }
+
+  // ---- chat ----
+  onChatInput(e){ this.setState({chatInput:e.target.value}); }
+  sendMsg(){
+    const t=this.state.chatInput.trim(); if(!t) return;
+    const base = this.state.messages || this.baseMessages;
+    this.setState({messages:[...base,{from:'Tú',me:true,text:t,time:'ahora',initials:'DV'}], chatInput:''});
+  }
+
+  // ---- player ----
+  togglePlay(){ if(this.state.playing){ this.stopPlay(); } else { this.startPlay(); } }
+  startPlay(){ this.setState({playing:true}); this._arm(); }
+  stopPlay(){ this.setState({playing:false}); if(this._timer){ clearInterval(this._timer); this._timer=null; } }
+  _arm(){
+    if(this._timer) clearInterval(this._timer);
+    const interval = Math.max(220, (60/this.state.bpm)*1000*2);
+    this._timer = setInterval(()=>{ this.setState(s=>({activeChord:(s.activeChord+1)%this._total})); }, interval);
+  }
+  bpmUp(){ this.setState(s=>({bpm:Math.min(220,s.bpm+2)}), ()=>{ if(this.state.playing) this._arm(); }); }
+  bpmDown(){ this.setState(s=>({bpm:Math.max(40,s.bpm-2)}), ()=>{ if(this.state.playing) this._arm(); }); }
+  transposeUp(){ this.setState(s=>({transpose:Math.min(11,s.transpose+1)})); }
+  transposeDown(){ this.setState(s=>({transpose:Math.max(-11,s.transpose-1)})); }
+  toggleAutoscroll(){ this.setState(s=>({autoscroll:!s.autoscroll})); }
+  openPlayer(){ this.setState({route:'player', activeChord:0}); if(this.sheetRef && this.sheetRef.current) this.sheetRef.current.scrollTop=0; }
+  closePlayer(){ this.stopPlay(); this.setState({route:this.state.ctx==='band'?'b-repertorio':'biblioteca'}); }
+
+  // ---- helpers ----
+  transposeChord(ch,n){
+    if(!ch) return ch;
+    const flats={'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#','Cb':'B','Fb':'E'};
+    return ch.split('/').map(part=>{
+      const m = part.match(/^([A-G])(#|b)?(.*)$/);
+      if(!m) return part;
+      let root = m[1]+(m[2]||'');
+      if(flats[root]) root=flats[root];
+      let i=this.NOTES.indexOf(root);
+      if(i<0) return part;
+      i=(i+n+120)%12;
+      return this.NOTES[i]+m[3];
+    }).join('/');
+  }
+  roleMeta(role){
+    if(role==='admin') return {label:'Admin', color:'#f5b94a', bg:'rgba(245,185,74,.16)'};
+    if(role==='member') return {label:'Miembro', color:'#6f9bf5', bg:'rgba(111,155,245,.16)'};
+    return {label:'Invitado', color:'#c08cff', bg:'rgba(192,140,255,.16)'};
+  }
+  fmtEur(n,sign){
+    const a = Math.abs(n).toFixed(2).replace('.',',');
+    const s = n>0?(sign?'+':''):(n<0?'−':'');
+    return s + a + ' €';
+  }
+  bandColor(id){ const b=this.bands.find(x=>x.id===id); return b?b.color:'var(--text-faint)'; }
+  bandName(id){ const b=this.bands.find(x=>x.id===id); return b?b.name:'Personal'; }
+  bandWeak(id){ const b=this.bands.find(x=>x.id===id); if(!b) return 'var(--surface-3)'; return b.color.replace('#','rgba(')+'X'; }
+
+  hexToRgba(hex,a){
+    const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  renderVals(){
+    const s = this.state;
+    const accent = this.props.accent || '#ff6b4a';
+    const accentWeak = this.hexToRgba(accent, 0.16);
+    const isLogin = s.route==='login';
+    const youRoutes = ['inicio','biblioteca','agenda','finanzas','chat','bandas','perfil','player'];
+    const is = {
+      login:isLogin, app:!isLogin,
+      youCtx:s.ctx==='you', bandCtx:s.ctx==='band',
+      inicio:s.route==='inicio', biblioteca:s.route==='biblioteca', agenda:s.route==='agenda',
+      finanzas:s.route==='finanzas', chat:s.route==='chat', bandas:s.route==='bandas',
+      perfil:s.route==='perfil', player:s.route==='player',
+      bResumen:s.route==='b-resumen', bMiembros:s.route==='b-miembros', bAgenda:s.route==='b-agenda',
+      bRepertorio:s.route==='b-repertorio', bSetlist:s.route==='b-setlist', bFinanzas:s.route==='b-finanzas',
+      bChat:s.route==='b-chat', bAjustes:s.route==='b-ajustes',
+    };
+
+    // nav
+    let navDefs;
+    if(s.ctx==='band'){
+      navDefs = [['b-resumen','Resumen','layout-dashboard'],['b-miembros','Miembros','users'],['b-agenda','Agenda','calendar-days'],['b-repertorio','Repertorio','music'],['b-setlist','Setlist','list-music'],['b-finanzas','Finanzas','wallet'],['b-chat','Chat','message-circle'],['b-ajustes','Ajustes','settings']];
+    } else {
+      navDefs = [['inicio','Inicio','home'],['biblioteca','Biblioteca','library'],['agenda','Agenda','calendar-days'],['finanzas','Finanzas','wallet'],['chat','Chat','message-circle'],['bandas','Bandas','users']];
+    }
+    const navItems = navDefs.map(d=>{
+      const active = s.route===d[0];
+      let badge = null;
+      if(d[0]==='chat' && s.ctx==='you') badge='3';
+      return {key:d[0], label:d[1], icon:d[2], active, badge,
+        color: active?'var(--accent)':'var(--text-muted)', bg: active?'var(--accent-weak)':'transparent',
+        go: ()=>this.go(d[0])};
+    });
+
+    // bands view
+    const bandsView = this.bands.map(b=>{
+      const rm = this.roleMeta(b.role);
+      return {...b, roleLabel:rm.label, roleColor:rm.color, roleBg:rm.bg,
+        gradient:`linear-gradient(135deg, ${this.hexToRgba(b.color,.5)}, ${this.hexToRgba(b.color,.12)})`,
+        balColor: b.myBal>0?'var(--success)':(b.myBal<0?'var(--danger)':'var(--text-muted)'),
+        balText: this.fmtEur(b.myBal,true),
+        balLabel: b.myBal>0?'Te deben':(b.myBal<0?'Debes':'Saldado'),
+        enter: ()=>this.enterBand(b.id)};
+    });
+    const currentBandRaw = this.bands.find(b=>b.id===s.bandId) || this.bands[0];
+    const crm = this.roleMeta(currentBandRaw.role);
+    const currentBand = {...currentBandRaw, roleLabel:crm.label, roleColor:crm.color, roleBg:crm.bg,
+      gradient:`linear-gradient(135deg, ${this.hexToRgba(currentBandRaw.color,.55)}, ${this.hexToRgba(currentBandRaw.color,.12)})`};
+
+    // songs view
+    const q = s.libQuery.trim().toLowerCase();
+    const songsView = this.songs.filter(song=>{
+      let ok=true;
+      if(s.libFilter==='personales') ok = !song.band;
+      else if(s.libFilter!=='todas') ok = song.band===s.libFilter;
+      if(ok && q){ ok = song.title.toLowerCase().includes(q) || this.bandName(song.band).toLowerCase().includes(q); }
+      return ok;
+    }).map(song=>({...song,
+      bandName: song.band?this.bandName(song.band):'Personal',
+      bandColor: song.band?this.bandColor(song.band):'var(--text-faint)',
+      bandBg: song.band?this.hexToRgba(this.bandColor(song.band),.16):'var(--surface-3)',
+      play: ()=>this.openPlayer()}));
+
+    const libChips = [{key:'todas',label:'Todas'},{key:'personales',label:'Personales'}, ...this.bands.map(b=>({key:b.id,label:b.name}))].map(c=>{
+      const active = s.libFilter===c.key;
+      return {...c, active, go:()=>this.setLibFilter(c.key),
+        bg: active?'var(--accent)':'var(--surface)', col: active?'#fff':'var(--text-muted)',
+        border: active?'var(--accent)':'var(--border-strong)'};
+    });
+
+    // events view
+    const eventsView = this.events.map(e=>{
+      const cur = s.rsvp[e.title] || e.rsvp;
+      const mk = (v,label,color)=>({label, active:cur===v, set:()=>this.setRsvp(e.title,v),
+        bg: cur===v?color.bg:'transparent', col: cur===v?color.fg:'var(--text-muted)', border: cur===v?color.fg:'var(--border-strong)'});
+      return {...e,
+        bandName:this.bandName(e.band), bandColor:this.bandColor(e.band), bandBg:this.hexToRgba(this.bandColor(e.band),.16),
+        isBolo:e.type==='Bolo',
+        rsvpOpts:[ mk('yes','Voy',{bg:'var(--success-weak)',fg:'var(--success)'}), mk('maybe','Quizás',{bg:'var(--warning-weak)',fg:'var(--warning)'}), mk('no','No',{bg:'var(--danger-weak)',fg:'var(--danger)'}) ]};
+    });
+    const agChips = [{key:'todas',label:'Todas'}, ...this.bands.map(b=>({key:b.id,label:b.name}))].map(c=>{
+      const active=s.agFilter===c.key;
+      return {...c, active, go:()=>this.setAgFilter(c.key),
+        bg: active?'var(--accent)':'var(--surface)', col: active?'#fff':'var(--text-muted)', border: active?'var(--accent)':'var(--border-strong)'};
+    });
+    const agendaView = eventsView.filter(e=> s.agFilter==='todas' || e.band===s.agFilter);
+    const upcoming = eventsView.slice(0,3);
+
+    // finances
+    const net = this.bands.reduce((a,b)=>a+b.myBal,0);
+    const netView = {text:this.fmtEur(net,true), color: net>=0?'var(--success)':'var(--danger)',
+      sub: net>=0?'Te deben en total':'Debes en total'};
+
+    // convos
+    const convosView = this.convos.map((c,i)=>{
+      const b=this.bands.find(x=>x.id===c.band);
+      const active = i===0;
+      return {...c, name:b.name, color:b.color, initials:b.initials,
+        activeBg: active?'var(--accent-weak)':'transparent', activeBorder: active?'var(--accent)':'transparent'};
+    });
+
+    // chat thread
+    const messages = (s.messages || this.baseMessages).map(m=>({...m,
+      align: m.me?'flex-end':'flex-start',
+      bubbleBg: m.me?'var(--accent)':'var(--surface-2)',
+      bubbleCol: m.me?'#fff':'var(--text)',
+      showAvatar: !m.me, byline: m.me?m.time:(m.from+' · '+m.time)}));
+
+    // band members
+    const membersView = this.members.map(m=>{
+      const rm=this.roleMeta(m.role);
+      return {...m, roleLabel:rm.label, roleColor:rm.color, roleBg:rm.bg};
+    });
+    // band finances
+    const bandMovsView = this.bandMovs.map(m=>({...m,
+      amountText:this.fmtEur(m.amount,true), amountColor: m.amount>0?'var(--success)':'var(--danger)',
+      icon: m.amount>0?'arrow-down-left':'arrow-up-right', iconBg: m.amount>0?'var(--success-weak)':'var(--danger-weak)', iconCol: m.amount>0?'var(--success)':'var(--danger)'}));
+    const memberBalsView = this.memberBals.map(m=>({...m,
+      balText:this.fmtEur(m.bal,true), balColor: m.bal>0?'var(--success)':(m.bal<0?'var(--danger)':'var(--text-muted)')}));
+    const bandTotal = this.bandMovs.reduce((a,m)=>a+m.amount,0);
+
+    // setlist
+    const toSec=(d)=>{const [m,ss]=d.split(':').map(Number); return m*60+ss;};
+    const totalSec = this.setlist.reduce((a,x)=>a+toSec(x.dur),0);
+    const setlistTotal = Math.floor(totalSec/60)+' min';
+    const setlistView = this.setlist.map((x,i)=>({...x, num:String(i+1).padStart(2,'0'), keyT:this.transposeChord(x.key,0)}));
+
+    // band-scoped
+    const bandSongs = this.songs.filter(x=>x.band===s.bandId).map(song=>({...song,
+      bandColor:this.bandColor(song.band), bandBg:this.hexToRgba(this.bandColor(song.band),.16),
+      play:()=>this.openPlayer()}));
+    const bandEvents = eventsView.filter(e=>e.band===s.bandId);
+
+    // PLAYER sheet
+    let idx=0;
+    const sections = this.playerSong.sections.map(sec=>({
+      name:sec.name,
+      lines:sec.lines.map(line=>{
+        const chordOnly = line.every(g=>!g.text);
+        return {gap: chordOnly?'20px':'6px', chordOnly,
+          segs: line.map(g=>{
+            const myIdx = idx++;
+            const active = myIdx===s.activeChord;
+            const size = chordOnly?(active?'46px':'42px'):(active?'24px':'21px');
+            return {chord:this.transposeChord(g.chord,s.transpose), text:g.text||'', active,
+              size, pad: active?'5px 11px':'2px 6px',
+              bg: active?'var(--accent)':'transparent', col: active?'#fff':'var(--accent)'};
+          })};
+      })
+    }));
+    this._total = idx || 16;
+    const player = {
+      title:this.playerSong.title, band:this.playerSong.band,
+      keyDisplay:this.transposeChord(this.playerSong.baseKey, s.transpose),
+      bpm:s.bpm, sections,
+      playIcon: s.playing?'pause':'play', playNudge: s.playing?'0':'2px',
+      progress: Math.round((s.activeChord/(this._total))*100)+'%',
+      transposeLabel: (s.transpose>0?'+':'')+s.transpose,
+      asBg: s.autoscroll?'var(--accent-weak)':'var(--surface)', asColor: s.autoscroll?'var(--accent)':'var(--text-muted)',
+      asBorder: s.autoscroll?'var(--accent)':'var(--border-strong)'};
+
+    return {
+      theme:s.theme, accent, accentWeak,
+      is,
+      navItems, bandsView, currentBand,
+      songsView, libChips, libQuery:s.libQuery, onLibSearch:(e)=>this.onLibSearch(e),
+      eventsView, agendaView, agChips, upcoming,
+      net:netView, convosView, messages, chatInput:s.chatInput, onChatInput:(e)=>this.onChatInput(e), sendMsg:()=>this.sendMsg(), onChatKey:(e)=>{ if(e.key==='Enter') this.sendMsg(); },
+      membersView, bandMovsView, memberBalsView, bandSongs, bandEvents,
+      invite:()=>this.showToast('Invitación enviada por email'),
+      registrarMov:()=>this.showToast('Movimiento registrado'),
+      liquidar:()=>this.showToast('Cuentas liquidadas entre miembros'),
+      bandTotalText:this.fmtEur(bandTotal,false), bandTotalColor: bandTotal>=0?'var(--success)':'var(--danger)',
+      setlistView, setlistTotal,
+      player, sheetRef:this.sheetRef,
+      counts:{bands:this.bands.length, songs:this.songs.length, sheets:this.songs.filter(x=>x.sheet).length},
+      // theme + band banner colors
+      themeIcon: s.theme==='dark'?'sun':'moon', themeLabel: s.theme==='dark'?'Tema claro':'Tema oscuro',
+      bandBgValue: this.hexToRgba(currentBandRaw.color,.10), bandBorderValue: this.hexToRgba(currentBandRaw.color,.35),
+      // login
+      loginCta: s.loginTab==='entrar'?'Entrar':'Crear cuenta',
+      loginTabEntrar:{bg: s.loginTab==='entrar'?'var(--surface)':'transparent', col: s.loginTab==='entrar'?'var(--text)':'var(--text-muted)'},
+      loginTabRegistro:{bg: s.loginTab==='registro'?'var(--surface)':'transparent', col: s.loginTab==='registro'?'var(--text)':'var(--text-muted)'},
+      setLoginTab:{entrar:()=>this.setState({loginTab:'entrar'}), registro:()=>this.setState({loginTab:'registro'})},
+      login:()=>this.login(),
+      // handlers
+      toggleTheme:()=>this.toggleTheme(), goHome:()=>this.go('inicio'), goPerfil:()=>this.go('perfil'),
+      goAgenda:()=>this.go('agenda'), goChat:()=>this.go('chat'), exitBand:()=>this.exitBand(),
+      togglePlay:()=>this.togglePlay(), bpmUp:()=>this.bpmUp(), bpmDown:()=>this.bpmDown(),
+      transposeUp:()=>this.transposeUp(), transposeDown:()=>this.transposeDown(),
+      toggleAutoscroll:()=>this.toggleAutoscroll(), closePlayer:()=>this.closePlayer(),
+      toast:s.toast,
+    };
+  }
+}
+</script>
+
+
+</body></html>

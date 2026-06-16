@@ -18,6 +18,7 @@ def test_config_expone_test_mode(api):
 
 @pytest.mark.parametrize("path", [
     "/static/login.html",
+    "/static/app.html",
     "/static/library.html",
     "/static/editor.html",
 ])
@@ -35,7 +36,7 @@ def test_apifetch_redirige_a_login_en_401(page, live_server):
     1. La caché de `/config`: si `networkidle` salta antes de que `_cfg` esté cacheada,
        sobreescribir `fetch` rompe `getConfig()` y `getToken()` lanzaría antes del 401.
        → lo evitamos calentando la caché con un `getToken()` real previo.
-    2. `login.js` rebota a `library.html` cuando HAY sesión (modo test → siempre la hay),
+    2. `login.js` rebota al inicio (`app.html`) cuando HAY sesión (modo test → siempre la hay),
        así que exigir *quedarse* en login.html era una carrera contra ese rebote.
        → comprobamos que la navegación de apiFetch PASÓ por login.html (aunque rebote)."""
     page.goto(live_server + "/static/library.html", wait_until="networkidle")

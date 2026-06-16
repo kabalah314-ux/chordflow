@@ -1,0 +1,43 @@
+<!-- ===================== LOGIN ===================== -->
+  <sc-if value="{{is.login}}" hint-placeholder-val="">
+    <div style="flex:1;display:flex;align-items:stretch">
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px">
+        <div style="width:100%;max-width:380px">
+          <div style="display:flex;align-items:center;gap:11px;margin-bottom:34px">
+            <div style="width:38px;height:38px;border-radius:11px;background:var(--accent);display:flex;align-items:flex-end;justify-content:center;gap:3px;padding:9px 0">
+              <span style="width:3.5px;height:60%;background:#fff;border-radius:2px;animation:bf-eq 1s ease-in-out infinite"></span>
+              <span style="width:3.5px;height:100%;background:#fff;border-radius:2px;animation:bf-eq 1s ease-in-out infinite .2s"></span>
+              <span style="width:3.5px;height:45%;background:#fff;border-radius:2px;animation:bf-eq 1s ease-in-out infinite .4s"></span>
+            </div>
+            <span style="font-size:21px;font-weight:700;letter-spacing:-.02em">BandFlow</span>
+          </div>
+          <h1 style="font-size:27px;font-weight:700;letter-spacing:-.02em;margin:0 0 8px">Entra en tu música</h1>
+          <p style="color:var(--text-muted);margin:0 0 28px;font-size:15px;line-height:1.5">Gestiona todas tus bandas, repertorio y bolos desde un solo sitio.</p>
+          <div style="display:flex;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;margin-bottom:22px">
+            <button onclick="{{setLoginTab.entrar}}" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;background:{{loginTabEntrar.bg}};color:{{loginTabEntrar.col}}">Entrar</button>
+            <button onclick="{{setLoginTab.registro}}" style="flex:1;padding:9px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;background:{{loginTabRegistro.bg}};color:{{loginTabRegistro.col}}">Crear cuenta</button>
+          </div>
+          <label style="display:block;font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:7px">Email</label>
+          <input value="hola@danivega.es" style="width:100%;padding:11px 13px;background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;color:var(--text);font-size:15px;margin-bottom:16px;outline:none" style-focus="border-color:var(--accent)">
+          <label style="display:block;font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:7px">Contraseña</label>
+          <input type="password" value="········" style="width:100%;padding:11px 13px;background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;color:var(--text);font-size:15px;margin-bottom:22px;outline:none" style-focus="border-color:var(--accent)">
+          <button onclick="{{login}}" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:15px;cursor:pointer;box-shadow:var(--shadow-sm)" style-hover="filter:brightness(1.07)">{{loginCta}}</button>
+          <p style="text-align:center;color:var(--text-faint);font-size:13px;margin:18px 0 0">¿Olvidaste tu contraseña?</p>
+        </div>
+      </div>
+      <div style="flex:1;display:none;background:linear-gradient(150deg,var(--surface-2),var(--app-bg));border-left:1px solid var(--border);align-items:center;justify-content:center;padding:40px" data-wide="1">
+        <div style="text-align:center;max-width:340px">
+          <div style="display:flex;align-items:flex-end;justify-content:center;gap:6px;height:120px;margin-bottom:28px">
+            <span style="width:9px;height:40%;background:var(--accent);border-radius:5px;animation:bf-eq 1.1s ease-in-out infinite"></span>
+            <span style="width:9px;height:80%;background:var(--accent);border-radius:5px;animation:bf-eq 1.1s ease-in-out infinite .15s"></span>
+            <span style="width:9px;height:100%;background:var(--accent);border-radius:5px;animation:bf-eq 1.1s ease-in-out infinite .3s"></span>
+            <span style="width:9px;height:55%;background:var(--accent);border-radius:5px;animation:bf-eq 1.1s ease-in-out infinite .45s"></span>
+            <span style="width:9px;height:75%;background:var(--accent);border-radius:5px;animation:bf-eq 1.1s ease-in-out infinite .6s"></span>
+          </div>
+          <p style="font-size:18px;font-weight:600;line-height:1.45;margin:0">Del ensayo al escenario,<br>todo tu repertorio en su sitio.</p>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  

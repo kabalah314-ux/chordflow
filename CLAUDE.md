@@ -2,7 +2,13 @@
 
 > Este archivo lo lee el agente (Claude Code) al empezar cada sesión.
 > Es la **fuente de verdad operativa**: cómo trabajar, cómo verificar y qué nunca romper.
-> Para entender la arquitectura del producto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
+> Producto: **GIRO V2 a SaaS de gestión de bandas** (multi-tenant). La dirección y el detalle
+> funcional son la fuente de verdad de producto:
+> [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md) (decisiones del giro) +
+> [GUIA_MAESTRA_V2_FUNCIONAL.md](GUIA_MAESTRA_V2_FUNCIONAL.md) (las 14 áreas resueltas, roadmap
+> 7–21, convenciones §C.4, detalle Fase 7 §C.5, diagrama §C.6).
+> La [GUIA_MAESTRA.md](GUIA_MAESTRA.md) original describe el producto previo (teleprompter), que
+> sigue siendo la "joya" intacta dentro del nuevo flujo.
 
 ---
 
@@ -11,6 +17,14 @@
 ChordFlow es un teleprompter musical: reproduce partituras de acordes resaltando el
 acorde activo según el BPM, con auto-scroll. Backend **FastAPI + SQLAlchemy + SQLite**;
 frontend **HTML/CSS/JS vanilla**; auth con **Supabase**.
+
+**Dirección actual (giro V2):** evoluciona a **SaaS de gestión de bandas** (multi-tenant
+colaborativo) manteniendo el reproductor como joya. Todo el giro es **aditivo** (no rompe
+producción). El trabajo arranca por la **Fase 7** (identidad + núcleo de banda + auth
+multi-tenant). Ver las guías V2 y `harness/ROADMAP.md` §"Giro a SaaS de banda".
+⚠️ **Regla nueva de oro multi-tenant:** cada ruta de banda valida pertenencia+rol y filtra por
+`band_id`; un fallo = fuga de datos entre bandas. Por eso **cada ruta de banda exige su test de
+aislamiento** ("usuario ajeno → 403/404"), tan obligatorio como el doctor verde.
 
 ---
 
@@ -29,6 +43,20 @@ Todo cambio sigue estos 7 pasos. No se salta ninguno.
 
 > **Regla de oro:** una tarea NO está terminada hasta que `doctor.py` está verde
 > **y** existe un test automatizado que prueba el comportamiento nuevo.
+
+### Revisión al cerrar una SECCIÓN/FASE (nuevo)
+
+Además del bucle por tarea, **al terminar una sección/fase completa** (p. ej. la Fase 7) se hace
+una **revisión de la app** para ver las integraciones hechas:
+
+1. `python harness/revision.py <sección>` → muestra qué rutas API y páginas están integradas
+   (✅) y cuáles faltan (⛔), más el checklist de esa sección.
+2. `python harness/revision.py <sección> --serve` → arranca la app en modo test para
+   **revisarla a ojo** en el navegador (incluida la verificación de **aislamiento multi-tenant**).
+3. Anotar el veredicto en `harness/REVISIONES.md` (plantilla en `templates/REVISION_TEMPLATE.md`).
+
+> Una **fase no se da por cerrada** hasta tener su revisión con veredicto ✅ en `REVISIONES.md`
+> (junto al doctor verde y los tests).
 
 ---
 
@@ -49,6 +77,10 @@ python harness/doctor.py
 
 # Suite completa de calidad (lint + unit + e2e)
 python harness/run_checks.py
+
+# Revisión de integraciones por sección (al cerrar una fase) + verla en el navegador
+python harness/revision.py                 # resumen: qué hay integrado y qué falta
+python harness/revision.py fase7 --serve   # detalle de una sección + arrancar la app
 
 # Solo una capa
 python -m pytest tests/unit -m unit
@@ -126,11 +158,14 @@ La app está **en vivo**: https://chordflow-ecru.vercel.app — **Vercel** (`api
 
 | Necesito… | Archivo |
 |-----------|---------|
+| Dirección de producto (giro V2) | `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md` |
 | Hoja de ruta priorizada | `harness/ROADMAP.md` |
 | Tarea en curso | `harness/TASKS.md` |
 | Qué flujos deben funcionar siempre | `harness/CHECKLIST_E2E.md` |
 | Comprobar que todo arranca | `harness/doctor.py` |
 | Correr toda la calidad | `harness/run_checks.py` |
+| Revisar integraciones por sección + ver la app | `harness/revision.py` |
+| Registro de revisiones por sección | `harness/REVISIONES.md` |
 | Endpoints (canciones) | `src/api/songs_router.py` |
 | Endpoints (repertorios) | `src/api/setlists_router.py` |
 | Importar desde URL con IA | `src/api/import_router.py` + `src/services/importer.py` |

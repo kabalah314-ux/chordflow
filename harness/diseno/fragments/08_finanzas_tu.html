@@ -1,0 +1,30 @@
+<!-- ============ FINANZAS (TÚ) ============ -->
+      <sc-if value="{{is.finanzas}}" hint-placeholder-val="">
+        <div style="max-width:920px;margin:0 auto;padding:32px 38px 60px">
+          <div style="margin-bottom:22px">
+            <h1 style="font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px">Finanzas</h1>
+            <p style="color:var(--text-muted);margin:0;font-size:15px">Tu saldo en cada banda. En verde lo que te deben, en rojo lo que debes.</p>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">{{net.sub}}</div>
+              <div style="font-size:34px;font-weight:700;font-family:'IBM Plex Mono';color:{{net.color}}">{{net.text}}</div>
+            </div>
+            <div style="width:60px;height:60px;border-radius:15px;background:var(--accent-weak);display:flex;align-items:center;justify-content:center;color:var(--accent)"><i data-lucide="wallet" style="width:28px;height:28px"></i></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+            <sc-for list="{{bandsView}}" as="b" hint-placeholder-count="3">
+              <div onclick="{{b.enter}}" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer" style-hover="border-color:var(--border-strong)">
+                <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px">
+                  <div style="width:38px;height:38px;border-radius:10px;background:{{b.color}};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:14px">{{b.initials}}</div>
+                  <div style="font-weight:600;font-size:15px">{{b.name}}</div>
+                </div>
+                <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:3px">{{b.balLabel}}</div>
+                <div style="font-size:24px;font-weight:700;font-family:'IBM Plex Mono';color:{{b.balColor}}">{{b.balText}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      

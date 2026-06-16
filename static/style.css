@@ -1,14 +1,19 @@
+/* Fuentes BandFlow (reskin T-081): IBM Plex, como el design-system. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
 :root {
-    --bg-dark: #0a0a0a;
-    --bg-panel: rgba(25, 25, 30, 0.6);
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --accent-color: #00f2ff;
-    --accent-hover: #00c8d4;
-    --chord-color: #00f2ff;
-    --chord-active-bg: rgba(0, 242, 255, 0.2);
-    --font-ui: 'Inter', sans-serif;
-    --font-score: 'Roboto Mono', monospace;
+    /* Paleta BandFlow (reskin T-081): acento coral, fondo casi-negro, IBM Plex.
+       Las páginas legacy conservan su estructura (glassmorphism); solo cambia el tema. */
+    --bg-dark: #0d0d10;
+    --bg-panel: rgba(22, 22, 27, 0.72);
+    --text-primary: #ededf1;
+    --text-secondary: #9a9aa6;
+    --accent-color: #ff6b4a;
+    --accent-hover: #ff7d5f;
+    --chord-color: #ff6b4a;
+    --chord-active-bg: rgba(255, 107, 74, 0.2);
+    --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-score: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 * {
@@ -137,7 +142,7 @@ button {
 .primary-btn:hover {
     background: var(--accent-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 242, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 /* Main Score Area */
@@ -157,7 +162,7 @@ button {
     left: 0;
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 107, 74, 0.2), transparent);
     pointer-events: none;
     z-index: 1;
 }
@@ -217,14 +222,14 @@ button {
 .line-chord-only .chord-pill {
     padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(0, 242, 255, 0.08);
-    border: 1px solid rgba(0, 242, 255, 0.2);
+    background: rgba(255, 107, 74, 0.08);
+    border: 1px solid rgba(255, 107, 74, 0.2);
     transition: all 0.2s ease;
 }
 
 .line-chord-only .chord-pill.active {
     background: var(--chord-active-bg);
-    box-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
+    box-shadow: 0 0 8px rgba(255, 107, 74, 0.4);
     color: #ffffff;
 }
 
@@ -276,7 +281,7 @@ button {
 .chord-container.active {
     background: var(--chord-active-bg);
     transform: scale(1.15) translateY(-2px);
-    box-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
+    box-shadow: 0 0 10px rgba(255, 107, 74, 0.4);
     color: #ffffff;
 }
 
@@ -345,7 +350,7 @@ button {
 .editor-split textarea:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 8px rgba(255, 107, 74, 0.2);
 }
 
 .preview-pane {
@@ -366,7 +371,7 @@ button {
     color: var(--accent-color);
     padding: 0.6rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(0, 242, 255, 0.04);
+    background: rgba(255, 107, 74, 0.04);
 }
 
 .preview-content {
@@ -529,7 +534,7 @@ button {
 .input-group textarea:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 8px rgba(255, 107, 74, 0.2);
 }
 
 .help-text {
@@ -599,7 +604,7 @@ button {
 .login-card input:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 8px rgba(255, 107, 74, 0.2);
 }
 
 .login-actions {
@@ -706,8 +711,35 @@ button {
 .search-box:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 8px rgba(255, 107, 74, 0.2);
 }
+
+/* Filtros de la biblioteca unificada (Todas · Personales · [banda]), T-077 */
+.library-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: -1rem 0 1.5rem;   /* compensa el margin-bottom del search-box */
+}
+.lib-filter {
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.lib-filter:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+.lib-filter.active {
+    background: var(--accent-color);
+    color: #04141f;
+    border-color: transparent;
+    font-weight: 700;
+}
+.card-source { opacity: 0.85; }
 
 .song-grid {
     display: grid;
@@ -770,7 +802,7 @@ button {
 .song-card:hover {
     transform: translateY(-3px);
     border-color: var(--accent-color);
-    box-shadow: 0 6px 18px rgba(0, 242, 255, 0.15);
+    box-shadow: 0 6px 18px rgba(255, 107, 74, 0.15);
 }
 
 .card-title {
@@ -796,8 +828,8 @@ button {
     font-family: var(--font-score);
     font-size: 0.72rem;
     color: var(--accent-color);
-    background: rgba(0, 242, 255, 0.08);
-    border: 1px solid rgba(0, 242, 255, 0.2);
+    background: rgba(255, 107, 74, 0.08);
+    border: 1px solid rgba(255, 107, 74, 0.2);
     padding: 2px 8px;
     border-radius: 20px;
 }
@@ -890,3 +922,24 @@ button {
 .import-row input[type="url"] { flex: 1; }
 .import-row .secondary-btn { white-space: nowrap; }
 .import-row .secondary-btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* ─── Agenda de banda: botones de asistencia (Fase 10) ────────────────────── */
+.att-buttons { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; align-items: center; }
+.att-btn { opacity: 0.6; }
+.att-btn.active {
+    opacity: 1;
+    background: rgba(124, 222, 168, 0.22);
+    border-color: rgba(124, 222, 168, 0.5);
+    font-weight: 600;
+}
+#b-agenda h5 { margin: 0.8rem 0 0.4rem; color: var(--text-secondary, #aaa); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ─── Finanzas de banda: saldos (Fase 11) ─────────────────────────────────── */
+.bal-pos { color: #7cdea8; font-weight: 600; }
+.bal-neg { color: #ff8a8a; font-weight: 600; }
+#b-finance h5 { margin: 0.8rem 0 0.4rem; color: var(--text-secondary, #aaa); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ─── Chat de banda (Fase 12) ─────────────────────────────────────────────── */
+.msg-pinned { background: rgba(255, 214, 102, 0.12); border-radius: 8px; }
+.msg-actions { display: inline-flex; gap: 0.3rem; }
+#b-chat .setlist-list { max-height: 320px; overflow-y: auto; }

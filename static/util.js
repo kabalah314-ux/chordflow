@@ -76,3 +76,71 @@ function confirmModal(message, { okText = 'Aceptar', cancelText = 'Cancelar' } =
         if (okBtn) okBtn.focus();
     });
 }
+
+// Modal con un input de texto. Devuelve Promise<string|null> (null = cancelar/​vacío).
+// Reemplaza prompt(). El texto del usuario se escapa; el valor devuelto va trim().
+function promptModal(message, { okText = 'Aceptar', cancelText = 'Cancelar', placeholder = '', value = '' } = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+                <p class="modal-msg">${escapeHtml(message)}</p>
+                <input type="text" class="search-box" data-act="input"
+                       placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}">
+                <div class="modal-actions">
+                    <button class="secondary-btn" data-act="cancel">${escapeHtml(cancelText)}</button>
+                    <button class="primary-btn" data-act="ok">${escapeHtml(okText)}</button>
+                </div>
+            </div>`;
+        const input = overlay.querySelector('[data-act="input"]');
+        const close = (val) => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve(val);
+        };
+        const submit = () => { const v = input.value.trim(); close(v || null); };
+        const onKey = (e) => {
+            if (e.key === 'Escape') close(null);
+            if (e.key === 'Enter') submit();
+        };
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close(null);
+            const act = e.target.getAttribute('data-act');
+            if (act === 'ok') submit();
+            if (act === 'cancel') close(null);
+        });
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        input.focus();
+    });
+}
+
+// Modal informativo (un solo botón). Permite HTML controlado (NO escapado): el llamante es
+// responsable de escapar cualquier dato de usuario que interpole. Devuelve Promise<void>.
+function alertModal(html, { okText = 'Aceptar' } = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+                <div class="modal-msg">${html}</div>
+                <div class="modal-actions">
+                    <button class="primary-btn" data-act="ok">${escapeHtml(okText)}</button>
+                </div>
+            </div>`;
+        const close = () => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve();
+        };
+        const onKey = (e) => { if (e.key === 'Escape' || e.key === 'Enter') close(); };
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay || e.target.getAttribute('data-act') === 'ok') close();
+        });
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        const okBtn = overlay.querySelector('[data-act="ok"]');
+        if (okBtn) okBtn.focus();
+    });
+}

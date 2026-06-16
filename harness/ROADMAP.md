@@ -228,3 +228,192 @@
 - [x] **T-M06** 🟡 Criterio de molde estable **verificado**: `git archive` del molde → carpeta nueva
       limpia (45 ficheros) → `run_checks.py` **TODO VERDE sin tocar nada** (doctor + ruff + 27 unit +
       4 e2e). Anotado en `../app-skeleton/harness/MOLDE.md` (commit `31e450f`).
+
+---
+
+# 🎸→🏠 GIRO A SAAS DE BANDA (V2) — backlog activo
+
+> Dirección de producto: `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md` (14 áreas resueltas,
+> convenciones §C.4, detalle Fase 7 §C.5, diagrama §C.6). **Todo aditivo** (no rompe producción).
+> Roadmap completo y priorizado en `GUIA_MAESTRA_V2_FUNCIONAL.md` §C.1 (Fases 7–13 núcleo, 14–21
+> satélite). **Se empieza por la Fase 7** (todo lo demás cuelga de ella).
+>
+> 🔐 **Regla de oro multi-tenant:** cada ruta de banda valida pertenencia+rol y filtra por
+> `band_id`. **Cada ruta exige su test de aislamiento** ("usuario ajeno → 403/404").
+> 🔎 **Al cerrar la fase:** `python harness/revision.py fase7 --serve` + veredicto en `REVISIONES.md`.
+
+## Fase 7 — Identidad + núcleo de banda (auth multi-tenant)
+
+> Entidades: `MusicianProfile`, `Band`, `BandMembership`, `BandInvite`. Convenciones transversales
+> en §C.4.3 (Decimal/divisa, soft-delete, índices `band_id`, timestamps UTC). `Song.band_id` y
+> `Setlist.band_id` NO entran aquí (son Fases 8 y 9).
+
+- [x] **T-048** 🔴 **Migración aditiva**: tablas `musician_profiles`, `bands`, `band_memberships`,
+      `band_invites` + índices (`band_id` y FKs) + CHECK (`role`/`status`/`role_to_grant`) + único
+      `(band_id, user_id)` + baja blanda (`status`/`left_at`). Migración `39fbdc0fff0f` solo aditiva;
+      `alembic check` limpio (sin drift). Test `test_upgrade_crea_el_nucleo_de_banda`. Doctor + 50 unit
+      verdes. **Pendiente: aplicar a Postgres prod (pooler 5432) en el próximo deploy.**
+- [x] **T-049** 🟠 **Modelos + schemas**: modelos SQLAlchemy hechos en T-048. Schemas Pydantic de las
+      4 entidades (`Band` Create/Update/Response/Summary, `BandMembershipResponse`/`MembershipRoleUpdate`,
+      `BandInvite` Create/Response, `MusicianProfile`), con `role`/`status` como `Literal` alineados a
+      las fuentes únicas `models.BAND_ROLES`/`MEMBERSHIP_STATUSES`. Test `test_schemas_banda` (8 casos,
+      incl. alineación schema↔models). Doctor + ruff verdes.
+- [x] **T-050** 🔴 **Auth multi-tenant**: `src/services/band_auth.py` con `require_band_member`
+      (ajeno/baja/banda-borrada→404) y `require_band_admin` (no-admin→403, compone sobre member→ ajeno
+      sigue 404). Devuelven el `BandMembership` para reusar el rol. Test `test_band_auth` (7 casos:
+      matriz completa de aislamiento). **Base del aislamiento — la regla de oro.** 65 unit verdes.
+- [x] **T-051** 🟠 **Endpoints banda**: `src/api/bands_router.py` — POST crear (creador→admin),
+      GET listar "mis bandas" (con mi rol + nº miembros, 1 query agregada), GET ver
+      (`require_band_member`), PATCH editar y DELETE soft delete (`require_band_admin`). Registrado en
+      `main.py`. Test `test_api_bands` (CRUD completo + **aislamiento por ruta**: ajeno→404 en
+      ver/editar/borrar + no la lista). 68 unit verdes.
+- [x] **T-052** 🟠 **Endpoints membresía**: `/bands/{id}/members` (listar con nombre real), cambiar
+      rol, dar de baja (**baja blanda** `status='left'`+`left_at`), reactivar. Salvaguarda "nunca sin
+      admin". Test `test_api_memberships` (baja corta acceso pero conserva histórico; aislamiento).
+- [x] **T-053** 🟠 **Invitaciones por código**: `POST /bands/{id}/invites` (admin, código
+      `secrets.token_urlsafe`); `GET /invites/{code}` previsualiza; `POST /invites/{code}/accept` crea/
+      reactiva `BandMembership`; caducidad/usos máximos. Test `test_api_invites` (aceptar/caducada/
+      agotada/ya-miembro 409).
+- [x] **T-054** 🟡 **Perfil músico**: `GET/PUT /profile/me` (`MusicianProfile`, autocreación en 1er
+      acceso). Test `test_api_profile`: el nombre real aparece en la lista de miembros (no UUID).
+- [x] **T-055** 🟢 **Frontend**: `bands.html`/`bands.js` (Mis bandas: lista+crear+detalle con
+      miembros+invitar), `join.html`/`join.js` (aceptar por enlace), `profile.html`/`profile.js`.
+      `promptModal`/`alertModal` en `util.js`; enlace en biblioteca; SW excluye rutas dinámicas;
+      `cachebust.py` + 7 filas en `CHECKLIST_E2E.md`. e2e `test_bands_ui` (3 casos).
+- [x] **T-056** 🔴 **Cierre de fase**: `run_checks` **TODO VERDE** (doctor 10/10 · ruff · 83 unit ·
+      38 e2e, incl. aislamiento por ruta) + **revisión de sección** `revision.py fase7` ✅ completa
+      (3/3 rutas · 3/3 páginas) con veredicto ✅ en `REVISIONES.md`. Registro en `REGISTRO_DE_CAMBIOS.md`.
+      **Pendiente solo: aplicar migración a Postgres prod (en local hecho).**
+
+## Fases 8–21 (se detallan en T-NNN al aprobarse cada una)
+
+> Orden y dependencias en `GUIA_MAESTRA_V2_FUNCIONAL.md` §C.1.
+
+- [x] **Fase 8** 🟢 Repertorio de banda (`Song.band_id`, copiar de personal). Área 1. **COMPLETA**:
+  - [x] **T-057** 🔴 Migración aditiva `Song.band_id` (nullable, FK `bands` ondelete CASCADE, index) —
+        migración `908a0a3875b1` (batch, FK nombrada `fk_songs_band_id_bands`), `alembic check` limpio.
+  - [x] **T-058** 🟠 Repertorio backend: `band_songs_router.py` (`/bands/{id}/songs`: listar/crear/
+        **copiar** de personal/quitar). `/songs/` personales excluyen `band_id`; `/songs/{id}` (lectura
+        y escritura) autoriza a miembros de banda (guest solo lee). Test `test_api_band_songs` (6 casos:
+        separación personal/banda, copia independiente, reproductor por pertenencia, miembro edita/guest
+        no, quitar, aislamiento).
+  - [x] **T-059** 🟢 Repertorio frontend: en la ficha de banda (`bands.js`) — listar, ▶ reproducir,
+        copiar de mis partituras (modal selector) y quitar. e2e `test_bands_ui` (copiar al repertorio).
+  - [x] **Cierre**: `run_checks` TODO VERDE (89 unit + 39 e2e) · `revision.py fase8` ✅ completa ·
+        veredicto en `REVISIONES.md`. **Pendiente: aplicar migración a Postgres prod (local hecho).**
+- [x] **Fase 9** 🟢 Setlists de banda (`Setlist.band_id`, `SetlistItem.note`). **COMPLETA**:
+  - [x] **T-060** 🔴 Migración aditiva `Setlist.band_id` (FK CASCADE, index) + `SetlistItem.note`
+        (Text) — migración `95eddae092db` (FK nombrada), `alembic check` limpio.
+  - [x] **T-061** 🟠 Setlists de banda backend: `band_setlists_router.py` (`/bands/{id}/setlists`
+        CRUD; las canciones se sacan del **repertorio de la banda**, `_valid_band_song_ids`). `/setlists/`
+        personal excluye `band_id`; `/setlists/{id}` (reproductor) autoriza a miembros; patch/delete
+        personales estrictos. Test `test_api_band_setlists` (6: desde repertorio, filtra ajenas,
+        reproductor por pertenencia, guest 403, editar/borrar, aislamiento).
+  - [x] **T-062** 🟢 Setlists de banda frontend: sección 🎵 Setlists en la ficha de banda (`bands.js`)
+        — listar, ▶ reproducir en orden (◀▶), crear desde el repertorio (editor available/selected),
+        borrar. e2e `test_bands_ui` (crear setlist desde la UI).
+  - [x] **Cierre**: `run_checks` TODO VERDE (95 unit + 40 e2e) · `revision.py fase9` ✅ completa ·
+        veredicto en `REVISIONES.md`. **Pendiente: migración a Postgres prod (local hecho).**
+- [x] **Fase 10** 🟢 Agenda (`Event`, `EventAttendance`). Áreas 2, 3, 4. **NÚCLEO COMPLETO**:
+  - [x] **T-063** 🔴 Migración aditiva `events` + `event_attendance` (`22c7ea96b921`): tipo
+        (rehearsal|concert|other), status-pipeline, `setlist_id` (SET NULL), CHECK + único
+        `(event_id,user_id)`. `alembic check` limpio.
+  - [x] **T-064** 🟠 Agenda backend: `events_router.py` (`/bands/{id}/events`): crear/editar/borrar
+        **solo admin**, listar/ver miembros, `PUT .../attendance` (voy/no voy/quizás, incl. guest).
+        Setlist solo en conciertos y de la banda. Test `test_api_events` (6: admin crea/miembro no,
+        asistencia, guest asiste, setlist validado, editar/borrar admin, aislamiento).
+  - [x] **T-065** 🟢 Agenda frontend: sección 📅 Agenda en la ficha de banda (`bands.js`) —
+        próximos/pasados, crear evento (admin; tipo/título/fecha/setlist), botones de asistencia.
+        e2e `test_bands_ui` (crear evento + marcar asistencia).
+  - [x] **Cierre**: `run_checks` TODO VERDE (101 unit + 41 e2e) · `revision.py fase10` ✅ · `REVISIONES.md`.
+  - **Diferido (Áreas 2/3/4, no bloquea):** `EventSong` (orden del día), `Venue`, `BandResource`,
+    checklist con responsable, campos de concierto (cronograma), logística. Pipeline de booking → Fase 14.
+- [x] **Fase 11** 🟢 Finanzas con división (`Transaction`/`Split`, `Settlement`, fondo). Áreas 4, 6. **COMPLETA**:
+  - [x] **T-066** 🔴 Migración `transactions`+`transaction_splits`+`settlements` + `Band.currency` (EUR)
+        (`84c9ca4f7b64`): Decimal(10,2), flags fondo (`paid_by_fund`/`to_fund`), soft-delete financiero,
+        CHECK tipo. `alembic check` limpio.
+  - [x] **T-067** 🔴 **Servicio único de balances** `services/balances.py` (función pura): gasto/ingreso/
+        fondo/liquidación, reparto con céntimos al último, **invariante cuadra-a-cero**. Test
+        `test_balances` (6: ejemplo de la guía, fondo, liquidación, remanente — todos a cero).
+  - [x] **T-068** 🟠 Finanzas backend `finance_router.py` (`/bands/{id}/transactions|balances|settlements`):
+        registrar (**solo admin**, reparto por defecto a partes iguales, valida pagador/partes/Σ),
+        listar/ver (miembros), soft delete, balances, liquidaciones. Test `test_api_finance` (8).
+  - [x] **T-069** 🟢 Finanzas frontend: sección 💶 Finanzas en la ficha (`bands.js`) — panel de saldos
+        (verde/rojo), registrar movimiento, liquidar, lista de movimientos. e2e `test_bands_ui`.
+  - [x] **Cierre**: `run_checks` TODO VERDE (115 unit + 42 e2e) · `revision.py fase11` ✅ · `REVISIONES.md`.
+  - **Diferido (no bloquea):** editor de reparto personalizado en la UI (el backend ya lo acepta);
+    informes/export CSV; cuotas recurrentes; ligar movimiento a evento desde la UI.
+- [x] **Fase 12** 🟢 Comunicación (`Message`). Área 7. **NÚCLEO COMPLETO**:
+  - [x] **T-070** 🔴 Migración `messages` (`7022a3162284`): `event_id` null=chat general / valor=hilo,
+        `is_pinned` (notas), soft delete, índices `band_id`/`event_id`. `alembic check` limpio.
+  - [x] **T-071** 🟠 Chat backend `messages_router.py` (`/bands/{id}/messages`): publicar (miembros,
+        incl. guest), listar (chat general o hilo `?event_id=`, fijados primero), editar el propio,
+        borrar (autor/admin), **fijar nota** (solo admin). Test `test_api_messages` (7).
+  - [x] **T-072** 🟢 Chat frontend: sección 💬 Chat en la ficha (`bands.js`) — lista con refresco
+        periódico (6 s), enviar, fijar (admin), borrar (autor/admin). e2e `test_bands_ui`.
+  - [x] **Cierre**: `run_checks` TODO VERDE (122 unit + 43 e2e) · `revision.py fase12` ✅ · `REVISIONES.md`.
+  - **Diferido (no bloquea):** UI del hilo por evento (backend ya lo soporta); `Poll`/encuestas,
+    `Notification`/campana, @menciones; tiempo real (Supabase Realtime).
+- [x] **Fase 13** ✅ (2026-06-16) App shell (nav TÚ/BANDA) + sistema de diseño + rebranding BandFlow. Spec de UX:
+  `GUIA_MAESTRA_V2.md` §3 (contexto TÚ agregado + contexto BANDA con banner y pestañas) y §10.
+  **Reskin sobre el stack actual** (HTML/CSS/JS vanilla), no se reescribe a otro framework. La joya
+  (`sync_engine.js`/`score_render.js`) no se toca. Orden: fundación (diseño → shell) → vistas
+  agregadas → reskin → marca. 🔐 Las vistas agregadas exigen su test de aislamiento ("solo MIS bandas").
+  - [x] **T-073** 🟠 **Sistema de diseño** `static/design-system.css`: tokens (paleta oscura/clara,
+        tipografía, espaciado, radios, sombras) + componentes base (botón, card, input, badge de rol,
+        tabs, lista, avatar, `nav-item`, banner de banda). Self-contained (prefijo `bf-`), no colisiona
+        con el player. Test `test_design_system.py` (se sirve + declara tokens/componentes). Doctor 10/10.
+        ↳ **Fase A (2026-06-16):** tokens reescritos al look **BandFlow** (acento coral `#ff6b4a`,
+        IBM Plex, tokens `*-weak`/`hover`, keyframes) según `harness/diseno/BANDFLOW_SPEC.md` §2. Tema
+        `data-theme`. Test ampliado (`…adopta_paleta_bandflow`). **Solo tokens; ninguna página usa `bf-*` aún.**
+  - [x] **T-074** 🟠 **App shell — contexto TÚ**: `static/shell.js` inyecta el **lateral fijo**
+        (Inicio·Biblioteca·Agenda·Finanzas·Chat·Bandas·Perfil); marca activo; móvil → nav
+        inferior. e2e: el lateral aparece y navega entre secciones. ✅ (2026-06-16) `shell.js`+
+        `shell.css`+`app.html` (anfitriona, 1ª página con `design-system.css`/`bf-*`). Items de
+        páginas futuras → «Pronto» (toast). Tema `data-theme`. e2e `test_shell.py` (4). Doctor 10/10.
+  - [x] **T-075** 🟠 **Espacio de banda — contexto BANDA**: **banner** (avatar + tu rol) + **pestañas**
+        (Resumen·Miembros·Repertorio·Setlists·Agenda·Finanzas·Chat·Ajustes). Refactor del detalle de
+        banda a `band.html`+`band.js` (en el shell), REUSANDO los loaders de `bands.js`. ✅ (2026-06-16)
+        Las 8 pestañas; editor «crear setlist» desacoplado; lista `bands.html`/`createBand` → `band.html`;
+        Ajustes admin (PATCH/DELETE banda). e2e `test_band_space.py` (3) + 6 e2e de `bands_ui` migrados.
+        **Nota:** el detalle in-page legacy de `bands.js` (`openBand`) queda sin uso → se retira en T-081.
+  - [x] **T-076** 🟠 **Inicio (dashboard agregado)**: endpoint agregado + dashboard en `app.html`.
+        ✅ (2026-06-16) `GET /me/dashboard` (`me_router.py`): próximos eventos + últimos mensajes de
+        **todas mis bandas** con etiqueta, **aislado** (solo bandas activas mías). Front `home.js`.
+        `sw.js` no cachea `/me`. unit `test_api_dashboard.py` (4, incl. aislamiento) + e2e `test_home.py`.
+        **Diferido:** saldo total agregado (gap: falta `/me/balances`; el detalle por banda ya existe).
+  - [x] **T-077** 🟠 **Biblioteca unificada**: todas las canciones (personal + banda) con **buscador** y
+        filtro **Todas·Personales·[banda]**. ✅ (2026-06-16) `library.js` une `/songs/` + repertorio de
+        cada banda; badge de fuente por tarjeta; de banda solo-lectura. e2e `test_biblioteca_unificada…`
+        + 2 casos adaptados. **Diferido:** mostrar también los setlists al elegir banda (va a `band.html`).
+  - [x] **T-078** 🟠 **Agenda agregada**: todos los eventos de mis bandas con **etiqueta de banda** +
+        filtro. ✅ (2026-06-16) `GET /me/events` (`me_router.py`, aislado) + `agenda.html`/`agenda.js`
+        (próximos/pasados + filtro por banda). Agenda ya no es «Pronto» en el lateral. unit
+        `test_me_events_*` (incl. aislamiento) + e2e `test_agenda.py`. Revisión ultracode adversarial.
+  - [x] **T-079** 🟠 **Finanzas agregada**: **mi saldo por banda** (debes/te deben) + entrada al detalle.
+        ✅ (2026-06-16) `GET /me/balances` (`me_router.py`, reusa `compute_balances`, aislado) +
+        `finanzas.html`/`finanzas.js` (saldo por banda con color). Finanzas ya no «Pronto». unit
+        `test_me_balances…` + e2e `test_finanzas`. Revisión ultracode de `/me/*` aplicada (TZ, event_id,
+        tests de aislamiento left/borrada + cancelados).
+  - [x] **T-080** 🟠 **Chat agregado**: lista de conversaciones (una por banda); entrar abre el chat de
+        esa banda. ✅ (2026-06-16) `GET /me/conversations` (aislado) + `chat.html`/`chat.js`. Chat ya
+        no «Pronto» → lateral sin pendientes. unit `test_me_conversations_*` + e2e `test_chat`.
+  - [x] **T-081** 🟢 **Reskin de la joya y páginas restantes** al sistema de diseño, **sin tocar**
+        `sync_engine.js`/`score_render.js`. ✅ (2026-06-16) Re-tematizado `style.css` a la paleta BandFlow
+        (acento coral, fondo `#0d0d10`, IBM Plex vía `@import`) → todas las legacy adoptan el look.
+        Player verificado funcionando en captura. **Reskin por tokens** (estructura intacta); conversión
+        completa a `bf-*` y retirar `openBand` muerto = pulido opcional.
+  - [x] **T-082** 🟢 **Rebranding BandFlow** (visible): títulos, `manifest`, `theme-color`, textos
+        ChordFlow→BandFlow. ✅ (2026-06-16) 8 HTML + manifest; `theme-color` `#0d0d10`. Marca técnica
+        diferida (API title, SW key, env, repo). Test `test_rebrand.py` (grep sin "ChordFlow" visible).
+  - [x] **T-083** 🔴 **Cierre de fase**: `run_checks` TODO VERDE + `revision.py fase13` + veredicto en
+        `REVISIONES.md` + `REGISTRO_DE_CAMBIOS.md`. ✅ (2026-06-16) Revisión fase13 ✅ completa (1/1 rutas
+        · 5/5 páginas) + veredicto en `REVISIONES.md`. `run_checks` VERDE (139 unit · 57 e2e).
+- [ ] **Fase 14** 🟢 Booking (pipeline `Event.status` + recordatorios + `EmailTemplate`). Área 10.
+- [ ] **Fase 15** 🟡 Almacenamiento (Supabase Storage) — subida real de archivos. Transversal.
+- [ ] **Fase 16** 🟢 Promoción + EPK + `Contact`. Área 9.
+- [ ] **Fase 17** 🟢 Página pública + Fans (`FanSubscriber`, `FanMessage`). Área 14.
+- [ ] **Fase 18** 🟡 Inventario (`InventoryItem`). Área 5.
+- [ ] **Fase 19** 🟡 Producción (`Project`, `Task` genérica). Área 11.
+- [ ] **Fase 20** 🟡 Merch (`MerchProduct`/`MerchVariant`). Área 13.
+- [ ] **Fase 21** ⚪ Legal/administrativo (fiscales banda + documentos). Área 12.

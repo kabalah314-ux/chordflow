@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
 from ..services.db import get_db
-from ..services.models import Setlist, SetlistItem, Song, _utcnow
+from ..services.models import BandMembership, Setlist, SetlistItem, Song, _utcnow
 from ..services.schemas import (
     SetlistCreate,
     SetlistItemOut,
@@ -19,6 +19,19 @@ from ..services.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/setlists", tags=["setlists"])
+
+
+def _is_active_member(db: Session, band_id: str, user_id: str) -> bool:
+    return (
+        db.query(BandMembership)
+        .filter(
+            BandMembership.band_id == band_id,
+            BandMembership.user_id == user_id,
+            BandMembership.status == "active",
+        )
+        .first()
+        is not None
+    )
 
 
 def _valid_song_ids(db: Session, user_id: str, song_ids: List[str]) -> List[str]:
@@ -50,17 +63,21 @@ def _to_response(setlist: Setlist) -> SetlistResponse:
         if song is None or song.deleted_at is not None:
             continue
         items.append(SetlistItemOut(song_id=song.id, position=it.position,
-                                    title=song.title, artist=song.artist, bpm=song.bpm))
+                                    title=song.title, artist=song.artist, bpm=song.bpm,
+                                    note=it.note))
     return SetlistResponse(id=setlist.id, name=setlist.name, owner_id=setlist.owner_id,
-                           created_at=setlist.created_at, updated_at=setlist.updated_at, items=items)
+                           band_id=setlist.band_id, created_at=setlist.created_at,
+                           updated_at=setlist.updated_at, items=items)
 
 
 @router.get("/", response_model=List[SetlistSummary])
 def list_setlists(db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
-    """Lista los repertorios del usuario (con nº de canciones), no borrados."""
+    """Lista los repertorios PERSONALES del usuario (band_id IS NULL), no borrados. Los de banda
+    se listan en /bands/{id}/setlists."""
     try:
         setlists = (db.query(Setlist)
-                    .filter(Setlist.owner_id == user_id, Setlist.deleted_at.is_(None))
+                    .filter(Setlist.owner_id == user_id, Setlist.deleted_at.is_(None),
+                            Setlist.band_id.is_(None))
                     .order_by(Setlist.updated_at.desc()).all())
         return [SetlistSummary(id=s.id, name=s.name, updated_at=s.updated_at,
                                song_count=len(s.items)) for s in setlists]
@@ -90,11 +107,17 @@ def create_setlist(payload: SetlistCreate, db: Session = Depends(get_db),
 @router.get("/{setlist_id}", response_model=SetlistResponse)
 def get_setlist(setlist_id: str, db: Session = Depends(get_db),
                 user_id: str = Depends(get_current_user)):
+    """Detalle de un setlist. Lo usa el reproductor: autoriza al dueño (personal) o a un miembro
+    activo de la banda (setlist de banda); ajeno → 404."""
     try:
         sl = (db.query(Setlist)
-              .filter(Setlist.id == setlist_id, Setlist.owner_id == user_id,
-                      Setlist.deleted_at.is_(None)).first())
+              .filter(Setlist.id == setlist_id, Setlist.deleted_at.is_(None)).first())
         if not sl:
+            raise HTTPException(status_code=404, detail="Repertorio no encontrado")
+        if sl.band_id is None:
+            if sl.owner_id != user_id:
+                raise HTTPException(status_code=404, detail="Repertorio no encontrado")
+        elif not _is_active_member(db, sl.band_id, user_id):
             raise HTTPException(status_code=404, detail="Repertorio no encontrado")
         return _to_response(sl)
     except SQLAlchemyError as e:
@@ -111,7 +134,7 @@ def update_setlist(setlist_id: str, payload: SetlistUpdate, db: Session = Depend
     try:
         sl = (db.query(Setlist)
               .filter(Setlist.id == setlist_id, Setlist.owner_id == user_id,
-                      Setlist.deleted_at.is_(None)).first())
+                      Setlist.deleted_at.is_(None), Setlist.band_id.is_(None)).first())
         if not sl:
             raise HTTPException(status_code=404, detail="Repertorio no encontrado")
         if payload.name is not None:
@@ -133,11 +156,11 @@ def update_setlist(setlist_id: str, payload: SetlistUpdate, db: Session = Depend
 @router.delete("/{setlist_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_setlist(setlist_id: str, db: Session = Depends(get_db),
                    user_id: str = Depends(get_current_user)):
-    """Soft delete del repertorio (coherente con el de canciones)."""
+    """Soft delete del repertorio PERSONAL (los de banda se borran en /bands/{id}/setlists)."""
     try:
         sl = (db.query(Setlist)
               .filter(Setlist.id == setlist_id, Setlist.owner_id == user_id,
-                      Setlist.deleted_at.is_(None)).first())
+                      Setlist.deleted_at.is_(None), Setlist.band_id.is_(None)).first())
         if not sl:
             raise HTTPException(status_code=404, detail="Repertorio no encontrado")
         sl.deleted_at = _utcnow()

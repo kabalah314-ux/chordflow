@@ -21,3 +21,6 @@ logs/
 .idea/
 
 .vercel
+
+# Bundle de diseño en bruto (referencia local; el spec vive en harness/diseno/)
+BandFlow.html

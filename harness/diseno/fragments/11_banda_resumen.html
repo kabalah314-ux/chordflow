@@ -1,0 +1,34 @@
+<!-- ============ BANDA · RESUMEN ============ -->
+      <sc-if value="{{is.bResumen}}" hint-placeholder-val="">
+        <div style="max-width:1000px;margin:0 auto;padding:0 0 60px">
+          <div style="height:140px;background:{{currentBand.gradient}};position:relative"></div>
+          <div style="padding:0 38px;margin-top:-44px;position:relative">
+            <div style="display:flex;align-items:flex-end;gap:18px;margin-bottom:24px">
+              <div style="width:84px;height:84px;border-radius:20px;background:{{currentBand.color}};border:4px solid var(--app-bg);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:30px;flex-shrink:0">{{currentBand.initials}}</div>
+              <div style="flex:1;padding-bottom:6px">
+                <div style="display:flex;align-items:center;gap:10px"><h1 style="font-size:25px;font-weight:700;margin:0">{{currentBand.name}}</h1><span style="font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;background:{{currentBand.roleBg}};color:{{currentBand.roleColor}}">{{currentBand.roleLabel}}</span></div>
+                <div style="font-size:14px;color:var(--text-muted);margin-top:2px">{{currentBand.genre}} · {{currentBand.members}} miembros</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:26px">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:15px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:7px">Próximo bolo</div><div style="font-size:15px;font-weight:700">Sala Apolo</div><div style="font-size:11.5px;color:var(--accent);font-weight:600;margin-top:2px">Sáb 20 Jun</div></div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:15px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:7px">Miembros</div><div style="font-size:22px;font-weight:700">{{currentBand.members}}</div></div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:15px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:7px">Repertorio</div><div style="font-size:22px;font-weight:700">3</div><div style="font-size:11.5px;color:var(--text-faint);margin-top:2px">canciones</div></div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:15px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:7px">Caja de la banda</div><div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono';color:{{bandTotalColor}}">{{bandTotalText}}</div></div>
+            </div>
+            <h2 style="font-size:15px;font-weight:600;margin:0 0 12px">Próximos eventos</h2>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{bandEvents}}" as="e" hint-placeholder-count="2">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:14px">
+                  <div style="text-align:center;width:46px"><div style="font-size:11px;color:var(--text-faint);font-weight:600">{{e.dow}}</div><div style="font-size:21px;font-weight:700;line-height:1">{{e.day}}</div></div>
+                  <div style="width:1px;height:32px;background:var(--border)"></div>
+                  <div style="flex:1"><div style="font-weight:600;font-size:14.5px">{{e.title}}</div><div style="font-size:12.5px;color:var(--text-muted)">{{e.time}} · {{e.place}}</div></div>
+                  <sc-if value="{{e.isBolo}}" hint-placeholder-val=""><span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--accent-weak);color:var(--accent)">Bolo</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0d0d10">
+    <title>BandFlow — Unirse a una banda</title>
+    <link rel="stylesheet" href="style.css?v=13dca123">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <header class="glass-panel top-bar">
+            <div class="song-info">
+                <h1>🎸 Unirse a una banda</h1>
+                <h2>Has abierto un enlace de invitación</h2>
+            </div>
+            <div class="global-controls">
+                <a href="bands.html" class="primary-btn square" title="Mis bandas" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🎸</a>
+            </div>
+        </header>
+        <main id="library-container">
+            <div class="library-content">
+                <div id="join-box" class="empty-state">
+                    <p class="loading-text">Comprobando la invitación…</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.js"
+            integrity="sha384-EjUdIVmzWliPzdzhxZ9ZoO0etXLKWuUPUftAGxP6qH6Lm4oLwoLaJR0Ba4pIDiDL"
+            crossorigin="anonymous"></script>
+    <script src="auth.js?v=55a0092d"></script>
+    <script src="util.js?v=c0e1df98"></script>
+    <script src="join.js?v=35d3fe58"></script>
+</body>
+</html>
