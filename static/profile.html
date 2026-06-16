@@ -5,24 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#0d0d10">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>BandFlow — Mi perfil</title>
     <link rel="stylesheet" href="style.css?v=13dca123">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css?v=c6ff2c13">
+    <link rel="stylesheet" href="shell.css?v=f583ba6a">
 </head>
 <body>
-    <div id="app">
-        <header class="glass-panel top-bar">
-            <div class="song-info">
-                <h1>👤 Mi perfil</h1>
-                <h2>Tu nombre e instrumentos en las bandas</h2>
-            </div>
-            <div class="global-controls">
-                <a href="app.html" class="primary-btn square" title="Inicio" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
-                <a href="bands.html" class="primary-btn square" title="Mis bandas" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🎸</a>
-            </div>
-        </header>
-        <main id="library-container">
-            <div class="library-content">
+    <div class="bf-shell">
+        <main class="bf-shell-main">
+            <div class="bf-page">
+                <div style="margin-bottom:1.25rem;">
+                    <h1 class="bf-h1">Mi perfil</h1>
+                    <p class="bf-muted">Tu nombre e instrumentos en las bandas.</p>
+                </div>
                 <div class="setlist-editor" id="profile-form">
                     <p class="loading-text">Cargando perfil…</p>
                 </div>
@@ -35,6 +33,7 @@
             crossorigin="anonymous"></script>
     <script src="auth.js?v=55a0092d"></script>
     <script src="util.js?v=c0e1df98"></script>
+    <script src="shell.js?v=9dcf88ce"></script>
     <script src="profile.js?v=091ccaf8"></script>
 </body>
 </html>

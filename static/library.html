@@ -8,36 +8,26 @@
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>BandFlow — Biblioteca</title>
+    <!-- style.css: estilos del contenido (tarjetas, buscador, filtros). design-system+shell: el shell. -->
     <link rel="stylesheet" href="style.css?v=13dca123">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css?v=c6ff2c13">
+    <link rel="stylesheet" href="shell.css?v=f583ba6a">
 </head>
 <body>
-    <div id="app">
-        <!-- Top Bar -->
-        <header class="glass-panel top-bar">
-            <div class="song-info">
-                <h1>BandFlow</h1>
-                <h2>Tu biblioteca de partituras</h2>
-            </div>
-            <div class="global-controls" style="display:flex; align-items:center; gap:1rem;">
-                <a href="app.html" class="primary-btn square" title="Inicio" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
-                <a href="bands.html" class="primary-btn" title="Mis bandas" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🎸 Mis bandas</a>
-                <a href="setlists.html" class="primary-btn" title="Repertorios" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🎼 Repertorios</a>
-                <a href="editor.html" class="primary-btn" title="Crear Partitura" style="text-decoration: none;">➕ Nueva Partitura</a>
-                <div class="user-box">
-                    <span id="user-email" class="user-email"></span>
-                    <button id="btn-logout" class="icon-btn" title="Cerrar sesión">⎋</button>
+    <div class="bf-shell">
+        <main class="bf-shell-main">
+            <div class="bf-page">
+                <div class="bf-row bf-row--between bf-wrap" style="margin-bottom:1.25rem;">
+                    <div>
+                        <h1 class="bf-h1">Biblioteca</h1>
+                        <p class="bf-muted">Tus partituras y el repertorio de tus bandas.</p>
+                    </div>
+                    <a href="editor.html" class="bf-btn bf-btn--primary" style="text-decoration:none;">➕ Nueva partitura</a>
                 </div>
-            </div>
-        </header>
-
-        <!-- Main Content: Song Library -->
-        <main id="library-container">
-            <div class="library-content">
                 <input type="search" id="search-input" class="search-box" placeholder="🔍 Buscar por título o artista...">
                 <div id="library-filters" class="library-filters"></div>
                 <div id="song-grid" class="song-grid">
-                    <!-- Cards inyectadas dinámicamente -->
                     <p class="loading-text">Cargando canciones...</p>
                 </div>
             </div>
@@ -49,6 +39,7 @@
             crossorigin="anonymous"></script>
     <script src="auth.js?v=55a0092d"></script>
     <script src="util.js?v=c0e1df98"></script>
+    <script src="shell.js?v=9dcf88ce"></script>
     <script src="library.js?v=86e4c18c"></script>
 </body>
 </html>

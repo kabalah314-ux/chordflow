@@ -8,31 +8,28 @@
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>BandFlow — Mis bandas</title>
+    <!-- style.css: estilos del contenido reusado (tarjetas, modales). design-system+shell: el shell. -->
     <link rel="stylesheet" href="style.css?v=13dca123">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css?v=c6ff2c13">
+    <link rel="stylesheet" href="shell.css?v=f583ba6a">
 </head>
 <body>
-    <div id="app">
-        <header class="glass-panel top-bar">
-            <div class="song-info">
-                <h1>🎸 Mis bandas</h1>
-                <h2>Crea tu banda, invita y gestionad juntos</h2>
-            </div>
-            <div class="global-controls" style="display:flex; align-items:center; gap:1rem;">
-                <a href="app.html" class="primary-btn square" title="Inicio" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
-                <a href="library.html" class="primary-btn square" title="Biblioteca" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
-                <a href="profile.html" class="primary-btn square" title="Mi perfil" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">👤</a>
-                <button id="btn-new-band" class="primary-btn">➕ Nueva banda</button>
-            </div>
-        </header>
-
-        <main id="library-container">
-            <div class="library-content">
+    <div class="bf-shell">
+        <main class="bf-shell-main">
+            <div class="bf-page">
+                <div class="bf-row bf-row--between bf-wrap" style="margin-bottom:1.25rem;">
+                    <div>
+                        <h1 class="bf-h1">Mis bandas</h1>
+                        <p class="bf-muted">Crea tu banda, invita y gestionad juntos.</p>
+                    </div>
+                    <button id="btn-new-band" class="bf-btn bf-btn--primary">➕ Nueva banda</button>
+                </div>
                 <!-- Lista de bandas -->
                 <div id="bands-grid" class="song-grid">
                     <p class="loading-text">Cargando bandas…</p>
                 </div>
-                <!-- Detalle de una banda (oculto por defecto) -->
+                <!-- Detalle legacy (sin uso: la ficha vive en band.html). Se conserva oculto. -->
                 <div id="band-detail" style="display:none;"></div>
             </div>
         </main>
@@ -43,6 +40,7 @@
             crossorigin="anonymous"></script>
     <script src="auth.js?v=55a0092d"></script>
     <script src="util.js?v=c0e1df98"></script>
+    <script src="shell.js?v=9dcf88ce"></script>
     <script src="bands.js?v=b67a5200"></script>
 </body>
 </html>

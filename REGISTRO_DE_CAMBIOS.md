@@ -258,6 +258,17 @@ del giro a la Postgres de producción (`PENDIENTES_OSCAR.md`). Diferido (pulido,
 profundo a `bf-*`/flat de cada página, retirar `openBand` muerto, saldo total agregado, UI del hilo
 de evento.
 
+### 🧩 Coherencia del shell — biblioteca/bandas/perfil envueltas en el shell (2026-06-17)
+
+Tras desplegar, Oscar notó que el formato "saltaba" entre páginas con lateral (Inicio/Agenda/…) y las
+legacy con top-bar (Biblioteca/Bandas). Arreglado: `library.html`, `bands.html` y `profile.html` ahora
+usan el **shell BandFlow** (`.bf-shell` + `shell.js` → lateral con nav, perfil y tema), con cabecera
+propia dentro del `main` (título + acción). Se conservan todos los ids de contenido (search-input,
+library-filters, song-grid, bands-grid, btn-new-band, profile-form) → tests intactos. Añadido botón
+**«Cerrar sesión»** al pie del shell (antes solo estaba en la top-bar legacy). Así los **7 destinos del
+lateral** comparten chrome. Setlists/editor/reproductor (pantallas de tarea enfocada) mantienen su
+cabecera propia a propósito. e2e (library/bands/shell/responsive) verdes · `run_checks` TODO VERDE.
+
 ---
 
 ## Índice

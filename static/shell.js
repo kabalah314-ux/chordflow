@@ -78,6 +78,9 @@
                 <button class="bf-theme-toggle" id="bf-theme-btn" type="button">
                     <span id="bf-theme-icon" aria-hidden="true">☀️</span><span id="bf-theme-label">Modo claro</span>
                 </button>
+                <button class="bf-theme-toggle" id="bf-logout" type="button" title="Cerrar sesión">
+                    <span aria-hidden="true">⎋</span><span>Cerrar sesión</span>
+                </button>
             </div>`;
         return aside;
     }
@@ -115,6 +118,8 @@
         // Aplicar el tema otra vez ahora que existen el icono/label del botón.
         applyTheme(currentTheme());
         document.getElementById('bf-theme-btn').addEventListener('click', toggleTheme);
+        const logoutBtn = document.getElementById('bf-logout');
+        if (logoutBtn) logoutBtn.addEventListener('click', () => signOut());
 
         // Items "Pronto": avisan en vez de llevar a un 404.
         aside.querySelectorAll('.bf-nav-item[data-soon]').forEach(btn =>
