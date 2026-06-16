@@ -9,7 +9,8 @@
 ## 🟢 Puedes ir haciendo ya
 
 ### 1. 🔴 Rotar secretos (seguridad — lo más urgente)
-Se compartieron por chat la `sb_secret_` y la contraseña de Postgres.
+Se compartieron por chat la `sb_secret_` y la contraseña de Postgres **(la contraseña de la BD se
+volvió a ver en el chat al hacer el despliegue del 2026-06-16 → cámbiala cuanto antes)**.
 - [ ] Supabase → proyecto `fwynfifvtthtpzpejfhb` → **Settings → API** → regenerar la **secret key**.
 - [ ] Supabase → **Settings → Database** → cambiar la **contraseña de Postgres**.
 - [ ] Avísame con las nuevas (o actualízalas tú) en **Vercel** (`DATABASE_URL`, claves) y en
@@ -31,13 +32,13 @@ Se compartieron por chat la `sb_secret_` y la contraseña de Postgres.
 
 ## 🟡 Cuando lleguemos / decisión tuya
 
-### 4. Despliegue del giro (Fases 7–12, núcleo completo) a producción
-- [ ] Dar luz verde para **push a `main`** (auto-despliega en Vercel).
-- [ ] Aplicar las **migraciones del giro** a **Postgres** (pooler **5432**): `39fbdc0fff0f` (núcleo de
-      banda), `908a0a3875b1` (`Song.band_id`), `95eddae092db` (`Setlist.band_id`+`note`),
-      `22c7ea96b921` (agenda), `84c9ca4f7b64` (finanzas + `Band.currency`) y `7022a3162284` (chat
-      `messages`). Lo hacemos juntos. *(En local ya aplicadas; como `create_all` corre al arrancar, en
-      prod puede bastar `alembic stamp 7022a3162284` tras el deploy.)*
+### 4. ✅ Despliegue del giro (Fases 7–13) a producción — HECHO (2026-06-16)
+- [x] **Push a `main`** (commit `29bd505`) → Vercel desplegó (deployment READY).
+- [x] **6 migraciones del giro aplicadas** a Postgres prod vía pooler 5432
+      (`3684ab6335e8` → … → `7022a3162284`, head).
+- [x] Verificado en vivo: `/health` ok, `manifest` = BandFlow (código nuevo sirviendo).
+- [ ] **Comprobación a ojo final (tú):** entra en https://chordflow-ecru.vercel.app, **inicia sesión**
+      y prueba el flujo nuevo (crear banda → Inicio/Agenda/Finanzas/Chat → reproductor). Avísame si algo falla.
 
 ### 5. Más adelante (no urgente)
 - [ ] **Almacenamiento (Fase 15):** activar **Supabase Storage** (buckets + políticas por banda)

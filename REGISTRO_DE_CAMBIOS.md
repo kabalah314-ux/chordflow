@@ -8,12 +8,14 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
-## 🚀 Estado actual (2026-06-16) — EN PRODUCCIÓN: Fase 5/6 · V2 núcleo en local
+## 🚀 Estado actual (2026-06-16) — EN PRODUCCIÓN: giro V2 completo (BandFlow)
 
-**En vivo (https://chordflow-ecru.vercel.app): el producto Fase 5/6** (teleprompter, importación
-con IA, PWA, export PDF, setlists). El **núcleo del giro V2** (Fases 7–12: bandas, agenda, finanzas,
-chat) está **hecho y verde en local, pero AÚN NO desplegado**: falta `push` a `main` + aplicar las
-**6 migraciones del giro** a la Postgres de producción (ver `PENDIENTES_OSCAR.md`).
+**En vivo (https://chordflow-ecru.vercel.app): TODO el giro V2** — Fase 5/6 (teleprompter, import IA,
+PWA, PDF, setlists) **+ Fases 7–13** (bandas multi-tenant: repertorio, setlists, agenda, finanzas,
+chat · app shell BandFlow · vistas agregadas · reskin · rebranding). Desplegado el 2026-06-16
+(commit `29bd505`): push a `main` → Vercel (deployment READY) + **6 migraciones aplicadas** a la
+Postgres de producción (head `7022a3162284`). Verificado: `/health` ok, `manifest`=BandFlow.
+Pendiente solo: **comprobación a ojo del flujo logueado** + **rotar secretos** (`PENDIENTES_OSCAR.md`).
 
 - **Despliegue (Fase 6):** repo GitHub privado `kabalah314-ux/chordflow` (rama `main`, auto-deploy en
   cada push) · **Vercel** (`api/index.py` ASGI + `vercel.json` + `.vercelignore`) · **Supabase** para
