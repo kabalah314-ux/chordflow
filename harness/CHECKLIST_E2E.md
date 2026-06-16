@@ -1,4 +1,4 @@
-# ✅ ChordFlow — Catálogo de flujos E2E
+# ✅ BandFlow — Catálogo de flujos E2E
 
 > Lo que **siempre** debe funcionar. Cada ítem mapea a un test en `tests/e2e/`.
 > Si tocas una zona, corre su test. Antes de cerrar cualquier tarea: `run_checks.py` verde.
@@ -58,6 +58,17 @@
 | FN3 | UI finanzas: registrar movimiento y ver saldos | `test_bands_ui.py` | ✅ |
 | MSG1 | Chat: publicar/listar, hilo de evento, fijar (admin), editar/borrar propio, aislamiento | `test_api_messages.py` | ✅ |
 | MSG2 | UI chat: enviar un mensaje y verlo en el chat de la banda | `test_bands_ui.py` | ✅ |
+| SH1 | App shell: lateral + nav + perfil + toggle de tema (claro/oscuro) | `test_shell.py` | ✅ |
+| SH2 | Shell navega entre secciones (Inicio/Biblioteca/Agenda/Finanzas/Chat/Bandas/Perfil) | `test_shell.py` | ✅ |
+| HOME1 | Inicio: dashboard agrega próximos eventos + últimos mensajes de mis bandas (con etiqueta) | `test_home.py` / `test_api_dashboard.py` | ✅ |
+| HOME2 | Aislamiento agregado `/me/*`: solo MIS bandas activas (`left`/borrada/ajena excluidas) | `test_api_dashboard.py` | ✅ |
+| BND1 | Espacio de banda (`band.html`): banner + 8 pestañas reusando los loaders de `bands.js` | `test_band_space.py` | ✅ |
+| LIBU1 | Biblioteca unificada: personal + banda con filtro Todas/Personales/[banda] + badge de fuente | `test_library.py` | ✅ |
+| AGA1 | Agenda agregada: próximos/pasados de todas mis bandas + etiqueta de banda + filtro | `test_agenda.py` / `test_api_dashboard.py` | ✅ |
+| FINA1 | Finanzas agregada: mi saldo por banda (verde/rojo); aislado | `test_finanzas.py` / `test_api_dashboard.py` | ✅ |
+| CHTA1 | Chat agregado: una conversación por banda con último mensaje; aislado | `test_chat.py` / `test_api_dashboard.py` | ✅ |
+| DS1 | Sistema de diseño BandFlow: se sirve + tokens (acento coral, IBM Plex, `*-weak`/`hover`) | `test_design_system.py` | ✅ |
+| RBR1 | Rebranding: sin "ChordFlow" visible en HTML; `manifest` = BandFlow | `test_rebrand.py` | ✅ |
 
 > Al añadir una feature nueva, **añade aquí su fila** y crea su test antes de cerrar la tarea.
 

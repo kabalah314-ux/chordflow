@@ -1,4 +1,4 @@
-# CLAUDE.md — Reglas maestras de ChordFlow
+# CLAUDE.md — Reglas maestras de BandFlow
 
 > Este archivo lo lee el agente (Claude Code) al empezar cada sesión.
 > Es la **fuente de verdad operativa**: cómo trabajar, cómo verificar y qué nunca romper.
@@ -14,14 +14,16 @@
 
 ## 1. Qué es esto
 
-ChordFlow es un teleprompter musical: reproduce partituras de acordes resaltando el
-acorde activo según el BPM, con auto-scroll. Backend **FastAPI + SQLAlchemy + SQLite**;
+BandFlow es un **SaaS de gestión para bandas** (multi-tenant colaborativo): identidad de banda,
+repertorio y setlists compartidos, agenda de eventos, finanzas con división y chat. La **joya
+original** —teleprompter que reproduce acordes resaltando el activo según el BPM con auto-scroll—
+sigue intacta dentro del flujo. Backend **FastAPI + SQLAlchemy** (SQLite local / Postgres en prod);
 frontend **HTML/CSS/JS vanilla**; auth con **Supabase**.
 
-**Dirección actual (giro V2):** evoluciona a **SaaS de gestión de bandas** (multi-tenant
-colaborativo) manteniendo el reproductor como joya. Todo el giro es **aditivo** (no rompe
-producción). El trabajo arranca por la **Fase 7** (identidad + núcleo de banda + auth
-multi-tenant). Ver las guías V2 y `harness/ROADMAP.md` §"Giro a SaaS de banda".
+**Estado (giro V2):** las **Fases 7–13 están COMPLETAS y EN PRODUCCIÓN** desde 2026-06-16 (app shell
+BandFlow, espacio de banda con pestañas, vistas agregadas TÚ, biblioteca unificada, reskin y
+rebranding visible). Lo nuevo arranca desde el roadmap **posterior a la Fase 13**. Ver las guías V2
+y `harness/ROADMAP.md`. (El repo, la URL y los env siguen como `chordflow` — marca técnica, no de cara al usuario.)
 ⚠️ **Regla nueva de oro multi-tenant:** cada ruta de banda valida pertenencia+rol y filtra por
 `band_id`; un fallo = fuga de datos entre bandas. Por eso **cada ruta de banda exige su test de
 aislamiento** ("usuario ajeno → 403/404"), tan obligatorio como el doctor verde.
@@ -142,8 +144,9 @@ temporal** (`DATABASE_URL` apuntando a un sqlite desechable), nunca tocando `cho
 
 ## 5.bis Despliegue (EN PRODUCCIÓN)
 
-La app está **en vivo**: https://chordflow-ecru.vercel.app — **Vercel** (`api/index.py` ASGI +
-`vercel.json`) + **Supabase** (auth) + **Postgres de Supabase** (BD). Repo GitHub privado
+La app está **en vivo con el giro V2 COMPLETO** (Fases 5/6 + 7–13, marca **BandFlow** visible):
+https://chordflow-ecru.vercel.app — **Vercel** (`api/index.py` ASGI + `vercel.json`) + **Supabase**
+(auth) + **Postgres de Supabase** (BD, head `7022a3162284`). Repo GitHub privado
 `kabalah314-ux/chordflow` rama `main` → **auto-deploy en cada push**. Local sigue en **SQLite**
 (sin `DATABASE_URL` en `.env.local`); producción usa Postgres vía env vars de Vercel.
 
@@ -168,6 +171,13 @@ La app está **en vivo**: https://chordflow-ecru.vercel.app — **Vercel** (`api
 | Registro de revisiones por sección | `harness/REVISIONES.md` |
 | Endpoints (canciones) | `src/api/songs_router.py` |
 | Endpoints (repertorios) | `src/api/setlists_router.py` |
+| Endpoints (bandas / invitar / perfil) | `src/api/bands_router.py` · `invites_router.py` · `profile_router.py` |
+| Endpoints (repertorio/setlists de banda) | `src/api/band_songs_router.py` · `band_setlists_router.py` |
+| Endpoints (agenda / finanzas / chat) | `src/api/events_router.py` · `finance_router.py` · `messages_router.py` |
+| Endpoints (vistas agregadas TÚ) | `src/api/me_router.py` (`/me/dashboard·events·balances·conversations`) |
+| Auth multi-tenant / cálculo de saldos | `src/services/band_auth.py` · `src/services/balances.py` |
+| App shell + sistema de diseño | `static/shell.js` · `shell.css` · `design-system.css` |
+| Inicio / espacio de banda / agregadas (front) | `static/app.html`+`home.js` · `band.html`+`band.js` · `agenda/finanzas/chat.js` |
 | Importar desde URL con IA | `src/api/import_router.py` + `src/services/importer.py` |
 | Tablas / columnas | `src/services/models.py` |
 | Validación / forma JSON | `src/services/schemas.py` |

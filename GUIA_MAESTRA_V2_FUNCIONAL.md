@@ -1,13 +1,13 @@
-# 🎸 ChordFlow v2 — Especificación funcional completa (por áreas)
+# 🎸 BandFlow — Especificación funcional completa (por áreas)
 
 > Companion de [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md). Aquí resolvemos **necesidad por
 > necesidad** todo lo que hace una banda, decidiendo para cada una: si entra en la app o se
 > descarta/aplaza, cómo se modela (datos) y se ve (UX), y en qué fase encaja.
 >
-> Estado: **COMPLETO y revisado** — las 14 áreas resueltas + revisión crítica (§C.4),
-> priorización (§C.1), detalle de la Fase 7 (§C.5) y diagrama (§C.6). Pendiente de aprobar para
-> abrir la Fase 7 en `harness/ROADMAP.md`.
-> Última actualización: 2026-06-15.
+> Estado: **COMPLETO y DESPLEGADO** — las 14 áreas especificadas; **Fases 7–13 (Áreas 1–12)
+> implementadas y EN VIVO** (Vercel + Postgres) desde 2026-06-16. Áreas 13–14 (mercado, grabación,
+> legal…) quedan para el roadmap posterior.
+> Última actualización: 2026-06-17.
 >
 > Leyenda: ✅ ya existe · 🟡 parcial · ❌ nuevo · ⏳ aplazar.
 

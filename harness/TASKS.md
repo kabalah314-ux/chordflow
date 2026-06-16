@@ -7,12 +7,12 @@
 
 ---
 
-## 🚀 EN PRODUCCIÓN (Fase 5/6) · V2 núcleo en local: https://chordflow-ecru.vercel.app
+## 🚀 EN PRODUCCIÓN — giro V2 completo (BandFlow): https://chordflow-ecru.vercel.app
 
-En vivo está el **producto Fase 5/6** (Vercel + Supabase auth + Postgres). El **giro V2** (Fases
-7–12) está **hecho y verde en local, sin desplegar todavía** (falta push + migraciones a Postgres
-prod; ver `PENDIENTES_OSCAR.md`). Repo GitHub privado
-`kabalah314-ux/chordflow` (rama `main`, auto-deploy en cada push). Cuenta de prueba:
+**Todo el giro V2 (Fases 7–13) está EN VIVO** (desplegado 2026-06-16: commit `29bd505` → Vercel +
+6 migraciones aplicadas a Postgres, head `7022a3162284`; marca **BandFlow** visible). Repo GitHub
+privado `kabalah314-ux/chordflow` (rama `main`, auto-deploy en cada push). Pendiente solo de Oscar:
+**rotar secretos** (`PENDIENTES_OSCAR.md`). Cuenta de prueba:
 `oscarcon314@gmail.com` / `Chordflow2026!`. Detalle en REGISTRO §"Estado actual".
 
 CLIs ya logueadas en la máquina: `gh` y `vercel` (ambas `kabalah314-ux`). Secretos en `.env.local`

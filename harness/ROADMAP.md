@@ -381,7 +381,7 @@
         ✅ (2026-06-16) `GET /me/dashboard` (`me_router.py`): próximos eventos + últimos mensajes de
         **todas mis bandas** con etiqueta, **aislado** (solo bandas activas mías). Front `home.js`.
         `sw.js` no cachea `/me`. unit `test_api_dashboard.py` (4, incl. aislamiento) + e2e `test_home.py`.
-        **Diferido:** saldo total agregado (gap: falta `/me/balances`; el detalle por banda ya existe).
+        (El saldo agregado por banda se implementó en **T-079**: `GET /me/balances`.)
   - [x] **T-077** 🟠 **Biblioteca unificada**: todas las canciones (personal + banda) con **buscador** y
         filtro **Todas·Personales·[banda]**. ✅ (2026-06-16) `library.js` une `/songs/` + repertorio de
         cada banda; badge de fuente por tarjeta; de banda solo-lectura. e2e `test_biblioteca_unificada…`

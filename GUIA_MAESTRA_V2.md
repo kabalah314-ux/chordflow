@@ -1,11 +1,11 @@
-# 🎸→🏠 ChordFlow v2 — Guía Maestra del giro a **SaaS de gestión de bandas**
+# 🎸→🏠 BandFlow — Guía Maestra del giro a **SaaS de gestión de bandas**
 
 > Continuación de [GUIA_MAESTRA.md](GUIA_MAESTRA.md). Este documento define el **nuevo
 > enfoque del producto**: de "lector/teleprompter de partituras de un usuario" a
 > **SaaS de gestión para músicos que se mueven en bandas**.
 >
-> Estado: **núcleo F7–12 IMPLEMENTADO en local** (no desplegado). Fuente de verdad de decisiones
-> del giro. Última actualización: 2026-06-16.
+> Estado: **Fases 7–13 IMPLEMENTADAS y EN PRODUCCIÓN** (desplegado 2026-06-16, Vercel + Postgres;
+> rebranding a **BandFlow** visible). Fuente de verdad de decisiones del giro. Actualizado 2026-06-17.
 > Reglas operativas y bucle de trabajo siguen en [CLAUDE.md](CLAUDE.md).
 >
 > ✅ Documento **aprobado** (2026-06-15). Decisiones de producto del giro cerradas (§2 y §12).
