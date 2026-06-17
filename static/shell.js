@@ -17,7 +17,7 @@
         const icon = document.getElementById('bf-theme-icon');
         const label = document.getElementById('bf-theme-label');
         // El botón ofrece el tema CONTRARIO al activo.
-        if (icon) icon.textContent = theme === 'light' ? '🌙' : '☀️';
+        if (icon) icon.innerHTML = bfIcon(theme === 'light' ? 'moon' : 'sun', { size: 18 });
         if (label) label.textContent = theme === 'light' ? 'Modo oscuro' : 'Modo claro';
     }
     function toggleTheme() {
@@ -30,13 +30,14 @@
 
     // ── Navegación (contexto TÚ). `soon`: página aún no construida (T-076..T-080). ──
     const NAV = [
-        { label: 'Inicio',     icon: '🏠', href: 'app.html' },
-        { label: 'Biblioteca', icon: '📚', href: 'library.html' },
-        { label: 'Agenda',     icon: '📅', href: 'agenda.html' },
-        { label: 'Finanzas',   icon: '💶', href: 'finanzas.html' },
-        { label: 'Chat',       icon: '💬', href: 'chat.html' },
-        { label: 'Bandas',     icon: '🎸', href: 'bands.html' },
-        { label: 'Perfil',     icon: '👤', href: 'profile.html' },
+        { label: 'Inicio',     icon: 'home',     href: 'app.html' },
+        { label: 'Explorar',   icon: 'globe',    href: 'biblioteca-global.html' },
+        { label: 'Biblioteca', icon: 'library',  href: 'library.html' },
+        { label: 'Agenda',     icon: 'calendar', href: 'agenda.html' },
+        { label: 'Finanzas',   icon: 'wallet',   href: 'finanzas.html' },
+        { label: 'Chat',       icon: 'chat',     href: 'chat.html' },
+        { label: 'Bandas',     icon: 'users',    href: 'bands.html' },
+        { label: 'Perfil',     icon: 'user',     href: 'profile.html' },
     ];
 
     function currentPage() {
@@ -44,7 +45,7 @@
     }
 
     function navItemHtml(n, here) {
-        const inner = `<span class="bf-nav-icon">${n.icon}</span><span>${escapeHtml(n.label)}</span>`;
+        const inner = `<span class="bf-nav-icon">${bfIcon(n.icon)}</span><span>${escapeHtml(n.label)}</span>`;
         if (n.soon) {
             return `<button class="bf-nav-item" data-soon data-label="${escapeHtml(n.label)}">
                 ${inner}<span class="bf-nav-soon">Pronto</span></button>`;
@@ -73,13 +74,13 @@
                         <span class="bf-profile-name" id="bf-prof-name">Tú</span>
                         <span class="bf-profile-sub">Mi perfil</span>
                     </span>
-                    <span style="margin-left:auto;color:var(--bf-text-faint)" aria-hidden="true">⚙️</span>
+                    <span class="bf-nav-icon" style="margin-left:auto;color:var(--bf-text-faint)">${bfIcon('settings', { size: 18 })}</span>
                 </a>
                 <button class="bf-theme-toggle" id="bf-theme-btn" type="button">
-                    <span id="bf-theme-icon" aria-hidden="true">☀️</span><span id="bf-theme-label">Modo claro</span>
+                    <span class="bf-nav-icon" id="bf-theme-icon">${bfIcon('sun', { size: 18 })}</span><span id="bf-theme-label">Modo claro</span>
                 </button>
                 <button class="bf-theme-toggle" id="bf-logout" type="button" title="Cerrar sesión">
-                    <span aria-hidden="true">⎋</span><span>Cerrar sesión</span>
+                    <span class="bf-nav-icon">${bfIcon('logout', { size: 18 })}</span><span>Cerrar sesión</span>
                 </button>
             </div>`;
         return aside;

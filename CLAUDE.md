@@ -161,7 +161,9 @@ https://chordflow-ecru.vercel.app — **Vercel** (`api/index.py` ASGI + `vercel.
 
 | Necesito… | Archivo |
 |-----------|---------|
-| Dirección de producto (giro V2) | `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md` |
+| Dirección de producto **vigente (V3)** | `GUIA_MAESTRA_V3.md` (red musical + plano público; D1–D8; fases V3-F1→F11) |
+| Dirección de producto (giro V2, base) | `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md` |
+| Iconos SVG / helpers de UI | `static/icons.js` (`bfIcon`, `bfEmpty`) |
 | Hoja de ruta priorizada | `harness/ROADMAP.md` |
 | Tarea en curso | `harness/TASKS.md` |
 | Qué flujos deben funcionar siempre | `harness/CHECKLIST_E2E.md` |

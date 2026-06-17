@@ -87,6 +87,7 @@ def list_my_bands(db: Session = Depends(get_db), user_id: str = Depends(get_curr
             id=b.id,
             name=b.name,
             avatar_url=b.avatar_url,
+            plan=b.plan,
             role=role,
             member_count=counts.get(b.id, 0),
         )

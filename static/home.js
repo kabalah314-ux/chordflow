@@ -36,7 +36,24 @@
         </a>`;
     }
 
+    // Skeleton mientras carga (T-087): da sensación de respuesta inmediata.
+    function renderSkeleton() {
+        el.innerHTML = `
+            <div class="bf-stack">
+                <div><div class="bf-skeleton bf-skeleton--title"></div></div>
+                <div class="bf-card">
+                    <div class="bf-skeleton bf-skeleton--text" style="width:50%"></div>
+                    <div class="bf-skeleton bf-skeleton--card" style="margin-top:.75rem"></div>
+                </div>
+                <div class="bf-card">
+                    <div class="bf-skeleton bf-skeleton--text" style="width:40%"></div>
+                    <div class="bf-skeleton bf-skeleton--card" style="margin-top:.75rem"></div>
+                </div>
+            </div>`;
+    }
+
     async function load() {
+        renderSkeleton();
         if (!(await requireAuth())) return;
         let data, name = '';
         try {
@@ -60,13 +77,16 @@
                     <h2 class="bf-h3" style="margin-bottom:.75rem;">📅 Próximos eventos</h2>
                     ${events.length
                         ? `<div class="bf-list" id="home-events">${events.map(eventItem).join('')}</div>`
-                        : `<p class="bf-muted" id="home-events">No tienes eventos próximos. <a href="bands.html">Crea uno en tu banda</a>.</p>`}
+                        : bfEmpty('calendar', 'Sin eventos próximos',
+                            'No tienes eventos próximos. <a href="bands.html">Crea uno en tu banda</a>.',
+                            { id: 'home-events' })}
                 </div>
                 <div class="bf-card">
                     <h2 class="bf-h3" style="margin-bottom:.75rem;">💬 Últimos mensajes</h2>
                     ${msgs.length
                         ? `<div class="bf-list" id="home-messages">${msgs.map(msgItem).join('')}</div>`
-                        : `<p class="bf-muted" id="home-messages">Sin mensajes recientes.</p>`}
+                        : bfEmpty('chat', 'Sin mensajes',
+                            'Aún no hay mensajes recientes en tus bandas.', { id: 'home-messages' })}
                 </div>
             </div>`;
     }

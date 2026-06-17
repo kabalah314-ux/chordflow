@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from .api.band_setlists_router import router as band_setlists_router
 from .api.band_songs_router import router as band_songs_router
 from .api.bands_router import router as bands_router
+from .api.catalog_router import router as catalog_router
 from .api.events_router import router as events_router
 from .api.finance_router import router as finance_router
 from .api.import_router import router as import_router
@@ -18,6 +19,7 @@ from .api.messages_router import router as messages_router
 from .api.profile_router import router as profile_router
 from .api.setlists_router import router as setlists_router
 from .api.songs_router import router as songs_router
+from .api.tours_router import router as tours_router
 from .services.auth import SUPABASE_ANON_KEY, SUPABASE_URL, TEST_MODE
 from .services.config import settings
 from .services.db import Base, engine
@@ -98,6 +100,8 @@ app.include_router(events_router)
 app.include_router(finance_router)
 app.include_router(messages_router)
 app.include_router(me_router)
+app.include_router(tours_router)
+app.include_router(catalog_router)
 
 @app.get("/")
 def read_root():

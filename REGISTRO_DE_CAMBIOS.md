@@ -8,6 +8,273 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🌍 V3 — Red musical con plano público (arranque 2026-06-17)
+
+Aprobada la dirección **V3** (`GUIA_MAESTRA_V3.md`): el salto de "SaaS aislado" a "red musical con
+un plano público opt-in". 8 decisiones de fondo cerradas con Oscar (D1–D8) tras un análisis
+multiagente. Orden de fases V3-F1→F11 en la guía §6. **Todo aditivo; la V2 (en producción) no se
+toca.** Se empieza por **V3-F1 (diseño)** porque es gratis, transversal y sube la percepción de todo.
+
+### 🎨 V3-F1 · T-084 — Estados de UI base en el sistema de diseño (2026-06-17)
+
+**Qué:** añadidos a `static/design-system.css` los estados que separan un "demo" de un "producto",
+todos con prefijo `bf-` (no colisionan con el player ni tocan rutas/`band_id`):
+- **Deshabilitado:** `.bf-btn:disabled`/`[disabled]`/`[aria-disabled]` (opacidad + `not-allowed`) e
+  inputs `:disabled`.
+- **Cargando:** `.bf-spinner` reutilizable + botón `[data-loading="true"]` que oculta el texto y
+  pinta el spinner (keyframe nuevo `bf-spin`).
+- **Skeleton:** `.bf-skeleton` (+ `--text`/`--title`/`--card`) reusando el keyframe `bf-pulse`.
+- **Empty state:** `.bf-empty` (icono + título + texto) para listas/vistas vacías.
+- **Foco accesible:** `:focus-visible` en `.bf-card--interactive`/`.bf-nav-item`/`.bf-tab`/`.bf-list-item`.
+- **Datos:** `.bf-num` (mono + `tabular-nums`) para importes/BPM/contadores.
+
+**Por qué:** la app ya hace mucho, pero le faltaban los estados intermedios (carga, vacío,
+deshabilitado) que dan sensación de producto terminado. Es la base de T-087 (aplicarlos a las vistas
+agregadas) y del resto de V3-F1.
+
+**Cómo/Verificación:** test `test_design_system_tiene_estados_de_ui` (asserta los 8 estados nuevos);
+`cachebust.py` reescrito (8 HTML); `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · **140 unit**
+[+1] · 57 e2e).
+
+### 🎨 V3-F1 · T-085 — Iconos SVG (Lucide auto-alojado) (2026-06-17)
+
+**Qué:** nuevo `static/icons.js` con `bfIcon(name, {size})` que devuelve SVG inline (trazos de
+Lucide, MIT) heredando `currentColor`. Cargado **antes de `shell.js`** en las 8 páginas con shell.
+El lateral pasa de emojis a iconos SVG: navegación (home/library/calendar/wallet/chat/users/user),
+toggle de tema (sun/moon), ajustes (settings) y cerrar sesión (logout). CSS `.bf-nav-icon` ajustado
+para centrar el SVG.
+
+**Por qué:** los emojis eran lo que más "amateur" hacía ver la interfaz; los iconos SVG coherentes
+son el quick win nº1 de profesionalidad. **Auto-alojado** (no CDN) para respetar el hardening del
+proyecto (las CDN se fijan con SRI) y no añadir dependencias externas.
+
+**Cómo/Verificación:** e2e `test_shell_nav_usa_iconos_svg` (≥7 SVG en la nav + `window.bfIcon`
+existe y devuelve `<svg>`); `cachebust.py` al día (`icons.js` cargado en las 8 páginas);
+`run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · 140 unit · **58 e2e** [+1]).
+
+### 🎨 V3-F1 · T-086 — Teleprompter espectacular (solo CSS) (2026-06-17)
+
+**Qué:** realce visual de la joya en `static/style.css`, **sin tocar** la lógica
+(`sync_engine.js`/`score_render.js` por ids/BPM): el acorde activo (`.chord-container.active` y
+`.line-chord-only .chord-pill.active`) "respira" con un **glow coral pulsante**
+(`@keyframes chord-pulse`, 1.2 s) sobre el scale ya existente; guard `prefers-reduced-motion`
+(animación off). Las líneas inactivas pasan de `opacity 0.5 → 0.4` para más contraste teleprompter.
+
+**Por qué:** el teleprompter es la joya del producto; un acorde activo que destaca con vida le da el
+toque "producto" sin reescribir nada. El modo escenario/fullscreen (que sí lleva JS) se hará en
+**V3-F4 (Modo Directo)**, su sitio natural.
+
+**Cómo/Verificación:** e2e `test_acorde_activo_tiene_glow` (tras reproducir, el `box-shadow`
+computado del acorde activo ≠ `none`); los tests del player existentes siguen verdes (render
+intacto). `cachebust.py` al día; `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · 140 unit ·
+**59 e2e** [+1]).
+
+### 🎨 V3-F1 · T-087 — Empty states + skeletons en las vistas agregadas + cierre de V3-F1 (2026-06-17)
+
+**Qué:** nuevo helper `window.bfEmpty(icon, title, text, {id})` en `static/icons.js` que genera el
+componente `.bf-empty` (de T-084) con icono SVG. Aplicado a los estados vacíos de las vistas
+agregadas del contexto TÚ: **Inicio** (sin eventos / sin mensajes), **Agenda** (agenda vacía),
+**Finanzas** (sin cuentas) y **Chat** (sin conversaciones). **Inicio** ahora pinta un **skeleton**
+(`.bf-skeleton`) mientras carga, en vez de un texto "Cargando…".
+
+**Por qué:** cierra el círculo de T-084 (definir los estados) aplicándolos donde se ven; los empty
+states con icono y el skeleton de carga son lo que da sensación de "producto terminado".
+
+**Cómo/Verificación:** e2e `test_ui_helper_empty_state` (el helper genera `.bf-empty` + `<svg>`;
+DB-independiente porque el `live_server` e2e comparte BD de sesión y un "vacío real" sería frágil);
+los tests de las vistas (camino con datos) siguen verdes. `cachebust.py` al día; `run_checks.py`
+**TODO VERDE** (doctor 10/10 · ruff · 140 unit · **60 e2e** [+1]).
+
+**✅ V3-F1 (pulido de diseño profesional) COMPLETA** — T-084 (estados de UI), T-085 (iconos SVG
+Lucide auto-alojados), T-086 (teleprompter espectacular), T-087 (empty states + skeletons). Todo
+aditivo, `bf-`-prefijado o solo-CSS; la joya y las rutas intactas. Es una fase de **pulido
+transversal de front** (sin rutas nuevas) → no aplica `revision.py`. Siguiente: **V3-F2** (mapa de
+estructura + bolita de posición, modo solitario).
+
+### 🎯 V3-F2 · T-088 — Bolita de posición (client-side, modo solitario) (2026-06-17)
+
+**Qué:** indicador de posición en la canción dentro del reproductor: una **barra de progreso**
+(`#song-progress` con relleno + dot luminoso en el borde superior de la barra inferior) y la
+**sección actual** (`#current-section-display`). Todo derivado del **timeline de beats que la
+canción ya tiene** (`state.currentBeat`/`state.totalBeats` del motor), calculado en `app.js`
+(controlador) + estilos en `style.css`. **`sync_engine.js` y `score_render.js` (la joya) no se
+tocan**; `computeSectionRanges()` replica la misma lógica de cursor del motor para ubicar la sección.
+
+**Por qué:** era la parte de la "idea 2" de Oscar que mejora la joya **para todos sin infraestructura
+ni coste** (modo solitario). Decisión de implementación: hacerla **client-side** sobre los beats
+existentes en vez de crear ya las entidades `ArrangementMap`/`ArrangementSegment` — esas solo hacen
+falta cuando una canción importada no trae buenos tiempos, y encajan mejor junto al **sync de ensayo
+(V3-F6)**, donde el re-timing aporta de verdad. **Diferido y anotado**, no descartado.
+
+**Cómo/Verificación:** e2e `test_bolita_de_posicion_avanza` (tras reproducir, el relleno pasa de 0%
+y se muestra la sección); los tests del player existentes siguen verdes (motor intacto).
+`cachebust.py` al día; `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · 140 unit · **61 e2e** [+1]).
+
+### 🎤 V3-F4 · T-089 — Modo Directo (escenario a pantalla completa) (2026-06-17)
+
+**Qué:** botón ⛶ en el reproductor que activa el **Modo Directo**: añade la clase `stage-mode` al
+`<body>` (oculta la barra superior, agranda la letra y los acordes, máximo contraste de escenario) y
+entra en **pantalla completa** (Fullscreen API). Funciona aunque el navegador bloquee el fullscreen
+(la clase es independiente). Sale con el propio botón, con **Esc** o al abandonar el fullscreen.
+`index.html` (botón) + `style.css` (`.stage-mode …`) + `app.js` (toggle/Fullscreen/Esc). **La joya
+(`sync_engine.js`/`score_render.js`) no se toca.**
+
+**Por qué:** es la herramienta de directo/ensayo más visible y la que más "enamora" en el escenario;
+y es client-side y gratis.
+
+**Cómo/Verificación:** e2e `test_modo_directo_alterna_y_oculta_barra` (al activar: `stage-mode`
+presente, barra superior `display:none`, letra >24px; al desactivar: vuelve todo). `cachebust.py`
+al día; `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · 140 unit · **62 e2e** [+1]).
+
+### 🎬 V3-F4 · T-090 — Vídeo de referencia (YouTube) en el reproductor (2026-06-17)
+
+**Qué:** campo nuevo **`Song.reference_url`** (enlace YouTube/Spotify) + su uso en el player:
+- **Backend:** columna `reference_url String(512) nullable` en el modelo `Song`, en `SongBase`/
+  `SongUpdate` (Pydantic) y **migración aditiva** `b3f1a9c2d4e5` (batch mode). `alembic check` sin
+  drift (validado por `tests/unit/test_migrations.py` en BD limpia).
+- **Editor:** input "Enlace de referencia (YouTube)" que se carga y se guarda con la canción.
+- **Player:** botón 🎬 (visible solo si la canción tiene un enlace de YouTube válido) que abre un
+  **panel flotante** con el vídeo embebido (`youtube.com/embed/<id>`, id parseado y validado por
+  regex `[A-Za-z0-9_-]{11}` → seguro). v1 = referencia manual (no sincronizada al beat; la sincronía
+  fina con audio se valoró en la guía V3 §2.3 y depende de Storage/realtime).
+
+**Por qué:** "escuchar el original mientras lees la partitura" es una de las peticiones de Oscar
+(idea 2) y un quick win client-side y gratis.
+
+**Cómo/Verificación:** e2e `test_video_de_referencia_youtube` (botón visible + iframe con el id) y
+`test_sin_referencia_no_hay_boton`. `cachebust.py` al día; `run_checks.py` **TODO VERDE** (doctor
+10/10 · ruff · 140 unit · **64 e2e** [+2]). ⚠️ **Pendiente: aplicar la migración a Postgres prod**
+(en local aplicada; las migraciones a prod las hace Oscar en el deploy, como en el resto del giro).
+
+### 🎸 V3-F4 · T-091 (afinador) + T-092 (pasapáginas) + cierre de V3-F4 (2026-06-17)
+
+**T-092 — Pasapáginas / pedalera:** las teclas de avance/retroceso que envían los pedales Bluetooth
+(PageDown/PageUp y flechas) pasan de canción dentro de un setlist o, si no hay setlist, hacen scroll
+de una página en la partitura. Manos libres en el atril; se ignora en campos de texto. `app.js`.
+e2e `test_pasapaginas_hace_scroll`.
+
+**T-091 — Afinador integrado** (`static/tuner.js`): detección de tono por **autocorrelación**
+expuesta como **función pura** (`window.bfDetectPitch` + `window.bfFreqToNote`) — testeable con una
+onda sintética **sin micrófono** — y, aparte, el plumbing de micro (Web Audio `getUserMedia` →
+`AnalyserNode` → bucle rAF) con un panel en el player que muestra nota, cents y una aguja. Botón 🎤.
+e2e `test_afinador_detecta_y_abre` (440 Hz → La4 + apertura/cierre del panel).
+
+**✅ V3-F4 (quick wins de directo) COMPLETA** — Modo Directo (T-089), vídeo de referencia (T-090),
+afinador (T-091), pasapáginas (T-092). Todo client-side y gratis; la joya intacta. Diferido a V3-F6:
+loop A-B / tempo trainer y metrónomo *lookahead* (requieren seek/bucle en el motor).
+`run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · 140 unit · **66 e2e** [+2]).
+
+### 🚌 V3-F5 · T-093/094/095 — Backend de giras (2026-06-17)
+
+**Qué:** módulo nuevo de **gestión de giras** (backend), aislado por `band_id`:
+- **Modelos** `Tour` (nombre, status `planning|active|done|cancelled`, fechas, notas, soft-delete),
+  `TourStop` (parada de la ruta, opcionalmente ligada a un `Event(concert)` de la banda, `position`,
+  ciudad, notas) y `TourBudgetLine` (presupuesto **estimado**; el gasto real sigue en `Transaction`).
+  Enum `TOUR_STATUSES`. **Migración aditiva** `c5d7e9f1a2b3` (3 tablas + índices `band_id`/FKs + CHECK,
+  batch). `alembic check` sin drift (validado en BD limpia por `test_migrations`).
+- **Router** `tours_router.py` (`/bands/{id}/tours` + `/stops` + `/budget`): crear/editar/borrar gira y
+  paradas/líneas **solo admin**; miembros listan/ven. Las paradas que ligan un evento **validan que
+  sea de esta banda** (400 si es ajeno). El detalle enriquece cada parada con el título/fecha del
+  evento y calcula el **presupuesto total**. Registrado en `main.py`.
+
+**Por qué:** la gira es un módulo de alto valor y **aislado** (no toca la capa pública), por eso se
+adelanta en la V3 (decisión D4). No duplica Agenda ni Finanzas: las **agrega** (paradas = conciertos
+existentes; presupuesto = estimación que luego se contrasta con los `Transaction` reales).
+
+**Cómo/Verificación:** `test_api_tours` (5 casos: admin crea/miembro no, paradas ligadas + evento
+ajeno 400 + posiciones, presupuesto suma total, CRUD admin/miembro 403, **aislamiento** ajeno→404 en
+cada ruta). `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · **145 unit** [+5] · 66 e2e).
+⚠️ **Pendiente: aplicar la migración a Postgres prod.** Falta el **frontend** (T-096: pestaña Giras).
+
+### 🚌 V3-F5 · T-096 — Frontend de giras + cierre de V3-F5 (2026-06-17)
+
+**Qué:** pestaña **Giras** en el espacio de banda (`band.js`, autocontenida): lista de giras (nombre,
+estado, nº de paradas, presupuesto total), **crear gira** (admin, `promptModal`), y **detalle** con la
+**ruta** (paradas, cada una con su ciudad y el concierto ligado de la banda) y el **presupuesto** con
+total y categorías. Admin añade/quita paradas (eligiendo un concierto de la agenda o solo ciudad) y
+líneas de presupuesto; miembros lo ven en solo lectura.
+
+**Por qué:** completa la gestión de giras (la parte visible) sobre el backend de T-093/095.
+
+**Cómo/Verificación:** e2e `test_band_space_giras` (crear gira por UI + abrir detalle con ruta y
+presupuesto). `cachebust.py` al día; `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · 145 unit ·
+**67 e2e** [+1]).
+
+**✅ V3-F5 (gestión de giras) COMPLETA.** Diferido (anotado, no bloquea): **mapa Leaflet+OSM** (para
+no añadir una CDN nueva sin SRI ahora), ligar el gasto real (`Transaction`) a la gira desde la UI, y
+la co-organización con otra banda (Opción 0 informativa). ⚠️ **Pendiente: aplicar la migración de
+giras a Postgres prod** en el próximo deploy.
+
+### 🧱 V3-F3 · T-097 (`Band.plan`) + T-098 (gate de aislamiento) (2026-06-17)
+
+**T-097 — Andamiaje de planes SaaS** (D8, sin cobro): columna `Band.plan` ('free'|'pro', default
+'free') + enum `BAND_PLANS` + **migración aditiva** `d7e9f1a2b3c4`. Expuesto en `BandResponse` y
+`BandSummary`; un **admin** lo cambia vía `PATCH /bands/{id}` (validado por `Literal BandPlan`;
+inválido→422). La validación vive en la capa API (sin CHECK de BD para no recrear la tabla `bands`,
+muy referenciada). Test `test_band_plan` (default free, admin cambia a pro, aparece en "mis bandas",
+inválido 422, miembro 403). Prepara la monetización sin retrofit por fase.
+
+**T-098 — Gate de aislamiento parametrizado**: `test_aislamiento_parametrizado.py` recorre **16 rutas
+de banda** (bandas, miembros, repertorio, setlists, agenda, finanzas, mensajes, giras) y exige que un
+usuario **ajeno** reciba 403/404. Es una red de seguridad transversal sobre la "regla de oro": si
+alguien añade una ruta de banda y olvida el guard, este test lo caza.
+
+**Verificación:** `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · **163 unit** [+18] · 67 e2e).
+⚠️ **Pendiente: aplicar la migración de `plan` a Postgres prod.**
+
+**Límite alcanzado:** con esto se completa **toda la parte de la V3 que es código y gratis**. Lo que
+queda (Storage, Realtime, capa pública/biblioteca global/red, pagos) **requiere configuración de
+Supabase/Stripe por parte de Oscar** — ver `PENDIENTES_OSCAR.md`.
+
+### 🌍 V3-F9 · Biblioteca global (catálogo público) — backend + revisión ultracode (2026-06-17)
+
+**Qué (T-100/101):** el **reclamo de la app** (D9). Modelos `MusicalWork` (canción abstracta) +
+`PublicScore` (versión publicada, snapshot independiente) + `ScoreRating` + `ScoreComment`, en un
+**plano de datos SEPARADO** (copia desacoplada, D1). Migración `e9f1a2b3c4d5`. Router `/catalog`:
+**publicar** ("ponla aquí"), **buscar**, **detalle** (con la partitura para el visor), **importar**
+a banda/personal, **valorar** (1–5), **comentar**. Test `test_api_catalog`.
+
+**Revisión ultracode (T-102):** workflow adversarial multi-agente (33 agentes, ~1.4M tokens, 20
+hallazgos confirmados). Aplicado:
+- **C1 (crítico, D2):** la vista pública (`GET /catalog/scores/{id}`) ahora **recorta la letra**
+  (`_public_sections`, umbral `_LYRIC_PREVIEW`); el `content_json` guarda la letra completa y solo se
+  entrega **al importar**. Test `test_letra_recortada_en_publico_completa_al_importar`.
+- **H1/M1/M2:** snapshot COMPLETO para round-trip exacto (tabs `tab_strings`, `repeat_count`,
+  `color_tag`, `display_hint`, y `reference_url` como columna). Test de round-trip de `reference_url`.
+- **H3/M4:** `try/except` con rollback+log en escrituras; **carrera de `MusicalWork`** (SELECT-then-
+  INSERT) resuelta con `IntegrityError`→re-SELECT.
+- **H4 (D9):** no republicar la misma canción (`source_song_id`→409). Test `test_no_republicar…`.
+- **M3:** `rating_avg` como `Decimal` (coherente con finanzas). **L1:** import valida banda no borrada.
+  **M6/L2:** índice compuesto `(status, deleted_at)` + `updated_at`.
+- **Diferido (anotado):** XSS escaping (se hará en el frontend, que aún no existe), rate-limit/moderación
+  de comentarios. El **umbral de recorte de letra** es decisión legal de Oscar (ajustable).
+
+**Verificación:** `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · **177 unit** · 67 e2e).
+⚠️ **Pendiente: aplicar la migración del catálogo a Postgres prod.** Falta el **frontend** (T-103).
+
+### 🌍 V3-F9 · T-103 — Frontend de la biblioteca global + cierre de V3-F9 (2026-06-17)
+
+**Qué:** `static/biblioteca-global.html` + `catalogo.js` (sección **Explorar** del shell): buscador
+del catálogo, el reclamo **"¿no la encuentras? ponla aquí"** (→ editor), **detalle** con vista previa
+de la partitura (reusa `score_render.js`, con la **letra recortada**), **importar** a una banda mía o
+a mis partituras, **valorar** (estrellas) y **comentar**. Nuevo item **"Explorar"** (icono globo) en
+el lateral (`shell.js`). **D9 por defecto:** al guardar una canción NUEVA en el editor (`editor.js`),
+se **publica automáticamente** al catálogo (best-effort, no bloquea el guardado). Todo el texto de
+usuario va **escapado** (cierra el hallazgo H2 de la revisión).
+
+**Por qué:** completa la pieza que para Oscar es la más importante (la visión global) y la deja usable
+de punta a punta: añadir una canción la sube al catálogo, y cualquiera la busca/importa.
+
+**Cómo/Verificación:** e2e `test_catalogo` (buscar + abrir detalle con importar/estrellas; "Explorar"
+navega desde el lateral). `cachebust.py` al día; `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff ·
+**177 unit** · **71 e2e** [+4]).
+
+**✅ V3-F9 (biblioteca global) COMPLETA** — backend + revisión ultracode + frontend. Diferido (próxima
+revisión/pulido): navegación pública SIN login + SEO (necesita el plano público/Supabase), moderación,
+importar directo a banda desde la tarjeta, afinar el umbral de recorte de letra.
+
+---
+
 ## 🚀 Estado actual (2026-06-16) — EN PRODUCCIÓN: giro V2 completo (BandFlow)
 
 **En vivo (https://chordflow-ecru.vercel.app): TODO el giro V2** — Fase 5/6 (teleprompter, import IA,

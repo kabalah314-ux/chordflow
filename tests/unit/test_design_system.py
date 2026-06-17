@@ -43,3 +43,22 @@ def test_design_system_adopta_paleta_bandflow(client):
         assert token in css, f"falta el token nuevo {token}"
     # Identidad tipográfica IBM Plex (UI + mono)
     assert "IBM Plex Sans" in css and "IBM Plex Mono" in css, "faltan las fuentes IBM Plex"
+
+
+def test_design_system_tiene_estados_de_ui(client):
+    """V3-F1 (T-084): el sistema de diseño cubre los estados que separan un demo de un
+    producto — deshabilitado, cargando (spinner), skeleton, vista vacía y foco accesible.
+    Si alguien los borra, las páginas pierden estos estados de golpe y este test lo caza."""
+    css = client.get("/static/design-system.css").text
+    # Deshabilitado en botones e inputs
+    assert ".bf-btn:disabled" in css, "falta el estado deshabilitado de botón"
+    assert ".bf-input:disabled" in css, "falta el estado deshabilitado de input"
+    # Cargando: spinner + botón con [data-loading]
+    assert ".bf-spinner" in css and "@keyframes bf-spin" in css, "falta el spinner de carga"
+    assert '[data-loading="true"]' in css, "falta el estado de carga del botón"
+    # Skeleton y empty state
+    assert ".bf-skeleton" in css, "falta el skeleton de carga"
+    assert ".bf-empty" in css, "falta la vista vacía (empty state)"
+    # Foco accesible y datos numéricos en mono
+    assert ":focus-visible" in css, "falta el foco accesible"
+    assert ".bf-num" in css, "falta la utilidad de números en mono"

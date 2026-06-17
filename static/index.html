@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>BandFlow Player</title>
-    <link rel="stylesheet" href="style.css?v=13dca123">
+    <link rel="stylesheet" href="style.css?v=b3988ed7">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -35,6 +35,8 @@
                     <button id="btn-key-up" class="icon-btn" aria-label="Subir semitono" title="Subir semitono">♯</button>
                     <button id="btn-key-save" class="icon-btn" aria-label="Guardar tono" title="Guardar tono">💾</button>
                 </div>
+                <button id="btn-tuner" class="primary-btn square" aria-label="Afinador" title="Afinador" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🎤</button>
+                <button id="btn-reference" class="primary-btn square" aria-label="Vídeo de referencia" title="Vídeo de referencia" style="display:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🎬</button>
                 <button id="btn-print" class="primary-btn square" aria-label="Exportar a PDF" title="Exportar / Imprimir (PDF)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🖨️</button>
                 <a href="app.html" class="primary-btn square" aria-label="Ir al inicio" title="Inicio" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
                 <a href="library.html" class="primary-btn square" aria-label="Ir a la biblioteca" title="Biblioteca" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
@@ -54,15 +56,38 @@
 
         <!-- Bottom Bar: Playback Controls -->
         <footer class="glass-panel bottom-bar">
+            <!-- Bolita de posición (V3-F2, T-088): progreso en la canción + sección actual -->
+            <div class="song-progress" id="song-progress" aria-hidden="true">
+                <div class="song-progress__fill" id="song-progress-fill"></div>
+                <div class="song-progress__dot" id="song-progress-dot"></div>
+            </div>
             <div class="playback-controls">
                 <button id="btn-metronome" class="primary-btn square" aria-label="Metrónomo (clic por beat)" title="Metrónomo (clic por beat)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🥁</button>
                 <button id="btn-stop" class="primary-btn square" aria-label="Detener">⏹</button>
                 <button id="btn-play-pause" class="primary-btn" aria-label="Reproducir o pausar (barra espaciadora)">▶ Play</button>
+                <button id="btn-stage" class="primary-btn square" aria-label="Modo Directo (pantalla completa)" title="Modo Directo" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">⛶</button>
             </div>
             <div class="time-display">
+                <span id="current-section-display" class="section-chip"></span>
                 <span id="current-beat-display">Beat: 0.0</span>
             </div>
         </footer>
+
+        <!-- Panel de vídeo de referencia (V3-F4, T-090): se muestra si la canción tiene reference_url -->
+        <div id="reference-panel" class="reference-panel" style="display:none;">
+            <button id="btn-reference-close" class="reference-panel__close" aria-label="Cerrar referencia">✕</button>
+            <div id="reference-embed"></div>
+        </div>
+
+        <!-- Panel del afinador (V3-F4, T-091) -->
+        <div id="tuner-panel" class="tuner-panel" style="display:none;">
+            <button id="tuner-close" class="reference-panel__close" aria-label="Cerrar afinador">✕</button>
+            <div class="tuner-note" id="tuner-note">—</div>
+            <div class="tuner-cents" id="tuner-cents"></div>
+            <div class="tuner-meter"><div class="tuner-needle" id="tuner-needle"></div></div>
+            <p class="tuner-msg" id="tuner-msg">Pulsa para activar el micrófono.</p>
+            <button id="tuner-start" class="secondary-btn">Activar micrófono</button>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.js"
@@ -73,6 +98,7 @@
     <script src="sync_engine.js?v=64c07151"></script>
     <script src="score_render.js?v=d66bbc20"></script>
     <script src="chord_shapes.js?v=c04dafa3"></script>
-    <script src="app.js?v=79705009"></script>
+    <script src="app.js?v=39eeee7f"></script>
+    <script src="tuner.js?v=23a06d6d"></script>
 </body>
 </html>

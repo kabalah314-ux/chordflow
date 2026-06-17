@@ -292,6 +292,9 @@
 .bf-nav-item:hover { background: var(--bf-surface-2); color: var(--bf-text); }
 .bf-nav-item[aria-current="page"] { background: var(--bf-surface-3); color: var(--bf-text); }
 .bf-nav-item .bf-nav-icon { font-size: 1.1rem; width: 1.3rem; text-align: center; }
+/* Icono SVG dentro de un .bf-nav-icon (T-085): centrado y alineado al texto */
+.bf-nav-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.bf-nav-icon svg { display: block; }
 
 /* ── Banner de banda (contexto BANDA, T-075) ───────────────────────────── */
 .bf-band-banner {
@@ -319,7 +322,70 @@
 .bf-wrap    { flex-wrap: wrap; }
 .bf-hidden  { display: none !important; }
 
+/* ── Estados de UI (T-084, V3-F1) ───────────────────────────────────────────
+   Lo que separa un "demo" de un "producto": deshabilitado, cargando, skeleton,
+   vista vacía y foco accesible. Todo `bf-`, no toca el player ni las rutas. */
+
+/* Deshabilitado (botones e inputs) */
+.bf-btn:disabled, .bf-btn[disabled], .bf-btn[aria-disabled="true"] {
+  opacity: 0.5; cursor: not-allowed; pointer-events: none;
+}
+.bf-input:disabled, .bf-select:disabled, .bf-textarea:disabled {
+  opacity: 0.6; cursor: not-allowed; background: var(--bf-surface-3);
+}
+
+/* Cargando: spinner reutilizable + botón en estado de carga (oculta el texto) */
+.bf-spinner {
+  display: inline-block; width: 1em; height: 1em;
+  border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: var(--bf-radius-full);
+  animation: bf-spin 0.6s linear infinite; vertical-align: -0.15em;
+}
+.bf-btn[data-loading="true"] { color: transparent !important; pointer-events: none; position: relative; }
+.bf-btn[data-loading="true"]::after {
+  content: ""; position: absolute;
+  width: 1em; height: 1em;
+  border: 2px solid var(--bf-on-primary); border-right-color: transparent;
+  border-radius: var(--bf-radius-full); animation: bf-spin 0.6s linear infinite;
+}
+
+/* Skeleton (placeholder mientras carga) */
+.bf-skeleton {
+  background: var(--bf-surface-3); border-radius: var(--bf-radius-sm);
+  animation: bf-pulse 1.4s ease-in-out infinite;
+}
+.bf-skeleton--text  { height: 0.85em; margin: 0.3em 0; }
+.bf-skeleton--title { height: 1.4em; width: 40%; margin-bottom: 0.6em; }
+.bf-skeleton--card  { height: 84px; border-radius: var(--bf-radius-lg); }
+
+/* Empty state (lista / vista sin contenido) */
+.bf-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--bf-space-3); padding: var(--bf-space-8) var(--bf-space-5);
+  text-align: center; color: var(--bf-text-muted);
+}
+.bf-empty__icon {
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--bf-radius-full); background: var(--bf-surface-3); color: var(--bf-text-faint);
+}
+.bf-empty__icon svg { width: 28px; height: 28px; }
+.bf-empty__title { font-size: var(--bf-fs-lg); font-weight: var(--bf-fw-semibold); color: var(--bf-text); }
+.bf-empty__text  { font-size: var(--bf-fs-sm); max-width: 34ch; }
+
+/* Foco accesible en los componentes interactivos que aún no lo tenían */
+.bf-card--interactive:focus-visible,
+.bf-nav-item:focus-visible,
+.bf-tab:focus-visible,
+.bf-list-item:focus-visible {
+  outline: 2px solid var(--bf-primary); outline-offset: 2px;
+}
+
+/* Datos numéricos en mono con cifras de ancho fijo (importes, BPM, contadores) */
+.bf-num { font-family: var(--bf-font-mono); font-variant-numeric: tabular-nums; }
+
 /* ── Animaciones (foundation BandFlow, spec §2.6) ───────────────────────── */
 @keyframes bf-fade  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes bf-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 @keyframes bf-eq    { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+@keyframes bf-spin  { to { transform: rotate(360deg); } }

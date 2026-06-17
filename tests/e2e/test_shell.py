@@ -22,6 +22,30 @@ def test_shell_lateral_aparece_con_marca_y_nav(page, live_server, api):
     assert "Inicio" in activo
 
 
+def test_shell_nav_usa_iconos_svg(page, live_server, api):
+    # T-085 (V3-F1): los emojis del lateral se reemplazaron por iconos SVG (Lucide auto-alojado).
+    page.goto(live_server + "/static/app.html", wait_until="networkidle")
+    page.wait_for_selector(".bf-sidebar", timeout=8000)
+    # Cada item de navegación pinta su icono como <svg> dentro de .bf-nav-icon
+    svg_icons = page.query_selector_all(".bf-sidebar .bf-nav-item .bf-nav-icon svg")
+    assert len(svg_icons) >= 7, f"esperaba ≥7 iconos SVG en la nav, hay {len(svg_icons)}"
+    # El helper global existe y devuelve un <svg>
+    assert page.evaluate("typeof window.bfIcon === 'function'"), "falta el helper global bfIcon"
+    assert "<svg" in page.evaluate("window.bfIcon('home')"), "bfIcon no devuelve un SVG"
+
+
+def test_ui_helper_empty_state(page, live_server, api):
+    # T-087 (V3-F1): bfEmpty genera el componente de estado vacío (.bf-empty de T-084) con icono SVG.
+    # Lo usan las vistas agregadas (Inicio/Agenda/Finanzas/Chat) cuando no hay datos.
+    page.goto(live_server + "/static/app.html", wait_until="networkidle")
+    page.wait_for_selector(".bf-sidebar", timeout=8000)
+    html = page.evaluate(
+        "window.bfEmpty('calendar', 'Nada por aquí', 'Sin contenido. <a href=\"bands.html\">Crear</a>.')")
+    assert "bf-empty" in html, "bfEmpty no usa el componente .bf-empty"
+    assert "<svg" in html, "bfEmpty no incluye el icono SVG"
+    assert "Nada por aquí" in html and "bands.html" in html
+
+
 def test_shell_navega_entre_secciones(page, live_server, api):
     page.goto(live_server + "/static/app.html", wait_until="networkidle")
     page.wait_for_selector(".bf-sidebar", timeout=8000)

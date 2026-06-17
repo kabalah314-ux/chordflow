@@ -38,8 +38,8 @@
             el.innerHTML = `
                 <div class="bf-stack">
                     <div><h1 class="bf-h1">Agenda</h1></div>
-                    <div class="bf-card"><p class="bf-muted">No tienes eventos en ninguna banda.
-                        <a href="bands.html">Entra en una banda</a> para crear ensayos o conciertos.</p></div>
+                    <div class="bf-card">${bfEmpty('calendar', 'Tu agenda está vacía',
+                        'No tienes eventos en ninguna banda. <a href="bands.html">Entra en una banda</a> para crear ensayos o conciertos.')}</div>
                 </div>`;
             return;
         }

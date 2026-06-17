@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -38,6 +39,12 @@ EVENT_STATUSES = ("lead", "contacted", "negotiating", "confirmed", "done", "canc
 ATTENDANCE_STATUSES = ("yes", "no", "maybe")
 # Finanzas (Fase 11). Tipo de movimiento.
 TRANSACTION_TYPES = ("expense", "income")
+# Giras (V3-F5). Estado de una gira.
+TOUR_STATUSES = ("planning", "active", "done", "cancelled")
+# Plan SaaS de la banda (V3-F3, andamiaje; sin cobro aún). 'free' por defecto.
+BAND_PLANS = ("free", "pro")
+# Biblioteca global (V3-F9). Estado de una partitura del catálogo público.
+PUBLIC_SCORE_STATUSES = ("published", "hidden", "removed")
 
 
 def _utcnow():
@@ -80,6 +87,8 @@ class Song(Base):
     is_public = Column(Boolean, default=False, server_default=text("false"))
     source_type = Column(String(32))
     source_file_path = Column(Text)
+    # Enlace de referencia (YouTube/Spotify) para escuchar el tema original (V3-F4, T-090).
+    reference_url = Column(String(512), nullable=True)
     tags = Column(JSON)
     duration_beats = Column(Float)
     created_at = Column(DateTime, default=_utcnow)
@@ -224,6 +233,9 @@ class Band(Base):
     created_by = Column(String(36), nullable=False, index=True)  # user_id del creador (→ admin)
     # Una sola divisa por banda (§C.4.3). Sin multi-divisa en v1. Default EUR.
     currency = Column(String(3), nullable=False, default="EUR", server_default=text("'EUR'"))
+    # Plan SaaS (V3-F3, andamiaje; sin cobro aún). 'free' | 'pro'. Lo cambia un admin. La validación
+    # de valores vive en la capa API (Literal BandPlan); sin CHECK de BD para no recrear `bands`.
+    plan = Column(String(16), nullable=False, default="free", server_default=text("'free'"))
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (como Song)
@@ -466,3 +478,187 @@ class Message(Base):
     created_at = Column(DateTime, default=_utcnow)
     edited_at = Column(DateTime, nullable=True)
     deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete
+
+
+# ── V3 — Giras (V3-F5) ────────────────────────────────────────────────────────
+# Una gira agrupa varios conciertos (Event type=concert) en una ruta + presupuesto estimado.
+# Aislada por band_id (regla de oro). NO duplica Agenda/Finanzas: las agrega/enriquece.
+
+
+class Tour(Base):
+    """Gira: colección ordenada de paradas (conciertos) + presupuesto estimado de la banda.
+    Soft-delete (tiene histórico, §C.4.3)."""
+
+    __tablename__ = "tours"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in TOUR_STATUSES) + ")",
+            name="ck_tours_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name = Column(String(255), nullable=False)
+    status = Column(
+        String(16), nullable=False, default="planning", server_default=text("'planning'")
+    )
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    notes = Column(Text)
+    created_by = Column(String(36), nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+    stops = relationship(
+        "TourStop", back_populates="tour", cascade="all, delete-orphan",
+        order_by="TourStop.position",
+    )
+    budget_lines = relationship(
+        "TourBudgetLine", back_populates="tour", cascade="all, delete-orphan"
+    )
+
+
+class TourStop(Base):
+    """Parada de una gira: fecha/ciudad, opcionalmente ligada a un Event(concert) de la MISMA banda.
+    SET NULL si se borra el evento: la parada permanece en la ruta."""
+
+    __tablename__ = "tour_stops"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tour_id = Column(
+        String(36), ForeignKey("tours.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    event_id = Column(
+        String(36), ForeignKey("events.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    position = Column(Integer, nullable=False)  # orden en la ruta (0,1,2…)
+    city = Column(String(255))
+    notes = Column(Text)
+
+    tour = relationship("Tour", back_populates="stops")
+    event = relationship("Event")
+
+
+class TourBudgetLine(Base):
+    """Línea de presupuesto ESTIMADO de la gira (el gasto real va en Transaction y se enlaza)."""
+
+    __tablename__ = "tour_budget_lines"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tour_id = Column(
+        String(36), ForeignKey("tours.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    concept = Column(String(255), nullable=False)
+    category = Column(String(64))
+    estimated_amount = Column(Numeric(10, 2), nullable=False)
+
+    tour = relationship("Tour", back_populates="budget_lines")
+
+
+# ── V3 — Biblioteca global / catálogo público (V3-F9, D9) ─────────────────────
+# El catálogo es el RECLAMO de la app: un buscador de muchos artistas que crece con lo que sube la
+# gente. Es un PLANO DE DATOS SEPARADO (copia desacoplada, D1): publicar una canción crea aquí un
+# snapshot independiente; los datos privados de la banda (arreglos, notas, finanzas) NUNCA entran.
+
+
+class MusicalWork(Base):
+    """La "canción" abstracta (p. ej. Wonderwall de Oasis), independiente de quién la suba. Agrupa
+    las N versiones publicadas. Único por (artista, título) normalizados para buscar y agrupar."""
+
+    __tablename__ = "musical_works"
+    __table_args__ = (
+        UniqueConstraint("norm_artist", "norm_title", name="uq_work_artist_title"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    title = Column(String(255), nullable=False)        # título mostrado
+    artist = Column(String(255))                       # artista mostrado
+    norm_title = Column(String(255), nullable=False, index=True)   # normalizado (búsqueda/único)
+    norm_artist = Column(String(255), nullable=False, index=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+    scores = relationship("PublicScore", back_populates="work", cascade="all, delete-orphan")
+
+
+class PublicScore(Base):
+    """Una versión publicada en el catálogo. `content_json` = snapshot inmutable del árbol de la
+    partitura (lo pinta `score_render.js`). `source_band_id` es solo auditoría: NUNCA se expone."""
+
+    __tablename__ = "public_scores"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in PUBLIC_SCORE_STATUSES) + ")",
+            name="ck_public_scores_status",
+        ),
+        # Búsqueda/listado del catálogo filtra siempre por (status, deleted_at) → índice compuesto.
+        Index("ix_public_scores_status_deleted", "status", "deleted_at"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    work_id = Column(
+        String(36), ForeignKey("musical_works.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    publisher_id = Column(String(36), nullable=False, index=True)  # user_id que la subió (atribución)
+    source_band_id = Column(String(36), nullable=True)            # auditoría; NUNCA se expone
+    source_song_id = Column(String(36), nullable=True, index=True)  # origen (para evitar republicar, D9)
+    title = Column(String(255), nullable=False)
+    artist = Column(String(255))
+    key_root = Column(String(4))
+    key_mode = Column(String(32))
+    bpm = Column(Integer)
+    reference_url = Column(String(512))                # enlace de referencia (round-trip al importar)
+    content_json = Column(JSON, nullable=False)        # snapshot del árbol (secciones→líneas→acordes)
+    rating_avg = Column(Numeric(3, 2), nullable=False, default=0, server_default=text("0"))
+    rating_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    import_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    status = Column(
+        String(16), nullable=False, default="published", server_default=text("'published'")
+    )
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete
+
+    work = relationship("MusicalWork", back_populates="scores")
+    ratings = relationship("ScoreRating", back_populates="score", cascade="all, delete-orphan")
+    comments = relationship("ScoreComment", back_populates="score", cascade="all, delete-orphan")
+
+
+class ScoreRating(Base):
+    """Valoración de una partitura del catálogo (1–5 = lo fiel/completa que es). Una por usuario."""
+
+    __tablename__ = "score_ratings"
+    __table_args__ = (
+        UniqueConstraint("public_score_id", "user_id", name="uq_rating_score_user"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    public_score_id = Column(
+        String(36), ForeignKey("public_scores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(String(36), nullable=False, index=True)
+    stars = Column(Integer, nullable=False)            # 1..5
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    score = relationship("PublicScore", back_populates="ratings")
+
+
+class ScoreComment(Base):
+    """Comentario sobre una partitura del catálogo ("falta el puente", "acordes del solo mal…")."""
+
+    __tablename__ = "score_comments"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    public_score_id = Column(
+        String(36), ForeignKey("public_scores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(String(36), nullable=False, index=True)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete
+
+    score = relationship("PublicScore", back_populates="comments")

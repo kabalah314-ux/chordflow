@@ -410,6 +410,131 @@
         `REVISIONES.md` + `REGISTRO_DE_CAMBIOS.md`. ✅ (2026-06-16) Revisión fase13 ✅ completa (1/1 rutas
         · 5/5 páginas) + veredicto en `REVISIONES.md`. `run_checks` VERDE (139 unit · 57 e2e).
 - [ ] **Fase 14** 🟢 Booking (pipeline `Event.status` + recordatorios + `EmailTemplate`). Área 10.
+
+---
+
+# 🎸→🌍 V3 — RED MUSICAL CON PLANO PÚBLICO (backlog activo)
+
+> Dirección de producto: `GUIA_MAESTRA_V3.md` (8 decisiones cerradas D1–D8 + orden V3-F1→F11).
+> El giro: de "SaaS aislado" a "red musical con un plano público opt-in". **Todo aditivo; la V2
+> (Fases 7–13, en producción) no se toca.** Se empieza por **V3-F1 (diseño)** porque es gratis,
+> transversal y sube la percepción de todo lo demás.
+>
+> 🔐 La regla de oro multi-tenant sigue vigente; lo público será una **capa separada opt-in** con
+> su **propio** test ("fila privada jamás aparece en `/public`"), distinto del de aislamiento de banda.
+
+## V3-F1 — Pulido de diseño profesional (D7)
+
+> CSS sobre el sistema de diseño ya existente (`design-system.css`, prefijo `bf-`). **Sin framework**
+> (única dependencia aceptada: Lucide, iconos SVG). No toca rutas ni `band_id`. La joya
+> (`sync_engine.js`/`score_render.js`) no se toca por dentro: el "teleprompter espectacular" es solo CSS.
+
+- [x] **T-084** 🟢 **Estados de UI base** en `design-system.css`: deshabilitado (botón/input),
+      cargando (`.bf-spinner` + botón `[data-loading]`), `.bf-skeleton`, `.bf-empty` (empty state),
+      foco accesible (`:focus-visible` en card/nav/tab/list) y `.bf-num` (cifras tabulares). Todo
+      `bf-`, aditivo. Test `test_design_system_tiene_estados_de_ui`. `cachebust` al día. run_checks
+      TODO VERDE (140 unit · 57 e2e).
+- [x] **T-085** 🟢 **Iconos SVG (Lucide)**: helper auto-alojado `static/icons.js` (`bfIcon(name)`,
+      trazos Lucide MIT, `currentColor`, cero dependencia externa) cargado antes de `shell.js` en las
+      8 páginas con shell. El lateral (nav + tema + ajustes + cerrar sesión) usa SVG en vez de emojis.
+      e2e `test_shell_nav_usa_iconos_svg`. `cachebust` al día. run_checks TODO VERDE (140 unit · 58 e2e).
+- [x] **T-086** 🟢 **Teleprompter espectacular**: acorde activo con **glow coral pulsante**
+      (`@keyframes chord-pulse`, guard `prefers-reduced-motion`) + más contraste teleprompter
+      (líneas inactivas 0.5→0.4). **Solo CSS** en `style.css`; la lógica de la joya (ids/BPM) intacta.
+      e2e `test_acorde_activo_tiene_glow` (box-shadow computado ≠ none). run_checks TODO VERDE
+      (140 unit · 59 e2e). ↳ Modo escenario/fullscreen → se hace en **V3-F4 (Modo Directo)** (lleva JS).
+- [x] **T-087** 🟢 **Empty states + skeletons aplicados** a las vistas agregadas: helper
+      `bfEmpty(icon,title,text)` en `icons.js`; Inicio/Agenda/Finanzas/Chat usan `.bf-empty` (con
+      icono SVG) en sus estados vacíos; Inicio muestra **skeleton** (`.bf-skeleton`) mientras carga.
+      e2e `test_ui_helper_empty_state`. run_checks TODO VERDE (140 unit · 60 e2e).
+- [x] **Cierre V3-F1**: `run_checks` TODO VERDE (140 unit · 60 e2e) en cada tarea. Fase de pulido
+      transversal de diseño (solo front, sin rutas nuevas) → no requiere `revision.py` (que cubre
+      integración de rutas/páginas de banda). **V3-F1 COMPLETA.** Siguiente: V3-F2.
+
+## V3-F2 → V3-F11 (se detallan en T-NNN al aprobar cada fase)
+
+> Orden y razonamiento en `GUIA_MAESTRA_V3.md` §6.
+
+- [~] **V3-F2** 🟢 Mapa de estructura + bolita de posición, **modo solitario** (mejora la joya, sin infra). **Núcleo (bolita) COMPLETO:**
+  - [x] **T-088** 🟢 **Bolita de posición** (client-side, cero backend): barra de progreso
+        (#song-progress) + dot + **sección actual**, derivadas del timeline de beats que ya existe
+        (`state.currentBeat`/`totalBeats`). Hecho en `app.js` (controlador) + `style.css`; **el motor
+        `sync_engine.js` no se toca**. e2e `test_bolita_de_posicion_avanza`. run_checks TODO VERDE
+        (140 unit · 61 e2e).
+  - [ ] **Diferido — Mapa de estructura persistido** (`ArrangementMap`/`ArrangementSegment` + modo
+        "tap para aprender"): solo necesario cuando una canción NO trae buenos tiempos (imports web);
+        para canciones del editor el timeline de beats ya basta. Se hará junto a **V3-F6** (sync de
+        ensayo), donde el re-timing aporta de verdad y comparte el modelo de sala.
+- [~] **V3-F3** 🟡 Habilitadores. **Parte de código (gratis) COMPLETA:**
+  - [x] **T-097** 🟢 **Andamiaje `Band.plan`** (Free/Pro, sin cobrar, D8): columna `Band.plan` +
+        enum `BAND_PLANS` + migración `d7e9f1a2b3c4` + expuesto en `BandResponse`/`BandSummary` +
+        editable por admin vía PATCH (Literal `BandPlan`, inválido→422). Test `test_band_plan`.
+        run_checks VERDE. ⚠️ Migración pendiente en Postgres prod.
+  - [x] **T-098** 🟢 **Gate de aislamiento parametrizado**: `test_aislamiento_parametrizado.py`
+        recorre 16 rutas de banda y exige que un ajeno reciba 403/404 (caza fugas si alguien añade
+        una ruta sin guard). 163 unit · 67 e2e VERDE.
+  - [ ] **T-099** 🟡 **Storage (Supabase) — BLOQUEADO: necesita configuración de Oscar** (crear
+        bucket(s) + políticas por banda + env vars). Es el prerequisito de audio propio del ensayo,
+        grabadora, fotos/EPK/merch y transcripción IA.
+- [x] **V3-F4** 🟢 Quick wins de directo (client-side, sin coste). **COMPLETA:**
+  - [x] **T-089** 🟢 **Modo Directo** (escenario a pantalla completa): botón en el player que añade
+        `stage-mode` (oculta la barra superior, letra grande, máximo contraste) + Fullscreen API
+        (con fallback si el navegador lo bloquea) + salida con Esc. Solo CSS/JS de control en
+        `index.html`/`style.css`/`app.js`; el motor no se toca. e2e `test_modo_directo_alterna_y_oculta_barra`.
+        run_checks TODO VERDE (140 unit · 62 e2e).
+  - [x] **T-090** 🟢 **Vídeo de referencia (YouTube)**: campo nuevo `Song.reference_url` (modelo +
+        schema + migración aditiva `b3f1a9c2d4e5`, batch) + input en el editor + botón 🎬 en el player
+        que embebe el YouTube (id parseado del enlace). e2e `test_video_de_referencia_youtube` +
+        `test_sin_referencia_no_hay_boton`. run_checks TODO VERDE (140 unit · 64 e2e). **Pendiente:
+        aplicar migración a Postgres prod (local hecho).**
+  - [x] **T-091** 🟢 **Afinador integrado** (`tuner.js`): detección de tono por **autocorrelación**
+        (función pura `bfDetectPitch`, testeable con onda sintética) + micro (Web Audio) + panel con
+        nota/cents/aguja en el player. e2e `test_afinador_detecta_y_abre` (440 Hz → La4 + UI).
+        run_checks TODO VERDE (140 unit · 66 e2e).
+  - [x] **T-092** 🟢 **Pasapáginas / pedalera**: PageDown/PageUp y flechas (las teclas que envían los
+        pedales Bluetooth) pasan de canción en un setlist o hacen scroll de una página en la partitura
+        (manos libres, se ignora en campos de texto). e2e `test_pasapaginas_hace_scroll`. run_checks
+        TODO VERDE (140 unit · 65 e2e).
+  - [ ] **Diferido** — Loop A-B / tempo trainer y **metrónomo *lookahead***: requieren añadir *seek*/
+        bucle al motor → se hacen junto a **V3-F6** (sync de ensayo), para no tocar la joya ahora.
+- [x] **V3-F5** 🟢 Gestión de giras (`Tour`/`TourStop`/`TourBudgetLine`). **COMPLETA:**
+  - [x] **T-093** 🔴 Modelos `Tour`/`TourStop`/`TourBudgetLine` + enum `TOUR_STATUSES` + migración
+        aditiva `c5d7e9f1a2b3` (3 tablas, índices `band_id`/FKs, CHECK status, batch). `alembic check`
+        sin drift (validado por `test_migrations`). **Pendiente: aplicar a Postgres prod.**
+  - [x] **T-094** 🟠 Schemas Pydantic (Tour Create/Update/Response/Summary, Stop, BudgetLine).
+  - [x] **T-095** 🟠 `tours_router.py` (`/bands/{id}/tours` + `/stops` + `/budget`): CRUD gira
+        (admin), paradas ligadas a conciertos de la banda (valida pertenencia del evento), presupuesto
+        con total, miembros leen. Registrado en `main.py`. Test `test_api_tours` (5 casos: admin/miembro,
+        paradas, presupuesto, CRUD, **aislamiento por ruta** ajeno→404). run_checks VERDE (145 unit · 66 e2e).
+  - [x] **T-096** 🟢 Frontend: pestaña **Giras** en `band.html` (autocontenida): lista + crear gira
+        (admin), detalle con **ruta** (paradas ligadas a conciertos de la banda) y **presupuesto** con
+        total, añadir/quitar paradas y líneas (admin). e2e `test_band_space_giras`. run_checks VERDE
+        (145 unit · 67 e2e). ⚠️ Migración pendiente en Postgres prod.
+  - **Diferido:** **mapa Leaflet+OSM** (evita meter CDN nueva ahora; sin SRI); ligar gasto real
+        (`Transaction`) a la gira desde la UI; co-organización con otra banda (Opción 0 informativa).
+- [ ] **V3-F6** 🟠 Realtime + sala de ensayo sincronizada (Supabase Realtime + `/clock`; sincronía visual + metrónomo, D5/D6).
+- [ ] **V3-F7** 🟢 Efecto red sin copyright: compartir `unlisted` + onboarding viral + oEmbed (introduce el eje `visibility`).
+- [ ] **V3-F8** 🟢 EPK + página pública + perfil indexable + RSVP + seguir/fans (entra el rol usuario-fan + RLS).
+- [x] **V3-F9** 🟢 Biblioteca global — **EL RECLAMO** (D9: contribución por defecto). **COMPLETA (backend + revisión + frontend):**
+  - [x] **T-100** 🔴 Modelos `MusicalWork`/`PublicScore`/`ScoreRating`/`ScoreComment` + migración
+        `e9f1a2b3c4d5` (plano de datos SEPARADO, copia desacoplada). `alembic check` sin drift.
+  - [x] **T-101** 🟠 `catalog_router.py` (`/catalog`): publicar ("ponla aquí"), buscar, detalle,
+        importar (banda/personal), valorar (1–5), comentar. Registrado en `main.py`. Test
+        `test_api_catalog` (10 casos incl. propiedad/pertenencia y round-trip).
+  - [x] **T-102** 🔴 **Revisión ultracode aplicada** (33 agentes, 20 hallazgos confirmados): C1
+        **letra recortada en público / completa al importar** (D2); round-trip COMPLETO (tabs,
+        repeat/color/hint, `reference_url`); dedup de publicación (D9, source_song_id→409); try/except
+        + carrera de `MusicalWork`; `rating_avg` Decimal; import valida banda no borrada; índice
+        compuesto + `updated_at`. Diferido: XSS escaping (en el frontend), rate-limit de comentarios.
+        run_checks TODO VERDE (177 unit · 67 e2e). ⚠️ Migración pendiente en Postgres prod.
+  - [x] **T-103** 🟢 **Frontend**: `biblioteca-global.html`+`catalogo.js` (Explorar): buscar, reclamo
+        "ponla aquí" (→ editor, que **publica por defecto**, D9), detalle con **preview de letra
+        recortada** (reusa `score_render`), **importar** a banda/personal, **valorar** (estrellas) y
+        **comentar** (todo escapado, H2). Item "Explorar" (icono globo) en el lateral del shell. e2e
+        `test_catalogo` (buscar/abrir + nav). run_checks TODO VERDE (177 unit · 71 e2e).
+  - **Diferido:** navegación pública SIN login + SEO (necesita el plano público/Supabase), moderación.
+- [ ] **V3-F10** 🟢 Red acotada (D3): directorio público + bolsa de colaboraciones (`CollabPost`), sin DM.
+- [ ] **V3-F11** 🟡 Monetización de pago (Stripe/Pro) cuando Storage + web pública den el gancho.
 - [ ] **Fase 15** 🟡 Almacenamiento (Supabase Storage) — subida real de archivos. Transversal.
 - [ ] **Fase 16** 🟢 Promoción + EPK + `Contact`. Área 9.
 - [ ] **Fase 17** 🟢 Página pública + Fans (`FanSubscriber`, `FanMessage`). Área 14.

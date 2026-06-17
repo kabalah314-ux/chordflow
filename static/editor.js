@@ -325,6 +325,7 @@ async function initEditor() {
         document.getElementById('title').value = song.title || '';
         document.getElementById('artist').value = song.artist || '';
         document.getElementById('bpm').value = song.bpm || 120;
+        document.getElementById('reference-url').value = song.reference_url || '';
         document.getElementById('raw-text').value = songToRawText(song);
         updatePreview();
 
@@ -398,11 +399,13 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
     const title = document.getElementById('title').value;
     const artist = document.getElementById('artist').value;
     const bpm = parseInt(document.getElementById('bpm').value, 10);
+    const referenceUrl = document.getElementById('reference-url').value.trim();
     const rawText = document.getElementById('raw-text').value;
 
     const sections = parseRawText(rawText);
 
     const payload = { title, artist, bpm, sections };
+    if (referenceUrl) payload.reference_url = referenceUrl;
 
     // PUT si estamos editando, POST si es nueva
     const isEditing = !!editingSongId;
@@ -428,6 +431,16 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
         }
 
         const data = await res.json();
+        // D9: al AÑADIR una canción nueva se sube al catálogo global por defecto ("ponla aquí").
+        // Best-effort: si el catálogo falla (o ya está publicada), no bloquea el guardado.
+        if (!isEditing) {
+            try {
+                await apiFetch('/catalog/publish', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ song_id: data.id }),
+                });
+            } catch (e) { /* el catálogo es opcional para el guardado */ }
+        }
         window.location.href = `index.html?songId=${data.id}`;
 
     } catch (err) {

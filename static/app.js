@@ -8,6 +8,10 @@ const elBtnPlayPause = document.getElementById("btn-play-pause");
 const elBtnStop = document.getElementById("btn-stop");
 const elCurrentBeat = document.getElementById("current-beat-display");
 const elScoreContent = document.getElementById("score-content");
+// Bolita de posición (V3-F2, T-088)
+const elProgressFill = document.getElementById("song-progress-fill");
+const elProgressDot = document.getElementById("song-progress-dot");
+const elSection = document.getElementById("current-section-display");
 
 // Instanciar el motor
 const engine = new SyncEngine();
@@ -16,6 +20,24 @@ const engine = new SyncEngine();
 let currentSong = null;
 let transposeOffset = 0; // semitonos (-11..+11)
 let lastAutoScrollChordId = null; // último acorde al que ancló el auto-scroll (T-019)
+let sectionRanges = [];          // [{name, startBeat, endBeat}] para la bolita de posición (T-088)
+
+// Rangos de beat por sección, derivados de la misma lógica de cursor que el motor
+// (línea con beat_start o cursor acumulado). Sirve para mostrar la sección actual.
+function computeSectionRanges(song) {
+    const ranges = [];
+    let cursor = 0;
+    (song.sections || []).forEach(sec => {
+        const start = cursor;
+        (sec.lines || []).forEach(line => {
+            const dur = line.beat_duration || 4.0;
+            const ls = (line.beat_start !== null && line.beat_start !== undefined) ? line.beat_start : cursor;
+            cursor = ls + dur;
+        });
+        ranges.push({ name: sec.name || '', startBeat: start, endBeat: cursor });
+    });
+    return ranges;
+}
 
 // La lógica de transposición (transposeChord) y el render (renderScoreInto)
 // viven en score_render.js, compartido con la vista previa del editor.
@@ -34,7 +56,21 @@ engine.subscribe((state) => {
     // Actualizar controles
     elBpmValue.textContent = state.bpm;
     elCurrentBeat.textContent = `Beat: ${state.currentBeat.toFixed(1)}`;
-    
+
+    // Bolita de posición (T-088): progreso global + sección actual, derivados del beat.
+    const totalBeats = state.totalBeats || 1;
+    const frac = Math.max(0, Math.min(1, state.currentBeat / totalBeats));
+    if (elProgressFill) elProgressFill.style.width = (frac * 100) + '%';
+    if (elProgressDot) elProgressDot.style.left = (frac * 100) + '%';
+    if (elSection) {
+        let secName = '';
+        if (state.currentBeat > 0 && sectionRanges.length) {
+            const r = sectionRanges.find(s => state.currentBeat >= s.startBeat && state.currentBeat < s.endBeat);
+            secName = (r || sectionRanges[sectionRanges.length - 1]).name || '';
+        }
+        elSection.textContent = secName;
+    }
+
     if (state.status === "playing") {
         elBtnPlayPause.innerHTML = "⏸ Pause";
         elBtnPlayPause.style.background = "var(--accent-hover)";
@@ -89,6 +125,71 @@ elBtnStop.addEventListener('click', () => {
     document.getElementById('score-container').scrollTo({top: 0, behavior: 'smooth'});
 });
 
+// --- Modo Directo (V3-F4, T-089): escenario a pantalla completa, sin tocar el motor ---
+const elBtnStage = document.getElementById('btn-stage');
+function isStageMode() { return document.body.classList.contains('stage-mode'); }
+function setStageButton() {
+    if (!elBtnStage) return;
+    const on = isStageMode();
+    elBtnStage.setAttribute('aria-label', on ? 'Salir del Modo Directo' : 'Modo Directo (pantalla completa)');
+    elBtnStage.title = on ? 'Salir del Modo Directo' : 'Modo Directo';
+}
+async function enterStage() {
+    document.body.classList.add('stage-mode');
+    setStageButton();
+    // Pantalla completa real si el navegador lo permite (gesto del usuario). Opcional: el modo
+    // funciona igual sin FS (p. ej. si el navegador lo bloquea).
+    try { if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }
+    catch (e) { /* fullscreen opcional */ }
+}
+function exitStage() {
+    document.body.classList.remove('stage-mode');
+    setStageButton();
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); }
+    catch (e) { /* ignore */ }
+}
+if (elBtnStage) elBtnStage.addEventListener('click', () => (isStageMode() ? exitStage() : enterStage()));
+// Salir del modo al abandonar pantalla completa (Esc del navegador) o con Escape si no se entró a FS.
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && isStageMode()) { document.body.classList.remove('stage-mode'); setStageButton(); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isStageMode()) exitStage(); });
+
+// --- Vídeo de referencia (V3-F4, T-090): YouTube embebido si la canción tiene reference_url ---
+const elBtnReference = document.getElementById('btn-reference');
+const elReferencePanel = document.getElementById('reference-panel');
+const elReferenceEmbed = document.getElementById('reference-embed');
+const elBtnReferenceClose = document.getElementById('btn-reference-close');
+
+function youtubeId(url) {
+    if (!url) return null;
+    const m = String(url).match(
+        /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+}
+function closeReference() {
+    if (elReferencePanel) elReferencePanel.style.display = 'none';
+    if (elReferenceEmbed) elReferenceEmbed.innerHTML = '';  // quitar el iframe detiene la reproducción
+}
+function setupReference(song) {
+    closeReference();
+    const hasYt = !!(song && youtubeId(song.reference_url));
+    if (elBtnReference) elBtnReference.style.display = hasYt ? '' : 'none';
+}
+function toggleReference() {
+    if (!elReferencePanel || !elReferenceEmbed) return;
+    if (elReferencePanel.style.display !== 'none') { closeReference(); return; }
+    const id = currentSong && youtubeId(currentSong.reference_url);
+    if (!id) return;   // id validado por regex ([A-Za-z0-9_-]{11}) → seguro para el src
+    elReferenceEmbed.innerHTML =
+        `<iframe src="https://www.youtube.com/embed/${id}" title="Vídeo de referencia" ` +
+        `allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ` +
+        `allowfullscreen></iframe>`;
+    elReferencePanel.style.display = '';
+}
+if (elBtnReference) elBtnReference.addEventListener('click', toggleReference);
+if (elBtnReferenceClose) elBtnReferenceClose.addEventListener('click', closeReference);
+
 // Exportar a PDF: imprime la partitura actual (con su transposición) → "Guardar como PDF" del
 // navegador. Los estilos @media print muestran solo la partitura en blanco/negro (Fase 5).
 const elBtnPrint = document.getElementById('btn-print');
@@ -133,6 +234,29 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();  // evita el scroll por defecto de la barra espaciadora
     if (engine.state.status === 'playing') engine.pause();
     else engine.play();
+});
+
+// Pasapáginas / pedalera (V3-F4, T-092): las teclas de avance/retroceso que envían los pedales
+// Bluetooth (PageDown/PageUp o flechas) pasan de canción dentro de un setlist o, si no hay setlist,
+// hacen scroll de "una página" en la partitura. Manos libres en el atril. Se ignora en campos de texto.
+document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    const fwd = e.key === 'PageDown' || e.key === 'ArrowRight';
+    const back = e.key === 'PageUp' || e.key === 'ArrowLeft';
+    if (!fwd && !back) return;
+    const navBtn = document.getElementById(fwd ? 'sl-next' : 'sl-prev');
+    if (navBtn && !navBtn.disabled) {   // pasar de canción en el setlist
+        e.preventDefault();
+        navBtn.click();
+        return;
+    }
+    const container = document.getElementById('score-container');
+    if (container) {                    // o avanzar "una página" en la partitura
+        e.preventDefault();
+        const page = container.clientHeight * 0.85;
+        container.scrollBy({ top: fwd ? page : -page, behavior: 'smooth' });
+    }
 });
 
 // Guardado automático del tempo (debounce): la canción recuerda el último BPM elegido.
@@ -242,6 +366,8 @@ async function fetchAndRenderSong() {
         renderScoreInto(elScoreContent, song, transposeOffset);
         applyTranspose();
         engine.loadSong(song);
+        sectionRanges = computeSectionRanges(song);
+        setupReference(song);
 
     } catch (err) {
         // Antes el fallo de carga era casi silencioso (mensaje técnico solo en el título y la
@@ -304,6 +430,8 @@ if (elKeySave) elKeySave.addEventListener('click', async () => {
         renderScoreInto(elScoreContent, data, transposeOffset);
         applyTranspose();
         engine.loadSong(data);
+        sectionRanges = computeSectionRanges(data);
+        setupReference(data);
     } catch (err) {
         console.error(err);
         toast('No se pudo guardar el tono: ' + err.message, 'error');

@@ -46,6 +46,42 @@ volvió a ver en el chat al hacer el despliegue del 2026-06-16 → cámbiala cua
 
 ---
 
+---
+
+## 🟣 V3 (red musical) — desbloqueos pendientes (2026-06-17)
+
+> Avancé en código toda la parte gratis de la V3 (ver `GUIA_MAESTRA_V3.md` y `REGISTRO_DE_CAMBIOS.md`).
+> Lo siguiente necesita acción tuya.
+
+### 6. 🟠 Aplicar las 3 migraciones nuevas de la V3 a Postgres prod
+En el próximo deploy (o cuando quieras), aplicar con el **pooler de sesión (5432)**:
+- [ ] `b3f1a9c2d4e5` — `Song.reference_url` (vídeo de referencia, T-090).
+- [ ] `c5d7e9f1a2b3` — tablas de **giras** (`tours`/`tour_stops`/`tour_budget_lines`, T-093).
+- [ ] `d7e9f1a2b3c4` — `Band.plan` (andamiaje Free/Pro, T-097).
+- [ ] `e9f1a2b3c4d5` — **biblioteca global** (`musical_works`/`public_scores`/`score_ratings`/`score_comments`, V3-F9).
+      *(En local ya están aplicadas. Comando: `python -m alembic upgrade head` con `DATABASE_URL` al pooler 5432.)*
+
+### 7. 🟡 Supabase Storage (desbloquea V3-F3 audio/fotos, grabadora, EPK, merch)
+- [ ] Supabase → **Storage** → crear bucket(s) (p. ej. `band-media`).
+- [ ] Políticas de acceso **por banda** (mismo principio multi-tenant: solo miembros acceden a sus
+      archivos). Límites de tamaño/tipos. *Te paso el SQL/políticas cuando lo abordemos.*
+
+### 8. 🟡 Supabase Realtime (desbloquea V3-F6 ensayo sincronizado + chat en vivo)
+- [ ] Confirmar que **Realtime** está activo en el proyecto (suele venir activado).
+- [ ] Decidir autorización de canales por `band_id` (te guío con el código cuando lleguemos).
+
+### 9. 🟡 RLS de Postgres (prerequisito de abrir datos al público — V3-F7→F10)
+- [ ] Decisión: activar **Row-Level Security** como 2ª barrera antes de la capa pública.
+      ⚠️ Hay que revisar **cómo conecta el backend** (si usa `service_role`, RLS se ignora). Lo
+      analizo y te propongo el plan cuando empecemos la biblioteca global / red.
+
+### 10. 🟡 Stripe (monetización real — V3-F11, muy posterior)
+- [ ] Cuenta Stripe + claves. Gratis hasta que cobres. Solo cuando haya features Pro que vender.
+
+---
+
 ## ✅ Decisiones ya tomadas (no requieren acción)
 - **Nombre del producto:** **BandFlow** (el rebranding se aplica en la **Fase 13**).
 - **Divisa:** **EUR** (una por banda; finanzas en Fase 11).
+- **V3 (D1–D8):** plano público híbrido, biblioteca acordes+letra recortada, red acotada, giras
+  tempranas, ensayo sync v1 visual+metrónomo, Lucide, planes sin cobrar. Ver `GUIA_MAESTRA_V3.md`.

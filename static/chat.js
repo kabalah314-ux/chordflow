@@ -50,8 +50,9 @@
                 <div class="bf-card">
                     ${convs.length
                         ? `<div class="bf-list" id="chat-list">${convs.map(convRow).join('')}</div>`
-                        : `<p class="bf-muted" id="chat-list">No estás en ninguna banda.
-                            <a href="bands.html">Crea o únete a una</a> para chatear.</p>`}
+                        : bfEmpty('chat', 'Sin conversaciones',
+                            'No estás en ninguna banda. <a href="bands.html">Crea o únete a una</a> para chatear.',
+                            { id: 'chat-list' })}
                 </div>
             </div>`;
     }

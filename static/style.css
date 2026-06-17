@@ -201,7 +201,7 @@ button {
 }
 
 .line-lyric.inactive {
-    opacity: 0.5;
+    opacity: 0.4;   /* T-086: más contraste teleprompter entre la línea activa y el resto */
 }
 
 /* Línea de solo acordes (Intro, Puente sin letra) */
@@ -231,6 +231,7 @@ button {
     background: var(--chord-active-bg);
     box-shadow: 0 0 8px rgba(255, 107, 74, 0.4);
     color: #ffffff;
+    animation: chord-pulse 1.2s ease-in-out infinite;
 }
 
 /* Chords */
@@ -283,6 +284,144 @@ button {
     transform: scale(1.15) translateY(-2px);
     box-shadow: 0 0 10px rgba(255, 107, 74, 0.4);
     color: #ffffff;
+    animation: chord-pulse 1.2s ease-in-out infinite;
+}
+
+/* Teleprompter espectacular (T-086, V3-F1): el acorde activo "respira" con un glow
+   coral pulsante. Solo CSS; la lógica del motor (ids/BPM) no se toca. */
+@keyframes chord-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 107, 74, 0.45); }
+    50%      { box-shadow: 0 0 24px 4px rgba(255, 107, 74, 0.7); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .chord-container.active,
+    .line-chord-only .chord-pill.active { animation: none; }
+}
+
+/* Afinador (V3-F4, T-091): panel flotante con la nota detectada y un medidor de cents. */
+.tuner-panel {
+    position: fixed;
+    right: 18px;
+    bottom: 96px;
+    width: 240px;
+    max-width: calc(100vw - 36px);
+    background: var(--surface-color, #16161b);
+    border: 1px solid var(--accent-color);
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    padding: 1.2rem 1rem 1rem;
+    text-align: center;
+    z-index: 60;
+}
+.tuner-note { font-family: var(--font-score); font-size: 2.6rem; font-weight: 700; color: var(--accent-color); line-height: 1.1; }
+.tuner-cents { font-size: 0.85rem; color: var(--text-secondary); min-height: 1.1em; }
+.tuner-meter {
+    position: relative;
+    height: 6px;
+    margin: 0.7rem 0;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+}
+.tuner-meter::before {   /* marca del centro (afinado) */
+    content: "";
+    position: absolute;
+    left: 50%; top: -3px;
+    width: 2px; height: 12px;
+    background: var(--text-secondary);
+    transform: translateX(-50%);
+}
+.tuner-needle {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    transform: translate(-50%, -50%);
+    transition: left 0.08s linear;
+}
+.tuner-msg { font-size: 0.8rem; color: var(--text-secondary); margin: 0.6rem 0; }
+
+/* Vídeo de referencia (V3-F4, T-090): panel flotante con el YouTube de la canción. */
+.reference-panel {
+    position: fixed;
+    right: 18px;
+    bottom: 96px;
+    width: 340px;
+    max-width: calc(100vw - 36px);
+    background: #000;
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    z-index: 60;
+}
+.reference-panel__close {
+    position: absolute;
+    top: 6px; right: 6px;
+    z-index: 1;
+    width: 26px; height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+.reference-panel iframe {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+}
+
+/* Modo Directo (V3-F4, T-089): pantalla de escenario — letra grande, sin distracciones, máximo
+   contraste. Solo CSS sobre una clase `stage-mode` en <body>; la lógica del motor no cambia. */
+.stage-mode .top-bar { display: none; }
+.stage-mode #app { background: #08080a; }
+.stage-mode #score-content { padding-top: 20vh; }
+.stage-mode .line-lyric { font-size: 1.9rem; line-height: 2.4; }
+.stage-mode .line-chord-only { font-size: 1.55rem; }
+.stage-mode .chord-container { font-size: 1.45rem; top: -1.35em; }
+.stage-mode .section-name { font-size: 1.05rem; }
+.stage-mode .chord-container.active,
+.stage-mode .line-chord-only .chord-pill.active { transform: scale(1.18) translateY(-2px); }
+
+/* Bolita de posición (V3-F2, T-088): barra de progreso en el borde superior de la barra inferior.
+   Muestra dónde vas en la canción; el motor (sync_engine) no se toca, solo se lee currentBeat. */
+.bottom-bar { position: relative; }
+.song-progress {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: visible;
+}
+.song-progress__fill {
+    height: 100%;
+    width: 0;
+    background: var(--accent-color);
+    transition: width 0.12s linear;
+}
+.song-progress__dot {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 11px; height: 11px;
+    margin-left: -5.5px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    box-shadow: 0 0 8px 1px rgba(255, 107, 74, 0.7);
+    transform: translateY(-50%);
+    transition: left 0.12s linear;
+}
+.section-chip {
+    font-family: var(--font-score);
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 0.8rem;
 }
 
 /* Bottom Bar */

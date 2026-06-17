@@ -33,8 +33,19 @@
         { key: 'agenda',     label: 'Agenda' },
         { key: 'finanzas',   label: 'Finanzas' },
         { key: 'chat',       label: 'Chat' },
+        { key: 'giras',      label: 'Giras' },
         { key: 'ajustes',    label: 'Ajustes' },
     ];
+
+    const TOUR_STATUS = {
+        planning: 'En preparación', active: 'En gira', done: 'Terminada', cancelled: 'Cancelada',
+    };
+    function money(x) { return Number(x || 0).toFixed(2) + ' €'; }
+    function fmtDay(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return isNaN(d) ? '' : d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    }
 
     function errorView(msg) {
         elSpace.innerHTML = `
@@ -161,6 +172,17 @@
                     </div>
                 </div>
 
+                <div class="bs-panel" data-panel="giras" hidden>
+                    <div id="b-tours-list-wrap">
+                        <div class="bf-row bf-row--between" style="margin-bottom:.6rem;">
+                            <h3 class="bf-h3">Giras</h3>
+                            ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-tour">➕ Nueva gira</button>` : ''}
+                        </div>
+                        <div id="b-tours"><p class="loading-text">Cargando…</p></div>
+                    </div>
+                    <div id="b-tour-detail" hidden></div>
+                </div>
+
                 <div class="bs-panel" data-panel="ajustes" hidden>
                     ${ctx.iAmAdmin ? `
                         <div class="bf-card bf-stack">
@@ -203,6 +225,151 @@
         else if (key === 'agenda') loadAgenda(bandId, ctx.iAmAdmin);
         else if (key === 'finanzas') loadFinance(bandId, ctx.iAmAdmin);
         else if (key === 'chat') initChat(bandId, ctx.iAmAdmin);
+        else if (key === 'giras') loadTours(ctx.iAmAdmin);
+    }
+
+    // ── Giras (V3-F5, T-096) ────────────────────────────────────────────────
+    async function loadTours(isAdmin) {
+        const wrap = document.getElementById('b-tours');
+        if (!wrap) return;
+        try {
+            const res = await apiFetch(`/bands/${bandId}/tours`);
+            if (!res.ok) throw new Error('http');
+            const tours = await res.json();
+            if (!tours.length) {
+                wrap.innerHTML = bfEmpty('calendar', 'Sin giras todavía',
+                    isAdmin ? 'Crea tu primera gira para planificar la ruta y el presupuesto.'
+                            : 'Aún no hay giras planificadas.');
+                return;
+            }
+            wrap.innerHTML = `<ul class="setlist-list">${tours.map(tourRow).join('')}</ul>`;
+            wrap.querySelectorAll('[data-tour]').forEach(li =>
+                li.addEventListener('click', () => openTour(li.dataset.tour, isAdmin)));
+        } catch (e) {
+            wrap.innerHTML = '<p class="loading-text">No se pudieron cargar las giras.</p>';
+        }
+    }
+
+    function tourRow(t) {
+        const dates = t.start_date
+            ? `<small>${fmtDay(t.start_date)}${t.end_date ? ' – ' + fmtDay(t.end_date) : ''}</small>` : '';
+        return `<li class="setlist-song" data-tour="${escapeHtml(t.id)}" style="cursor:pointer;">
+            <span class="sl-title">${escapeHtml(t.name)}
+                <small>${escapeHtml(TOUR_STATUS[t.status] || t.status)} · ${t.stop_count} ${t.stop_count === 1 ? 'parada' : 'paradas'} · ${money(t.total_budget)}</small></span>
+            ${dates}
+        </li>`;
+    }
+
+    async function openTour(tourId, isAdmin) {
+        const listWrap = document.getElementById('b-tours-list-wrap');
+        const detail = document.getElementById('b-tour-detail');
+        listWrap.hidden = true; detail.hidden = false;
+        detail.innerHTML = '<p class="loading-text">Cargando gira…</p>';
+        let tour, concerts = [];
+        try {
+            const [rt, re] = await Promise.all([
+                apiFetch(`/bands/${bandId}/tours/${tourId}`),
+                apiFetch(`/bands/${bandId}/events`)]);
+            if (!rt.ok) throw new Error('http');
+            tour = await rt.json();
+            if (re.ok) concerts = (await re.json()).filter(e => e.type === 'concert');
+        } catch (e) { detail.innerHTML = '<p class="loading-text">No se pudo abrir la gira.</p>'; return; }
+        renderTourDetail(detail, tour, concerts, isAdmin);
+    }
+
+    function backToTours(isAdmin) {
+        document.getElementById('b-tour-detail').hidden = true;
+        document.getElementById('b-tours-list-wrap').hidden = false;
+        loadTours(isAdmin);
+    }
+
+    function renderTourDetail(detail, tour, concerts, isAdmin) {
+        const stops = (tour.stops || []).map(s => `
+            <li class="setlist-song">
+                <span class="sl-title">${escapeHtml(s.city || s.event_title || 'Parada')}
+                    <small>${s.event_title ? '🎤 ' + escapeHtml(s.event_title) : 'sin concierto ligado'}${s.event_starts_at ? ' · ' + fmtDay(s.event_starts_at) : ''}</small></span>
+                ${isAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--danger" data-del-stop="${escapeHtml(s.id)}">Quitar</button>` : ''}
+            </li>`).join('') || '<li><small>Sin paradas todavía.</small></li>';
+
+        const budget = (tour.budget_lines || []).map(b => `
+            <li class="setlist-song">
+                <span class="sl-title">${escapeHtml(b.concept)}<small>${b.category ? escapeHtml(b.category) : 'sin categoría'}</small></span>
+                <span class="bf-num">${money(b.estimated_amount)}</span>
+                ${isAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--danger" data-del-line="${escapeHtml(b.id)}">Quitar</button>` : ''}
+            </li>`).join('') || '<li><small>Sin líneas de presupuesto.</small></li>';
+
+        const concertOpts = ['<option value="">— Parada sin concierto —</option>']
+            .concat(concerts.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.title)}</option>`)).join('');
+
+        detail.innerHTML = `
+            <button class="bf-btn bf-btn--sm bf-btn--ghost" id="b-tour-back" style="margin-bottom:.6rem;">← Giras</button>
+            <div class="bf-band-banner" style="margin-bottom:1rem;">
+                <div class="bf-grow">
+                    <div class="bf-band-banner__name">${escapeHtml(tour.name)}</div>
+                    <div class="bf-band-banner__meta">${escapeHtml(TOUR_STATUS[tour.status] || tour.status)} · Presupuesto estimado: <span class="bf-num">${money(tour.total_budget)}</span></div>
+                </div>
+            </div>
+
+            <div class="bf-card bf-stack" style="margin-bottom:1rem;">
+                <h3 class="bf-h3">Ruta (${(tour.stops || []).length})</h3>
+                <ul class="setlist-list">${stops}</ul>
+                ${isAdmin ? `<div class="bf-row bf-wrap" style="gap:.4rem;">
+                    <input class="bf-input" id="b-stop-city" placeholder="Ciudad" style="max-width:140px;">
+                    <select class="bf-select" id="b-stop-event" style="max-width:200px;">${concertOpts}</select>
+                    <button class="bf-btn bf-btn--sm bf-btn--primary" id="b-add-stop">Añadir parada</button>
+                </div>` : ''}
+            </div>
+
+            <div class="bf-card bf-stack">
+                <h3 class="bf-h3">Presupuesto</h3>
+                <ul class="setlist-list">${budget}</ul>
+                ${isAdmin ? `<div class="bf-row bf-wrap" style="gap:.4rem;">
+                    <input class="bf-input" id="b-line-concept" placeholder="Concepto" style="max-width:160px;">
+                    <input class="bf-input bf-num" id="b-line-amount" type="number" min="0" step="0.01" placeholder="0.00" style="max-width:100px;">
+                    <button class="bf-btn bf-btn--sm bf-btn--primary" id="b-add-line">Añadir línea</button>
+                </div>` : ''}
+            </div>`;
+
+        document.getElementById('b-tour-back').addEventListener('click', () => backToTours(isAdmin));
+        const reopen = () => openTour(tour.id, isAdmin);
+
+        const addStop = document.getElementById('b-add-stop');
+        if (addStop) addStop.addEventListener('click', async () => {
+            const city = document.getElementById('b-stop-city').value.trim();
+            const eventId = document.getElementById('b-stop-event').value || null;
+            if (!city && !eventId) { toast('Indica una ciudad o un concierto.', 'error'); return; }
+            await postTour(`/bands/${bandId}/tours/${tour.id}/stops`,
+                { city: city || null, event_id: eventId }, reopen);
+        });
+        const addLine = document.getElementById('b-add-line');
+        if (addLine) addLine.addEventListener('click', async () => {
+            const concept = document.getElementById('b-line-concept').value.trim();
+            const amount = document.getElementById('b-line-amount').value;
+            if (!concept || amount === '') { toast('Concepto e importe son obligatorios.', 'error'); return; }
+            await postTour(`/bands/${bandId}/tours/${tour.id}/budget`,
+                { concept, estimated_amount: amount }, reopen);
+        });
+        detail.querySelectorAll('[data-del-stop]').forEach(b => b.addEventListener('click', () =>
+            delTour(`/bands/${bandId}/tours/${tour.id}/stops/${b.dataset.delStop}`, reopen)));
+        detail.querySelectorAll('[data-del-line]').forEach(b => b.addEventListener('click', () =>
+            delTour(`/bands/${bandId}/tours/${tour.id}/budget/${b.dataset.delLine}`, reopen)));
+    }
+
+    async function postTour(url, body, onDone) {
+        try {
+            const res = await apiFetch(url, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body) });
+            if (!res.ok) throw new Error('http');
+            onDone();
+        } catch (e) { toast('No se pudo guardar.', 'error'); }
+    }
+    async function delTour(url, onDone) {
+        try {
+            const res = await apiFetch(url, { method: 'DELETE' });
+            if (!res.ok && res.status !== 204) throw new Error('http');
+            onDone();
+        } catch (e) { toast('No se pudo quitar.', 'error'); }
     }
 
     function wire(band, active, ctx) {
@@ -214,6 +381,19 @@
         if (newEv) newEv.addEventListener('click', () => newEvent(bandId));
         const newTx = document.getElementById('b-new-tx');
         if (newTx) newTx.addEventListener('click', () => newTransaction(bandId, active));
+        const newTour = document.getElementById('b-new-tour');
+        if (newTour) newTour.addEventListener('click', async () => {
+            const name = await promptModal('¿Cómo se llama la gira?',
+                { okText: 'Crear', placeholder: 'Ej: Gira Verano 2026' });
+            if (!name || !name.trim()) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/tours`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name.trim() }) });
+                if (!res.ok) throw new Error('http');
+                loadTours(ctx.iAmAdmin);
+            } catch (e) { toast('No se pudo crear la gira.', 'error'); }
+        });
         const settle = document.getElementById('b-settle');
         if (settle) settle.addEventListener('click', () => newSettlement(bandId, active));
 

@@ -45,6 +45,29 @@ def test_band_space_pestana_reusa_repertorio(page, live_server, api):
     assert page.locator("#b-add-song").count() == 1   # admin → botón copiar visible
 
 
+def test_band_space_giras(page, live_server, api):
+    """T-096 (V3-F5): la pestaña Giras lista/crea giras y abre su detalle (ruta + presupuesto)."""
+    bid = api.post("/bands/", json={"name": "Banda Giras UI"}).json()["id"]
+    page.goto(live_server + f"/static/band.html?id={bid}", wait_until="networkidle")
+    page.wait_for_selector(".bf-tabs", timeout=8000)
+    page.click('.bf-tab[data-tab="giras"]')
+    page.wait_for_selector("#b-tours", timeout=8000)
+
+    # Crear una gira con el botón + promptModal
+    page.click("#b-new-tour")
+    page.fill('.modal-overlay [data-act="input"]', "Gira Test UI")
+    page.click('.modal-overlay [data-act="ok"]')
+
+    # Aparece en la lista
+    page.wait_for_selector("#b-tours .setlist-song", timeout=8000)
+    assert "Gira Test UI" in page.inner_text("#b-tours")
+
+    # Abrir el detalle: ruta + presupuesto, con el formulario de añadir parada (soy admin)
+    page.click("#b-tours [data-tour]")
+    page.wait_for_selector("#b-tour-detail #b-add-stop", timeout=8000)
+    assert "Presupuesto" in page.inner_text("#b-tour-detail")
+
+
 def test_band_space_id_invalido_muestra_error(page, live_server, api):
     # Una banda inexistente → la vista avisa con elegancia, no se rompe.
     page.goto(live_server + "/static/band.html?id=no-existe-1234", wait_until="networkidle")

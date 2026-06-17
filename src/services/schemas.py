@@ -100,6 +100,7 @@ class SongBase(BaseModel):
     is_public: bool = False
     source_type: Optional[str] = None
     source_file_path: Optional[str] = None
+    reference_url: Optional[str] = Field(None, max_length=512)
     tags: Optional[List[str]] = None
     duration_beats: Optional[float] = None
 
@@ -126,6 +127,7 @@ class SongUpdate(BaseModel):
     capo: Optional[int] = Field(None, ge=0, le=24)
     instrument: Optional[str] = None
     is_public: Optional[bool] = None
+    reference_url: Optional[str] = Field(None, max_length=512)
 
 class SongResponse(SongBase):
     id: str
@@ -228,10 +230,14 @@ class BandCreate(BaseModel):
     avatar_url: Optional[str] = Field(None, max_length=512)
 
 
+BandPlan = Literal["free", "pro"]
+
+
 class BandUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     avatar_url: Optional[str] = Field(None, max_length=512)
+    plan: Optional[BandPlan] = None  # andamiaje SaaS (V3-F3); lo cambia un admin
 
 
 class BandResponse(BaseModel):
@@ -240,6 +246,7 @@ class BandResponse(BaseModel):
     description: Optional[str] = None
     avatar_url: Optional[str] = None
     created_by: str
+    plan: BandPlan = "free"
     created_at: datetime
     updated_at: datetime
 
@@ -252,6 +259,7 @@ class BandSummary(BaseModel):
     id: str
     name: str
     avatar_url: Optional[str] = None
+    plan: BandPlan = "free"
     role: Literal["admin", "member", "guest"]  # mi rol en esta banda
     member_count: int = 0
 
@@ -553,3 +561,139 @@ class MyConversation(BaseModel):
     last_body: Optional[str] = None
     last_author: Optional[str] = None
     last_at: Optional[datetime] = None
+
+
+# ── V3 — Giras (V3-F5) ────────────────────────────────────────────────────────
+TourStatus = Literal["planning", "active", "done", "cancelled"]
+
+
+class TourBudgetLineCreate(BaseModel):
+    concept: str = Field(min_length=1, max_length=255)
+    category: Optional[str] = None
+    estimated_amount: Decimal = Field(ge=0, max_digits=10, decimal_places=2)
+
+
+class TourBudgetLineResponse(BaseModel):
+    id: str
+    concept: str
+    category: Optional[str] = None
+    estimated_amount: Decimal
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TourStopCreate(BaseModel):
+    event_id: Optional[str] = None     # concierto de la banda (validado en el router)
+    city: Optional[str] = Field(None, max_length=255)
+    notes: Optional[str] = None
+
+
+class TourStopUpdate(BaseModel):
+    event_id: Optional[str] = None
+    city: Optional[str] = Field(None, max_length=255)
+    notes: Optional[str] = None
+    position: Optional[int] = Field(None, ge=0)
+
+
+class TourStopResponse(BaseModel):
+    id: str
+    event_id: Optional[str] = None
+    position: int
+    city: Optional[str] = None
+    notes: Optional[str] = None
+    # Enriquecido desde el evento ligado (si lo hay), para pintar la ruta sin otra llamada.
+    event_title: Optional[str] = None
+    event_starts_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TourBase(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    status: TourStatus = "planning"
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class TourCreate(TourBase):
+    pass
+
+
+class TourUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    status: Optional[TourStatus] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class TourSummary(BaseModel):
+    id: str
+    band_id: str
+    name: str
+    status: TourStatus
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    stop_count: int = 0
+    total_budget: Decimal = Decimal("0.00")
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TourResponse(TourBase):
+    id: str
+    band_id: str
+    created_at: datetime
+    updated_at: datetime
+    stops: List[TourStopResponse] = []
+    budget_lines: List[TourBudgetLineResponse] = []
+    total_budget: Decimal = Decimal("0.00")
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ── V3 — Biblioteca global / catálogo público (V3-F9, D9) ─────────────────────
+class PublicScoreSummary(BaseModel):
+    id: str
+    work_id: str
+    title: str
+    artist: Optional[str] = None
+    key_root: Optional[str] = None
+    key_mode: Optional[str] = None
+    bpm: Optional[int] = None
+    publisher_name: Optional[str] = None   # nombre del que la publicó (atribución)
+    rating_avg: float = 0
+    rating_count: int = 0
+    import_count: int = 0
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ScoreCommentOut(BaseModel):
+    id: str
+    user_id: str
+    author_name: Optional[str] = None
+    body: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicScoreDetail(PublicScoreSummary):
+    sections: List[Any] = []               # snapshot del árbol (lo pinta score_render.js)
+    comments: List[ScoreCommentOut] = []
+    my_rating: Optional[int] = None
+
+
+class CatalogPublishRequest(BaseModel):
+    """Subir una de mis canciones al catálogo global (flujo "ponla aquí", D9)."""
+    song_id: str
+
+
+class CatalogImportRequest(BaseModel):
+    """Importar una partitura del catálogo a mi espacio: a una banda mía o (null) a lo personal."""
+    band_id: Optional[str] = None
+
+
+class ScoreRatingSet(BaseModel):
+    stars: int = Field(ge=1, le=5)
+
+
+class CatalogCommentCreate(BaseModel):
+    body: str = Field(min_length=1, max_length=2000)

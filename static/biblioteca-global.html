@@ -7,14 +7,17 @@
     <meta name="theme-color" content="#0d0d10">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>BandFlow — Agenda</title>
+    <title>BandFlow — Explorar (biblioteca global)</title>
+    <!-- style.css: estilos del visor (score_render) en el preview. design-system+shell: el shell. -->
+    <link rel="stylesheet" href="style.css?v=b3988ed7">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="design-system.css?v=6f1bff6a">
     <link rel="stylesheet" href="shell.css?v=f583ba6a">
 </head>
 <body>
     <div class="bf-shell">
         <main class="bf-shell-main">
-            <div id="agenda" class="bf-page"><p class="bf-muted">Cargando tu agenda…</p></div>
+            <div id="catalog" class="bf-page"><p class="bf-muted">Cargando la biblioteca global…</p></div>
         </main>
     </div>
 
@@ -24,7 +27,8 @@
     <script src="auth.js?v=55a0092d"></script>
     <script src="util.js?v=c0e1df98"></script>
     <script src="icons.js?v=371d5b93"></script>
+    <script src="score_render.js?v=d66bbc20"></script>
     <script src="shell.js?v=83483c3d"></script>
-    <script src="agenda.js?v=5445cb65"></script>
+    <script src="catalogo.js?v=d378e777"></script>
 </body>
 </html>

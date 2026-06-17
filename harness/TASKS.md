@@ -22,6 +22,58 @@ CLIs ya logueadas en la máquina: `gh` y `vercel` (ambas `kabalah314-ux`). Secre
 
 ## 🟢 En curso
 
+### 🌍 V3 — Red musical con plano público (arranque 2026-06-17)
+
+Dirección aprobada en `GUIA_MAESTRA_V3.md` (D1–D8). **✅ V3-F1 (pulido de diseño) COMPLETA.**
+**V3-F2 — núcleo (bolita) COMPLETO:**
+- ✅ **T-088 — Bolita de posición** (client-side): barra de progreso + dot + sección actual sobre el
+  timeline de beats ya existente; `app.js`+`style.css`, motor intacto. e2e `test_bolita_de_posicion_avanza`.
+  run_checks VERDE (140·61). Diferido: mapa persistido + "tap para aprender" → junto a V3-F6 (sync).
+
+**✅ V3-F4 — Quick wins de directo (COMPLETA):**
+- ✅ **T-089 — Modo Directo** (escenario pantalla completa): `stage-mode` + Fullscreen API + Esc.
+  e2e `test_modo_directo_alterna_y_oculta_barra`.
+- ✅ **T-090 — Vídeo de referencia (YouTube)**: `Song.reference_url` (modelo+schema+migración
+  `b3f1a9c2d4e5`) + input en editor + botón 🎬. e2e ×2. ⚠️ Pendiente migración a Postgres prod.
+- ✅ **T-091 — Afinador** (`tuner.js`, autocorrelación pura `bfDetectPitch` + micro + panel). e2e.
+- ✅ **T-092 — Pasapáginas/pedalera** (PageDown/PageUp/flechas → setlist o scroll). e2e.
+- Diferido: loop A-B / metrónomo *lookahead* → V3-F6 (requieren seek/bucle en el motor).
+- run_checks TODO VERDE (140 unit · 66 e2e).
+
+**✅ V3-F5 — Gestión de giras (COMPLETA):**
+- ✅ **T-093/094/095 — Backend**: modelos `Tour`/`TourStop`/`TourBudgetLine` + migración
+  `c5d7e9f1a2b3` + schemas + `tours_router.py` (CRUD admin, paradas ligadas a conciertos, presupuesto
+  con total, miembros leen). Test `test_api_tours` (5, incl. aislamiento). ⚠️ Migración pendiente en prod.
+- ✅ **T-096 — Frontend**: pestaña Giras en `band.html` (lista/crear/detalle con ruta + presupuesto).
+  e2e `test_band_space_giras`. Diferido: mapa Leaflet, ligar gasto real, co-organización. VERDE (145·67).
+
+**V3-F9 — Biblioteca global (EL RECLAMO, D9) — backend COMPLETO + revisado:**
+- ✅ **T-100/101 — Backend**: `MusicalWork`/`PublicScore`/`ScoreRating`/`ScoreComment` + migración
+  `e9f1a2b3c4d5` + `catalog_router` (publicar/buscar/detalle/importar/valorar/comentar). `test_api_catalog`.
+- ✅ **T-102 — Revisión ultracode aplicada** (33 agentes · 20 hallazgos): letra recortada en público
+  (D2), round-trip completo (tabs/reference_url), dedup D9 (409), try/except + carrera work, Decimal,
+  banda no borrada, índice+updated_at. Diferido: XSS (frontend), rate-limit comentarios. VERDE (177·67).
+  ⚠️ Migración pendiente en Postgres prod.
+- ✅ **T-103 — Frontend**: `biblioteca-global.html`+`catalogo.js` (Explorar): buscar · "ponla aquí"
+  (editor publica por defecto, D9) · preview recortado · importar · valorar/comentar (escapado). Item
+  "Explorar" en el lateral. e2e `test_catalogo`. **✅ V3-F9 COMPLETA.** run_checks VERDE (177·71).
+
+**V3-F3 — Habilitadores (parte de código COMPLETA):**
+- ✅ **T-097 — Andamiaje `Band.plan`** (Free/Pro, sin cobrar): columna + migración `d7e9f1a2b3c4` +
+  expuesto en API + editable por admin (inválido→422). Test `test_band_plan`. ⚠️ Migración pendiente prod.
+- ✅ **T-098 — Gate de aislamiento parametrizado**: 16 rutas de banda → ajeno 403/404. VERDE (163·67).
+- ⛔ **T-099 — Storage (Supabase)**: BLOQUEADO, necesita que Oscar cree bucket(s) + políticas + env vars.
+
+- ✅ **T-084 — Estados de UI base** (`design-system.css`): deshabilitado, cargando (`.bf-spinner` +
+  `[data-loading]`), `.bf-skeleton`, `.bf-empty`, `:focus-visible` y `.bf-num`. Test
+  `test_design_system_tiene_estados_de_ui`. run_checks TODO VERDE.
+- ✅ **T-085 — Iconos SVG (Lucide)**: `static/icons.js` (`bfIcon`, auto-alojado) en el shell (nav +
+  tema + ajustes + logout). e2e `test_shell_nav_usa_iconos_svg`.
+- ✅ **T-086 — Teleprompter espectacular**: acorde activo con glow pulsante (`chord-pulse`) +
+  contraste teleprompter, solo CSS. e2e `test_acorde_activo_tiene_glow`.
+- ✅ **T-087 — Empty states + skeletons**: helper `bfEmpty` en `icons.js`; Inicio/Agenda/Finanzas/
+  Chat con `.bf-empty`; skeleton de carga en Inicio. e2e `test_ui_helper_empty_state`. VERDE (140·60).
+
 ### ✅ FASE 13 COMPLETA (Shell + diseño + vistas agregadas + rebranding BandFlow)
 
 - ✅ **Fase A — Tokens BandFlow** (actualiza T-073): `design-system.css` al look del prototipo

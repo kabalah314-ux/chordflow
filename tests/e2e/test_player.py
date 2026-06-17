@@ -125,6 +125,124 @@ def test_autoscroll_mantiene_visible_el_acorde_activo(page, live_server, api):
     assert page.evaluate("document.getElementById('score-container').scrollTop") > 0
 
 
+def test_acorde_activo_tiene_glow(page, live_server, api):
+    """T-086 (V3-F1 teleprompter espectacular): al reproducir, el acorde activo recibe el realce
+    visual (glow coral) — su box-shadow computado deja de ser 'none'. Solo CSS; la estructura del
+    render no cambia (sigue habiendo acordes, como verifican los demás tests)."""
+    _crear_y_abrir(page, live_server, api, title="Cancion Glow")
+    page.locator("#score-container").click()
+    page.click("#btn-play-pause")
+    page.wait_for_timeout(700)
+    page.click("#btn-play-pause")  # pausar: el acorde activo conserva la clase .active
+    glow = page.evaluate("""() => {
+        const el = document.querySelector('.chord-container.active, .chord-pill.active');
+        if (!el) return null;
+        return getComputedStyle(el).boxShadow;
+    }""")
+    assert glow and glow != "none", f"el acorde activo no tiene glow: {glow}"
+
+
+def test_bolita_de_posicion_avanza(page, live_server, api):
+    """T-088 (V3-F2): la bolita de posición progresa con la reproducción — el relleno
+    (#song-progress-fill) pasa de 0% y se muestra la sección actual. Todo derivado del beat
+    existente; el motor (sync_engine.js) no se toca."""
+    wipe_songs(api)
+    sid = api.post("/songs/", json=_payload_largo()).json()["id"]
+    page.goto(live_server + f"/static/index.html?songId={sid}", wait_until="networkidle")
+    page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
+    page.locator("#score-container").click()
+    page.click("#btn-play-pause")
+    page.wait_for_timeout(1200)
+    page.click("#btn-play-pause")  # pausar
+    width = page.evaluate("() => document.getElementById('song-progress-fill').style.width")
+    pct = float(width.replace("%", "")) if width and width.endswith("%") else 0.0
+    assert pct > 0.0, f"la bolita no avanzó: {width!r}"
+    seccion = page.inner_text("#current-section-display").strip()
+    assert seccion != "", "no se muestra la sección actual"
+
+
+def test_modo_directo_alterna_y_oculta_barra(page, live_server, api):
+    """T-089 (V3-F4): el Modo Directo añade la clase `stage-mode` (escenario sin distracciones:
+    oculta la barra superior y agranda la letra) y alterna al volver a pulsar. Funciona aunque el
+    navegador bloquee la pantalla completa (la clase es independiente del Fullscreen API). Solo
+    CSS/JS de control; el motor (sync_engine.js) no se toca."""
+    _crear_y_abrir(page, live_server, api, title="Cancion Directo")
+
+    def top_display():
+        return page.evaluate("() => getComputedStyle(document.querySelector('.top-bar')).display")
+
+    assert "stage-mode" not in (page.get_attribute("body", "class") or "")
+    assert top_display() != "none"
+    page.click("#btn-stage")
+    assert "stage-mode" in (page.get_attribute("body", "class") or "")
+    assert top_display() == "none", "el Modo Directo no oculta la barra superior"
+    # La letra de la partitura es mayor en escenario.
+    lyric_fs = page.evaluate(
+        "() => { const e = document.querySelector('.line-lyric'); return e ? parseFloat(getComputedStyle(e).fontSize) : null; }")
+    if lyric_fs is not None:
+        assert lyric_fs > 24, f"la letra no se agranda en escenario ({lyric_fs}px)"
+    page.click("#btn-stage")
+    assert "stage-mode" not in (page.get_attribute("body", "class") or "")
+    assert top_display() != "none"
+
+
+def test_afinador_detecta_y_abre(page, live_server, api):
+    """T-091 (V3-F4): la detección de tono (función pura por autocorrelación) reconoce una onda
+    sintética de 440 Hz como La4, y el panel del afinador abre/cierra. La detección se prueba sin
+    micrófono (función pura `bfDetectPitch`); el plumbing del micro va aparte."""
+    _crear_y_abrir(page, live_server, api, title="Cancion Afinador")
+    freq = page.evaluate("""() => {
+        const sr = 44100, N = 2048, f = 440;
+        const buf = new Float32Array(N);
+        for (let i = 0; i < N; i++) buf[i] = Math.sin(2 * Math.PI * f * i / sr);
+        return window.bfDetectPitch(buf, sr);
+    }""")
+    assert abs(freq - 440) < 8, f"detección de 440 Hz incorrecta: {freq}"
+    note = page.evaluate("() => window.bfFreqToNote(440)")
+    assert note["name"] == "La" and note["octave"] == 4, note
+    assert page.is_visible("#tuner-panel") is False
+    page.click("#btn-tuner")
+    assert page.is_visible("#tuner-panel") is True
+    page.click("#tuner-close")
+    assert page.is_visible("#tuner-panel") is False
+
+
+def test_pasapaginas_hace_scroll(page, live_server, api):
+    """T-092 (V3-F4): el pasapáginas (PageDown, como envían los pedales Bluetooth) hace scroll de
+    una página en la partitura cuando no hay setlist. Manos libres en el atril."""
+    wipe_songs(api)
+    sid = api.post("/songs/", json=_payload_largo()).json()["id"]
+    page.goto(live_server + f"/static/index.html?songId={sid}", wait_until="networkidle")
+    page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
+    page.locator("#score-container").click()
+    before = page.evaluate("document.getElementById('score-container').scrollTop")
+    page.keyboard.press("PageDown")
+    page.wait_for_timeout(600)
+    after = page.evaluate("document.getElementById('score-container').scrollTop")
+    assert after > before, f"el pasapáginas no avanzó la partitura ({before} -> {after})"
+
+
+def test_video_de_referencia_youtube(page, live_server, api):
+    """T-090 (V3-F4): si la canción tiene reference_url de YouTube, aparece el botón 🎬 y al pulsarlo
+    se embebe el iframe del vídeo (id parseado del enlace)."""
+    wipe_songs(api)
+    payload = sample_song_payload(title="Con Referencia")
+    payload["reference_url"] = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    sid = api.post("/songs/", json=payload).json()["id"]
+    page.goto(live_server + f"/static/index.html?songId={sid}", wait_until="networkidle")
+    page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
+    assert page.is_visible("#btn-reference"), "no aparece el botón de vídeo de referencia"
+    page.click("#btn-reference")
+    src = page.get_attribute("#reference-embed iframe", "src")
+    assert src and "youtube.com/embed/dQw4w9WgXcQ" in src, f"iframe de referencia incorrecto: {src!r}"
+
+
+def test_sin_referencia_no_hay_boton(page, live_server, api):
+    """T-090: una canción sin reference_url no muestra el botón de vídeo de referencia."""
+    _crear_y_abrir(page, live_server, api, title="Sin Referencia")
+    assert page.is_visible("#btn-reference") is False
+
+
 def test_export_pdf_oculta_controles(page, live_server, api):
     """El botón de PDF existe y, en media 'print', se ocultan los controles y la partitura
     queda visible (Fase 5). No imprime de verdad; emula el media print para validar el CSS."""

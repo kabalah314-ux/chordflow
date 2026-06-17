@@ -42,8 +42,9 @@
                 <div class="bf-card">
                     ${balances.length
                         ? `<div class="bf-list" id="finanzas-list">${balances.map(balanceRow).join('')}</div>`
-                        : `<p class="bf-muted" id="finanzas-list">No estás en ninguna banda con cuentas.
-                            <a href="bands.html">Entra en una banda</a>.</p>`}
+                        : bfEmpty('wallet', 'Sin cuentas todavía',
+                            'No estás en ninguna banda con cuentas. <a href="bands.html">Entra en una banda</a>.',
+                            { id: 'finanzas-list' })}
                 </div>
             </div>`;
     }
