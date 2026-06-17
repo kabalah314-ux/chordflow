@@ -4,7 +4,7 @@
  *  - Navegaciones HTML → network-first (fresco online; caché como respaldo offline).
  *  - Estáticos (js/css/png con ?v=<hash>, inmutables) → cache-first.
  */
-const CACHE = 'chordflow-shell-v1';
+const CACHE = 'chordflow-shell-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -23,7 +23,7 @@ self.addEventListener('fetch', (e) => {
     // Solo gestionamos GET del mismo origen. POST/API externas (Supabase, OpenRouter, CDN) → red.
     if (req.method !== 'GET' || url.origin !== self.location.origin) return;
     // Endpoints dinámicos: nunca cachear (datos del usuario, auth, config).
-    if (/^\/(songs|setlists|bands|invites|profile|me|import|config|health)/.test(url.pathname)) return;
+    if (/^\/(songs|setlists|bands|invites|profile|me|import|config|health|catalog|tours)/.test(url.pathname)) return;
 
     // HTML / navegaciones: red primero, caché de respaldo si no hay conexión.
     if (req.mode === 'navigate' || url.pathname.endsWith('.html')) {
