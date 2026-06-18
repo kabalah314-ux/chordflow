@@ -2,9 +2,39 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-06-15
+> Última actualización: 2026-06-18
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🔐 T-046 — Login con Google (OAuth) CONFIGURADO Y VERIFICADO (2026-06-18)
+
+**Qué:** activado el inicio de sesión con Google. El **código ya estaba** desde antes
+(`auth.js::signInGoogle` con `signInWithOAuth({provider:'google', redirectTo:.../app.html})`, botón
+"Entrar con Google" en `login.html`, handler en `login.js`); lo único que faltaba era la
+**configuración externa del proveedor**, que no vive en el repo:
+
+1. **Google Cloud Console** — proyecto nuevo + credencial *OAuth client ID* (tipo "Web application"):
+   - Client ID: `630184504034-bra6igkkrje527klmhms2m06vvfbpun1.apps.googleusercontent.com`.
+   - Orígenes JavaScript autorizados: `https://chordflow-ecru.vercel.app` y `http://127.0.0.1:8000`.
+   - Redirect URI autorizada: `https://fwynfifvtthtpzpejfhb.supabase.co/auth/v1/callback` (callback de Supabase).
+2. **Supabase** — activado el proveedor Google + URLs de retorno, vía **Management API** (no por panel):
+   `PATCH https://api.supabase.com/v1/projects/fwynfifvtthtpzpejfhb/config/auth` con
+   `external_google_enabled=true`, `external_google_client_id`, `external_google_secret`,
+   `site_url=https://chordflow-ecru.vercel.app` y
+   `uri_allow_list=".../static/app.html, http://127.0.0.1:8000/static/app.html"` (prod + local).
+
+**Por qué:** era una de las deudas de Fase 5 (`PENDIENTES_OSCAR.md` §2) que requería acción de Oscar
+en Google Cloud + Supabase. Reduce fricción de registro/login.
+
+**Cómo/Verificación:** probado en local (`uvicorn` con `/config` `test_mode:false` → Supabase real).
+El flujo OAuth completó: Google autenticó a `oscarcon314@gmail.com` (app_metadata `provider: google`)
+y devolvió un `access_token` válido a `app.html`. (Un primer intento falló solo porque el servidor
+local de fondo se había caído al volver de Google — relanzado de forma persistente y reverificado;
+en producción no aplica.) Es **configuración externa de Supabase**, no cubrible por la suite local;
+el botón/flujo del front ya estaban cubiertos. ⚠️ Pendiente de Oscar: **revocar el Personal Access
+Token `sbp_` de Supabase** usado para el `PATCH` (quedó expuesto en chat).
 
 ---
 

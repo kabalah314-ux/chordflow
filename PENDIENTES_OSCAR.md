@@ -16,13 +16,15 @@ volvió a ver en el chat al hacer el despliegue del 2026-06-16 → cámbiala cua
 - [ ] Avísame con las nuevas (o actualízalas tú) en **Vercel** (`DATABASE_URL`, claves) y en
       `.env.local`. *(El `.env.local` lo actualizo yo si me pasas los valores.)*
 
-### 2. 🔵 Login con Google (T-046)
-- [ ] **Google Cloud Console** → crear proyecto → *APIs & Services → Credentials* →
-      **OAuth client ID** (tipo "Web application").
-- [ ] Copiar el **Redirect URI** de Supabase (*Authentication → Providers → Google*) y pegarlo en
-      Google Cloud como *Authorized redirect URI*.
-- [ ] Pegar *Client ID* + *Client Secret* en **Supabase → Authentication → Providers → Google** y
-      **activar** el proveedor.  *(El botón de Google ya existe en el front.)*
+### 2. ✅ Login con Google (T-046) — HECHO (2026-06-18)
+- [x] **Google Cloud Console** → proyecto + **OAuth client ID** ("Web application") creado.
+- [x] **Redirect URI** de Supabase (`https://fwynfifvtthtpzpejfhb.supabase.co/auth/v1/callback`)
+      añadida en Google Cloud + orígenes JS (prod + `127.0.0.1:8000`).
+- [x] *Client ID* + *Client Secret* + URLs de retorno aplicados en **Supabase** (vía Management API)
+      y proveedor Google **activado**. Verificado: login real con `oscarcon314@gmail.com` ✅.
+- [ ] 🔴 **REVOCAR el Personal Access Token `sbp_` de Supabase** usado para configurarlo (se vio en
+      chat). [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens).
+      Ya cumplió su función; no afecta a nada borrarlo.
 
 ### 3. ✉️ Emails de auth con marca (T-047)
 - [ ] Supabase → **Authentication → Email Templates** → personalizar confirmación / recuperación de

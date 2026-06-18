@@ -3,7 +3,7 @@
 > Una tarea activa a la vez (recomendado). Al cerrarla, moverla a "Hechas".
 > Abrir tareas nuevas copiando `templates/TASK_TEMPLATE.md`.
 > Backlog completo y priorizado en `ROADMAP.md`. Diseño del molde en `MOLDE.md`.
-> **Última sincronización: 2026-06-15.**
+> **Última sincronización: 2026-06-18.**
 
 ---
 
@@ -141,8 +141,9 @@ Dirección en `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md`; backlog en 
 3. 🔐 **Por cada ruta de banda, su test de aislamiento** ("usuario ajeno → 403/404"). Innegociable.
 4. 🔎 Al cerrar la fase: `python harness/revision.py fase7 --serve` → veredicto en `REVISIONES.md`.
 
-**Deuda previa aparcada (no bloquea el giro):** 🟢 Tablaturas (UI de `TabLine`); 🔵 T-046 Login con
-Google y ✉️ T-047 emails con marca (ambas requieren acción del usuario en Google Cloud / Supabase).
+**Deuda previa aparcada (no bloquea el giro):** 🟢 Tablaturas (UI de `TabLine`); ✉️ T-047 emails con
+marca (Supabase Email Templates). ✅ **T-046 Login con Google — HECHO (2026-06-18)** (Google Cloud +
+Supabase Management API; verificado con `oscarcon314@gmail.com`; ⚠️ revocar el PAT `sbp_` usado).
 
 > ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar.
 > ⚠️ Seguridad: rotar `sb_secret_` y contraseña de Postgres (compartidas en chat).

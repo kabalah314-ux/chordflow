@@ -181,8 +181,15 @@
       configurable) extrae la partitura en el formato del editor → precarga el textarea. `importer.py`
       + `import_router.py` + botón en el editor. Tests `test_import.py` + e2e. Verificado en producción
       con CifraClub y e-chords (UG bloquea por Cloudflare incluso vía Jina). Coste 0.
-- [ ] **T-046** 🟢 **Login con Google**: configurar OAuth (credenciales en Google Cloud + activar el
-      provider Google en Supabase con el redirect URI del proyecto). El botón ya existe en el front.
+- [x] **T-046** 🟢 **Login con Google** — **CONFIGURADO Y VERIFICADO** (2026-06-18). El código ya
+      existía (`auth.js::signInGoogle`, botón en `login.html`, handler en `login.js`); solo faltaba la
+      config externa. Hecho: (1) **Google Cloud** — proyecto + OAuth client ID "Web application"
+      (Client ID `630184504034-…apps.googleusercontent.com`), orígenes JS (`chordflow-ecru.vercel.app`
+      + `127.0.0.1:8000`) y redirect URI de Supabase (`https://fwynfifvtthtpzpejfhb.supabase.co/auth/v1/callback`).
+      (2) **Supabase** — proveedor Google activado + `site_url` + `uri_allow_list` (prod + local)
+      vía **Management API** (`PATCH /v1/projects/{ref}/config/auth`, `external_google_enabled=true`).
+      Verificado: el OAuth devolvió un token válido autenticando a `oscarcon314@gmail.com` (provider
+      `google`). Es config externa (Supabase), no cubierta por la suite. ⚠️ Revocar el PAT `sbp_` usado.
 - [ ] **T-047** 🟢 **Personalizar emails de auth** (Supabase → Email Templates: marca ChordFlow) y
       afinar los mensajes propios del front (`login.js`).
 
