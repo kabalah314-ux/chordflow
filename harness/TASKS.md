@@ -33,7 +33,10 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 - ✅ **T-111 — Pipeline en la agenda** (2026-06-20): badge de estado de booking por evento + selector
   de admin para mover el funnel (lead→…→done/cancelled, PATCH `status`) + estado inicial en el alta.
   Backend ya listo (admin-only). e2e `test_booking_pipeline_cambiar_estado_de_evento`. run_checks VERDE.
-- ⏳ **T-112** Recordatorios · ⏳ **T-113** `EmailTemplate` · diferido: campos de booking (contacto/caché/Venue).
+- ✅ **T-112 — Recordatorios in-app** (2026-06-20): "⏰ Pronto" (próximos 7 días) + resumen "🔔 N en
+  booking sin confirmar" en la agenda (cliente). e2e. run_checks VERDE.
+- ⏳ **T-113** `EmailTemplate` (bloqueado-ish: el envío real necesita infra) · diferido: campos de
+  booking (contacto/caché/Venue), recordatorios por email/push reales.
 
 ### ✅ T-110 — Apunte por canción en el setlist (SetlistItem.note) (2026-06-20)
 Los setlists de banda admiten una nota por canción ("capo 2", "acústica"). El modelo+lectura existían

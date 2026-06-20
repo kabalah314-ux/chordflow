@@ -8,6 +8,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🔔 T-112 — Recordatorios in-app de la agenda (Fase 14) (2026-06-20)
+
+**Qué:** la agenda marca con **⏰ Pronto** los eventos en los próximos 7 días y muestra un resumen
+**🔔 N en booking sin confirmar** (eventos en el funnel `lead`/`contacted`/`negotiating`). Todo
+calculado en el cliente sobre los eventos que ya carga la agenda.
+
+**Por qué:** continúa la Fase 14 (Booking) con la parte de **recordatorios que NO necesita infra de
+envío**. Da visibilidad de un vistazo a lo inminente y a los "deals" de booking abiertos, que es
+justo lo accionable del funnel.
+
+**Cómo/Verificación:** solo frontend en `loadAgenda` (`isSoon` + `enBooking`) + CSS `.ev-soon`/
+`.agenda-booking-note`. e2e `test_recordatorios_agenda_pronto_y_booking` (evento a 1 día → "Pronto";
+un lead → "en booking sin confirmar"). `run_checks` TODO VERDE (174 unit · 81 e2e [+1]). **Diferido:**
+recordatorios **por email/push reales** (necesitan infra de envío — Supabase/email, junto a T-047 y
+T-113 `EmailTemplate`).
+
+---
+
 ## 📇 T-111 — Pipeline de booking en la agenda (`Event.status`) — arranca la Fase 14 (2026-06-20)
 
 **Qué:** la agenda muestra el **estado de booking** de cada evento (badge: Lead · Contactado ·

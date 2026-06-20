@@ -255,6 +255,14 @@ button {
 }
 .ev-status-sel { font-size: 0.75rem; padding: 0.15rem 0.3rem; max-width: 130px; }
 
+/* Recordatorios in-app de la agenda (T-112): evento próximo + resumen del funnel de booking */
+.ev-soon { display: inline-block; margin-left: 0.4rem; font-size: 0.72rem; color: var(--accent-color); font-weight: 600; }
+.agenda-booking-note {
+    margin: 0 0 0.6rem; padding: 0.4rem 0.7rem; font-size: 0.85rem;
+    color: var(--accent-color); background: rgba(255, 107, 74, 0.08);
+    border-left: 2px solid var(--accent-color); border-radius: 6px;
+}
+
 /* Línea de solo acordes (Intro, Puente sin letra) */
 .line-chord-only {
     display: flex;

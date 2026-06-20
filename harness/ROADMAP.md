@@ -444,7 +444,9 @@
         admin para mover el funnel (lead→…→done/cancelled vía PATCH `status`) + estado inicial en el alta.
         Backend ya listo (admin-only, `status` con CHECK/Literal). e2e
         `test_booking_pipeline_cambiar_estado_de_evento`. run_checks VERDE.
-  - [ ] **T-112** 🟡 Recordatorios (avisos de próximos eventos / pasos de booking pendientes).
+  - [x] **T-112** 🟡 **Recordatorios in-app** (2026-06-20): "⏰ Pronto" para eventos en los próximos 7
+        días + resumen "🔔 N en booking sin confirmar" en la agenda (cliente). e2e. VERDE. Diferido:
+        recordatorios por email/push reales (necesitan infra de envío).
   - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
   - [ ] Diferido: campos de booking (contacto, caché/fee, `Venue` como modelo propio).
 

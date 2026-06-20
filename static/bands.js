@@ -473,11 +473,19 @@ async function loadAgenda(bandId, iAmAdmin) {
     const upcoming = events.filter(e => e.starts_at && new Date(e.starts_at).getTime() >= now);
     const past = events.filter(e => !e.starts_at || new Date(e.starts_at).getTime() < now);
 
+    // Recordatorios in-app (T-112, sin email): "⏰ Pronto" para eventos en los próximos 7 días y
+    // un resumen de cuántos siguen en el funnel de booking (sin confirmar). Todo cliente.
+    const SOON_MS = 7 * 24 * 60 * 60 * 1000;
+    const isSoon = (e) => e.starts_at && e.status !== 'cancelled' && e.status !== 'done'
+        && (new Date(e.starts_at).getTime() - now) >= 0
+        && (new Date(e.starts_at).getTime() - now) <= SOON_MS;
+    const enBooking = events.filter(e => ['lead', 'contacted', 'negotiating'].includes(e.status)).length;
+
     const row = (e) => `
         <li class="setlist-song" data-id="${escapeHtml(e.id)}">
             <span class="sl-title">${EVENT_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
                 <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}</small>
-                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span></span>
+                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}</span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
                 <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">💬</button>
@@ -486,6 +494,7 @@ async function loadAgenda(bandId, iAmAdmin) {
             </span>
         </li>`;
     el.innerHTML = `
+        ${enBooking ? `<p class="agenda-booking-note">🔔 ${enBooking} ${enBooking === 1 ? 'evento' : 'eventos'} en booking sin confirmar</p>` : ''}
         ${upcoming.length ? `<h5>Próximos</h5><ul class="setlist-list">${upcoming.map(row).join('')}</ul>` : ''}
         ${past.length ? `<h5>Pasados</h5><ul class="setlist-list">${past.map(row).join('')}</ul>` : ''}`;
 

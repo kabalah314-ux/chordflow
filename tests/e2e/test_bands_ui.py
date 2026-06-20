@@ -318,6 +318,28 @@ def test_booking_pipeline_cambiar_estado_de_evento(page, live_server, api):
     assert "Confirmado" in page.inner_text(fila)
 
 
+def test_recordatorios_agenda_pronto_y_booking(page, live_server, api):
+    """Recordatorios in-app (T-112): un evento en los próximos 7 días muestra '⏰ Pronto' y la agenda
+    resume cuántos eventos siguen en el funnel de booking sin confirmar. Todo cliente, sin email."""
+    from datetime import datetime, timedelta, timezone
+    bid = api.post("/bands/", json={"name": "Banda Recordatorios UI"}).json()["id"]
+    manana = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S")
+    api.post(f"/bands/{bid}/events/",
+             json={"type": "concert", "title": "Concierto Pronto", "starts_at": manana, "status": "confirmed"})
+    api.post(f"/bands/{bid}/events/", json={"type": "concert", "title": "Posible Bolo", "status": "lead"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Recordatorios UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    page.wait_for_selector('#b-agenda .setlist-song', timeout=8000)
+
+    agenda = page.inner_text("#b-agenda")
+    assert "Pronto" in agenda                       # recordatorio de evento próximo (≤7 días)
+    assert "en booking sin confirmar" in agenda     # resumen del funnel de booking
+
+
 def test_enviar_mensaje_en_el_chat_de_banda(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Chat UI"})
 
