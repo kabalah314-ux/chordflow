@@ -34,8 +34,14 @@ _REF = re.compile(r'(?P<attr>\b(?:src|href))="(?P<file>[^"?]+\.(?:js|css))(?:\?v
 
 
 def _hash(path: Path) -> str:
-    """Hash corto (sha256[:8]) del contenido del fichero."""
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:8]
+    """Hash corto (sha256[:8]) del contenido del fichero.
+
+    Normaliza el fin de línea (CRLF/CR → LF) antes de hashear: así el `?v=` es el MISMO en
+    cualquier checkout (Windows/Mac/Linux) y no depende de cómo git materialice los saltos de
+    línea. Sin esto, un `?v=` generado en una copia CRLF rompía el test en checkouts LF (y en CI).
+    """
+    data = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(data).hexdigest()[:8]
 
 
 def _process(html_text: str):
