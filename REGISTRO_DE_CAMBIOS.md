@@ -8,6 +8,25 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 💬 T-107 — Hilo de discusión por evento (chat) (2026-06-20)
+
+**Qué:** cada evento de la agenda (`band.html`, pestaña Agenda) abre un **modal con su hilo de
+mensajes** (botón 💬 por evento). Para no duplicar el render del chat, se extrajo `renderMessageList`
+(lista + fijar/borrar) y ahora lo reusan **el chat general** (`loadChat`) y el nuevo
+`openEventThread`. Los mensajes del hilo llevan `event_id`.
+
+**Por qué:** `messages_router` ya soportaba `?event_id=` (chat general vs hilo de evento) desde la
+Fase 12, pero la UI solo exponía el chat general → discutir un **bolo/ensayo concreto** era imposible
+desde la app. Aditivo, sin rutas nuevas (reusa endpoints ya con guard de pertenencia).
+
+**Cómo/Verificación:** e2e `test_hilo_de_discusion_por_evento` (abrir el hilo del evento, publicar,
+ver el mensaje) + el e2e del chat general sigue verde (confirma que el refactor no rompe nada). CSS
+`.thread-list` (modal scrollable). `cachebust` al día; `run_checks` TODO VERDE (doctor · ruff · 173
+unit · 75 e2e [+1]). **Revisión adversarial** (3 lentes, solo lectura): aislamiento multi-tenant ✅ y
+XSS/escapado ✅ **sin hallazgos**. **Diferido:** hilo embebido en la pestaña (no modal), notificaciones.
+
+---
+
 ## 💶 T-106 — Reparto personalizado de gastos en la UI (finanzas) (2026-06-20)
 
 **Qué:** el modal "Movimiento" (`bands.js::newTransaction`) ahora ofrece **A partes iguales /

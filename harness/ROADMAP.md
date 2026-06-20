@@ -368,8 +368,11 @@
   - [x] **T-072** 🟢 Chat frontend: sección 💬 Chat en la ficha (`bands.js`) — lista con refresco
         periódico (6 s), enviar, fijar (admin), borrar (autor/admin). e2e `test_bands_ui`.
   - [x] **Cierre**: `run_checks` TODO VERDE (122 unit + 43 e2e) · `revision.py fase12` ✅ · `REVISIONES.md`.
-  - **Diferido (no bloquea):** UI del hilo por evento (backend ya lo soporta); `Poll`/encuestas,
-    `Notification`/campana, @menciones; tiempo real (Supabase Realtime).
+  - [x] **T-107** 🟢 **UI del hilo por evento** (2026-06-20): botón 💬 por evento en la agenda abre un
+        modal con el hilo de mensajes (`?event_id=`). Refactor `renderMessageList` compartido (chat +
+        hilos). e2e `test_hilo_de_discusion_por_evento`. Revisión adversarial (aislamiento+XSS) ✅. VERDE.
+  - **Diferido (no bloquea):** `Poll`/encuestas, `Notification`/campana, @menciones; tiempo real
+    (Supabase Realtime); hilo embebido en la pestaña (no modal).
 - [x] **Fase 13** ✅ (2026-06-16) App shell (nav TÚ/BANDA) + sistema de diseño + rebranding BandFlow. Spec de UX:
   `GUIA_MAESTRA_V2.md` §3 (contexto TÚ agregado + contexto BANDA con banner y pestañas) y §10.
   **Reskin sobre el stack actual** (HTML/CSS/JS vanilla), no se reescribe a otro framework. La joya

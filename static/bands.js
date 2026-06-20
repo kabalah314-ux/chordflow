@@ -87,16 +87,10 @@ function initChat(bandId, iAmAdmin) {
     }, 6000);
 }
 
-async function loadChat(bandId, iAmAdmin) {
-    const el = document.getElementById('b-chat');
-    if (!el) return;
-    let msgs;
-    try {
-        const res = await apiFetch(`/bands/${bandId}/messages/`);
-        if (!res.ok) throw new Error('http');
-        msgs = await res.json();
-    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar el chat.</p>'; return; }
-
+// Renderiza una lista de mensajes (chat general O hilo de evento) en `el` y cablea fijar/borrar.
+// `reload` recarga ESA misma vista tras una acción. Fuente única de render para no divergir entre
+// el chat general y los hilos por evento (mismo criterio que la consolidación de escapeHtml, T-039).
+function renderMessageList(el, msgs, bandId, iAmAdmin, reload) {
     if (!msgs.length) { el.innerHTML = '<p class="loading-text">Aún no hay mensajes. ¡Rompe el hielo!</p>'; return; }
     el.innerHTML = `<ul class="setlist-list">${msgs.map(m => `
         <li class="setlist-song ${m.is_pinned ? 'msg-pinned' : ''}" data-id="${escapeHtml(m.id)}">
@@ -119,7 +113,7 @@ async function loadChat(bandId, iAmAdmin) {
                     body: JSON.stringify({ is_pinned: !isPinned })
                 });
                 if (!res.ok) throw new Error('http');
-                loadChat(bandId, iAmAdmin);
+                reload();
             } catch (e) { toast('No se pudo fijar el mensaje.', 'error'); }
         });
         const del = li.querySelector('[data-act="del"]');
@@ -129,10 +123,71 @@ async function loadChat(bandId, iAmAdmin) {
             try {
                 const res = await apiFetch(`/bands/${bandId}/messages/${mid}`, { method: 'DELETE' });
                 if (!res.ok && res.status !== 204) throw new Error('http');
-                loadChat(bandId, iAmAdmin);
+                reload();
             } catch (e) { toast('No se pudo borrar el mensaje.', 'error'); }
         });
     });
+}
+
+async function loadChat(bandId, iAmAdmin) {
+    const el = document.getElementById('b-chat');
+    if (!el) return;
+    let msgs;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/messages/`);
+        if (!res.ok) throw new Error('http');
+        msgs = await res.json();
+    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar el chat.</p>'; return; }
+    renderMessageList(el, msgs, bandId, iAmAdmin, () => loadChat(bandId, iAmAdmin));
+}
+
+// Hilo de discusión de un evento: mensajes con `event_id`. Modal autocontenido que reusa
+// renderMessageList. El backend valida que el evento sea de la banda (aislamiento ya garantizado).
+async function openEventThread(bandId, event, iAmAdmin) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+            <p class="modal-msg">💬 ${escapeHtml(event.title || 'Evento')} · discusión</p>
+            <div id="thread-list" class="thread-list"><p class="loading-text">Cargando…</p></div>
+            <div class="import-row" style="margin-top:0.6rem;">
+                <input type="text" id="thread-input" class="search-box" placeholder="Escribe en el hilo del evento…" maxlength="4000">
+                <button class="primary-btn" data-act="send">Enviar</button>
+            </div>
+            <div class="modal-actions"><button class="secondary-btn" data-act="close">Cerrar</button></div>
+        </div>`;
+    const listEl = overlay.querySelector('#thread-list');
+    const input = overlay.querySelector('#thread-input');
+    const reload = async () => {
+        let msgs;
+        try {
+            const res = await apiFetch(`/bands/${bandId}/messages/?event_id=${encodeURIComponent(event.id)}`);
+            if (!res.ok) throw new Error('http');
+            msgs = await res.json();
+        } catch (e) { listEl.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar el hilo.</p>'; return; }
+        renderMessageList(listEl, msgs, bandId, iAmAdmin, reload);
+    };
+    const send = async () => {
+        const body = input.value.trim();
+        if (!body) return;
+        input.value = '';
+        try {
+            const res = await apiFetch(`/bands/${bandId}/messages/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ body, event_id: event.id })
+            });
+            if (!res.ok) throw new Error('http');
+            reload();
+        } catch (e) { toast('No se pudo enviar.', 'error'); input.value = body; }
+    };
+    overlay.addEventListener('click', (e) => {
+        const act = e.target.getAttribute('data-act');
+        if (e.target === overlay || act === 'close') { overlay.remove(); return; }
+        if (act === 'send') send();
+    });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+    document.body.appendChild(overlay);
+    reload();
 }
 
 // ─── Finanzas ─────────────────────────────────────────────────────────────────
@@ -373,6 +428,7 @@ async function loadAgenda(bandId, iAmAdmin) {
                 <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}${e.status === 'cancelled' ? ' · ❌ cancelado' : ''}</small></span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
+                <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">💬</button>
                 ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">🗑️</button>` : ''}
             </span>
         </li>`;
@@ -380,10 +436,13 @@ async function loadAgenda(bandId, iAmAdmin) {
         ${upcoming.length ? `<h5>Próximos</h5><ul class="setlist-list">${upcoming.map(row).join('')}</ul>` : ''}
         ${past.length ? `<h5>Pasados</h5><ul class="setlist-list">${past.map(row).join('')}</ul>` : ''}`;
 
+    const byId = Object.fromEntries(events.map(e => [e.id, e]));
     el.querySelectorAll('.setlist-song').forEach(li => {
         const eid = li.dataset.id;
         li.querySelectorAll('[data-att]').forEach(b =>
             b.addEventListener('click', () => setAttendance(bandId, eid, b.dataset.att, iAmAdmin)));
+        const th = li.querySelector('[data-act="thread"]');
+        if (th) th.addEventListener('click', () => openEventThread(bandId, byId[eid] || { id: eid }, iAmAdmin));
         const del = li.querySelector('[data-act="del"]');
         if (del) del.addEventListener('click', async () => {
             const ok = await confirmModal('¿Borrar este evento?', { okText: 'Borrar' });

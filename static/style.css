@@ -233,6 +233,9 @@ button {
 .split-amount { width: 110px; flex: 0 0 auto; }
 .split-sum { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--text-secondary); text-align: right; }
 
+/* Hilo de discusión por evento (modal): lista scrollable de mensajes */
+.thread-list { max-height: 50vh; overflow-y: auto; margin-top: 0.3rem; }
+
 /* Línea de solo acordes (Intro, Puente sin letra) */
 .line-chord-only {
     display: flex;

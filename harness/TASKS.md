@@ -29,6 +29,13 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 `test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
 (`TabLine.fret_sequence`) → V3-F6.
 
+### ✅ T-107 — Hilo de discusión por evento (chat) (2026-06-20)
+Botón 💬 por evento en la agenda abre un modal con el hilo de mensajes (`event_id`). Refactor
+`renderMessageList` compartido (chat general + hilos, sin duplicar render). El backend ya soportaba
+`?event_id=` (Fase 12). e2e `test_hilo_de_discusion_por_evento` + chat general sigue verde. Revisión
+adversarial (aislamiento + XSS) sin hallazgos. run_checks VERDE. Diferido: hilo embebido (no modal),
+notificaciones, encuestas.
+
 ### ✅ T-106 — Reparto personalizado de gastos en la UI (2026-06-20)
 El modal "Movimiento" ofrece A partes iguales / Personalizado (fila por miembro, prerrelleno, valida
 que la Σ cuadre, envía `splits`). El backend ya lo soportaba (Fase 11) pero la UI no lo exponía. e2e

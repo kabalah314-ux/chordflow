@@ -187,6 +187,29 @@ def test_reparto_personalizado_en_movimiento(page, live_server, api):
     assert "Furgoneta" in page.inner_text("#b-finance")             # el movimiento con splits se registró
 
 
+def test_hilo_de_discusion_por_evento(page, live_server, api):
+    """Cada evento de la agenda abre su HILO de discusión (mensajes con event_id): se publica en el
+    hilo y aparece allí. El backend ya soportaba `?event_id=`; faltaba exponerlo en la UI (T-107)."""
+    r = api.post("/bands/", json={"name": "Banda Hilo UI"})
+    bid = r.json()["id"]
+    api.post(f"/bands/{bid}/events/", json={"type": "rehearsal", "title": "Ensayo del jueves"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Hilo UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    page.wait_for_selector('#b-agenda .setlist-song', timeout=8000)
+
+    # Abrir el hilo del evento y publicar un mensaje
+    page.click('#b-agenda .setlist-song:has-text("Ensayo del jueves") button[data-act="thread"]')
+    page.wait_for_selector("#thread-input", timeout=8000)
+    page.fill("#thread-input", "¿Llevamos el ampli grande?")
+    page.click('.modal-overlay button[data-act="send"]')
+    page.wait_for_selector('#thread-list .setlist-song', timeout=8000)
+    assert "ampli grande" in page.inner_text("#thread-list")
+
+
 def test_enviar_mensaje_en_el_chat_de_banda(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Chat UI"})
 
