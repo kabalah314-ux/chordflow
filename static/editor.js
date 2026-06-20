@@ -40,6 +40,20 @@ function isChordLine(line) {
 }
 
 /**
+ * Determina si una línea es una CUERDA de tablatura ASCII (una fila de un diagrama de tab).
+ * Firma inequívoca: una corrida de ≥2 guiones y SOLO caracteres de tab — nombre de cuerda
+ * (a-g/A-G), `|`, dígitos de traste, técnicas (h/p/b/r/s/t/x), ligados (/ \ ~ . ()), guiones y
+ * espacios. Las letras de palabra normales (h,o,l,a…) la descartan, así no colisiona con la
+ * letra ni con las líneas de acordes (que no llevan corridas de guiones).
+ */
+function isTabLine(line) {
+    const t = (line || '').trim();
+    if (t.length < 3) return false;
+    if (!/--/.test(t)) return false;                          // corrida de guiones = firma de tab
+    return /^[A-Ga-g#b|0-9\-hpbrstx/\\~.() ]+$/.test(t);      // solo caracteres de tablatura
+}
+
+/**
  * Detecta si una línea es de tipo Intro con el formato:  `: Acorde : Acorde :`
  */
 function isIntroLine(line) {
@@ -218,6 +232,29 @@ function parseRawText(text) {
             continue;
         }
 
+        // 3.5 Bloque de TABLATURA: una o varias cuerdas consecutivas → UNA sola línea type 'tab'.
+        // El ASCII se guarda tal cual en `content` y el render lo pinta monoespaciado. La joya no se
+        // toca: una tab no lleva acordes con id, así que el motor de sincronización la ignora.
+        if (isTabLine(trimmed)) {
+            ensureSection();
+            const tabLines = [];
+            while (i < rawLines.length && isTabLine(rawLines[i])) {
+                tabLines.push(rawLines[i].replace(/\s+$/, ''));   // conserva la sangría izquierda
+                i++;
+            }
+            currentSection.lines.push({
+                order: lineOrder++,
+                type: 'tab',
+                content: tabLines.join('\n'),
+                beat_start: globalBeatTracker,
+                beat_duration: 4.0,
+                chords: [],
+                tab_strings: []
+            });
+            globalBeatTracker += 4.0;
+            continue;
+        }
+
         // 4. Línea de acordes — mirar si la siguiente es letra
         if (isChordLine(trimmed)) {
             ensureSection();
@@ -299,6 +336,8 @@ function songToRawText(song) {
                 } else if (line.content) {
                     out.push(line.content);
                 }
+            } else if (line.type === 'tab') {
+                if (line.content) out.push(line.content);   // ASCII de la tablatura (multilínea)
             } else if (line.content) {
                 out.push(line.content);
             }

@@ -133,6 +133,14 @@ function renderScoreInto(container, song, transposeOffset = 0) {
                 secDiv.appendChild(lineDiv);
                 i++;
 
+            // Caso C: tablatura — ASCII monoespaciado. `textContent` escapa por sí solo (anti-XSS).
+            } else if (line.type === 'tab') {
+                const pre = document.createElement('pre');
+                pre.className = 'line-tab';
+                pre.textContent = line.content || '';
+                secDiv.appendChild(pre);
+                i++;
+
             } else {
                 i++;
             }

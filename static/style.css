@@ -204,6 +204,24 @@ button {
     opacity: 0.4;   /* T-086: más contraste teleprompter entre la línea activa y el resto */
 }
 
+/* Tablatura (líneas type 'tab'): ASCII monoespaciado, con scroll-x en pantallas estrechas
+   para no romper la alineación de las cuerdas. */
+.line-tab {
+    font-family: var(--font-score);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    white-space: pre;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0.6rem 0;
+    padding: 0.7rem 0.9rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid var(--accent-color);
+    border-radius: 8px;
+    tab-size: 4;
+}
+
 /* Línea de solo acordes (Intro, Puente sin letra) */
 .line-chord-only {
     display: flex;

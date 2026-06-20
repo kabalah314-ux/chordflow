@@ -8,6 +8,30 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 T-104 — UI de tablaturas (editor + render) (2026-06-20)
+
+**Qué:** la app ya muestra y edita TABLATURAS. El modelo (`TabLine`) y la API existían desde el giro,
+pero el frontend no las tocaba (el parser las leía como letra y el render las descartaba en su `else`).
+Ahora:
+- **Parser** (`editor.js`): `isTabLine()` reconoce una cuerda de tab ASCII (corrida de ≥2 guiones +
+  solo caracteres de tab); `parseRawText` agrupa las cuerdas consecutivas en UNA línea `type:"tab"` con
+  el ASCII en `content`. `songToRawText` la reemite → round-trip al editar.
+- **Render** (`score_render.js`): una línea `tab` se pinta como `<pre class="line-tab">` con
+  `textContent` (escapa solo → anti-XSS). Mismo render en el reproductor y en la vista previa del editor.
+- **Estilo** (`style.css`): `.line-tab` monoespaciado, borde coral, `overflow-x:auto` en móvil.
+
+**Por qué:** era la deuda 🟢 más antigua de Fase 5. Las tabs son esenciales para riffs/punteos que no
+caben en "acordes sobre letra". Aditivo: no toca la joya — una tab no lleva acordes con id, así que el
+motor de sincronización la ignora.
+
+**Cómo/Verificación:** 4 tests JS en navegador real (`tests/e2e/test_js_logic.py`): detección del
+bloque, no-colisión con letra/acordes/intro, render seguro (escapa `<img onerror>`) y round-trip del
+editor. `cachebust.py` al día; `run_checks.py` TODO VERDE (doctor 10/10 · ruff · 173 unit · 73 e2e).
+Prueba visual capturada. **Diferido:** tab "sincronizada" al beat (resaltado por tiempo) con el modelo
+estructurado `TabLine.fret_sequence` — encaja con V3-F6; por ahora el ASCII vive en `content` (fuente única).
+
+---
+
 ## ✅ Verificado — las 4 migraciones V3 ya están aplicadas en Postgres prod (2026-06-20)
 
 **Qué:** confirmado que producción (`fwynfifvtthtpzpejfhb`) está en el head de Alembic

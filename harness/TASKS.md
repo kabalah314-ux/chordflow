@@ -22,6 +22,13 @@ CLIs ya logueadas en la máquina: `gh` y `vercel` (ambas `kabalah314-ux`). Secre
 
 ## 🟢 En curso
 
+### ✅ T-104 — UI de tablaturas (2026-06-20)
+El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseRawText` → línea
+`type:"tab"` con el ASCII en `content`, round-trip en `songToRawText`), render `<pre class="line-tab">`
+(`textContent`, anti-XSS) y CSS `.line-tab` (monoespaciado, scroll-x). La joya intacta. 4 tests JS en
+`test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
+(`TabLine.fret_sequence`) → V3-F6.
+
 ### 🌍 V3 — Red musical con plano público (arranque 2026-06-17)
 
 Dirección aprobada en `GUIA_MAESTRA_V3.md` (D1–D8). **✅ V3-F1 (pulido de diseño) COMPLETA.**
@@ -141,7 +148,7 @@ Dirección en `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md`; backlog en 
 3. 🔐 **Por cada ruta de banda, su test de aislamiento** ("usuario ajeno → 403/404"). Innegociable.
 4. 🔎 Al cerrar la fase: `python harness/revision.py fase7 --serve` → veredicto en `REVISIONES.md`.
 
-**Deuda previa aparcada (no bloquea el giro):** 🟢 Tablaturas (UI de `TabLine`); ✉️ T-047 emails con
+**Deuda previa aparcada (no bloquea el giro):** ✅ **T-104 Tablaturas (UI)** HECHO (2026-06-20); ✉️ T-047 emails con
 marca (Supabase Email Templates). ✅ **T-046 Login con Google — HECHO (2026-06-18)** (Google Cloud +
 Supabase Management API; verificado con `oscarcon314@gmail.com`; ⚠️ revocar el PAT `sbp_` usado).
 

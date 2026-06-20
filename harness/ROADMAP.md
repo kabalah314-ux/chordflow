@@ -174,7 +174,13 @@
 - [x] 🟢 **Setlists/repertorios** — `Setlist`+`SetlistItem` (migración `3684ab6335e8`), API `/setlists`
       (CRUD, soft delete, filtra ajenas/borradas), página `setlists.html` (crear/ordenar/ver/borrar) y
       barra **anterior/siguiente** en el reproductor (`?setlist=&pos=`). Tests unit+e2e. EN VIVO.
-- [ ] 🟢 **UI de tablaturas** (`TabLine` ya modelado) — pendiente (editor + render de tabs).
+- [x] **T-104** 🟢 **UI de tablaturas** — editor + render (2026-06-20). El parser (`editor.js`)
+      detecta bloques de tab ASCII (`isTabLine` + agrupado de cuerdas) → una línea `type:"tab"` con el
+      ASCII en `content`; round-trip en `songToRawText`. El render (`score_render.js`) los pinta en
+      `<pre class="line-tab">` (`textContent`, anti-XSS) con estilo monoespaciado (`style.css`). La joya
+      intacta (una tab no lleva acordes con id → el motor la ignora). Tests JS en `test_js_logic.py`
+      (detección, no-colisión, render seguro, round-trip). run_checks VERDE (173 unit · 73 e2e).
+      **Diferido:** tab "sincronizada" al beat (`TabLine.fret_sequence`) → encaja con V3-F6.
 - [x] **T-045** 🟢 **Importar desde URL con IA** — **EN VIVO y verificado**. `POST /import/` (auth):
       lee la página (lector **Jina**, con fallback a **descarga directa + limpieza HTML** cuando Jina
       se rate-limitea desde datacenter) y una **IA gratuita por OpenRouter** (`openai/gpt-oss-120b:free`,
