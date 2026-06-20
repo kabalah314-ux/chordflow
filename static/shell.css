@@ -8,6 +8,30 @@
    Responsive: ≤768px el lateral pasa a barra de navegación inferior.
    ========================================================================== */
 
+/* El shell ocupa todo el viewport: reseteamos el margen por defecto del <body> (las páginas que NO
+   cargan style.css lo traían a 8px → marco/línea clara en los bordes) y fijamos el fondo de la app. */
+html, body { margin: 0; }
+body { background: var(--bf-bg); }
+
+/* Botón ☰ y backdrop del drawer móvil: ocultos en desktop (se activan en la media query ≤768px). */
+.bf-hamburger {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 50;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  background: var(--bf-surface);
+  color: var(--bf-text);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius);
+  cursor: pointer;
+}
+.bf-backdrop { display: none; }
+
 .bf-shell {
   display: flex;
   flex-direction: row;
@@ -188,34 +212,41 @@
   padding: var(--bf-space-6) var(--bf-space-5);
 }
 
-/* ── Responsive: lateral → barra inferior ───────────────────────────────── */
+/* ── Responsive: lateral → drawer deslizante (≤768px) ────────────────────── */
 @media (max-width: 768px) {
-  .bf-shell { flex-direction: column; }
+  /* El lateral se oculta fuera de pantalla por la izquierda; se abre con ☰ y se cierra tocando el
+     backdrop o un item de navegación. Conserva el layout vertical de escritorio (marca + nav + pie). */
   .bf-sidebar {
-    order: 2;
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    border-right: none;
-    border-top: 1px solid var(--bf-border);
     position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 50;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px;
+    max-width: 82vw;
+    height: 100vh;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
   }
-  .bf-brand, .bf-eyebrow, .bf-sidebar-foot { display: none; }
-  .bf-sidebar-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 6px 8px;
-    gap: 4px;
+  .bf-shell.bf-nav-open .bf-sidebar {
+    transform: translateX(0);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
   }
-  .bf-nav-item {
-    flex-direction: column;
-    gap: 3px;
-    font-size: 10.5px;
-    padding: 6px 10px;
-    white-space: nowrap;
+
+  /* Backdrop: aparece con el drawer; tocarlo cierra el menú. */
+  .bf-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(0, 0, 0, .5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .25s ease, visibility .25s ease;
   }
-  .bf-nav-soon, .bf-nav-badge { display: none; }
-  .bf-shell-main { height: auto; flex: 1; padding-bottom: 72px; }
+  .bf-shell.bf-nav-open .bf-backdrop { opacity: 1; visibility: visible; }
+
+  /* Botón ☰ fijo arriba-izquierda + hueco arriba en el contenido para no taparlo. */
+  .bf-hamburger { display: flex; }
+  .bf-shell-main { padding-top: 52px; }
 }

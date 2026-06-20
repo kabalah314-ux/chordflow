@@ -63,6 +63,33 @@ def test_shell_agenda_navega(page, live_server, api):
     assert page.url.endswith("agenda.html")
 
 
+def test_shell_sin_margen_blanco_del_body(page, live_server, api):
+    """El body se resetea a margin:0 en shell.css incluso en páginas que NO cargan style.css
+    (agenda/finanzas/chat/inicio) → desaparece el marco/línea clara del margen por defecto (8px)."""
+    page.goto(live_server + "/static/agenda.html", wait_until="networkidle")
+    page.wait_for_selector(".bf-sidebar", timeout=8000)
+    assert page.evaluate("getComputedStyle(document.body).margin") == "0px"
+
+
+def test_shell_drawer_movil_abre_y_cierra(page, live_server, api):
+    """En móvil el lateral es un DRAWER: oculto por defecto, se abre con ☰ y se cierra tocando el
+    backdrop (en vez de la barra inferior anterior)."""
+    page.set_viewport_size({"width": 390, "height": 780})
+    page.goto(live_server + "/static/agenda.html", wait_until="networkidle")
+    page.wait_for_selector(".bf-hamburger", timeout=8000)
+    # Cerrado: el ☰ se ve y el shell no está en "nav-open"
+    assert page.is_visible(".bf-hamburger")
+    assert not page.evaluate("document.querySelector('.bf-shell').classList.contains('bf-nav-open')")
+    # Abrir con ☰ → drawer completo (marca + nav)
+    page.click(".bf-hamburger")
+    page.wait_for_selector(".bf-shell.bf-nav-open", timeout=4000)
+    assert "BandFlow" in page.inner_text(".bf-sidebar")
+    # Cerrar tocando el backdrop
+    page.click(".bf-backdrop", position={"x": 360, "y": 400})
+    page.wait_for_function(
+        "!document.querySelector('.bf-shell').classList.contains('bf-nav-open')", timeout=4000)
+
+
 def test_shell_toggle_tema(page, live_server, api):
     page.goto(live_server + "/static/app.html", wait_until="networkidle")
     page.wait_for_selector("#bf-theme-btn", timeout=8000)

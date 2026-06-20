@@ -8,6 +8,29 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📱 fix(shell) — drawer móvil + línea blanca de los márgenes (2026-06-20)
+
+**Qué:** dos arreglos de UI reportados:
+1. **Lateral móvil → drawer.** En ≤768px el lateral pasaba a **barra inferior**; ahora es un **drawer
+   deslizante**: oculto por defecto, se abre con el botón **☰** (arriba-izquierda) y se cierra tocando
+   el **backdrop** o un item de navegación. Conserva el lateral completo (marca + nav + perfil + tema).
+2. **Línea/marco blanco en los márgenes.** Las páginas que **no cargan `style.css`** (inicio, agenda,
+   finanzas, chat) mostraban un marco claro: el `<body>` traía el **margin 8px** por defecto del
+   navegador y fondo transparente → se veía el fondo claro del `html`. `shell.css` ahora resetea
+   `html, body { margin: 0 }` y `body { background: var(--bf-bg) }` (lo cargan las 9 páginas del shell).
+
+**Por qué:** UX en móvil (un menú lateral de verdad, no una barra que "se va abajo") y coherencia
+visual (el marco claro afeaba varias secciones; quedaba bien solo en Explorar/Bandas/Perfil, que sí
+cargan `style.css`).
+
+**Cómo/Verificación:** `icons.js` (icono `menu`), `shell.css` (reset del body + `.bf-hamburger`/
+`.bf-backdrop` + media query ≤768px reescrita a drawer), `shell.js` (inyecta ☰ + backdrop + toggle
+`.bf-nav-open`, cierra al tocar fuera o un item). Verificado en navegador (móvil 390px: el drawer abre
+con ☰ y cierra con el backdrop; desktop: `body margin 0` + fondo oscuro, sin marco). e2e
+`test_shell_drawer_movil_abre_y_cierra` + `test_shell_sin_margen_blanco_del_body`. `run_checks` VERDE.
+
+---
+
 ## 🔔 T-112 — Recordatorios in-app de la agenda (Fase 14) (2026-06-20)
 
 **Qué:** la agenda marca con **⏰ Pronto** los eventos en los próximos 7 días y muestra un resumen

@@ -127,6 +127,23 @@
             btn.addEventListener('click', () =>
                 toast(`${btn.dataset.label}: próximamente.`, 'info')));
 
+        // ── Drawer móvil: botón ☰ + backdrop ────────────────────────────────────
+        // En ≤768px el lateral se oculta; el ☰ lo abre y el backdrop (o tocar un item) lo cierra.
+        const hamb = document.createElement('button');
+        hamb.className = 'bf-hamburger';
+        hamb.type = 'button';
+        hamb.setAttribute('aria-label', 'Abrir menú');
+        hamb.innerHTML = bfIcon('menu', { size: 22 });
+        const backdrop = document.createElement('div');
+        backdrop.className = 'bf-backdrop';
+        shell.appendChild(backdrop);
+        shell.appendChild(hamb);
+        const closeNav = () => shell.classList.remove('bf-nav-open');
+        hamb.addEventListener('click', () => shell.classList.add('bf-nav-open'));
+        backdrop.addEventListener('click', closeNav);
+        // Tocar un enlace/elemento de navegación también cierra el drawer.
+        aside.addEventListener('click', (e) => { if (e.target.closest('a, .bf-nav-item')) closeNav(); });
+
         loadProfile();
     }
 

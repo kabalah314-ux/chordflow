@@ -20,6 +20,40 @@ CLIs ya logueadas en la máquina: `gh` y `vercel` (ambas `kabalah314-ux`). Secre
 
 ---
 
+## ▶️ PRÓXIMA SESIÓN — correcciones rápidas (apuntado 2026-06-20, pedido por Oscar)
+
+> Sesión 2026-06-20: se hicieron **T-104→T-112** + `fix(shell)` (drawer móvil + reset del body).
+> **10 commits locales/pusheados a `main`** (`origin/main`=`237db9c`+ el fix); ⚠️ **Vercel los dejó
+> en `BLOCKED`** (tope del plan free) → NO están en vivo. La tarea programada `chordflow-redeploy-check`
+> (mañana 10:00) avisa cuando Vercel se libere para hacer Redeploy. CI de GitHub Actions sí corre.
+
+**Cómo verificar en local (Vercel bloqueado):** entorno en `./venv` (Py3.12). Sembrar + servir demo:
+```
+rm -f demo_bandflow.db
+DATABASE_URL="sqlite:///./demo_bandflow.db" venv/bin/python harness/seed_demo.py
+CHORDFLOW_TEST_MODE=1 DATABASE_URL="sqlite:///./demo_bandflow.db" venv/bin/python -m uvicorn src.main:app --host 127.0.0.1 --port 8000
+```
+→ http://127.0.0.1:8000 (modo test, sin login; banda demo "Los Demo Riff"). Playwright instalado para
+verificar a ojo (capturas) qué páginas/elementos fallan.
+
+**Correcciones a hacer (en orden):**
+1. 🔴 **La línea/marco lateral SIGUE apareciendo.** El `fix(shell)` reseteó `body{margin:0}` (resolvió
+   las páginas sin `style.css`), pero Oscar dice que el margen lateral persiste → **hay otra fuente**.
+   Reinvestigar con Playwright contra el local (o pedirle captura): mirar `border-right` del `.bf-sidebar`,
+   el centrado de `.bf-page` (max-width 920 → márgenes), scrollbar de `.bf-shell-main`, o algún wrapper
+   por página. Localizar el elemento exacto y en qué página(s).
+2. 🟠 **Repertorio → "Repertorios" (varias listas con nombre).** Hoy el repertorio de banda es UNA lista
+   plana de canciones. Oscar quiere **varias listas nombradas** dentro del repertorio ("acústico",
+   "cañero", "bodas"…). ⚠️ Se **solapa con Setlists** → decidir el modelo junto al punto 3 antes de tocar.
+3. 🟠 **Setlist vs Repertorios (decisión de producto).** Son casi lo mismo. Decidir con Oscar: ¿quitar
+   setlists?, ¿fusionar?, ¿diferenciarlos (idea: *repertorio* = colección temática de canciones;
+   *setlist* = orden concreto de un bolo, con sus notas por canción T-110/tiempos)? Definir antes de 2.
+4. 🟢 **Agenda: confirmados por evento (sutil).** Mostrar en cada evento, de forma discreta, **quién ha
+   confirmado** asistencia. El backend ya lo tiene (`EventAttendance` voy/no/quizás, devuelto en
+   `EventResponse.attendance`); falta solo la UI (una línea/sección plegable con los "voy").
+
+---
+
 ## 🟢 En curso
 
 ### ✅ T-104 — UI de tablaturas (2026-06-20)
