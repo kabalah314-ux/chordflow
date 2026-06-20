@@ -25,6 +25,24 @@ avisos obsoletos en `ROADMAP.md`, `TASKS.md` y `PENDIENTES_OSCAR.md` §6.
 
 ---
 
+## 🛠️ fix(cachebust) — `?v=` independiente del fin de línea (CRLF/LF) (2026-06-20)
+
+**Qué:** `harness/cachebust.py::_hash` ahora normaliza el fin de línea (CRLF/CR→LF) antes de
+calcular el `sha256[:8]`. Reescritos los `?v=` de `auth.js` en los 14 `static/*.html` al hash LF
+correcto (`55a0092d`→`32867392`).
+
+**Por qué:** los `?v=` de `auth.js` se habían generado desde una copia **CRLF** (Windows), pero el
+repo es **LF** (`.gitattributes: * text=auto eol=lf`). El hash era sensible al EOL, así que
+`test_cache_busting_al_dia` **fallaba en cualquier checkout LF** — este Mac y, sobre todo, el **CI
+de Linux** (que estaba en rojo sin que se notara). Normalizar el EOL hace que el `?v=` sea idéntico
+en Windows/Mac/Linux y elimina la clase de error para siempre.
+
+**Cómo/Verificación:** `run_checks.py` **TODO VERDE** (doctor 10/10 · ruff · 173 unit · 69 e2e) en
+un entorno LF recién montado (venv Python 3.12 + deps + Playwright chromium). Solo cambia `auth.js`
+(el resto de assets ya coincidían).
+
+---
+
 ## 🔐 T-046 — Login con Google (OAuth) CONFIGURADO Y VERIFICADO (2026-06-18)
 
 **Qué:** activado el inicio de sesión con Google. El **código ya estaba** desde antes
