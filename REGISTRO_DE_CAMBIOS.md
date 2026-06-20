@@ -8,6 +8,22 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📤 T-109 — Export CSV de finanzas (cliente) (2026-06-20)
+
+**Qué:** botón **⬇️ CSV** en la sección Finanzas que descarga un CSV de los movimientos (Fecha,
+Tipo, Descripción, Importe, Categoría, Evento, Pagado por), generado **100% en el cliente** (Blob +
+BOM UTF-8 para Excel; celdas entre comillas con escape). Disponible a cualquier miembro que ve las
+finanzas.
+
+**Por qué:** las bandas necesitan llevar sus cuentas fuera (Excel/gestoría). Sin backend ni rutas
+nuevas → cero superficie de aislamiento; compone con T-106/T-108.
+
+**Cómo/Verificación:** e2e `test_exportar_finanzas_csv` (descarga real con `expect_download`,
+verifica la cabecera y el movimiento en el contenido). `run_checks` TODO VERDE (doctor · ruff · 173
+unit · 77 e2e [+1]). **Diferido:** filtros/rango de fechas, export por evento/gira.
+
+---
+
 ## 🔗 T-108 — Ligar un movimiento de finanzas a un evento (UI) (2026-06-20)
 
 **Qué:** el modal "Movimiento" (`bands.js::newTransaction`) añade un selector **"Evento (opcional)"**

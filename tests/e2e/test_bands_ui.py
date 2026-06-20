@@ -238,6 +238,31 @@ def test_ligar_movimiento_a_evento(page, live_server, api):
     assert "Bolo del sabado" in fin   # la etiqueta del evento ligado se muestra
 
 
+def test_exportar_finanzas_csv(page, live_server, api):
+    """Las finanzas se exportan a CSV en el cliente: el botón descarga un CSV con cabecera y los
+    movimientos (T-109; export client-side, sin backend)."""
+    r = api.post("/bands/", json={"name": "Banda CSV UI"})
+    bid = r.json()["id"]
+    api.post(f"/bands/{bid}/transactions",
+             json={"type": "expense", "description": "Cuerdas nuevas", "amount": "12.00", "paid_by_fund": True})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda CSV UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="finanzas"]')
+    page.wait_for_selector('#b-export-csv', timeout=8000)
+
+    with page.expect_download() as dl_info:
+        page.click("#b-export-csv")
+    download = dl_info.value
+    assert download.suggested_filename.endswith(".csv")
+    with open(download.path(), encoding="utf-8-sig") as f:
+        content = f.read()
+    assert "Importe" in content          # fila de cabecera
+    assert "Cuerdas nuevas" in content   # el movimiento exportado
+
+
 def test_enviar_mensaje_en_el_chat_de_banda(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Chat UI"})
 

@@ -193,6 +193,35 @@ async function openEventThread(bandId, event, iAmAdmin) {
 // ─── Finanzas ─────────────────────────────────────────────────────────────────
 function fmtMoney(x) { return `${Number(x).toFixed(2)} €`; }
 
+// Exporta los movimientos a CSV en el cliente (sin backend). BOM (﻿) para que Excel respete
+// UTF-8; cada celda entre comillas con escape de comillas internas (seguro ante comas/saltos).
+function exportFinanceCSV(txs, evById, balances) {
+    const nameById = {};
+    (balances || []).forEach(b => { if (!b.is_fund) nameById[b.participant] = b.display_name || b.participant; });
+    const cell = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const header = ['Fecha', 'Tipo', 'Descripción', 'Importe', 'Categoría', 'Evento', 'Pagado por'];
+    const rows = (txs || []).map(t => [
+        (t.date || t.created_at || '').slice(0, 10),
+        t.type === 'income' ? 'Ingreso' : 'Gasto',
+        t.description || '',
+        Number(t.amount).toFixed(2),
+        t.category || '',
+        (t.event_id && evById && evById[t.event_id]) ? evById[t.event_id].title : '',
+        t.paid_by_fund ? 'Fondo común' : (nameById[t.paid_by] || t.paid_by || ''),
+    ]);
+    const csv = '﻿' + [header, ...rows].map(r => r.map(cell).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'finanzas-banda.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast('CSV exportado.', 'success');
+}
+
 async function loadFinance(bandId, iAmAdmin) {
     const el = document.getElementById('b-finance');
     if (!el) return;
@@ -225,7 +254,11 @@ async function loadFinance(bandId, iAmAdmin) {
 
     el.innerHTML = `
         <h5>Saldos</h5><ul class="setlist-list">${balRows}</ul>
-        <h5>Movimientos</h5><ul class="setlist-list" id="b-tx-list">${txRows}</ul>`;
+        <h5>Movimientos ${txs.length ? `<button id="b-export-csv" class="setlist-item-btn" title="Exportar movimientos a CSV">⬇️ CSV</button>` : ''}</h5>
+        <ul class="setlist-list" id="b-tx-list">${txRows}</ul>`;
+
+    const exportBtn = el.querySelector('#b-export-csv');   // disponible a cualquier miembro que ve las finanzas
+    if (exportBtn) exportBtn.addEventListener('click', () => exportFinanceCSV(txs, evById, balances));
 
     if (iAmAdmin) el.querySelectorAll('#b-tx-list .setlist-song').forEach(li => {
         const del = li.querySelector('[data-act="del"]');

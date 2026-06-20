@@ -360,7 +360,9 @@
   - [x] **T-108** 🟢 **Ligar movimiento a evento desde la UI** (2026-06-20): selector "Evento (opcional)"
         en el modal de movimiento (envía `event_id`) + etiqueta 🎵 del evento en cada movimiento ligado.
         Backend ya validaba `event_id` (Fase 11). e2e `test_ligar_movimiento_a_evento`. VERDE.
-  - **Diferido (no bloquea):** informes/export CSV; cuotas recurrentes; resumen/P&L por evento.
+  - [x] **T-109** 🟢 **Export CSV de finanzas** (2026-06-20): botón ⬇️ CSV que descarga los movimientos
+        (cliente, Blob + BOM UTF-8). e2e `test_exportar_finanzas_csv` (descarga real). VERDE.
+  - **Diferido (no bloquea):** cuotas recurrentes; resumen/P&L por evento; filtros de fecha en el CSV.
 - [x] **Fase 12** 🟢 Comunicación (`Message`). Área 7. **NÚCLEO COMPLETO**:
   - [x] **T-070** 🔴 Migración `messages` (`7022a3162284`): `event_id` null=chat general / valor=hilo,
         `is_pinned` (notas), soft delete, índices `band_id`/`event_id`. `alembic check` limpio.

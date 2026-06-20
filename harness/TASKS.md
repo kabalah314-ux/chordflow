@@ -29,6 +29,11 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 `test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
 (`TabLine.fret_sequence`) → V3-F6.
 
+### ✅ T-109 — Export CSV de finanzas (cliente) (2026-06-20)
+Botón ⬇️ CSV en Finanzas: descarga los movimientos (Fecha/Tipo/Descripción/Importe/Categoría/Evento/
+Pagado por) generado en el cliente (Blob + BOM UTF-8, celdas escapadas). Sin backend. e2e
+`test_exportar_finanzas_csv` (descarga real). run_checks VERDE. Diferido: filtros de fecha, P&L por evento.
+
 ### ✅ T-108 — Ligar movimiento de finanzas a un evento (UI) (2026-06-20)
 Selector "Evento (opcional)" en el modal de movimiento (carga los eventos de la banda, envía
 `event_id`) + etiqueta 🎵 del evento en cada movimiento ligado (`loadFinance`). El backend ya
