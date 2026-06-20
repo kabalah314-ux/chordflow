@@ -241,6 +241,20 @@ button {
 .sl-sel-row .sl-note { flex: 1; min-width: 0; }
 .sl-nav-note { color: var(--text-secondary); font-size: 0.85rem; }
 
+/* Pipeline de booking: badge de estado del evento + selector de admin (T-111) */
+.ev-status {
+    display: inline-block; margin-left: 0.4rem; padding: 0.08rem 0.5rem;
+    font-size: 0.72rem; border-radius: 999px; white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-secondary);
+}
+.ev-status--confirmed { color: #5db075; border-color: rgba(93, 176, 117, 0.4); }
+.ev-status--cancelled { color: #e0606a; border-color: rgba(224, 96, 106, 0.4); }
+.ev-status--done { opacity: 0.7; }
+.ev-status--lead, .ev-status--contacted, .ev-status--negotiating {
+    color: var(--accent-color); border-color: rgba(255, 107, 74, 0.4);
+}
+.ev-status-sel { font-size: 0.75rem; padding: 0.15rem 0.3rem; max-width: 130px; }
+
 /* Línea de solo acordes (Intro, Puente sin letra) */
 .line-chord-only {
     display: flex;

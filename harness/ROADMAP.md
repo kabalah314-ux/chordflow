@@ -439,7 +439,14 @@
   - [x] **T-083** 🔴 **Cierre de fase**: `run_checks` TODO VERDE + `revision.py fase13` + veredicto en
         `REVISIONES.md` + `REGISTRO_DE_CAMBIOS.md`. ✅ (2026-06-16) Revisión fase13 ✅ completa (1/1 rutas
         · 5/5 páginas) + veredicto en `REVISIONES.md`. `run_checks` VERDE (139 unit · 57 e2e).
-- [ ] **Fase 14** 🟢 Booking (pipeline `Event.status` + recordatorios + `EmailTemplate`). Área 10.
+- [~] **Fase 14** 🟢 Booking (pipeline `Event.status` + recordatorios + `EmailTemplate`). Área 10. **EN CURSO:**
+  - [x] **T-111** 🟢 **Pipeline en la agenda** (2026-06-20): badge de estado por evento + selector de
+        admin para mover el funnel (lead→…→done/cancelled vía PATCH `status`) + estado inicial en el alta.
+        Backend ya listo (admin-only, `status` con CHECK/Literal). e2e
+        `test_booking_pipeline_cambiar_estado_de_evento`. run_checks VERDE.
+  - [ ] **T-112** 🟡 Recordatorios (avisos de próximos eventos / pasos de booking pendientes).
+  - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
+  - [ ] Diferido: campos de booking (contacto, caché/fee, `Venue` como modelo propio).
 
 ---
 

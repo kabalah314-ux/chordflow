@@ -8,6 +8,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📇 T-111 — Pipeline de booking en la agenda (`Event.status`) — arranca la Fase 14 (2026-06-20)
+
+**Qué:** la agenda muestra el **estado de booking** de cada evento (badge: Lead · Contactado ·
+Negociando · Confirmado · Hecho · Cancelado) y el **admin lo mueve por el funnel** con un selector por
+evento (PATCH `status`). El alta de evento permite elegir el **estado inicial** (p. ej. crear un
+concierto como "Lead" para arrancar el booking).
+
+**Por qué:** `Event.status` y los 6 estados ya existían en el modelo (CHECK `ck_events_status`) y eran
+editables por la API (admin), pero la UI solo mostraba "cancelado" y no dejaba gestionar el funnel.
+Es la primera rebanada de la **Fase 14 (Booking, Área 10)**.
+
+**Cómo/Verificación:** solo frontend (badge + selector admin + estado en el alta); backend ya listo
+(`update_event` con `require_band_admin`, `status` validado por `Literal`/CHECK). `EVENT_STATUS_LABEL`/
+`EVENT_STATUS_ORDER` + CSS `.ev-status`. e2e `test_booking_pipeline_cambiar_estado_de_evento` (crear
+como lead → mover a confirmed → el badge cambia). `run_checks` TODO VERDE (174 unit · 80 e2e [+1]).
+**Resto de Fase 14 pendiente:** recordatorios (T-112), `EmailTemplate` (T-113), campos de booking
+(contacto, caché/fee, `Venue`).
+
+---
+
 ## 🎼 T-110 — Apunte por canción en el setlist (`SetlistItem.note`) (2026-06-20)
 
 **Qué:** los setlists de banda admiten una **nota por canción** ("capo 2", "acústica", "aquí hablo al

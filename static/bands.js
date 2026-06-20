@@ -440,6 +440,12 @@ async function newSettlement(bandId, members) {
 // ─── Agenda (eventos) ─────────────────────────────────────────────────────────
 const EVENT_ICON = { rehearsal: '🎼', concert: '🎤', other: '📌' };
 const EVENT_TYPE_LABEL = { rehearsal: 'Ensayo', concert: 'Concierto', other: 'Otro' };
+// Pipeline de booking (Fase 14, T-111): estados de un evento en orden del funnel.
+const EVENT_STATUS_ORDER = ['lead', 'contacted', 'negotiating', 'confirmed', 'done', 'cancelled'];
+const EVENT_STATUS_LABEL = {
+    lead: 'Lead', contacted: 'Contactado', negotiating: 'Negociando',
+    confirmed: 'Confirmado', done: 'Hecho', cancelled: 'Cancelado',
+};
 const ATT_LABEL = { yes: '✅ Voy', maybe: '🤔 Quizás', no: '❌ No voy' };
 
 function fmtDate(iso) {
@@ -470,10 +476,12 @@ async function loadAgenda(bandId, iAmAdmin) {
     const row = (e) => `
         <li class="setlist-song" data-id="${escapeHtml(e.id)}">
             <span class="sl-title">${EVENT_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
-                <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}${e.status === 'cancelled' ? ' · ❌ cancelado' : ''}</small></span>
+                <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}</small>
+                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span></span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
                 <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">💬</button>
+                ${iAmAdmin ? `<select class="ev-status-sel" data-ev="${escapeHtml(e.id)}" title="Estado de booking">${EVENT_STATUS_ORDER.map(s => `<option value="${s}" ${e.status === s ? 'selected' : ''}>${EVENT_STATUS_LABEL[s]}</option>`).join('')}</select>` : ''}
                 ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">🗑️</button>` : ''}
             </span>
         </li>`;
@@ -488,6 +496,18 @@ async function loadAgenda(bandId, iAmAdmin) {
             b.addEventListener('click', () => setAttendance(bandId, eid, b.dataset.att, iAmAdmin)));
         const th = li.querySelector('[data-act="thread"]');
         if (th) th.addEventListener('click', () => openEventThread(bandId, byId[eid] || { id: eid }, iAmAdmin));
+        const stSel = li.querySelector('.ev-status-sel');   // pipeline de booking (admin)
+        if (stSel) stSel.addEventListener('change', async () => {
+            try {
+                const res = await apiFetch(`/bands/${bandId}/events/${eid}`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: stSel.value })
+                });
+                if (!res.ok) throw new Error('http');
+                toast('Estado actualizado.', 'success');
+                loadAgenda(bandId, iAmAdmin);
+            } catch (e) { toast('No se pudo cambiar el estado.', 'error'); }
+        });
         const del = li.querySelector('[data-act="del"]');
         if (del) del.addEventListener('click', async () => {
             const ok = await confirmModal('¿Borrar este evento?', { okText: 'Borrar' });
@@ -529,6 +549,10 @@ async function newEvent(bandId) {
             </select>
             <input type="text" id="ev-title" class="search-box" placeholder="Título (p. ej. Ensayo jueves)">
             <input type="datetime-local" id="ev-date" class="search-box">
+            <label class="field-label">Estado (booking)</label>
+            <select id="ev-status" class="search-box">
+                ${EVENT_STATUS_ORDER.map(s => `<option value="${s}" ${s === 'confirmed' ? 'selected' : ''}>${EVENT_STATUS_LABEL[s]}</option>`).join('')}
+            </select>
             <div id="ev-setlist-wrap" style="display:none;">
                 <select id="ev-setlist" class="search-box">
                     <option value="">— Sin setlist —</option>
@@ -551,7 +575,7 @@ async function newEvent(bandId) {
         if (!title) { toast('Pon un título al evento.', 'error'); return; }
         const type = elType.value;
         const dateVal = overlay.querySelector('#ev-date').value;
-        const body = { type, title };
+        const body = { type, title, status: overlay.querySelector('#ev-status').value };
         if (dateVal) body.starts_at = dateVal;
         const slId = overlay.querySelector('#ev-setlist')?.value;
         if (type === 'concert' && slId) body.setlist_id = slId;

@@ -29,6 +29,12 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 `test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
 (`TabLine.fret_sequence`) → V3-F6.
 
+### 🟡 Fase 14 — Booking (EN CURSO)
+- ✅ **T-111 — Pipeline en la agenda** (2026-06-20): badge de estado de booking por evento + selector
+  de admin para mover el funnel (lead→…→done/cancelled, PATCH `status`) + estado inicial en el alta.
+  Backend ya listo (admin-only). e2e `test_booking_pipeline_cambiar_estado_de_evento`. run_checks VERDE.
+- ⏳ **T-112** Recordatorios · ⏳ **T-113** `EmailTemplate` · diferido: campos de booking (contacto/caché/Venue).
+
 ### ✅ T-110 — Apunte por canción en el setlist (SetlistItem.note) (2026-06-20)
 Los setlists de banda admiten una nota por canción ("capo 2", "acústica"). El modelo+lectura existían
 (Fase 9) pero faltaba la vía de escritura. Schema `items:[{song_id,note}]` (compat con `song_ids`),

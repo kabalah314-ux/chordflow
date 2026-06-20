@@ -298,6 +298,26 @@ def test_exportar_finanzas_csv(page, live_server, api):
     assert "Cuerdas nuevas" in content   # el movimiento exportado
 
 
+def test_booking_pipeline_cambiar_estado_de_evento(page, live_server, api):
+    """Pipeline de booking (Fase 14, T-111): un evento se crea con estado del funnel (lead) y el admin
+    lo mueve por el pipeline (Event.status) desde la agenda; el badge refleja el nuevo estado."""
+    bid = api.post("/bands/", json={"name": "Banda Booking UI"}).json()["id"]
+    api.post(f"/bands/{bid}/events/", json={"type": "concert", "title": "Sala Apolo", "status": "lead"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Booking UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    page.wait_for_selector('#b-agenda .setlist-song', timeout=8000)
+
+    fila = '#b-agenda .setlist-song:has-text("Sala Apolo")'
+    assert "Lead" in page.inner_text(fila)                       # badge inicial del funnel
+    page.select_option(f'{fila} .ev-status-sel', "confirmed")    # mover por el pipeline (admin)
+    page.wait_for_selector(f'{fila} .ev-status--confirmed', timeout=8000)
+    assert "Confirmado" in page.inner_text(fila)
+
+
 def test_enviar_mensaje_en_el_chat_de_banda(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Chat UI"})
 
