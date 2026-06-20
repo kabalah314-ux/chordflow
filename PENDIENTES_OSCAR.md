@@ -1,7 +1,7 @@
 # ✅ Pendientes de Oscar — acciones que solo puedes hacer tú
 
 > Cosas que dependen de paneles/cuentas externas (Claude no tiene acceso). Marca con `[x]` al
-> terminar. Última actualización: 2026-06-16.
+> terminar. Última actualización: 2026-06-20.
 > Leyenda: 🟢 puedes hacerlo YA (independiente) · 🟡 cuando lleguemos / decisión tuya.
 
 ---
@@ -55,13 +55,13 @@ volvió a ver en el chat al hacer el despliegue del 2026-06-16 → cámbiala cua
 > Avancé en código toda la parte gratis de la V3 (ver `GUIA_MAESTRA_V3.md` y `REGISTRO_DE_CAMBIOS.md`).
 > Lo siguiente necesita acción tuya.
 
-### 6. 🟠 Aplicar las 3 migraciones nuevas de la V3 a Postgres prod
-En el próximo deploy (o cuando quieras), aplicar con el **pooler de sesión (5432)**:
-- [ ] `b3f1a9c2d4e5` — `Song.reference_url` (vídeo de referencia, T-090).
-- [ ] `c5d7e9f1a2b3` — tablas de **giras** (`tours`/`tour_stops`/`tour_budget_lines`, T-093).
-- [ ] `d7e9f1a2b3c4` — `Band.plan` (andamiaje Free/Pro, T-097).
-- [ ] `e9f1a2b3c4d5` — **biblioteca global** (`musical_works`/`public_scores`/`score_ratings`/`score_comments`, V3-F9).
-      *(En local ya están aplicadas. Comando: `python -m alembic upgrade head` con `DATABASE_URL` al pooler 5432.)*
+### 6. ✅ Aplicar las 4 migraciones nuevas de la V3 a Postgres prod — HECHO (verificado 2026-06-20)
+Ya están aplicadas en Postgres prod (head de Alembic `e9f1a2b3c4d5`, verificado vía MCP de Supabase):
+- [x] `b3f1a9c2d4e5` — `Song.reference_url` (vídeo de referencia, T-090).
+- [x] `c5d7e9f1a2b3` — tablas de **giras** (`tours`/`tour_stops`/`tour_budget_lines`, T-093).
+- [x] `d7e9f1a2b3c4` — `Band.plan` (andamiaje Free/Pro, T-097).
+- [x] `e9f1a2b3c4d5` — **biblioteca global** (`musical_works`/`public_scores`/`score_ratings`/`score_comments`, V3-F9).
+      *(Aplicadas al desplegar el commit `c3a70d7 feat(v3)`; head de prod = head local. Confirmado por consulta de solo lectura a `alembic_version` + `information_schema`.)*
 
 ### 7. 🟡 Supabase Storage (desbloquea V3-F3 audio/fotos, grabadora, EPK, merch)
 - [ ] Supabase → **Storage** → crear bucket(s) (p. ej. `band-media`).

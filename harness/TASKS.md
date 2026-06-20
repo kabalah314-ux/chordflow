@@ -3,7 +3,7 @@
 > Una tarea activa a la vez (recomendado). Al cerrarla, moverla a "Hechas".
 > Abrir tareas nuevas copiando `templates/TASK_TEMPLATE.md`.
 > Backlog completo y priorizado en `ROADMAP.md`. Diseño del molde en `MOLDE.md`.
-> **Última sincronización: 2026-06-18.**
+> **Última sincronización: 2026-06-20.**
 
 ---
 
@@ -34,7 +34,7 @@ Dirección aprobada en `GUIA_MAESTRA_V3.md` (D1–D8). **✅ V3-F1 (pulido de di
 - ✅ **T-089 — Modo Directo** (escenario pantalla completa): `stage-mode` + Fullscreen API + Esc.
   e2e `test_modo_directo_alterna_y_oculta_barra`.
 - ✅ **T-090 — Vídeo de referencia (YouTube)**: `Song.reference_url` (modelo+schema+migración
-  `b3f1a9c2d4e5`) + input en editor + botón 🎬. e2e ×2. ⚠️ Pendiente migración a Postgres prod.
+  `b3f1a9c2d4e5`) + input en editor + botón 🎬. e2e ×2. ✅ Migración aplicada en Postgres prod.
 - ✅ **T-091 — Afinador** (`tuner.js`, autocorrelación pura `bfDetectPitch` + micro + panel). e2e.
 - ✅ **T-092 — Pasapáginas/pedalera** (PageDown/PageUp/flechas → setlist o scroll). e2e.
 - Diferido: loop A-B / metrónomo *lookahead* → V3-F6 (requieren seek/bucle en el motor).
@@ -43,7 +43,7 @@ Dirección aprobada en `GUIA_MAESTRA_V3.md` (D1–D8). **✅ V3-F1 (pulido de di
 **✅ V3-F5 — Gestión de giras (COMPLETA):**
 - ✅ **T-093/094/095 — Backend**: modelos `Tour`/`TourStop`/`TourBudgetLine` + migración
   `c5d7e9f1a2b3` + schemas + `tours_router.py` (CRUD admin, paradas ligadas a conciertos, presupuesto
-  con total, miembros leen). Test `test_api_tours` (5, incl. aislamiento). ⚠️ Migración pendiente en prod.
+  con total, miembros leen). Test `test_api_tours` (5, incl. aislamiento). ✅ Migración aplicada en prod.
 - ✅ **T-096 — Frontend**: pestaña Giras en `band.html` (lista/crear/detalle con ruta + presupuesto).
   e2e `test_band_space_giras`. Diferido: mapa Leaflet, ligar gasto real, co-organización. VERDE (145·67).
 
@@ -53,14 +53,14 @@ Dirección aprobada en `GUIA_MAESTRA_V3.md` (D1–D8). **✅ V3-F1 (pulido de di
 - ✅ **T-102 — Revisión ultracode aplicada** (33 agentes · 20 hallazgos): letra recortada en público
   (D2), round-trip completo (tabs/reference_url), dedup D9 (409), try/except + carrera work, Decimal,
   banda no borrada, índice+updated_at. Diferido: XSS (frontend), rate-limit comentarios. VERDE (177·67).
-  ⚠️ Migración pendiente en Postgres prod.
+  ✅ Migración aplicada en Postgres prod.
 - ✅ **T-103 — Frontend**: `biblioteca-global.html`+`catalogo.js` (Explorar): buscar · "ponla aquí"
   (editor publica por defecto, D9) · preview recortado · importar · valorar/comentar (escapado). Item
   "Explorar" en el lateral. e2e `test_catalogo`. **✅ V3-F9 COMPLETA.** run_checks VERDE (177·71).
 
 **V3-F3 — Habilitadores (parte de código COMPLETA):**
 - ✅ **T-097 — Andamiaje `Band.plan`** (Free/Pro, sin cobrar): columna + migración `d7e9f1a2b3c4` +
-  expuesto en API + editable por admin (inválido→422). Test `test_band_plan`. ⚠️ Migración pendiente prod.
+  expuesto en API + editable por admin (inválido→422). Test `test_band_plan`. ✅ Migración aplicada en prod.
 - ✅ **T-098 — Gate de aislamiento parametrizado**: 16 rutas de banda → ajeno 403/404. VERDE (163·67).
 - ⛔ **T-099 — Storage (Supabase)**: BLOQUEADO, necesita que Oscar cree bucket(s) + políticas + env vars.
 
@@ -115,8 +115,8 @@ Fase 14+ (booking, recursos, etc.) o pulido diferido (reskin `bf-*` profundo, hi
 - **Fase 12** (Comunicación — chat + notas, núcleo) — T-070 (migración `messages`), T-071 (backend
   `/bands/{id}/messages`), T-072 (UI 💬 Chat con refresco).
 
-Revisión ✅ de las **seis** en `REVISIONES.md`. **122 unit + 43 e2e verdes.** Pendiente solo de Oscar
-(`PENDIENTES_OSCAR.md`): aplicar las **6 migraciones** del giro a Postgres prod + push a `main`.
+Revisión ✅ de las **seis** en `REVISIONES.md`. **122 unit + 43 e2e verdes.** ✅ Desplegado: las
+**6 migraciones** del giro se aplicaron a Postgres prod y el código está en `main` (deploy 2026-06-16).
 
 **Próxima fase (cuando se apruebe): Fase 13 — Shell nueva + perfil + pulido** — navegación nueva
 (perfil → partituras/bandas → banda → secciones), dashboard, y **rebranding a BandFlow** (títulos,
@@ -194,7 +194,7 @@ automático por hash. **Sync:** T-019 auto-scroll anclado · T-040 findActiveCho
 **🎸→🏠 Giro V2 (SaaS de banda) — Fase 7:** T-048 migración aditiva del núcleo de identidad
 (`musician_profiles`, `bands`, `band_memberships`, `band_invites`) — migración `39fbdc0fff0f` solo
 aditiva, `alembic check` limpio, baja blanda + CHECK de roles/estados, doctor + 50 unit verdes.
-*(Pendiente aplicar a Postgres prod en el próximo deploy.)* · T-049 schemas Pydantic de las 4
+*(✅ Aplicada a Postgres prod en el deploy 2026-06-16.)* · T-049 schemas Pydantic de las 4
 entidades (Literal role/status alineados a `models`; `test_schemas_banda`, 8 casos) · **T-050 auth
 multi-tenant** (`band_auth.py`: `require_band_member`/`require_band_admin`, matriz de aislamiento
 en `test_band_auth`, 7 casos) · T-051 endpoints de banda (`bands_router.py`: CRUD + soft delete +

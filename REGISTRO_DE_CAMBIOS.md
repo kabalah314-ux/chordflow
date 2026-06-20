@@ -2,9 +2,26 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-06-18
+> Última actualización: 2026-06-20
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## ✅ Verificado — las 4 migraciones V3 ya están aplicadas en Postgres prod (2026-06-20)
+
+**Qué:** confirmado que producción (`fwynfifvtthtpzpejfhb`) está en el head de Alembic
+`e9f1a2b3c4d5` (el head local más reciente), con todos los objetos V3 físicamente presentes:
+`songs.reference_url` (T-090); tablas `tours`/`tour_stops`/`tour_budget_lines` (T-093); `bands.plan`
+(T-097); y `musical_works`/`public_scores`/`score_ratings`/`score_comments` (V3-F9/T-100).
+
+**Por qué:** el `ROADMAP.md`, `TASKS.md` y `PENDIENTES_OSCAR.md` §6 arrastraban avisos
+"⚠️ Migración pendiente en Postgres prod" que **ya no eran ciertos** — las 4 se aplicaron al
+desplegar el commit `c3a70d7 feat(v3)`. Mantenerlos arriesgaba intentar re-aplicarlas por error.
+
+**Cómo/Verificación:** consulta de **solo lectura** al Postgres de prod vía el MCP de Supabase
+(`SELECT` sobre `alembic_version` + `information_schema`); **sin cambios en la BD**. Actualizados los
+avisos obsoletos en `ROADMAP.md`, `TASKS.md` y `PENDIENTES_OSCAR.md` §6.
 
 ---
 

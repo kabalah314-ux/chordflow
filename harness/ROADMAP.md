@@ -259,7 +259,7 @@
       `band_invites` + índices (`band_id` y FKs) + CHECK (`role`/`status`/`role_to_grant`) + único
       `(band_id, user_id)` + baja blanda (`status`/`left_at`). Migración `39fbdc0fff0f` solo aditiva;
       `alembic check` limpio (sin drift). Test `test_upgrade_crea_el_nucleo_de_banda`. Doctor + 50 unit
-      verdes. **Pendiente: aplicar a Postgres prod (pooler 5432) en el próximo deploy.**
+      verdes. ✅ Migración aplicada a Postgres prod (deploy 2026-06-16).
 - [x] **T-049** 🟠 **Modelos + schemas**: modelos SQLAlchemy hechos en T-048. Schemas Pydantic de las
       4 entidades (`Band` Create/Update/Response/Summary, `BandMembershipResponse`/`MembershipRoleUpdate`,
       `BandInvite` Create/Response, `MusicianProfile`), con `role`/`status` como `Literal` alineados a
@@ -290,7 +290,7 @@
 - [x] **T-056** 🔴 **Cierre de fase**: `run_checks` **TODO VERDE** (doctor 10/10 · ruff · 83 unit ·
       38 e2e, incl. aislamiento por ruta) + **revisión de sección** `revision.py fase7` ✅ completa
       (3/3 rutas · 3/3 páginas) con veredicto ✅ en `REVISIONES.md`. Registro en `REGISTRO_DE_CAMBIOS.md`.
-      **Pendiente solo: aplicar migración a Postgres prod (en local hecho).**
+      ✅ Migración aplicada a Postgres prod (deploy 2026-06-16).
 
 ## Fases 8–21 (se detallan en T-NNN al aprobarse cada una)
 
@@ -307,7 +307,7 @@
   - [x] **T-059** 🟢 Repertorio frontend: en la ficha de banda (`bands.js`) — listar, ▶ reproducir,
         copiar de mis partituras (modal selector) y quitar. e2e `test_bands_ui` (copiar al repertorio).
   - [x] **Cierre**: `run_checks` TODO VERDE (89 unit + 39 e2e) · `revision.py fase8` ✅ completa ·
-        veredicto en `REVISIONES.md`. **Pendiente: aplicar migración a Postgres prod (local hecho).**
+        veredicto en `REVISIONES.md`. ✅ Migración aplicada a Postgres prod (deploy 2026-06-16).
 - [x] **Fase 9** 🟢 Setlists de banda (`Setlist.band_id`, `SetlistItem.note`). **COMPLETA**:
   - [x] **T-060** 🔴 Migración aditiva `Setlist.band_id` (FK CASCADE, index) + `SetlistItem.note`
         (Text) — migración `95eddae092db` (FK nombrada), `alembic check` limpio.
@@ -320,7 +320,7 @@
         — listar, ▶ reproducir en orden (◀▶), crear desde el repertorio (editor available/selected),
         borrar. e2e `test_bands_ui` (crear setlist desde la UI).
   - [x] **Cierre**: `run_checks` TODO VERDE (95 unit + 40 e2e) · `revision.py fase9` ✅ completa ·
-        veredicto en `REVISIONES.md`. **Pendiente: migración a Postgres prod (local hecho).**
+        veredicto en `REVISIONES.md`. ✅ Migración aplicada a Postgres prod (deploy 2026-06-16).
 - [x] **Fase 10** 🟢 Agenda (`Event`, `EventAttendance`). Áreas 2, 3, 4. **NÚCLEO COMPLETO**:
   - [x] **T-063** 🔴 Migración aditiva `events` + `event_attendance` (`22c7ea96b921`): tipo
         (rehearsal|concert|other), status-pipeline, `setlist_id` (SET NULL), CHECK + único
@@ -476,7 +476,7 @@
   - [x] **T-097** 🟢 **Andamiaje `Band.plan`** (Free/Pro, sin cobrar, D8): columna `Band.plan` +
         enum `BAND_PLANS` + migración `d7e9f1a2b3c4` + expuesto en `BandResponse`/`BandSummary` +
         editable por admin vía PATCH (Literal `BandPlan`, inválido→422). Test `test_band_plan`.
-        run_checks VERDE. ⚠️ Migración pendiente en Postgres prod.
+        run_checks VERDE. ✅ Migración aplicada en Postgres prod (head `e9f1a2b3c4d5`).
   - [x] **T-098** 🟢 **Gate de aislamiento parametrizado**: `test_aislamiento_parametrizado.py`
         recorre 16 rutas de banda y exige que un ajeno reciba 403/404 (caza fugas si alguien añade
         una ruta sin guard). 163 unit · 67 e2e VERDE.
@@ -492,8 +492,8 @@
   - [x] **T-090** 🟢 **Vídeo de referencia (YouTube)**: campo nuevo `Song.reference_url` (modelo +
         schema + migración aditiva `b3f1a9c2d4e5`, batch) + input en el editor + botón 🎬 en el player
         que embebe el YouTube (id parseado del enlace). e2e `test_video_de_referencia_youtube` +
-        `test_sin_referencia_no_hay_boton`. run_checks TODO VERDE (140 unit · 64 e2e). **Pendiente:
-        aplicar migración a Postgres prod (local hecho).**
+        `test_sin_referencia_no_hay_boton`. run_checks TODO VERDE (140 unit · 64 e2e). ✅ Migración
+        aplicada a Postgres prod (head `e9f1a2b3c4d5`).
   - [x] **T-091** 🟢 **Afinador integrado** (`tuner.js`): detección de tono por **autocorrelación**
         (función pura `bfDetectPitch`, testeable con onda sintética) + micro (Web Audio) + panel con
         nota/cents/aguja en el player. e2e `test_afinador_detecta_y_abre` (440 Hz → La4 + UI).
@@ -507,7 +507,7 @@
 - [x] **V3-F5** 🟢 Gestión de giras (`Tour`/`TourStop`/`TourBudgetLine`). **COMPLETA:**
   - [x] **T-093** 🔴 Modelos `Tour`/`TourStop`/`TourBudgetLine` + enum `TOUR_STATUSES` + migración
         aditiva `c5d7e9f1a2b3` (3 tablas, índices `band_id`/FKs, CHECK status, batch). `alembic check`
-        sin drift (validado por `test_migrations`). **Pendiente: aplicar a Postgres prod.**
+        sin drift (validado por `test_migrations`). ✅ Migración aplicada a Postgres prod.
   - [x] **T-094** 🟠 Schemas Pydantic (Tour Create/Update/Response/Summary, Stop, BudgetLine).
   - [x] **T-095** 🟠 `tours_router.py` (`/bands/{id}/tours` + `/stops` + `/budget`): CRUD gira
         (admin), paradas ligadas a conciertos de la banda (valida pertenencia del evento), presupuesto
@@ -516,7 +516,7 @@
   - [x] **T-096** 🟢 Frontend: pestaña **Giras** en `band.html` (autocontenida): lista + crear gira
         (admin), detalle con **ruta** (paradas ligadas a conciertos de la banda) y **presupuesto** con
         total, añadir/quitar paradas y líneas (admin). e2e `test_band_space_giras`. run_checks VERDE
-        (145 unit · 67 e2e). ⚠️ Migración pendiente en Postgres prod.
+        (145 unit · 67 e2e). ✅ Migración aplicada en Postgres prod.
   - **Diferido:** **mapa Leaflet+OSM** (evita meter CDN nueva ahora; sin SRI); ligar gasto real
         (`Transaction`) a la gira desde la UI; co-organización con otra banda (Opción 0 informativa).
 - [ ] **V3-F6** 🟠 Realtime + sala de ensayo sincronizada (Supabase Realtime + `/clock`; sincronía visual + metrónomo, D5/D6).
@@ -533,7 +533,7 @@
         repeat/color/hint, `reference_url`); dedup de publicación (D9, source_song_id→409); try/except
         + carrera de `MusicalWork`; `rating_avg` Decimal; import valida banda no borrada; índice
         compuesto + `updated_at`. Diferido: XSS escaping (en el frontend), rate-limit de comentarios.
-        run_checks TODO VERDE (177 unit · 67 e2e). ⚠️ Migración pendiente en Postgres prod.
+        run_checks TODO VERDE (177 unit · 67 e2e). ✅ Migración aplicada en Postgres prod.
   - [x] **T-103** 🟢 **Frontend**: `biblioteca-global.html`+`catalogo.js` (Explorar): buscar, reclamo
         "ponla aquí" (→ editor, que **publica por defecto**, D9), detalle con **preview de letra
         recortada** (reusa `score_render`), **importar** a banda/personal, **valorar** (estrellas) y
