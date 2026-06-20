@@ -45,12 +45,24 @@ def _valid_band_song_ids(db: Session, band_id: str, song_ids: List[str]) -> List
     return [sid for sid in song_ids if sid in en_repertorio]
 
 
-def _set_band_items(db: Session, sl: Setlist, song_ids: List[str], band_id: str) -> None:
+def _pairs_from_payload(payload) -> list:
+    """Devuelve [(song_id, note)] en orden: prioriza `items` (con nota); si no, `song_ids` (sin nota)."""
+    if payload.items is not None:
+        return [(i.song_id, i.note) for i in payload.items]
+    return [(sid, None) for sid in (payload.song_ids or [])]
+
+
+def _set_band_items(db: Session, sl: Setlist, pairs: list, band_id: str) -> None:
     for it in list(sl.items):
         db.delete(it)
     db.flush()
-    for pos, sid in enumerate(_valid_band_song_ids(db, band_id, song_ids)):
-        sl.items.append(SetlistItem(song_id=sid, position=pos))
+    valid = set(_valid_band_song_ids(db, band_id, [sid for sid, _ in pairs]))
+    pos = 0
+    for sid, note in pairs:
+        if sid not in valid:
+            continue
+        sl.items.append(SetlistItem(song_id=sid, position=pos, note=note))
+        pos += 1
 
 
 def _get_band_setlist(db: Session, band_id: str, setlist_id: str) -> Setlist:
@@ -86,7 +98,7 @@ def create_band_setlist(
     _deny_guests(membership)
     sl = Setlist(name=payload.name, owner_id=membership.user_id, band_id=band_id)
     db.add(sl)
-    _set_band_items(db, sl, payload.song_ids, band_id)
+    _set_band_items(db, sl, _pairs_from_payload(payload), band_id)
     db.commit()
     db.refresh(sl)
     return _to_response(sl)
@@ -114,8 +126,8 @@ def update_band_setlist(
     sl = _get_band_setlist(db, band_id, setlist_id)
     if payload.name is not None:
         sl.name = payload.name
-    if payload.song_ids is not None:
-        _set_band_items(db, sl, payload.song_ids, band_id)
+    if payload.song_ids is not None or payload.items is not None:
+        _set_band_items(db, sl, _pairs_from_payload(payload), band_id)
     db.commit()
     db.refresh(sl)
     return _to_response(sl)

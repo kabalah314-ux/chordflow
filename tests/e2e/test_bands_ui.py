@@ -113,6 +113,41 @@ def test_crear_setlist_de_banda_desde_la_ui(page, live_server, api):
     assert "Bolo UI" in page.inner_text("#b-setlists")
 
 
+def test_setlist_de_banda_con_apunte_por_cancion(page, live_server, api):
+    """End-to-end del apunte por canción (T-110): el editor de setlist permite una nota por canción,
+    se guarda y el reproductor la muestra en la barra del setlist."""
+    bid = api.post("/bands/", json={"name": "Banda Apunte UI"}).json()["id"]
+    api.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="Cancion Apunte"))
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Apunte UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="setlists"]')
+    page.wait_for_selector("#b-new-setlist", timeout=8000)
+
+    page.click("#b-new-setlist")
+    page.wait_for_selector("#sl-name", timeout=8000)
+    page.fill("#sl-name", "Bolo con apuntes")
+    page.click('#sl-available button[data-id]')                 # añadir la canción
+    page.wait_for_selector('#sl-selected .sl-note', timeout=5000)
+    page.fill('#sl-selected .sl-note', "Capo 2 acustica")       # apunte por canción
+    page.click("#sl-save")
+    page.wait_for_selector("#b-setlists .setlist-song", timeout=8000)
+
+    # La nota se persistió (verificado vía API)
+    sid = next(s["id"] for s in api.get(f"/bands/{bid}/setlists/").json() if s["name"] == "Bolo con apuntes")
+    detail = api.get(f"/bands/{bid}/setlists/{sid}").json()
+    assert detail["items"][0]["note"] == "Capo 2 acustica"
+
+    # El reproductor muestra el apunte en la barra del setlist
+    song_id = detail["items"][0]["song_id"]
+    page.goto(f"{live_server}/static/index.html?songId={song_id}&setlist={sid}&pos=0",
+              wait_until="networkidle")
+    page.wait_for_selector("#setlist-nav .sl-nav-note", timeout=8000)
+    assert "Capo 2" in page.inner_text("#setlist-nav .sl-nav-note")
+
+
 def test_crear_evento_y_marcar_asistencia_en_la_ui(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Agenda UI"})
 

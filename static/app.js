@@ -210,6 +210,7 @@ async function setupSetlistNav() {
         let pos = parseInt(params.get('pos'), 10);
         if (isNaN(pos) || ids[pos] !== curId) pos = ids.indexOf(curId);  // recalcular si no cuadra
         if (pos < 0) return;
+        const note = (sl.items[pos] || {}).note;   // apunte de la canción actual (T-110)
         const go = (p) => { window.location.href =
             `index.html?songId=${encodeURIComponent(ids[p])}&setlist=${encodeURIComponent(setlistId)}&pos=${p}`; };
         const prevDis = pos <= 0 ? 'disabled' : '';
@@ -217,6 +218,7 @@ async function setupSetlistNav() {
         elNav.innerHTML = `
             <button id="sl-prev" class="secondary-btn" ${prevDis} aria-label="Canción anterior">◀</button>
             <span class="sl-nav-label">🎼 ${escapeHtml(sl.name)} · ${pos + 1}/${ids.length}</span>
+            ${note ? `<span class="sl-nav-note" title="Apunte de la canción">📝 ${escapeHtml(note)}</span>` : ''}
             <button id="sl-next" class="secondary-btn" ${nextDis} aria-label="Siguiente canción">▶</button>`;
         elNav.style.display = 'flex';
         const p = document.getElementById('sl-prev'); if (p && !prevDis) p.addEventListener('click', () => go(pos - 1));

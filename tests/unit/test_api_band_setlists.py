@@ -61,6 +61,26 @@ def test_crear_setlist_de_banda_desde_el_repertorio(client):
     assert all(s["id"] != sl["id"] for s in client.get("/setlists/").json())
 
 
+def test_setlist_de_banda_con_apunte_por_cancion(client):
+    """`items` con `note` por canción se persiste y se devuelve (T-110): orden respetado y el
+    formato antiguo `song_ids` (sin nota) sigue funcionando (compatibilidad)."""
+    bid, songs = _band_with_repertoire(client)
+    r = client.post(f"/bands/{bid}/setlists/", json={
+        "name": "Con apuntes",
+        "items": [{"song_id": songs[0], "note": "capo 2"},
+                  {"song_id": songs[1], "note": None}],
+    })
+    assert r.status_code == 201, r.text
+    items = r.json()["items"]
+    assert [i["song_id"] for i in items] == songs   # respeta el orden de items
+    assert items[0]["note"] == "capo 2"
+    assert items[1]["note"] is None
+    # Compat: el formato song_ids (sin nota) sigue creando el setlist
+    r2 = client.post(f"/bands/{bid}/setlists/", json={"name": "Sin apuntes", "song_ids": [songs[0]]})
+    assert r2.status_code == 201
+    assert r2.json()["items"][0]["note"] is None
+
+
 def test_no_admite_canciones_fuera_del_repertorio(client):
     bid, songs = _band_with_repertoire(client)
     personal = client.post("/songs/", json=sample_song_payload(title="Ajena")).json()["id"]

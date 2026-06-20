@@ -159,14 +159,21 @@ class SongSummary(SongBase):
 
 
 # ── Setlists / repertorios (Fase 5) ──────────────────────────────────────────
+class SetlistItemIn(BaseModel):
+    song_id: str
+    note: Optional[str] = Field(None, max_length=255)  # apunte por canción ("capo 2", "acústica"…)
+
+
 class SetlistCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    song_ids: List[str] = []  # canciones en el orden deseado
+    song_ids: List[str] = []  # canciones en el orden deseado (compat sin nota)
+    items: Optional[List[SetlistItemIn]] = None  # si viene, tiene prioridad: orden + nota por canción
 
 
 class SetlistUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
-    song_ids: Optional[List[str]] = None  # si viene, reemplaza la lista/orden completo
+    song_ids: Optional[List[str]] = None  # si viene, reemplaza la lista/orden completo (compat)
+    items: Optional[List[SetlistItemIn]] = None  # alternativa a song_ids con nota por canción
 
 
 class SetlistItemOut(BaseModel):

@@ -8,6 +8,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎼 T-110 — Apunte por canción en el setlist (`SetlistItem.note`) (2026-06-20)
+
+**Qué:** los setlists de banda admiten una **nota por canción** ("capo 2", "acústica", "aquí hablo al
+público"). El editor (`newBandSetlist`) tiene un input por canción seleccionada; se envía
+`items:[{song_id, note}]`; el **reproductor** muestra el apunte de la canción actual en la barra del
+setlist (`.sl-nav-note`).
+
+**Por qué:** el modelo `SetlistItem.note` y la lectura (`SetlistItemOut.note`) existían desde la Fase
+9, pero **no había vía de escritura** (el create solo tomaba `song_ids`) → la nota nunca se podía
+rellenar. Es el último hueco "modelo-ya-existe-falta-UI". Útil para recordatorios en directo.
+
+**Cómo/Verificación:** schema `SetlistItemIn` + `items` opcional en `SetlistCreate/Update`
+(backward-compat con `song_ids`); `band_setlists_router` persiste la nota (`_set_band_items` con
+pares, **filtrando al repertorio** de la banda y conservando posición/nota). Sin migración (la columna
+ya existía). unit `test_setlist_de_banda_con_apunte_por_cancion` (round-trip + compat) + e2e
+end-to-end (editor → reproductor) + **revisión adversarial** (compatibilidad/aislamiento/XSS/
+correctitud) **sin hallazgos**. `run_checks` TODO VERDE. **Diferido:** notas en setlists *personales*
+(editor) y editar las notas de un setlist ya creado.
+
+---
+
 ## 📤 T-109 — Export CSV de finanzas (cliente) (2026-06-20)
 
 **Qué:** botón **⬇️ CSV** en la sección Finanzas que descarga un CSV de los movimientos (Fecha,

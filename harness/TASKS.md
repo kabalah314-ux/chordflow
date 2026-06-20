@@ -29,6 +29,13 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 `test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
 (`TabLine.fret_sequence`) → V3-F6.
 
+### ✅ T-110 — Apunte por canción en el setlist (SetlistItem.note) (2026-06-20)
+Los setlists de banda admiten una nota por canción ("capo 2", "acústica"). El modelo+lectura existían
+(Fase 9) pero faltaba la vía de escritura. Schema `items:[{song_id,note}]` (compat con `song_ids`),
+`band_setlists_router` la persiste (filtrada al repertorio), input por canción en el editor y apunte en
+la barra del reproductor. unit + e2e end-to-end + revisión adversarial sin hallazgos. run_checks VERDE.
+Diferido: notas en setlists personales; editar notas de un setlist existente.
+
 ### ✅ T-109 — Export CSV de finanzas (cliente) (2026-06-20)
 Botón ⬇️ CSV en Finanzas: descarga los movimientos (Fecha/Tipo/Descripción/Importe/Categoría/Evento/
 Pagado por) generado en el cliente (Blob + BOM UTF-8, celdas escapadas). Sin backend. e2e

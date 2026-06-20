@@ -631,6 +631,7 @@ async function newBandSetlist(bandId, opts = {}) {
     if (!repertoire.length) { toast('Primero añade canciones al repertorio de la banda.', 'info'); return; }
 
     const selected = [];
+    const notes = {};   // apunte por canción (song_id → texto), persiste entre re-renders
     const byId = Object.fromEntries(repertoire.map(s => [s.id, s]));
     target.innerHTML = `
         <div class="setlist-editor">
@@ -654,9 +655,13 @@ async function newBandSetlist(bandId, opts = {}) {
         elAvail.querySelectorAll('button[data-id]').forEach(b =>
             b.addEventListener('click', () => { selected.push(b.dataset.id); render(); }));
         elSel.innerHTML = selected.map((id, i) => `
-            <li><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
+            <li class="sl-sel-row"><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
+                <input type="text" class="search-box sl-note" data-note="${escapeHtml(id)}" maxlength="255"
+                       placeholder="Apunte (capo 2, acústica…)" value="${escapeHtml(notes[id] || '')}">
                 <button class="setlist-item-btn danger" data-rm="${escapeHtml(id)}" aria-label="Quitar">✕</button></li>`).join('')
             || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
+        elSel.querySelectorAll('.sl-note').forEach(inp =>
+            inp.addEventListener('input', () => { notes[inp.dataset.note] = inp.value; }));
         elSel.querySelectorAll('button[data-rm]').forEach(b =>
             b.addEventListener('click', () => {
                 const i = selected.indexOf(b.dataset.rm); if (i > -1) selected.splice(i, 1); render();
@@ -668,9 +673,10 @@ async function newBandSetlist(bandId, opts = {}) {
         const name = document.getElementById('sl-name').value.trim();
         if (!name) { toast('Pon un nombre al setlist.', 'error'); return; }
         try {
+            const items = selected.map(id => ({ song_id: id, note: (notes[id] || '').trim() || null }));
             const res = await apiFetch(`/bands/${bandId}/setlists/`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, song_ids: selected })
+                body: JSON.stringify({ name, items })
             });
             if (!res.ok) throw new Error('http');
             toast('Setlist creado.', 'success');

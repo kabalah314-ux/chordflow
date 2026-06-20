@@ -327,6 +327,11 @@
         borrar. e2e `test_bands_ui` (crear setlist desde la UI).
   - [x] **Cierre**: `run_checks` TODO VERDE (95 unit + 40 e2e) · `revision.py fase9` ✅ completa ·
         veredicto en `REVISIONES.md`. ✅ Migración aplicada a Postgres prod (deploy 2026-06-16).
+  - [x] **T-110** 🟢 **Apunte por canción** (`SetlistItem.note`) en la UI (2026-06-20): el modelo y la
+        lectura existían, pero NO había vía de escritura. Schema `SetlistItemIn`+`items` (compat con
+        `song_ids`), `band_setlists_router` persiste la nota (filtrada al repertorio), input por canción
+        en el editor y apunte en la barra del reproductor. unit + e2e end-to-end + revisión adversarial
+        (compat/aislamiento/XSS/correctitud) ✅. VERDE. Diferido: notas en setlists personales; editar notas.
 - [x] **Fase 10** 🟢 Agenda (`Event`, `EventAttendance`). Áreas 2, 3, 4. **NÚCLEO COMPLETO**:
   - [x] **T-063** 🔴 Migración aditiva `events` + `event_attendance` (`22c7ea96b921`): tipo
         (rehearsal|concert|other), status-pipeline, `setlist_id` (SET NULL), CHECK + único
