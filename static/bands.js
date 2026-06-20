@@ -188,11 +188,18 @@ async function loadFinance(bandId, iAmAdmin) {
 async function newTransaction(bandId, members) {
     const payerOptions = members.map(m => `<option value="${escapeHtml(m.user_id)}">${escapeHtml(m.display_name || m.user_id)}</option>`).join('')
         + '<option value="__fund__">🏦 Fondo común</option>';
+    // Filas del reparto personalizado: una por miembro activo (id estable en data-uid).
+    const splitRows = members.map(m => `
+        <div class="split-row">
+            <span class="split-name">${escapeHtml(m.display_name || m.user_id)}</span>
+            <input type="number" class="search-box split-amount" data-uid="${escapeHtml(m.user_id)}"
+                   min="0" step="0.01" placeholder="0.00">
+        </div>`).join('');
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
         <div class="modal-card glass-panel" role="dialog" aria-modal="true">
-            <p class="modal-msg">Nuevo movimiento (reparto a partes iguales)</p>
+            <p class="modal-msg">Nuevo movimiento</p>
             <select id="tx-type" class="search-box">
                 <option value="expense">➖ Gasto</option>
                 <option value="income">➕ Ingreso</option>
@@ -201,16 +208,57 @@ async function newTransaction(bandId, members) {
             <input type="number" id="tx-amount" class="search-box" placeholder="Importe (€)" min="0.01" step="0.01">
             <label class="field-label">¿Quién pagó/cobró?</label>
             <select id="tx-payer" class="search-box">${payerOptions}</select>
+            <label class="field-label">Reparto entre miembros</label>
+            <select id="tx-split-mode" class="search-box">
+                <option value="equal">A partes iguales</option>
+                <option value="custom">Personalizado…</option>
+            </select>
+            <div id="tx-splits" style="display:none;">
+                ${splitRows}
+                <p class="split-sum" id="tx-split-sum"></p>
+            </div>
             <div class="modal-actions">
                 <button class="secondary-btn" data-act="cancel">Cancelar</button>
                 <button class="primary-btn" data-act="ok">Registrar</button>
             </div>
         </div>`;
+
+    const elMode = overlay.querySelector('#tx-split-mode');
+    const elSplits = overlay.querySelector('#tx-splits');
+    const elAmount = overlay.querySelector('#tx-amount');
+    const elSum = overlay.querySelector('#tx-split-sum');
+    const splitInputs = () => Array.from(overlay.querySelectorAll('.split-amount'));
+    const sumSplits = () => splitInputs().reduce((acc, i) => acc + (parseFloat(i.value) || 0), 0);
+    const refreshSum = () => {
+        const total = parseFloat(elAmount.value) || 0;
+        const asign = sumSplits();
+        const ok = total > 0 && Math.abs(asign - total) < 0.005;
+        elSum.textContent = `Asignado ${asign.toFixed(2)} € de ${total.toFixed(2)} €` + (ok ? '  ✓' : '');
+        elSum.style.color = ok ? '#5db075' : 'var(--text-secondary)';
+    };
+    // Al pasar a "personalizado", prerrellena a partes iguales (céntimos a los primeros) como
+    // punto de partida editable; el usuario ajusta cada importe.
+    elMode.addEventListener('change', () => {
+        const custom = elMode.value === 'custom';
+        elSplits.style.display = custom ? '' : 'none';
+        if (custom) {
+            const cents = Math.round((parseFloat(elAmount.value) || 0) * 100);
+            const n = splitInputs().length;
+            if (cents > 0 && n) {
+                const base = Math.floor(cents / n), rem = cents - base * n;
+                splitInputs().forEach((inp, idx) => { inp.value = ((base + (idx < rem ? 1 : 0)) / 100).toFixed(2); });
+            }
+            refreshSum();
+        }
+    });
+    elSplits.addEventListener('input', refreshSum);
+    elAmount.addEventListener('input', () => { if (elMode.value === 'custom') refreshSum(); });
+
     const close = () => overlay.remove();
     overlay.addEventListener('click', async (e) => {
         if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') { close(); return; }
         if (e.target.getAttribute('data-act') !== 'ok') return;
-        const amount = parseFloat(overlay.querySelector('#tx-amount').value);
+        const amount = parseFloat(elAmount.value);
         if (!(amount > 0)) { toast('Pon un importe válido.', 'error'); return; }
         const payer = overlay.querySelector('#tx-payer').value;
         const body = {
@@ -219,6 +267,19 @@ async function newTransaction(bandId, members) {
             amount: amount.toFixed(2),
         };
         if (payer === '__fund__') body.paid_by_fund = true; else body.paid_by = payer;
+        // Reparto personalizado: una parte por miembro con importe > 0; la Σ debe cuadrar con el
+        // total (el backend lo revalida y rechaza si no cuadra).
+        if (elMode.value === 'custom') {
+            const splits = splitInputs()
+                .map(i => ({ user_id: i.dataset.uid, amount: parseFloat(i.value) || 0 }))
+                .filter(s => s.amount > 0);
+            const suma = splits.reduce((a, s) => a + s.amount, 0);
+            if (!splits.length || Math.abs(suma - amount) >= 0.005) {
+                toast(`Las partes (${suma.toFixed(2)} €) deben sumar el total (${amount.toFixed(2)} €).`, 'error');
+                return;
+            }
+            body.splits = splits.map(s => ({ user_id: s.user_id, share_amount: s.amount.toFixed(2) }));
+        }
         close();
         try {
             const res = await apiFetch(`/bands/${bandId}/transactions`, {

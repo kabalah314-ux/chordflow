@@ -222,6 +222,17 @@ button {
     tab-size: 4;
 }
 
+/* Editor de reparto personalizado en el modal de movimiento (finanzas) */
+.split-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0.35rem 0;
+}
+.split-name { flex: 1; color: var(--text-secondary); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; }
+.split-amount { width: 110px; flex: 0 0 auto; }
+.split-sum { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--text-secondary); text-align: right; }
+
 /* Línea de solo acordes (Intro, Puente sin letra) */
 .line-chord-only {
     display: flex;

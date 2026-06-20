@@ -29,6 +29,12 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 `test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
 (`TabLine.fret_sequence`) → V3-F6.
 
+### ✅ T-106 — Reparto personalizado de gastos en la UI (2026-06-20)
+El modal "Movimiento" ofrece A partes iguales / Personalizado (fila por miembro, prerrelleno, valida
+que la Σ cuadre, envía `splits`). El backend ya lo soportaba (Fase 11) pero la UI no lo exponía. e2e
+`test_reparto_personalizado_en_movimiento`. + `fix(conftest)` deadline `live_server` 45→90s. run_checks
+VERDE. Diferido: export CSV, ligar movimiento a evento, cuotas recurrentes.
+
 ### ✅ T-105 — Limpieza: retirado el detalle de banda legacy (openBand) (2026-06-20)
 Eliminado el código muerto `openBand` (~91 líneas) + `showGrid`/`showDetail`/`elDetail` de `bands.js`,
 el `#band-detail` de `bands.html` y los fallbacks legacy de `newBandSetlist` (la ficha de banda vive en

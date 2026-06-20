@@ -159,6 +159,34 @@ def test_registrar_movimiento_y_ver_saldos_en_la_ui(page, live_server, api):
     assert "Local de ensayo" in page.inner_text("#b-finance")
 
 
+def test_reparto_personalizado_en_movimiento(page, live_server, api):
+    """El modal de movimiento permite reparto PERSONALIZADO: al elegirlo aparece una fila por
+    miembro, se prerrellena al total y la suma se valida (✓); al registrar se envían `splits` que
+    el backend acepta. (El backend ya soportaba splits; faltaba exponerlo en la UI — T-106.)"""
+    api.post("/bands/", json={"name": "Banda Split UI"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Split UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="finanzas"]')
+    page.wait_for_selector("#b-new-tx", timeout=8000)
+
+    page.click("#b-new-tx")
+    page.wait_for_selector("#tx-amount", timeout=8000)
+    page.fill("#tx-desc", "Furgoneta")
+    page.fill("#tx-amount", "90")
+    # Pasar a reparto personalizado → aparece una fila por miembro (aquí 1: yo), prerrellenada al total
+    page.select_option("#tx-split-mode", "custom")
+    page.wait_for_selector("#tx-splits .split-amount", timeout=4000)
+    assert page.input_value("#tx-splits .split-amount") == "90.00"  # prerrelleno al total
+    assert "✓" in page.inner_text("#tx-split-sum")                   # la suma cuadra
+
+    page.click('.modal-overlay button[data-act="ok"]')
+    page.wait_for_selector('#b-tx-list .setlist-song', timeout=8000)
+    assert "Furgoneta" in page.inner_text("#b-finance")             # el movimiento con splits se registró
+
+
 def test_enviar_mensaje_en_el_chat_de_banda(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Chat UI"})
 

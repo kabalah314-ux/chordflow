@@ -8,6 +8,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 💶 T-106 — Reparto personalizado de gastos en la UI (finanzas) (2026-06-20)
+
+**Qué:** el modal "Movimiento" (`bands.js::newTransaction`) ahora ofrece **A partes iguales /
+Personalizado**. En personalizado pinta una fila por miembro activo (la prerrellena a partes iguales
+como punto de partida editable), valida **en vivo** que la Σ cuadre con el total (indicador ✓) y
+envía `splits:[{user_id, share_amount}]`.
+
+**Por qué:** `finance_router` ya aceptaba y validaba `splits` desde la Fase 11, pero la UI solo
+mandaba el reparto por defecto (a partes iguales) → era una capacidad **inalcanzable** desde la app.
+Las bandas que reparten desigual (alguien adelanta más, partes distintas) ya pueden registrarlo.
+
+**Cómo/Verificación:** e2e `test_reparto_personalizado_en_movimiento` (elegir personalizado → fila
+prerrellena al total → ✓ → registrar con `splits` → backend acepta). El test del reparto igual sigue
+verde. CSS `.split-row`/`.split-name`/`.split-sum`. `cachebust` al día. `run_checks` TODO VERDE
+(doctor 10/10 · ruff · 173 unit · 74 e2e [+1]). Incluye `fix(conftest)`: deadline del `live_server`
+45→90s (en máquina lenta/cargada el arranque tardaba >45s → ERRORs en cascada de los e2e; mismo
+criterio que T-042/doctor). **Diferido:** export CSV, ligar el movimiento a un evento desde la UI,
+cuotas recurrentes.
+
+---
+
 ## 🧹 T-105 — Limpieza: retirado el detalle de banda in-page legacy (openBand) (2026-06-20)
 
 **Qué:** eliminado el código muerto del detalle de banda dentro de `bands.js` (`openBand`, ~91

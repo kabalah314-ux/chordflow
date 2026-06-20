@@ -119,10 +119,11 @@ def live_server():
         stdout=log_fh, stderr=subprocess.STDOUT,
     )
 
-    # Esperar a que responda. 45s de margen: el arranque de uvicorn en frío (import
-    # de la app + JIT) puede tardar bajo carga (varias suites seguidas / CI) y un
-    # deadline corto provocaba fallos en cascada de todos los e2e (flakiness T-042).
-    deadline = time.time() + 45
+    # Esperar a que responda. 90s de margen: el arranque de uvicorn en frío (import de la app)
+    # ronda los ~26s en máquinas lentas y se dispara bajo carga alta (varias suites seguidas / CI
+    # / la máquina ocupada) → un deadline corto provocaba fallos en cascada de todos los e2e por no
+    # llegar a arrancar (flakiness T-042; doctor usa el mismo criterio, 45s en un arranque aislado).
+    deadline = time.time() + 90
     up = False
     while time.time() < deadline:
         try:
