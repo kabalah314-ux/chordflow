@@ -1,23 +1,20 @@
 /**
- * bands.js — Mis bandas: listar, crear, ver detalle (miembros) e invitar por código (Fase 7).
- * El reproductor/repertorio de banda llega en fases posteriores; aquí está el núcleo de identidad.
+ * bands.js — "Mis bandas" (bands.html): listar y crear bandas. Además exporta las funciones de
+ * sección (loadRepertoire / loadBandSetlists / loadAgenda / loadFinance / initChat /
+ * newBandSetlist…) que REUSA el espacio de banda con pestañas (band.html + band.js).
+ * El detalle in-page legacy (openBand) se retiró: la ficha de banda vive en band.html.
  */
 const elGrid = document.getElementById('bands-grid');
-const elDetail = document.getElementById('band-detail');
-// `band.html` reutiliza las funciones de sección de este archivo (loadRepertoire, loadAgenda,
-// loadFinance, initChat…) pero NO tiene la rejilla ni el botón "nueva banda": guardamos el init.
+// `band.html` reutiliza las funciones de sección de este archivo pero NO tiene la rejilla ni el
+// botón "nueva banda": por eso protegemos su init con comprobaciones de existencia.
 const _btnNewBand = document.getElementById('btn-new-band');
 if (_btnNewBand) _btnNewBand.addEventListener('click', createBand);
-
-function showGrid() { elDetail.style.display = 'none'; elGrid.style.display = ''; }
-function showDetail() { elGrid.style.display = 'none'; elDetail.style.display = ''; }
 
 const ROLE_LABEL = { admin: 'Admin', member: 'Miembro', guest: 'Invitado' };
 
 // ─── Lista de bandas ──────────────────────────────────────────────────────────
 async function loadBands() {
     if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
-    showGrid();
     try {
         const res = await apiFetch('/bands/');
         if (!res.ok) throw new Error('http');
@@ -58,99 +55,6 @@ async function createBand() {
         toast('Banda creada.', 'success');
         window.location.href = `band.html?id=${encodeURIComponent(band.id)}`;
     } catch (e) { toast('No se pudo crear la banda.', 'error'); }
-}
-
-// ─── Detalle de una banda ─────────────────────────────────────────────────────
-async function openBand(id) {
-    showDetail();
-    elDetail.innerHTML = `<p class="loading-text">Cargando…</p>`;
-    let band, members;
-    try {
-        const [rb, rm] = await Promise.all([apiFetch(`/bands/${id}`), apiFetch(`/bands/${id}/members`)]);
-        if (!rb.ok || !rm.ok) throw new Error('http');
-        band = await rb.json();
-        members = await rm.json();
-    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ No se pudo abrir la banda.</p>'; return; }
-
-    const active = members.filter(m => m.status === 'active');
-    const left = members.filter(m => m.status === 'left');
-    const iAmAdmin = active.some(m => m.role === 'admin' && m.is_me);
-
-    const memberRow = (m) => `
-        <li class="setlist-song">
-            <span class="sl-title">${escapeHtml(m.display_name || m.user_id)} <small>${ROLE_LABEL[m.role] || escapeHtml(m.role)}${m.instrument ? ' · ' + escapeHtml(m.instrument) : ''}</small></span>
-        </li>`;
-
-    const iAmGuest = active.some(m => m.is_me && m.role === 'guest');
-
-    elDetail.innerHTML = `
-        <div class="setlist-editor">
-            <a href="#" id="b-back" class="back-link">← Volver</a>
-            <div class="setlist-detail-head">
-                <h3>${escapeHtml(band.name)}</h3>
-                <span style="display:flex; gap:0.5rem;">
-                    <a href="band.html?id=${encodeURIComponent(id)}" class="primary-btn" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);" title="Nueva vista de banda (pestañas)">🎛️ Nueva vista</a>
-                    ${iAmAdmin ? `<button id="b-invite" class="primary-btn">🔗 Invitar por enlace</button>` : ''}
-                </span>
-            </div>
-            ${band.description ? `<p class="card-artist">${escapeHtml(band.description)}</p>` : ''}
-            <h4>Miembros (${active.length})</h4>
-            <ul class="setlist-list">${active.map(memberRow).join('')}</ul>
-            ${left.length ? `<h4>Antiguos miembros</h4><ul class="setlist-list">${left.map(memberRow).join('')}</ul>` : ''}
-
-            <div class="setlist-detail-head" style="margin-top:1.5rem;">
-                <h4>📚 Repertorio</h4>
-                ${iAmGuest ? '' : `<button id="b-add-song" class="primary-btn">➕ Copiar de mis partituras</button>`}
-            </div>
-            <ul class="setlist-list" id="b-repertoire"><li><small>Cargando…</small></li></ul>
-
-            <div class="setlist-detail-head" style="margin-top:1.5rem;">
-                <h4>🎵 Setlists</h4>
-                ${iAmGuest ? '' : `<button id="b-new-setlist" class="primary-btn">➕ Nuevo setlist</button>`}
-            </div>
-            <ul class="setlist-list" id="b-setlists"><li><small>Cargando…</small></li></ul>
-
-            <div class="setlist-detail-head" style="margin-top:1.5rem;">
-                <h4>📅 Agenda</h4>
-                ${iAmAdmin ? `<button id="b-new-event" class="primary-btn">➕ Nuevo evento</button>` : ''}
-            </div>
-            <div id="b-agenda"><p class="loading-text">Cargando…</p></div>
-
-            <div class="setlist-detail-head" style="margin-top:1.5rem;">
-                <h4>💶 Finanzas</h4>
-                ${iAmAdmin ? `<span style="display:flex; gap:0.5rem;">
-                    <button id="b-new-tx" class="primary-btn">➕ Movimiento</button>
-                    <button id="b-settle" class="primary-btn" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">💸 Liquidar</button>
-                </span>` : ''}
-            </div>
-            <div id="b-finance"><p class="loading-text">Cargando…</p></div>
-
-            <div class="setlist-detail-head" style="margin-top:1.5rem;"><h4>💬 Chat</h4></div>
-            <div id="b-chat"></div>
-            <div class="import-row" style="margin-top:0.6rem;">
-                <input type="text" id="chat-input" class="search-box" placeholder="Escribe un mensaje…" maxlength="4000">
-                <button id="chat-send" class="primary-btn">Enviar</button>
-            </div>
-        </div>`;
-    document.getElementById('b-back').addEventListener('click', (e) => { e.preventDefault(); loadBands(); });
-    const btnInvite = document.getElementById('b-invite');
-    if (btnInvite) btnInvite.addEventListener('click', () => generateInvite(id));
-    const btnAdd = document.getElementById('b-add-song');
-    if (btnAdd) btnAdd.addEventListener('click', () => copyFromPersonal(id));
-    const btnNewSL = document.getElementById('b-new-setlist');
-    if (btnNewSL) btnNewSL.addEventListener('click', () => newBandSetlist(id));
-    const btnNewEv = document.getElementById('b-new-event');
-    if (btnNewEv) btnNewEv.addEventListener('click', () => newEvent(id));
-    const btnNewTx = document.getElementById('b-new-tx');
-    if (btnNewTx) btnNewTx.addEventListener('click', () => newTransaction(id, active));
-    const btnSettle = document.getElementById('b-settle');
-    if (btnSettle) btnSettle.addEventListener('click', () => newSettlement(id, active));
-
-    loadRepertoire(id, !iAmGuest);
-    loadBandSetlists(id, !iAmGuest);
-    loadAgenda(id, iAmAdmin);
-    loadFinance(id, iAmAdmin);
-    initChat(id, iAmAdmin);
 }
 
 // ─── Chat de banda (Fase 12) ──────────────────────────────────────────────────
@@ -549,10 +453,11 @@ async function playBandSetlist(bandId, setlistId) {
 
 // Editor de setlist de banda: elige del repertorio en orden y guarda.
 async function newBandSetlist(bandId, opts = {}) {
-    // Desacoplado (T-075 incr. 4): por defecto pinta en el detalle legacy y vuelve con openBand;
-    // band.html pasa su propio `container` y `onDone` para integrarlo en la pestaña Setlists.
-    const target = opts.container || elDetail;
-    const onDone = opts.onDone || (() => openBand(bandId));
+    // band.html pasa su propio `container` (dónde pintar el editor) y `onDone` (qué hacer al
+    // guardar/cancelar) para integrarlo en la pestaña Setlists. Es el único llamador vivo.
+    const target = opts.container;
+    const onDone = opts.onDone || (() => {});
+    if (!target) return;   // sin contenedor no hay dónde pintar (el detalle legacy ya no existe)
     let repertoire = [];
     try {
         const res = await apiFetch(`/bands/${bandId}/songs/`);

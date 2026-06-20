@@ -69,8 +69,12 @@ def http_get(url, timeout=5):
         return e.code, e.read().decode("utf-8", "replace")
 
 
-def wait_until_up(base_url, timeout=25):
-    """Espera a que el servidor responda. Devuelve True si arrancó."""
+def wait_until_up(base_url, timeout=45):
+    """Espera a que el servidor responda. Devuelve True si arrancó.
+
+    45 s (no 25): en máquinas lentas/cargadas el arranque en frío de uvicorn + el import de la app
+    (SQLAlchemy, routers, pydantic) ronda los ~25-30 s y rozaba el deadline → falso negativo. Mismo
+    criterio que el deadline del `live_server` de los e2e (subido en T-042)."""
     import time
     deadline = time.time() + timeout
     while time.time() < deadline:

@@ -414,8 +414,10 @@
   - [x] **T-081** 🟢 **Reskin de la joya y páginas restantes** al sistema de diseño, **sin tocar**
         `sync_engine.js`/`score_render.js`. ✅ (2026-06-16) Re-tematizado `style.css` a la paleta BandFlow
         (acento coral, fondo `#0d0d10`, IBM Plex vía `@import`) → todas las legacy adoptan el look.
-        Player verificado funcionando en captura. **Reskin por tokens** (estructura intacta); conversión
-        completa a `bf-*` y retirar `openBand` muerto = pulido opcional.
+        Player verificado funcionando en captura. **Reskin por tokens** (estructura intacta).
+        ↳ **T-105 (2026-06-20):** retirado el detalle in-page legacy muerto (`openBand` + `#band-detail`
+        + `showGrid`/`showDetail`/`elDetail`) de `bands.js`/`bands.html`; la ficha de banda vive solo en
+        `band.html`. run_checks VERDE. **Pendiente (opcional):** conversión completa a `bf-*` de las legacy.
   - [x] **T-082** 🟢 **Rebranding BandFlow** (visible): títulos, `manifest`, `theme-color`, textos
         ChordFlow→BandFlow. ✅ (2026-06-16) 8 HTML + manifest; `theme-color` `#0d0d10`. Marca técnica
         diferida (API title, SW key, env, repo). Test `test_rebrand.py` (grep sin "ChordFlow" visible).

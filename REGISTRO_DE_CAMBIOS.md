@@ -8,6 +8,37 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧹 T-105 — Limpieza: retirado el detalle de banda in-page legacy (openBand) (2026-06-20)
+
+**Qué:** eliminado el código muerto del detalle de banda dentro de `bands.js` (`openBand`, ~91
+líneas) y sus huérfanos (`showGrid`/`showDetail`/`elDetail`), el markup `#band-detail` de
+`bands.html`, y los fallbacks a `elDetail`/`openBand` en `newBandSetlist` (su único llamador vivo es
+`band.js`, que siempre pasa `container`+`onDone`). Cabecera de `bands.js` actualizada.
+
+**Por qué:** desde la Fase 13 (T-075) la ficha de banda vive en `band.html` (espacio con pestañas);
+el detalle in-page de `bands.js` quedó sin uso (la grid navega a `band.html`). Era la deuda "retirar
+openBand muerto" anotada como pulido opcional en T-081. Menos código muerto = menos confusión.
+
+**Cómo/Verificación:** ningún test dependía del detalle legacy; las 10 funciones de sección +
+`initChat` que `band.js` reusa siguen intactas; `node --check` de `bands.js` OK. `cachebust.py` al
+día; `run_checks.py` TODO VERDE (doctor 10/10 · ruff · 173 unit · 73 e2e). **Pendiente (opcional):**
+conversión completa de las páginas legacy a componentes `bf-*` (refactor visual grande, aparte).
+
+---
+
+## 🩺 fix(doctor) — deadline de arranque del server 25→45 s (2026-06-20)
+
+**Qué:** `harness/doctor.py::wait_until_up` ahora espera 45 s (antes 25) a que el server responda.
+
+**Por qué:** en esta máquina el arranque en frío de uvicorn + el import de la app tarda ~26 s, justo
+por encima de los 25 s → el doctor daba un falso negativo ("el servidor no respondió") aunque la app
+estaba sana (`/health` 200 medido a los 26 s; el check de navegador, posterior, sí la veía arriba).
+Mismo criterio que el deadline del `live_server` de los e2e (subido en T-042).
+
+**Cómo/Verificación:** doctor 10/10 verde de forma estable tras el cambio.
+
+---
+
 ## 🎸 T-104 — UI de tablaturas (editor + render) (2026-06-20)
 
 **Qué:** la app ya muestra y edita TABLATURAS. El modelo (`TabLine`) y la API existían desde el giro,

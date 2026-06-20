@@ -29,6 +29,13 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 `test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
 (`TabLine.fret_sequence`) → V3-F6.
 
+### ✅ T-105 — Limpieza: retirado el detalle de banda legacy (openBand) (2026-06-20)
+Eliminado el código muerto `openBand` (~91 líneas) + `showGrid`/`showDetail`/`elDetail` de `bands.js`,
+el `#band-detail` de `bands.html` y los fallbacks legacy de `newBandSetlist` (la ficha de banda vive en
+`band.html` desde T-075). Además `fix(doctor)`: deadline de arranque del server 25→45 s (la app tarda
+~26 s en frío → falso negativo). run_checks VERDE. Pendiente (opcional): conversión completa de las
+páginas legacy a componentes `bf-*` (refactor visual grande, aparte).
+
 ### 🌍 V3 — Red musical con plano público (arranque 2026-06-17)
 
 Dirección aprobada en `GUIA_MAESTRA_V3.md` (D1–D8). **✅ V3-F1 (pulido de diseño) COMPLETA.**
