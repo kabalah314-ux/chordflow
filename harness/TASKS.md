@@ -29,6 +29,12 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 `test_js_logic.py`. run_checks VERDE (173 unit · 73 e2e). Diferido: tab sincronizada al beat
 (`TabLine.fret_sequence`) → V3-F6.
 
+### ✅ T-108 — Ligar movimiento de finanzas a un evento (UI) (2026-06-20)
+Selector "Evento (opcional)" en el modal de movimiento (carga los eventos de la banda, envía
+`event_id`) + etiqueta 🎵 del evento en cada movimiento ligado (`loadFinance`). El backend ya
+validaba `event_id` (Fase 11). e2e `test_ligar_movimiento_a_evento`. run_checks VERDE. Diferido:
+P&L por evento, export CSV.
+
 ### ✅ T-107 — Hilo de discusión por evento (chat) (2026-06-20)
 Botón 💬 por evento en la agenda abre un modal con el hilo de mensajes (`event_id`). Refactor
 `renderMessageList` compartido (chat general + hilos, sin duplicar render). El backend ya soportaba

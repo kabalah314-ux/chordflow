@@ -8,6 +8,23 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🔗 T-108 — Ligar un movimiento de finanzas a un evento (UI) (2026-06-20)
+
+**Qué:** el modal "Movimiento" (`bands.js::newTransaction`) añade un selector **"Evento (opcional)"**
+que carga los eventos de la banda; al registrar envía `event_id`. `loadFinance` muestra la etiqueta
+**🎵 {evento}** en cada movimiento ligado (carga los eventos junto a saldos/movimientos).
+
+**Por qué:** `finance_router` ya aceptaba y validaba `event_id` (que el evento sea de la banda) desde
+la Fase 11, pero la UI no lo exponía → no se podía saber el coste/ingreso de un **bolo concreto**.
+Es la base para un P&L por evento. Compone con T-106 (reparto) y T-107 (hilo por evento).
+
+**Cómo/Verificación:** e2e `test_ligar_movimiento_a_evento` (elegir evento → registrar → la etiqueta
+del evento aparece en el movimiento). Título del evento **escapado** en `<option>` y en la etiqueta.
+`cachebust` al día; `run_checks` TODO VERDE (doctor · ruff · 173 unit · 76 e2e [+1]). **Diferido:**
+resumen/P&L por evento, export CSV, cuotas recurrentes.
+
+---
+
 ## 💬 T-107 — Hilo de discusión por evento (chat) (2026-06-20)
 
 **Qué:** cada evento de la agenda (`band.html`, pestaña Agenda) abre un **modal con su hilo de

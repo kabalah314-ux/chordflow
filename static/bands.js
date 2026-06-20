@@ -196,13 +196,15 @@ function fmtMoney(x) { return `${Number(x).toFixed(2)} €`; }
 async function loadFinance(bandId, iAmAdmin) {
     const el = document.getElementById('b-finance');
     if (!el) return;
-    let balances, txs;
+    let balances, txs, evById = {};
     try {
-        const [rb, rt] = await Promise.all([
-            apiFetch(`/bands/${bandId}/balances`), apiFetch(`/bands/${bandId}/transactions`)]);
+        const [rb, rt, rev] = await Promise.all([
+            apiFetch(`/bands/${bandId}/balances`), apiFetch(`/bands/${bandId}/transactions`),
+            apiFetch(`/bands/${bandId}/events/`)]);
         if (!rb.ok || !rt.ok) throw new Error('http');
         balances = await rb.json();
         txs = await rt.json();
+        if (rev.ok) evById = Object.fromEntries((await rev.json()).map(e => [e.id, e]));
     } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudieron cargar las finanzas.</p>'; return; }
 
     const balRows = balances.map(b => {
@@ -217,7 +219,7 @@ async function loadFinance(bandId, iAmAdmin) {
     const txRows = txs.map(t => `
         <li class="setlist-song" data-id="${escapeHtml(t.id)}">
             <span class="sl-title">${t.type === 'income' ? '➕' : '➖'} ${escapeHtml(t.description || (t.type === 'income' ? 'Ingreso' : 'Gasto'))}
-                <small>${fmtMoney(t.amount)}${t.category ? ' · ' + escapeHtml(t.category) : ''}</small></span>
+                <small>${fmtMoney(t.amount)}${t.category ? ' · ' + escapeHtml(t.category) : ''}${t.event_id && evById[t.event_id] ? ' · 🎵 ' + escapeHtml(evById[t.event_id].title) : ''}</small></span>
             ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar movimiento" title="Borrar">🗑️</button>` : ''}
         </li>`).join('') || '<li><small>Sin movimientos todavía.</small></li>';
 
@@ -250,6 +252,12 @@ async function newTransaction(bandId, members) {
             <input type="number" class="search-box split-amount" data-uid="${escapeHtml(m.user_id)}"
                    min="0" step="0.01" placeholder="0.00">
         </div>`).join('');
+    // Eventos de la banda para ligar el movimiento (opcional). El backend valida que el evento sea
+    // de la banda; aquí solo ofrecemos los suyos. Si falla la carga, el movimiento va sin evento.
+    let events = [];
+    try { const re = await apiFetch(`/bands/${bandId}/events/`); if (re.ok) events = await re.json(); } catch (e) { /* opcional */ }
+    const eventOptions = '<option value="">— Sin evento —</option>'
+        + events.map(e => `<option value="${escapeHtml(e.id)}">${escapeHtml(e.title)}</option>`).join('');
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
@@ -272,6 +280,8 @@ async function newTransaction(bandId, members) {
                 ${splitRows}
                 <p class="split-sum" id="tx-split-sum"></p>
             </div>
+            <label class="field-label">Evento (opcional)</label>
+            <select id="tx-event" class="search-box">${eventOptions}</select>
             <div class="modal-actions">
                 <button class="secondary-btn" data-act="cancel">Cancelar</button>
                 <button class="primary-btn" data-act="ok">Registrar</button>
@@ -322,6 +332,8 @@ async function newTransaction(bandId, members) {
             amount: amount.toFixed(2),
         };
         if (payer === '__fund__') body.paid_by_fund = true; else body.paid_by = payer;
+        const ev = overlay.querySelector('#tx-event').value;
+        if (ev) body.event_id = ev;
         // Reparto personalizado: una parte por miembro con importe > 0; la Σ debe cuadrar con el
         // total (el backend lo revalida y rechaza si no cuadra).
         if (elMode.value === 'custom') {

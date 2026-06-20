@@ -210,6 +210,34 @@ def test_hilo_de_discusion_por_evento(page, live_server, api):
     assert "ampli grande" in page.inner_text("#thread-list")
 
 
+def test_ligar_movimiento_a_evento(page, live_server, api):
+    """El modal de movimiento permite ligar el gasto/ingreso a un evento de la banda; queda asociado
+    (event_id) y la etiqueta del evento se muestra en el movimiento. El backend ya validaba event_id
+    (Fase 11); faltaba exponerlo en la UI (T-108)."""
+    r = api.post("/bands/", json={"name": "Banda Evento UI"})
+    bid = r.json()["id"]
+    api.post(f"/bands/{bid}/events/", json={"type": "concert", "title": "Bolo del sabado"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Evento UI") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="finanzas"]')
+    page.wait_for_selector("#b-new-tx", timeout=8000)
+
+    page.click("#b-new-tx")
+    page.wait_for_selector("#tx-event", timeout=8000)   # selector de evento (tras cargar eventos)
+    page.fill("#tx-desc", "Gasolina furgoneta")
+    page.fill("#tx-amount", "60")
+    page.select_option("#tx-event", label="Bolo del sabado")
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    page.wait_for_selector('#b-tx-list .setlist-song', timeout=8000)
+    fin = page.inner_text("#b-finance")
+    assert "Gasolina furgoneta" in fin
+    assert "Bolo del sabado" in fin   # la etiqueta del evento ligado se muestra
+
+
 def test_enviar_mensaje_en_el_chat_de_banda(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Chat UI"})
 

@@ -357,8 +357,10 @@
   - [x] **T-106** 🟢 **Reparto personalizado en la UI** (2026-06-20): el modal de movimiento ofrece
         "A partes iguales / Personalizado" (fila por miembro, prerrelleno, valida Σ, envía `splits`).
         El backend ya lo aceptaba (Fase 11). e2e `test_reparto_personalizado_en_movimiento`. VERDE.
-  - **Diferido (no bloquea):** informes/export CSV; cuotas recurrentes; ligar movimiento a evento
-    desde la UI.
+  - [x] **T-108** 🟢 **Ligar movimiento a evento desde la UI** (2026-06-20): selector "Evento (opcional)"
+        en el modal de movimiento (envía `event_id`) + etiqueta 🎵 del evento en cada movimiento ligado.
+        Backend ya validaba `event_id` (Fase 11). e2e `test_ligar_movimiento_a_evento`. VERDE.
+  - **Diferido (no bloquea):** informes/export CSV; cuotas recurrentes; resumen/P&L por evento.
 - [x] **Fase 12** 🟢 Comunicación (`Message`). Área 7. **NÚCLEO COMPLETO**:
   - [x] **T-070** 🔴 Migración `messages` (`7022a3162284`): `event_id` null=chat general / valor=hilo,
         `is_pinned` (notas), soft delete, índices `band_id`/`event_id`. `alembic check` limpio.
