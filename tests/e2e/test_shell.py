@@ -65,10 +65,17 @@ def test_shell_agenda_navega(page, live_server, api):
 
 def test_shell_sin_margen_blanco_del_body(page, live_server, api):
     """El body se resetea a margin:0 en shell.css incluso en páginas que NO cargan style.css
-    (agenda/finanzas/chat/inicio) → desaparece el marco/línea clara del margen por defecto (8px)."""
+    (agenda/finanzas/chat/inicio) → desaparece el marco/línea clara del margen por defecto (8px).
+    Además el fondo va en `html` Y en `body`: si el rebote de scroll (overscroll de macOS) o un hueco
+    dejan ver el `<html>`, debe ser oscuro y no el blanco por defecto → el marco no reaparece nunca."""
     page.goto(live_server + "/static/agenda.html", wait_until="networkidle")
     page.wait_for_selector(".bf-sidebar", timeout=8000)
     assert page.evaluate("getComputedStyle(document.body).margin") == "0px"
+    # El <html> tiene fondo propio (no transparente) y coincide con el del body (ambos var(--bf-bg)).
+    html_bg = page.evaluate("getComputedStyle(document.documentElement).backgroundColor")
+    body_bg = page.evaluate("getComputedStyle(document.body).backgroundColor")
+    assert html_bg not in ("rgba(0, 0, 0, 0)", "transparent", "rgb(255, 255, 255)")
+    assert html_bg == body_bg
 
 
 def test_shell_drawer_movil_abre_y_cierra(page, live_server, api):

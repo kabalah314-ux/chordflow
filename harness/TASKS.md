@@ -37,11 +37,13 @@ CHORDFLOW_TEST_MODE=1 DATABASE_URL="sqlite:///./demo_bandflow.db" venv/bin/pytho
 verificar a ojo (capturas) qué páginas/elementos fallan.
 
 **Correcciones a hacer (en orden):**
-1. 🔴 **La línea/marco lateral SIGUE apareciendo.** El `fix(shell)` reseteó `body{margin:0}` (resolvió
-   las páginas sin `style.css`), pero Oscar dice que el margen lateral persiste → **hay otra fuente**.
-   Reinvestigar con Playwright contra el local (o pedirle captura): mirar `border-right` del `.bf-sidebar`,
-   el centrado de `.bf-page` (max-width 920 → márgenes), scrollbar de `.bf-shell-main`, o algún wrapper
-   por página. Localizar el elemento exacto y en qué página(s).
+1. ✅ **La línea/marco lateral — INVESTIGADO Y BLINDADO (2026-06-21).** Reinvestigado con Playwright
+   contra el local (todas las páginas del shell, oscuro y claro): el marco **NO se reproduce** en local
+   → el `fix(shell)` previo (reset `body{margin:0}`) ya estaba bien. **Causa de que Oscar lo siguiera
+   viendo: NO está desplegado** — producción sirve el `shell.css` viejo (`?v=f583ba6a`) porque **Vercel
+   está BLOCKED**. Hardening añadido por si quedara una fuente residual (overscroll de macOS revela el
+   blanco del `<html>`): fondo ahora en `html` Y `body`. Test reforzado + doctor verde. **➡️ Para que
+   Oscar lo vea hay que DESPLEGAR** (Vercel desbloqueado → Redeploy). Detalle en REGISTRO (2026-06-21).
 2. 🟠 **Repertorio → "Repertorios" (varias listas con nombre).** Hoy el repertorio de banda es UNA lista
    plana de canciones. Oscar quiere **varias listas nombradas** dentro del repertorio ("acústico",
    "cañero", "bodas"…). ⚠️ Se **solapa con Setlists** → decidir el modelo junto al punto 3 antes de tocar.

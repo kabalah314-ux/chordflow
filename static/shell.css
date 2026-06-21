@@ -9,9 +9,10 @@
    ========================================================================== */
 
 /* El shell ocupa todo el viewport: reseteamos el margen por defecto del <body> (las páginas que NO
-   cargan style.css lo traían a 8px → marco/línea clara en los bordes) y fijamos el fondo de la app. */
-html, body { margin: 0; }
-body { background: var(--bf-bg); }
+   cargan style.css lo traían a 8px → marco/línea clara en los bordes) y fijamos el fondo de la app.
+   El fondo va en `html` Y en `body`: si solo está en `body`, el rebote de scroll (overscroll/rubber-band
+   de macOS) o cualquier hueco deja ver el fondo blanco por defecto del `<html>` → reaparece el marco. */
+html, body { margin: 0; background: var(--bf-bg); }
 
 /* Botón ☰ y backdrop del drawer móvil: ocultos en desktop (se activan en la media query ≤768px). */
 .bf-hamburger {

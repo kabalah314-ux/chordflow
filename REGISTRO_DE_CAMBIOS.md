@@ -2,9 +2,32 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-06-20
+> Última actualización: 2026-06-21
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🩹 fix(shell) — el marco blanco lateral: hardening del fondo en `html` (2026-06-21)
+
+**Qué:** el fondo de la app ahora va en **`html` Y `body`** (`html, body { background: var(--bf-bg) }`),
+no solo en `body`. Antes el `<html>` quedaba transparente: cualquier hueco o el **rebote de scroll**
+(overscroll/rubber-band de macOS) dejaba ver el **blanco por defecto del `<html>`** → reaparecía el
+"marco/línea lateral" que Oscar reportaba que **seguía** apareciendo.
+
+**Por qué:** el `fix(shell)` anterior (2026-06-20) reseteó `body{margin:0}` y eso resolvió el marco de
+las páginas sin `style.css`. **Reinvestigado con Playwright contra el local** (todas las páginas del
+shell, modo oscuro y claro): el marco ya **no se reproduce** en local. La razón de que Oscar lo siguiera
+viendo es que **el fix no está desplegado** — el commit vive en `main` local pero **Vercel está BLOCKED**
+(tope del plan free) y producción aún sirve el `shell.css` viejo (`?v=f583ba6a`, sin el reset). Aun así
+se añade este blindaje para que **ninguna fuente residual** (overscroll, páginas cortas) lo pueda revivir.
+
+**Cómo/Verificación:** una línea en `shell.css` (fondo en `html, body`). Verificado en navegador:
+`getComputedStyle(html).backgroundColor` = `#0d0d10` (oscuro) / `#f5f5f2` (claro), nunca transparente
+ni blanco, y coincide con el del `body`. Test `test_shell_sin_margen_blanco_del_body` **reforzado**
+(ahora exige que el `html` tenga fondo propio ≠ transparente/blanco y == al del body). `cachebust` al
+día (`shell.css?v=56a6ffa1`). Doctor 10/10, tests del shell **8/8 verdes**, ruff limpio. **Pendiente
+para que Oscar lo vea: desplegar** (Vercel desbloqueado → Redeploy, o el dominio).
 
 ---
 
