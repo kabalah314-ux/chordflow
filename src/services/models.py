@@ -388,6 +388,11 @@ class Event(Base):
     )
     # Solo concierto: setlist adjunto (SET NULL si se borra el setlist; los setlists son soft-delete).
     setlist_id = Column(String(36), ForeignKey("setlists.id", ondelete="SET NULL"), nullable=True)
+    # Booking (Fase 14, T-115): contacto del promotor + caché acordado (divisa de la banda). Opcional;
+    # se explota en conciertos del funnel de booking. Decimal como en Transaction.amount.
+    contact_name = Column(String(255), nullable=True)
+    contact_phone = Column(String(64), nullable=True)
+    fee = Column(Numeric(10, 2), nullable=True)
     created_by = Column(String(36), nullable=False)  # admin que lo creó
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

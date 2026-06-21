@@ -447,8 +447,14 @@
   - [x] **T-112** 🟡 **Recordatorios in-app** (2026-06-20): "⏰ Pronto" para eventos en los próximos 7
         días + resumen "🔔 N en booking sin confirmar" en la agenda (cliente). e2e. VERDE. Diferido:
         recordatorios por email/push reales (necesitan infra de envío).
+  - [x] **T-115** 🟢 **Campos de booking en el concierto** (2026-06-21): `Event.contact_name`/
+        `contact_phone`/`fee` (migración `c341c9bbb0ba`, `alembic check` limpio); campos en el modal de
+        evento (solo conciertos) + línea discreta `💶 caché · 📇 contacto` en la agenda. Schemas
+        (Create/Update/Response + Summary), `fee` ge=0 → 422. Router sin cambios (model_dump genérico,
+        admin-only). unit `test_booking_fields_contacto_y_cache` + e2e. VERDE. ⚠️ Migración pendiente en
+        Postgres prod (Vercel BLOCKED).
   - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
-  - [ ] Diferido: campos de booking (contacto, caché/fee, `Venue` como modelo propio).
+  - [ ] Diferido: `Venue` como modelo propio; resumen de caché por gira/temporada.
 
 - [x] **T-114** 🟢 **Repertorios (colecciones temáticas)** — diferenciar Repertorio vs Setlist
       (2026-06-21, cola de Oscar #2/#3). La pestaña "Repertorio" pasa a "Repertorios": varias listas

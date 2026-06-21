@@ -383,6 +383,10 @@ class EventCreate(BaseModel):
     notes: Optional[str] = None
     status: Optional[EventStatus] = None  # default en el modelo: 'confirmed'
     setlist_id: Optional[str] = None  # solo conciertos
+    # Booking (Fase 14, T-115): contacto del promotor + caché acordado (en la divisa de la banda).
+    contact_name: Optional[str] = Field(None, max_length=255)
+    contact_phone: Optional[str] = Field(None, max_length=64)
+    fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
 
     _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
 
@@ -396,6 +400,9 @@ class EventUpdate(BaseModel):
     notes: Optional[str] = None
     status: Optional[EventStatus] = None
     setlist_id: Optional[str] = None
+    contact_name: Optional[str] = Field(None, max_length=255)
+    contact_phone: Optional[str] = Field(None, max_length=64)
+    fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
 
     _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
 
@@ -422,6 +429,8 @@ class EventSummary(BaseModel):
     setlist_id: Optional[str] = None
     my_status: Optional[AttendanceStatus] = None  # mi asistencia (si la marqué)
     attendance: List[AttendanceOut] = []  # quién ha respondido (para mostrar confirmados en la agenda)
+    contact_name: Optional[str] = None  # booking (T-115): se muestra en la agenda del concierto
+    fee: Optional[Decimal] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -441,6 +450,9 @@ class EventResponse(BaseModel):
     created_at: datetime
     attendance: List[AttendanceOut] = []
     my_status: Optional[AttendanceStatus] = None
+    contact_name: Optional[str] = None  # booking (T-115)
+    contact_phone: Optional[str] = None
+    fee: Optional[Decimal] = None
 
     model_config = ConfigDict(from_attributes=True)
 

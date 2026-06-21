@@ -85,6 +85,38 @@ def test_listar_y_marcar_asistencia(client):
     assert any(a["user_id"] == MEMBER and a["status"] == "maybe" for a in lst_att)
 
 
+def test_booking_fields_contacto_y_cache(client):
+    """Booking (T-115): un concierto guarda contacto del promotor + caché; se devuelve en el detalle
+    y en la lista (para la agenda). Solo el admin los edita (la ruta ya es admin-only)."""
+    bid = _band(client)
+    r = client.post(f"/bands/{bid}/events/", json={
+        "type": "concert", "title": "Bolo Sala X", "status": "negotiating",
+        "contact_name": "Promotor Ana", "contact_phone": "600123456", "fee": "350.00",
+    })
+    assert r.status_code == 201, r.text
+    ev = r.json()
+    assert ev["contact_name"] == "Promotor Ana" and ev["contact_phone"] == "600123456"
+    assert ev["fee"] == "350.00"
+    eid = ev["id"]
+
+    # La lista (agenda) trae contacto + caché (sin el teléfono, que es del detalle)
+    summ = next(e for e in client.get(f"/bands/{bid}/events/").json() if e["id"] == eid)
+    assert summ["contact_name"] == "Promotor Ana" and summ["fee"] == "350.00"
+
+    # Editar el caché (admin)
+    r2 = client.patch(f"/bands/{bid}/events/{eid}", json={"fee": "400.00"})
+    assert r2.status_code == 200 and r2.json()["fee"] == "400.00"
+
+    # Un miembro NO puede editar (admin-only)
+    with acting_as(MEMBER):
+        assert client.patch(f"/bands/{bid}/events/{eid}",
+                            json={"fee": "1.00"}).status_code == 403
+
+    # Caché negativo → 422 (validación de schema)
+    assert client.post(f"/bands/{bid}/events/",
+                       json={"type": "concert", "title": "Y", "fee": "-5"}).status_code == 422
+
+
 def test_guest_puede_marcar_asistencia(client):
     bid = _band(client)
     eid = client.post(f"/bands/{bid}/events/", json={"type": "concert", "title": "Bolo"}).json()["id"]

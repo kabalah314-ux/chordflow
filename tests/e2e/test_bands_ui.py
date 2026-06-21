@@ -143,6 +143,35 @@ def test_crear_repertorio_coleccion_y_anadir_cancion(page, live_server, api):
     assert "Cancion Col" in page.inner_text("#col-songs")
 
 
+def test_concierto_con_booking_contacto_y_cache(page, live_server, api):
+    """Booking (T-115): al crear un CONCIERTO aparecen los campos de booking; el caché + contacto se
+    guardan y se muestran discretamente en la agenda (no en ensayos)."""
+    api.post("/bands/", json={"name": "Banda Booking"})
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Booking") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    page.wait_for_selector("#b-new-event", timeout=8000)
+
+    page.click("#b-new-event")
+    page.wait_for_selector("#ev-title", timeout=8000)
+    # Los campos de booking solo aparecen al elegir "Concierto"
+    page.select_option("#ev-type", "concert")
+    page.wait_for_selector("#ev-fee", state="visible", timeout=4000)
+    page.fill("#ev-title", "Bolo con cache")
+    page.fill("#ev-date", "2027-05-01T22:00")
+    page.fill("#ev-contact", "Promotor Test")
+    page.fill("#ev-fee", "300")
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # En la agenda el concierto muestra la línea de booking con el caché y el contacto
+    booking_sel = '#b-agenda .setlist-song:has-text("Bolo con cache") .ev-booking'
+    page.wait_for_selector(booking_sel, timeout=8000)
+    booking = page.inner_text(booking_sel)
+    assert "300" in booking and "Promotor Test" in booking
+
+
 def test_setlist_de_banda_con_apunte_por_cancion(page, live_server, api):
     """End-to-end del apunte por canción (T-110): el editor de setlist permite una nota por canción,
     se guarda y el reproductor la muestra en la barra del setlist."""

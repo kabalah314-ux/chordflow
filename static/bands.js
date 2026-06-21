@@ -462,6 +462,17 @@ function attendeesLine(e) {
     return `<span class="ev-attendees">${bits.join(' · ')}</span>`;
 }
 
+// Línea discreta de booking en los conciertos (T-115): caché + contacto del promotor. Solo se
+// muestra si el evento es 'concert' y tiene algún dato (escapados, XSS).
+function bookingLine(e) {
+    if (e.type !== 'concert') return '';
+    const bits = [];
+    if (e.fee != null && e.fee !== '') bits.push(`💶 ${escapeHtml(String(e.fee))}`);
+    if (e.contact_name) bits.push(`📇 ${escapeHtml(e.contact_name)}`);
+    if (!bits.length) return '';
+    return `<span class="ev-booking">${bits.join(' · ')}</span>`;
+}
+
 function fmtDate(iso) {
     if (!iso) return 'Sin fecha';
     const d = new Date(iso);
@@ -499,7 +510,7 @@ async function loadAgenda(bandId, iAmAdmin) {
         <li class="setlist-song" data-id="${escapeHtml(e.id)}">
             <span class="sl-title">${EVENT_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
                 <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}</small>
-                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${attendeesLine(e)}</span>
+                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${attendeesLine(e)}${bookingLine(e)}</span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
                 <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">💬</button>
@@ -582,6 +593,12 @@ async function newEvent(bandId) {
                     ${setlists.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('')}
                 </select>
             </div>
+            <div id="ev-booking-wrap" style="display:none;">
+                <label class="field-label">Booking (opcional)</label>
+                <input type="text" id="ev-contact" class="search-box" placeholder="Contacto del promotor" maxlength="255">
+                <input type="text" id="ev-phone" class="search-box" placeholder="Teléfono / email del contacto" maxlength="64">
+                <input type="number" id="ev-fee" class="search-box" min="0" step="0.01" placeholder="Caché (€)">
+            </div>
             <div class="modal-actions">
                 <button class="secondary-btn" data-act="cancel">Cancelar</button>
                 <button class="primary-btn" data-act="ok">Crear</button>
@@ -589,7 +606,12 @@ async function newEvent(bandId) {
         </div>`;
     const elType = overlay.querySelector('#ev-type');
     const elSlWrap = overlay.querySelector('#ev-setlist-wrap');
-    elType.addEventListener('change', () => { elSlWrap.style.display = elType.value === 'concert' ? '' : 'none'; });
+    const elBookWrap = overlay.querySelector('#ev-booking-wrap');
+    elType.addEventListener('change', () => {
+        const isConcert = elType.value === 'concert';
+        elSlWrap.style.display = isConcert ? '' : 'none';
+        elBookWrap.style.display = isConcert ? '' : 'none';
+    });
     const close = () => overlay.remove();
     overlay.addEventListener('click', async (e) => {
         if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') { close(); return; }
@@ -602,6 +624,14 @@ async function newEvent(bandId) {
         if (dateVal) body.starts_at = dateVal;
         const slId = overlay.querySelector('#ev-setlist')?.value;
         if (type === 'concert' && slId) body.setlist_id = slId;
+        if (type === 'concert') {
+            const contact = overlay.querySelector('#ev-contact').value.trim();
+            const phone = overlay.querySelector('#ev-phone').value.trim();
+            const fee = overlay.querySelector('#ev-fee').value;
+            if (contact) body.contact_name = contact;
+            if (phone) body.contact_phone = phone;
+            if (fee !== '') body.fee = fee;
+        }
         close();
         try {
             const res = await apiFetch(`/bands/${bandId}/events/`, {

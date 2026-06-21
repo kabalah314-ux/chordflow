@@ -8,6 +8,32 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📇 T-115 — Campos de booking en el concierto (contacto + caché) — Fase 14 (2026-06-21)
+
+**Qué:** un **concierto** guarda ahora **contacto del promotor** (nombre + teléfono/email) y **caché**
+(`fee`, en la divisa de la banda). En el alta de evento, al elegir "Concierto" aparecen esos campos
+(opcionales); en la **agenda** se muestra una línea discreta `💶 450.00 · 📇 Promotora Marta` bajo el
+concierto (solo si tiene datos; nunca en ensayos).
+
+**Por qué:** continúa la **Fase 14 (Booking, Área 10)** con la parte accionable sin infra de email: el
+funnel de booking (T-111) ahora tiene a quién contactar y cuánto se cobra, que es lo que falta para
+gestionar un bolo de verdad. (T-113 `EmailTemplate` sigue pendiente: necesita envío real.)
+
+**Cómo/Verificación:** aditivo.
+- **Modelo:** `Event.contact_name`/`contact_phone`/`fee` (`Numeric(10,2)`). Migración `c341c9bbb0ba`
+  (batch add_column), `alembic check` sin drift.
+- **Schemas:** añadidos a `EventCreate`/`EventUpdate`/`EventResponse` (+ `contact_name`/`fee` en
+  `EventSummary` para la agenda; el teléfono queda en el detalle). `fee` valida `ge=0` → caché negativo
+  **422**. El router no cambia: usa `**model_dump()`/`setattr` genéricos (admin-only ya vigente).
+- **Frontend:** campos en el modal de evento (visibles solo en conciertos) + helper `bookingLine` en
+  `bands.js` + `.ev-booking` en `style.css`. Nombres escapados (XSS).
+- **Tests:** unit `test_booking_fields_contacto_y_cache` (persistencia detalle+lista, admin-only, 422
+  negativo) + e2e `test_concierto_con_booking_contacto_y_cache`. Verificado en navegador (Bolo Sala
+  Apolo: "💶 450.00 · 📇 Promotora Marta"). Doctor verde, ruff limpio, `cachebust` al día. **Diferido:**
+  `Venue` como modelo propio; resumen de caché por gira/temporada; recordatorios de booking por email.
+
+---
+
 ## 📁 T-114 — Repertorios (colecciones temáticas) — diferenciar Repertorio vs Setlist (2026-06-21)
 
 **Qué:** la pestaña de banda **"Repertorio" pasa a "Repertorios"**: ahora puedes crear **varias listas
