@@ -174,8 +174,8 @@ https://chordflow-ecru.vercel.app — **Vercel** (`api/index.py` ASGI + `vercel.
 | Endpoints (canciones) | `src/api/songs_router.py` |
 | Endpoints (repertorios) | `src/api/setlists_router.py` |
 | Endpoints (bandas / invitar / perfil) | `src/api/bands_router.py` · `invites_router.py` · `profile_router.py` |
-| Endpoints (repertorio/setlists de banda) | `src/api/band_songs_router.py` · `band_setlists_router.py` |
-| Endpoints (agenda / finanzas / chat) | `src/api/events_router.py` · `finance_router.py` · `messages_router.py` |
+| Endpoints (repertorio/setlists/colecciones de banda) | `src/api/band_songs_router.py` · `band_setlists_router.py` · `band_collections_router.py` (Repertorios, T-114) |
+| Endpoints (agenda / salas / finanzas / chat) | `src/api/events_router.py` · `venues_router.py` (Salas, T-116) · `finance_router.py` · `messages_router.py` |
 | Endpoints (vistas agregadas TÚ) | `src/api/me_router.py` (`/me/dashboard·events·balances·conversations`) |
 | Auth multi-tenant / cálculo de saldos | `src/services/band_auth.py` · `src/services/balances.py` |
 | App shell + sistema de diseño | `static/shell.js` · `shell.css` · `design-system.css` |

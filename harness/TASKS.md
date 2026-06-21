@@ -3,7 +3,7 @@
 > Una tarea activa a la vez (recomendado). Al cerrarla, moverla a "Hechas".
 > Abrir tareas nuevas copiando `templates/TASK_TEMPLATE.md`.
 > Backlog completo y priorizado en `ROADMAP.md`. Diseño del molde en `MOLDE.md`.
-> **Última sincronización: 2026-06-20.**
+> **Última sincronización: 2026-06-21.**
 
 ---
 
@@ -20,12 +20,36 @@ CLIs ya logueadas en la máquina: `gh` y `vercel` (ambas `kabalah314-ux`). Secre
 
 ---
 
-## ▶️ PRÓXIMA SESIÓN — correcciones rápidas (apuntado 2026-06-20, pedido por Oscar)
+## 🔴 LO PRIMERO EN LA PRÓXIMA SESIÓN — desplegar + 3 migraciones a Postgres prod
 
-> Sesión 2026-06-20: se hicieron **T-104→T-112** + `fix(shell)` (drawer móvil + reset del body).
-> **10 commits locales/pusheados a `main`** (`origin/main`=`237db9c`+ el fix); ⚠️ **Vercel los dejó
-> en `BLOCKED`** (tope del plan free) → NO están en vivo. La tarea programada `chordflow-redeploy-check`
-> (mañana 10:00) avisa cuando Vercel se libere para hacer Redeploy. CI de GitHub Actions sí corre.
+> **Vercel está `BLOCKED`** (tope del plan free; confirmado por API el 2026-06-21: `readyState: BLOCKED`,
+> build 0ms). Todos los commits están en `origin/main` y el CI de GitHub Actions corre, pero **NADA de lo
+> nuevo está en vivo** (prod sirve el `shell.css` viejo `?v=f583ba6a`). La tarea programada
+> `chordflow-redeploy-check` (2026-06-21 10:00) avisa para hacer Redeploy cuando Vercel se libere.
+>
+> ⚠️ **Al desplegar, aplicar a Postgres prod estas 3 migraciones (head local = `91d60406fb92`)** con el
+> **pooler de sesión (5432)**, o las features nuevas dan **500**:
+> 1. `5481a965f5fb` — T-114 colecciones (`song_collections`/`song_collection_items`)
+> 2. `c341c9bbb0ba` — T-115 campos de booking (`events.contact_name/contact_phone/fee`)
+> 3. `91d60406fb92` — T-116 salas (`venues` + `events.venue_id`)
+> Aplicar con `DATABASE_URL=<pooler-5432> venv/bin/python -m alembic upgrade head`. (Pendiente del OK de Oscar.)
+
+## ✅ Sesión 2026-06-21 — cola de Oscar + Fase 14 + pulido (8 commits, todos en `origin/main`)
+
+> `539930a` fix marco blanco (html bg) · `1cdc1e2` confirmados por evento · `92daba3` **T-114 Repertorios**
+> · `a0da824` **T-115 booking (contacto+caché)** · `bee5fd2` setlist desde colección · `358e0e0`
+> **T-116 Salas (Venue)**. La **cola de correcciones de Oscar (#1–#4) está CERRADA** (ver abajo).
+> run_checks verde en cada tarea (192 unit · ~78 e2e). ⚠️ Aviso de entorno: si un pytest de unit se queda
+> colgado/lentísimo, borra el lock stale `rm -f test_unit.db*` (lo dejó un run matado) y reintenta.
+
+**Cómo verificar en local (Vercel bloqueado):** entorno en `./venv` (Py3.12). Sembrar + servir demo:
+```
+rm -f demo_bandflow.db
+DATABASE_URL="sqlite:///./demo_bandflow.db" venv/bin/python harness/seed_demo.py
+CHORDFLOW_TEST_MODE=1 DATABASE_URL="sqlite:///./demo_bandflow.db" venv/bin/python -m uvicorn src.main:app --host 127.0.0.1 --port 8000
+```
+→ http://127.0.0.1:8000 (modo test, sin login; banda demo "Los Demo Riff"). Playwright instalado para
+verificar a ojo (capturas). El id de la banda demo cambia en cada seed (lo imprime `seed_demo.py`).
 
 **Cómo verificar en local (Vercel bloqueado):** entorno en `./venv` (Py3.12). Sembrar + servir demo:
 ```
@@ -36,7 +60,7 @@ CHORDFLOW_TEST_MODE=1 DATABASE_URL="sqlite:///./demo_bandflow.db" venv/bin/pytho
 → http://127.0.0.1:8000 (modo test, sin login; banda demo "Los Demo Riff"). Playwright instalado para
 verificar a ojo (capturas) qué páginas/elementos fallan.
 
-**Correcciones a hacer (en orden):**
+**Correcciones a hacer (en orden) — ✅ LAS 4 HECHAS (2026-06-21):**
 1. ✅ **La línea/marco lateral — INVESTIGADO Y BLINDADO (2026-06-21).** Reinvestigado con Playwright
    contra el local (todas las páginas del shell, oscuro y claro): el marco **NO se reproduce** en local
    → el `fix(shell)` previo (reset `body{margin:0}`) ya estaba bien. **Causa de que Oscar lo siguiera
@@ -231,22 +255,24 @@ hilo por evento en UI / encuestas / notificaciones / @menciones (Fase 12); pipel
 
 ## ▶️ Siguiente recomendado (para el próximo hilo)
 
-🎸→🏠 **ARRANCA EL GIRO V2 a SaaS de banda — Fase 7 (identidad + núcleo de banda).**
-Dirección en `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md`; backlog en `ROADMAP.md`
-§"Giro a SaaS de banda". Empezar por:
+> 🔴 **ANTES DE NADA: desplegar.** Ver el bloque "LO PRIMERO EN LA PRÓXIMA SESIÓN" arriba (Vercel
+> `BLOCKED` + **3 migraciones pendientes** a Postgres prod: `5481a965f5fb`, `c341c9bbb0ba`,
+> `91d60406fb92`). Sin eso, lo de las 2 últimas sesiones no está en vivo.
 
-1. 🔴 **T-048 Migración aditiva** — 4 tablas nuevas (`musician_profiles`, `bands`,
-   `band_memberships`, `band_invites`) + índices. `alembic check` limpio. Es la base de todo.
-2. Seguir en orden T-049 → T-056 (modelos → **auth multi-tenant T-050** → endpoints → invitaciones
-   → perfil → frontend → cierre con revisión de sección).
-3. 🔐 **Por cada ruta de banda, su test de aislamiento** ("usuario ajeno → 403/404"). Innegociable.
-4. 🔎 Al cerrar la fase: `python harness/revision.py fase7 --serve` → veredicto en `REVISIONES.md`.
+Una vez desplegado, opciones de roadmap (todas aditivas, en `ROADMAP.md`):
 
-**Deuda previa aparcada (no bloquea el giro):** ✅ **T-104 Tablaturas (UI)** HECHO (2026-06-20); ✉️ T-047 emails con
-marca (Supabase Email Templates). ✅ **T-046 Login con Google — HECHO (2026-06-18)** (Google Cloud +
-Supabase Management API; verificado con `oscarcon314@gmail.com`; ⚠️ revocar el PAT `sbp_` usado).
+1. 🟢 **Pulir Fase 14 (Booking):** editar una sala desde la UI (hoy solo crear/borrar); resumen de caché
+   por gira/temporada; `EmailTemplate` (T-113) **bloqueado** hasta tener infra de envío (Supabase/email).
+2. 🟢 **Pulir Repertorios/Setlists:** reordenar canciones dentro de una colección; colecciones personales.
+3. 🟠 **Arrancar una fase V3 grande:** V3-F6 (sala de ensayo sincronizada, Supabase Realtime) o V3-F8 (EPK
+   + página pública). Necesitan **config de Oscar** (Storage/Realtime) → ver `T-099` (Storage BLOQUEADO).
+4. ✉️ **T-047** emails de auth con marca (Supabase Email Templates) — pequeño, mejora percepción.
 
-> ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar.
+🔐 **Innegociable:** cada ruta de banda nueva exige su test de aislamiento ("ajeno → 403/404") + alta en
+`tests/unit/test_aislamiento_parametrizado.py`. Cada migración: `alembic check` limpio.
+
+> ⚠️ `run_checks` puede fallar el e2e de forma intermitente (T-042); reintentar. Si un pytest de unit se
+> cuelga: `rm -f test_unit.db*` (lock stale) y reintentar.
 > ⚠️ Seguridad: rotar `sb_secret_` y contraseña de Postgres (compartidas en chat).
 > 🧬 El molde vive en el repo hermano `../app-skeleton` (extraído, plantillado, verificado + cookiecutter).
 > 🤖 Importar con IA usa OpenRouter gratuito (`OPENROUTER_MODEL`); si el modelo se satura, cambiarlo
