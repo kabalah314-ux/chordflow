@@ -387,6 +387,7 @@ class EventCreate(BaseModel):
     contact_name: Optional[str] = Field(None, max_length=255)
     contact_phone: Optional[str] = Field(None, max_length=64)
     fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
+    venue_id: Optional[str] = None  # sala reutilizable (T-116), solo conciertos
 
     _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
 
@@ -403,6 +404,7 @@ class EventUpdate(BaseModel):
     contact_name: Optional[str] = Field(None, max_length=255)
     contact_phone: Optional[str] = Field(None, max_length=64)
     fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
+    venue_id: Optional[str] = None
 
     _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
 
@@ -431,6 +433,8 @@ class EventSummary(BaseModel):
     attendance: List[AttendanceOut] = []  # quién ha respondido (para mostrar confirmados en la agenda)
     contact_name: Optional[str] = None  # booking (T-115): se muestra en la agenda del concierto
     fee: Optional[Decimal] = None
+    venue_id: Optional[str] = None  # sala (T-116)
+    venue_name: Optional[str] = None  # nombre de la sala (denormalizado para la agenda)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -453,6 +457,42 @@ class EventResponse(BaseModel):
     contact_name: Optional[str] = None  # booking (T-115)
     contact_phone: Optional[str] = None
     fee: Optional[Decimal] = None
+    venue_id: Optional[str] = None  # sala (T-116)
+    venue_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ── Booking — Salas reutilizables (Fase 14, T-116) ────────────────────────────
+class VenueCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    address: Optional[str] = Field(None, max_length=512)
+    city: Optional[str] = Field(None, max_length=255)
+    capacity: Optional[int] = Field(None, ge=0, le=1_000_000)
+    contact: Optional[str] = Field(None, max_length=255)
+    notes: Optional[str] = None
+
+
+class VenueUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    address: Optional[str] = Field(None, max_length=512)
+    city: Optional[str] = Field(None, max_length=255)
+    capacity: Optional[int] = Field(None, ge=0, le=1_000_000)
+    contact: Optional[str] = Field(None, max_length=255)
+    notes: Optional[str] = None
+
+
+class VenueResponse(BaseModel):
+    id: str
+    band_id: str
+    name: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    capacity: Optional[int] = None
+    contact: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

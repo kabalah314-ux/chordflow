@@ -78,8 +78,12 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 - ✅ **T-115 — Campos de booking en el concierto** (2026-06-21): `Event.contact_name`/`contact_phone`/
   `fee` (migración `c341c9bbb0ba`) + campos en el modal (solo conciertos) + línea `💶 caché · 📇 contacto`
   en la agenda. unit + e2e. VERDE. ⚠️ Migración pendiente en Postgres prod.
-- ⏳ **T-113** `EmailTemplate` (bloqueado-ish: el envío real necesita infra) · diferido: `Venue` como
-  modelo propio, recordatorios por email/push reales.
+- ✅ **T-116 — Salas (Venue) reutilizables** (2026-06-21): `Venue` + `Event.venue_id` (migración
+  `91d60406fb92`) + `venues_router` (CRUD admin/aislamiento) + sección "Salas" en Agenda + selector en el
+  modal de concierto + `📍` en la agenda. Fix UX: modal scrollable. unit `test_api_venues` (6) + e2e.
+  VERDE. ⚠️ Migración pendiente en Postgres prod.
+- ⏳ **T-113** `EmailTemplate` (bloqueado-ish: el envío real necesita infra) · diferido: recordatorios
+  por email/push reales, editar sala desde la UI, mapa de salas.
 
 ### ✅ T-110 — Apunte por canción en el setlist (SetlistItem.note) (2026-06-20)
 Los setlists de banda admiten una nota por canción ("capo 2", "acústica"). El modelo+lectura existían

@@ -8,6 +8,35 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📍 T-116 — Salas (Venue) reutilizables, enlazadas al concierto — Fase 14 (2026-06-21)
+
+**Qué:** la banda puede tener **salas** propias (nombre, ciudad, aforo, contacto) que se **reutilizan**
+entre conciertos. En la pestaña **Agenda** hay una sección "Salas" (el admin las crea/borra) y, al crear
+un **concierto**, un selector de sala. En la agenda, el concierto muestra **📍 nombre de la sala** en su
+línea de booking (junto al caché/contacto).
+
+**Por qué:** avance de roadmap (Fase 14, booking). El `location` libre del evento no se reutilizaba ni
+guardaba datos (aforo, contacto técnico). Un `Venue` propio permite reusar la sala y centralizar su info,
+base para futuros informes/mapa.
+
+**Cómo/Verificación:** aditivo.
+- **Modelo:** `Venue` (band_id, name, address, city, capacity, contact, notes, soft-delete) +
+  `Event.venue_id` (FK SET NULL, solo conciertos). Migración `91d60406fb92` (FK nombrada
+  `fk_events_venue_id_venues`), `alembic check` sin drift.
+- **Backend:** `venues_router.py` (`/bands/{id}/venues` CRUD; **admin** gestiona, miembros leen;
+  aislamiento + gate parametrizado T-098). `events_router` valida la sala (`_validate_venue`: solo
+  conciertos + de la banda → 400) y **denormaliza `venue_name`** en la agenda (lista, UNA query) y el
+  detalle.
+- **Frontend:** sección "Salas" en la pestaña Agenda + `loadVenues`/`newVenue` en `bands.js` + selector
+  de sala en el modal de concierto + `📍` en `bookingLine`. Escapado (XSS). **Fix de UX:** `.modal-card`
+  con `max-height:90vh; overflow-y:auto` (modales altos ya no dejan los botones fuera de pantalla).
+- **Tests:** unit `test_api_venues.py` (6: admin/miembro/guest, enlace a concierto, solo-conciertos +
+  sala-de-la-banda → 400, aislamiento) + e2e `test_sala_venue_reutilizable_en_concierto`. Verificado en
+  navegador (Sala Apolo · Barcelona · 600 pers. → concierto con 📍). Doctor verde, ruff limpio,
+  `cachebust` al día. **Diferido:** editar sala (capacidad/dirección) desde la UI; mapa; P&L por sala.
+
+---
+
 ## 🎵 Pulido T-114 — crear un setlist desde una colección (2026-06-21)
 
 **Qué:** en el detalle de un repertorio (colección) hay un botón **"🎵 Crear setlist con estas"** que

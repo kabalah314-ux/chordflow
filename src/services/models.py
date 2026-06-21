@@ -393,6 +393,9 @@ class Event(Base):
     contact_name = Column(String(255), nullable=True)
     contact_phone = Column(String(64), nullable=True)
     fee = Column(Numeric(10, 2), nullable=True)
+    # Sala reutilizable (T-116): un concierto puede apuntar a un Venue de la banda. SET NULL si se
+    # borra la sala. El `location` libre sigue existiendo (para ensayos/otros sin sala formal).
+    venue_id = Column(String(36), ForeignKey("venues.id", ondelete="SET NULL"), nullable=True)
     created_by = Column(String(36), nullable=False)  # admin que lo creó
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -424,6 +427,28 @@ class EventAttendance(Base):
     responded_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     event = relationship("Event", back_populates="attendance")
+
+
+# ── Booking — Salas reutilizables (Fase 14, T-116) ────────────────────────────
+class Venue(Base):
+    """Sala/local de la banda, reutilizable entre conciertos (T-116). De banda (band_id obligatorio);
+    el concierto la enlaza con `Event.venue_id`. Soft-delete (tiene histórico/valor, §C.4.3)."""
+
+    __tablename__ = "venues"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name = Column(String(255), nullable=False)
+    address = Column(String(512), nullable=True)
+    city = Column(String(255), nullable=True)
+    capacity = Column(Integer, nullable=True)
+    contact = Column(String(255), nullable=True)  # contacto de la sala (técnico/responsable)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete
 
 
 # ── Giro V2 — Finanzas con división (Fase 11, Áreas 4/6) ──────────────────────

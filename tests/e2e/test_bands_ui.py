@@ -200,6 +200,36 @@ def test_concierto_con_booking_contacto_y_cache(page, live_server, api):
     assert "300" in booking and "Promotor Test" in booking
 
 
+def test_sala_venue_reutilizable_en_concierto(page, live_server, api):
+    """Salas reutilizables (T-116): una sala de la banda se enlaza a un concierto y se ve en la agenda
+    (📍) y en la sección Salas."""
+    bid = api.post("/bands/", json={"name": "Banda Venue"}).json()["id"]
+    vid = api.post(f"/bands/{bid}/venues/",
+                   json={"name": "Sala Apolo", "city": "Barcelona", "capacity": 600}).json()["id"]
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Venue") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    # La sala aparece en la sección "Salas"
+    page.wait_for_selector('#b-venues .setlist-song:has-text("Sala Apolo")', timeout=8000)
+
+    # Crear un concierto con esa sala
+    page.click("#b-new-event")
+    page.wait_for_selector("#ev-title", timeout=8000)
+    page.select_option("#ev-type", "concert")
+    page.wait_for_selector("#ev-venue", state="visible", timeout=4000)
+    page.fill("#ev-title", "Bolo con sala")
+    page.select_option("#ev-venue", value=vid)
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # El concierto muestra la sala (📍) en la agenda
+    sel = '#b-agenda .setlist-song:has-text("Bolo con sala") .ev-booking'
+    page.wait_for_selector(sel, timeout=8000)
+    assert "Sala Apolo" in page.inner_text(sel)
+
+
 def test_setlist_de_banda_con_apunte_por_cancion(page, live_server, api):
     """End-to-end del apunte por canción (T-110): el editor de setlist permite una nota por canción,
     se guarda y el reproductor la muestra en la barra del setlist."""

@@ -162,6 +162,12 @@
                         ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-event">➕ Nuevo evento</button>` : ''}
                     </div>
                     <div id="b-agenda"><p class="loading-text">Cargando…</p></div>
+                    <!-- Salas reutilizables (T-116): infraestructura de booking, gestionada por admin. -->
+                    <div class="bf-row bf-row--between" style="margin:1.6rem 0 .6rem;">
+                        <h3 class="bf-h3">Salas</h3>
+                        ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm" id="b-new-venue">➕ Nueva sala</button>` : ''}
+                    </div>
+                    <ul class="setlist-list" id="b-venues"><li><small>Cargando…</small></li></ul>
                 </div>
 
                 <div class="bs-panel" data-panel="finanzas" hidden>
@@ -233,7 +239,7 @@
         loaded.add(key);
         if (key === 'repertorio') { loadRepertoire(bandId, !ctx.iAmGuest); loadCollections(bandId, !ctx.iAmGuest); }
         else if (key === 'setlists') loadBandSetlists(bandId, !ctx.iAmGuest);
-        else if (key === 'agenda') loadAgenda(bandId, ctx.iAmAdmin);
+        else if (key === 'agenda') { loadAgenda(bandId, ctx.iAmAdmin); loadVenues(bandId, ctx.iAmAdmin); }
         else if (key === 'finanzas') loadFinance(bandId, ctx.iAmAdmin);
         else if (key === 'chat') initChat(bandId, ctx.iAmAdmin);
         else if (key === 'giras') loadTours(ctx.iAmAdmin);
@@ -393,6 +399,9 @@
             newCollection(bandId, { onDone: () => loadCollections(bandId, !ctx.iAmGuest) }));
         const newEv = document.getElementById('b-new-event');
         if (newEv) newEv.addEventListener('click', () => newEvent(bandId));
+        const newVen = document.getElementById('b-new-venue');
+        if (newVen) newVen.addEventListener('click', () =>
+            newVenue(bandId, { onDone: () => loadVenues(bandId, ctx.iAmAdmin) }));
         const newTx = document.getElementById('b-new-tx');
         if (newTx) newTx.addEventListener('click', () => newTransaction(bandId, active));
         const newTour = document.getElementById('b-new-tour');

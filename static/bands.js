@@ -467,6 +467,7 @@ function attendeesLine(e) {
 function bookingLine(e) {
     if (e.type !== 'concert') return '';
     const bits = [];
+    if (e.venue_name) bits.push(`📍 ${escapeHtml(e.venue_name)}`);
     if (e.fee != null && e.fee !== '') bits.push(`💶 ${escapeHtml(String(e.fee))}`);
     if (e.contact_name) bits.push(`📇 ${escapeHtml(e.contact_name)}`);
     if (!bits.length) return '';
@@ -568,8 +569,9 @@ async function setAttendance(bandId, eventId, status, iAmAdmin) {
 
 // Crear evento (solo admin): tipo, título, fecha y (si concierto) setlist opcional.
 async function newEvent(bandId) {
-    let setlists = [];
+    let setlists = [], venues = [];
     try { setlists = await (await apiFetch(`/bands/${bandId}/setlists/`)).json(); } catch (_) { setlists = []; }
+    try { venues = await (await apiFetch(`/bands/${bandId}/venues/`)).json(); } catch (_) { venues = []; }
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -595,6 +597,10 @@ async function newEvent(bandId) {
             </div>
             <div id="ev-booking-wrap" style="display:none;">
                 <label class="field-label">Booking (opcional)</label>
+                ${venues.length ? `<select id="ev-venue" class="search-box">
+                    <option value="">— Sala (opcional) —</option>
+                    ${venues.map(v => `<option value="${escapeHtml(v.id)}">${escapeHtml(v.name)}${v.city ? ' · ' + escapeHtml(v.city) : ''}</option>`).join('')}
+                </select>` : ''}
                 <input type="text" id="ev-contact" class="search-box" placeholder="Contacto del promotor" maxlength="255">
                 <input type="text" id="ev-phone" class="search-box" placeholder="Teléfono / email del contacto" maxlength="64">
                 <input type="number" id="ev-fee" class="search-box" min="0" step="0.01" placeholder="Caché (€)">
@@ -628,9 +634,11 @@ async function newEvent(bandId) {
             const contact = overlay.querySelector('#ev-contact').value.trim();
             const phone = overlay.querySelector('#ev-phone').value.trim();
             const fee = overlay.querySelector('#ev-fee').value;
+            const venueId = overlay.querySelector('#ev-venue')?.value;
             if (contact) body.contact_name = contact;
             if (phone) body.contact_phone = phone;
             if (fee !== '') body.fee = fee;
+            if (venueId) body.venue_id = venueId;
         }
         close();
         try {
@@ -642,6 +650,84 @@ async function newEvent(bandId) {
             toast('Evento creado.', 'success');
             loadAgenda(bandId, true);
         } catch (e) { toast('No se pudo crear el evento.', 'error'); }
+    });
+    document.body.appendChild(overlay);
+}
+
+// ─── Salas reutilizables (T-116) ───────────────────────────────────────────────
+async function loadVenues(bandId, isAdmin) {
+    const el = document.getElementById('b-venues');
+    if (!el) return;
+    let venues;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/venues/`);
+        if (!res.ok) throw new Error('http');
+        venues = await res.json();
+    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar las salas.</small></li>'; return; }
+    if (!venues.length) {
+        el.innerHTML = '<li><small>Sin salas.' + (isAdmin ? ' Crea una para reutilizarla en tus conciertos.' : '') + '</small></li>';
+        return;
+    }
+    el.innerHTML = venues.map(v => {
+        const meta = [v.city, v.capacity ? v.capacity + ' pers.' : '', v.contact].filter(Boolean).map(escapeHtml).join(' · ');
+        return `<li class="setlist-song" data-id="${escapeHtml(v.id)}">
+            <span class="sl-title">📍 ${escapeHtml(v.name)}${meta ? ` <small>${meta}</small>` : ''}</span>
+            ${isAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar sala" title="Borrar">🗑️</button>` : ''}
+        </li>`;
+    }).join('');
+    el.querySelectorAll('.setlist-song').forEach(li => {
+        const vid = li.dataset.id;
+        const del = li.querySelector('[data-act="del"]');
+        if (del) del.addEventListener('click', async () => {
+            const ok = await confirmModal('¿Borrar esta sala? (Los conciertos que la usaban quedan sin sala.)', { okText: 'Borrar' });
+            if (!ok) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/venues/${vid}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                loadVenues(bandId, isAdmin);
+            } catch (e) { toast('No se pudo borrar la sala.', 'error'); }
+        });
+    });
+}
+
+async function newVenue(bandId, opts = {}) {
+    const onDone = opts.onDone || (() => {});
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+            <p class="modal-msg">Nueva sala</p>
+            <input type="text" id="v-name" class="search-box" placeholder="Nombre (p. ej. Sala Apolo)" maxlength="255">
+            <input type="text" id="v-city" class="search-box" placeholder="Ciudad" maxlength="255">
+            <input type="number" id="v-cap" class="search-box" min="0" placeholder="Aforo">
+            <input type="text" id="v-contact" class="search-box" placeholder="Contacto de la sala (técnico…)" maxlength="255">
+            <div class="modal-actions">
+                <button class="secondary-btn" data-act="cancel">Cancelar</button>
+                <button class="primary-btn" data-act="ok">Crear</button>
+            </div>
+        </div>`;
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', async (e) => {
+        if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') { close(); return; }
+        if (e.target.getAttribute('data-act') !== 'ok') return;
+        const name = overlay.querySelector('#v-name').value.trim();
+        if (!name) { toast('Pon un nombre a la sala.', 'error'); return; }
+        const body = { name };
+        const city = overlay.querySelector('#v-city').value.trim();
+        const cap = overlay.querySelector('#v-cap').value;
+        const contact = overlay.querySelector('#v-contact').value.trim();
+        if (city) body.city = city;
+        if (cap !== '') body.capacity = parseInt(cap, 10);
+        if (contact) body.contact = contact;
+        close();
+        try {
+            const res = await apiFetch(`/bands/${bandId}/venues/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body) });
+            if (!res.ok) throw new Error('http');
+            toast('Sala creada.', 'success');
+            onDone();
+        } catch (e) { toast('No se pudo crear la sala.', 'error'); }
     });
     document.body.appendChild(overlay);
 }

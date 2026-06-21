@@ -26,6 +26,7 @@ from ..services.models import (
     EventAttendance,
     MusicianProfile,
     Setlist,
+    Venue,
     _utcnow,
 )
 from ..services.schemas import (
@@ -64,6 +65,19 @@ def _validate_setlist(db: Session, band_id: str, setlist_id: Optional[str], even
         raise HTTPException(status_code=400, detail="El setlist no es de esta banda")
 
 
+def _validate_venue(db: Session, band_id: str, venue_id: Optional[str], event_type: str) -> None:
+    """La sala solo se adjunta a conciertos y debe ser de ESTA banda (T-116)."""
+    if venue_id is None:
+        return
+    if event_type != "concert":
+        raise HTTPException(status_code=400, detail="La sala solo se adjunta a conciertos")
+    ok = (db.query(Venue.id)
+          .filter(Venue.id == venue_id, Venue.band_id == band_id,
+                  Venue.deleted_at.is_(None)).first())
+    if not ok:
+        raise HTTPException(status_code=400, detail="La sala no es de esta banda")
+
+
 def _my_status(db: Session, event_id: str, user_id: str) -> Optional[str]:
     row = (db.query(EventAttendance.status)
            .filter(EventAttendance.event_id == event_id, EventAttendance.user_id == user_id)
@@ -100,11 +114,16 @@ def list_events(
         by_event.setdefault(att.event_id, []).append(
             AttendanceOut(user_id=att.user_id, status=att.status,
                           display_name=display_name, responded_at=att.responded_at))
+    # Nombre de la sala por evento (denormalizado, UNA query) → la agenda lo muestra en el concierto.
+    venue_ids = [e.venue_id for e in events if e.venue_id]
+    venue_names = (dict(db.query(Venue.id, Venue.name).filter(Venue.id.in_(venue_ids)).all())
+                   if venue_ids else {})
     out = []
     for e in events:
         s = EventSummary.model_validate(e)
         s.my_status = mine.get(e.id)
         s.attendance = by_event.get(e.id, [])
+        s.venue_name = venue_names.get(e.venue_id) if e.venue_id else None
         out.append(s)
     return out
 
@@ -118,6 +137,7 @@ def create_event(
 ):
     """Crear un evento (solo admin)."""
     _validate_setlist(db, band_id, payload.setlist_id, payload.type)
+    _validate_venue(db, band_id, payload.venue_id, payload.type)
     # exclude_none: los campos no enviados (incl. status) usan el default del modelo ('confirmed').
     ev = Event(band_id=band_id, created_by=membership.user_id,
                **payload.model_dump(exclude_none=True))
@@ -150,10 +170,13 @@ def update_event(
     """Editar un evento (solo admin)."""
     ev = _get_event(db, band_id, event_id)
     data = payload.model_dump(exclude_unset=True)
-    # Validar el setlist contra el tipo resultante (el del payload o el actual).
+    # Validar setlist/sala contra el tipo resultante (el del payload o el actual).
     if "setlist_id" in data or "type" in data:
         _validate_setlist(db, band_id, data.get("setlist_id", ev.setlist_id),
                           data.get("type", ev.type))
+    if "venue_id" in data or "type" in data:
+        _validate_venue(db, band_id, data.get("venue_id", ev.venue_id),
+                        data.get("type", ev.type))
     for field, value in data.items():
         setattr(ev, field, value)
     db.commit()
@@ -213,4 +236,6 @@ def _to_event_response(db: Session, ev: Event, user_id: str) -> EventResponse:
     resp = EventResponse.model_validate(ev)
     resp.attendance = attendance
     resp.my_status = my_status
+    if ev.venue_id:
+        resp.venue_name = db.query(Venue.name).filter(Venue.id == ev.venue_id).scalar()
     return resp

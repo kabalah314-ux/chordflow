@@ -21,6 +21,7 @@ from .api.profile_router import router as profile_router
 from .api.setlists_router import router as setlists_router
 from .api.songs_router import router as songs_router
 from .api.tours_router import router as tours_router
+from .api.venues_router import router as venues_router
 from .services.auth import SUPABASE_ANON_KEY, SUPABASE_URL, TEST_MODE
 from .services.config import settings
 from .services.db import Base, engine
@@ -99,6 +100,7 @@ app.include_router(band_songs_router)
 app.include_router(band_setlists_router)
 app.include_router(band_collections_router)
 app.include_router(events_router)
+app.include_router(venues_router)
 app.include_router(finance_router)
 app.include_router(messages_router)
 app.include_router(me_router)

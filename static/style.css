@@ -1107,6 +1107,10 @@ button {
 .modal-card {
     max-width: 420px;
     width: 100%;
+    /* Si el contenido (p. ej. el modal de evento con todos los campos de booking) supera la altura
+       de la pantalla, el modal hace scroll en vez de empujar los botones fuera del viewport. */
+    max-height: 90vh;
+    overflow-y: auto;
     padding: 1.6rem;
     border-radius: 18px;
     background: rgba(30, 30, 40, 0.85);

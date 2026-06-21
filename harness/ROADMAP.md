@@ -453,8 +453,14 @@
         (Create/Update/Response + Summary), `fee` ge=0 → 422. Router sin cambios (model_dump genérico,
         admin-only). unit `test_booking_fields_contacto_y_cache` + e2e. VERDE. ⚠️ Migración pendiente en
         Postgres prod (Vercel BLOCKED).
+  - [x] **T-116** 🟢 **Salas (Venue) reutilizables** (2026-06-21): `Venue` (band_id, name, city, capacity,
+        contact, notes) + `Event.venue_id` (FK SET NULL, migración `91d60406fb92`). `venues_router` (CRUD,
+        admin gestiona, miembros leen, aislamiento + gate T-098); `events_router` valida la sala (solo
+        conciertos + de la banda) y denormaliza `venue_name`. UI: sección "Salas" en Agenda + selector en
+        el modal de concierto + `📍` en la agenda. Fix UX: `.modal-card` scrollable. unit
+        `test_api_venues` (6) + e2e. VERDE. ⚠️ Migración pendiente en Postgres prod.
   - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
-  - [ ] Diferido: `Venue` como modelo propio; resumen de caché por gira/temporada.
+  - [ ] Diferido: resumen de caché por gira/temporada; editar sala desde la UI; mapa de salas.
 
 - [x] **T-114** 🟢 **Repertorios (colecciones temáticas)** — diferenciar Repertorio vs Setlist
       (2026-06-21, cola de Oscar #2/#3). La pestaña "Repertorio" pasa a "Repertorios": varias listas
