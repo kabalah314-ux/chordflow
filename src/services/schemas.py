@@ -379,6 +379,7 @@ class EventSummary(BaseModel):
     status: EventStatus
     setlist_id: Optional[str] = None
     my_status: Optional[AttendanceStatus] = None  # mi asistencia (si la marqué)
+    attendance: List[AttendanceOut] = []  # quién ha respondido (para mostrar confirmados en la agenda)
 
     model_config = ConfigDict(from_attributes=True)
 

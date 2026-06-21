@@ -24,8 +24,7 @@ logs/
 
 # Artefactos de verificación con Playwright (capturas, trazas, snapshots)
 .playwright-mcp/
-*-claro.png
-*-marco.png
+/*.png
 
 # Bundle de diseño en bruto (referencia local; el spec vive en harness/diseno/)
 BandFlow.html

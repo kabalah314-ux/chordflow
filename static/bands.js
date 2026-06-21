@@ -448,6 +448,20 @@ const EVENT_STATUS_LABEL = {
 };
 const ATT_LABEL = { yes: '✅ Voy', maybe: '🤔 Quizás', no: '❌ No voy' };
 
+// Línea discreta de "quién ha confirmado" en cada evento (#4): nombres de los que van + cuántos
+// dicen "quizás". El backend ya devuelve `attendance` (lista de {status, display_name}). Escapamos
+// los nombres (XSS). Si nadie ha respondido aún, no se muestra nada (no mete ruido).
+function attendeesLine(e) {
+    const att = Array.isArray(e.attendance) ? e.attendance : [];
+    const going = att.filter(a => a.status === 'yes').map(a => escapeHtml(a.display_name || 'Alguien'));
+    const maybe = att.filter(a => a.status === 'maybe').length;
+    if (!going.length && !maybe) return '';
+    const bits = [];
+    if (going.length) bits.push(`✅ ${going.join(', ')}`);
+    if (maybe) bits.push(`🤔 ${maybe}`);
+    return `<span class="ev-attendees">${bits.join(' · ')}</span>`;
+}
+
 function fmtDate(iso) {
     if (!iso) return 'Sin fecha';
     const d = new Date(iso);
@@ -485,7 +499,7 @@ async function loadAgenda(bandId, iAmAdmin) {
         <li class="setlist-song" data-id="${escapeHtml(e.id)}">
             <span class="sl-title">${EVENT_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
                 <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}</small>
-                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}</span>
+                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${attendeesLine(e)}</span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
                 <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">💬</button>

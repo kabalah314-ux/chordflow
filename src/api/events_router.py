@@ -84,15 +84,27 @@ def list_events(
               .order_by(Event.starts_at.asc().nullslast()).all())
     if not events:
         return []
+    event_ids = [e.id for e in events]
     mine = dict(
         db.query(EventAttendance.event_id, EventAttendance.status)
-        .filter(EventAttendance.event_id.in_([e.id for e in events]),
+        .filter(EventAttendance.event_id.in_(event_ids),
                 EventAttendance.user_id == membership.user_id).all()
     )
+    # Asistencia de TODOS por evento (con nombre real), en UNA query agregada (sin N+1) → el front
+    # muestra una línea discreta de "quién ha confirmado" en cada evento.
+    by_event: dict[str, list[AttendanceOut]] = {}
+    rows = (db.query(EventAttendance, MusicianProfile.display_name)
+            .outerjoin(MusicianProfile, MusicianProfile.id == EventAttendance.user_id)
+            .filter(EventAttendance.event_id.in_(event_ids)).all())
+    for att, display_name in rows:
+        by_event.setdefault(att.event_id, []).append(
+            AttendanceOut(user_id=att.user_id, status=att.status,
+                          display_name=display_name, responded_at=att.responded_at))
     out = []
     for e in events:
         s = EventSummary.model_validate(e)
         s.my_status = mine.get(e.id)
+        s.attendance = by_event.get(e.id, [])
         out.append(s)
     return out
 

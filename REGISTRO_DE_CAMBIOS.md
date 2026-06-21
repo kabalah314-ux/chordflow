@@ -8,6 +8,29 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 👥 Agenda — confirmados por evento (quién va) (2026-06-21)
+
+**Qué:** cada evento de la agenda de banda muestra, **de forma discreta** bajo el título, **quién ha
+confirmado** asistencia: una línea `✅ Ana, Luis · 🤔 2` (nombres de los que van + cuántos dicen
+"quizás"). Si nadie ha respondido aún, no se muestra nada (no mete ruido).
+
+**Por qué:** era el punto #4 de la cola de correcciones de Oscar. La info de asistencia existía
+(`EventAttendance`, voy/no/quizás) pero **solo se exponía en el detalle** del evento; en la **lista**
+(que es la que usa la agenda) no venía → no había forma de ver los confirmados de un vistazo.
+
+**Cómo/Verificación:** (1) **backend** — `EventSummary.attendance` nuevo y `list_events`
+(`events_router.py`) lo surte con **UNA query agregada** (join a `MusicianProfile` por nombre real,
+agrupado por evento en Python → sin N+1), mismo patrón que el detalle. (2) **frontend** — helper
+`attendeesLine(e)` en `bands.js` (escapa los nombres, XSS) + `.ev-attendees` discreto en `style.css`,
+insertado en el render de cada evento de `loadAgenda`. Verificado en navegador (banda demo: el ensayo
+muestra "✅ Oscar (tú), Ana · 🤔 1"; el concierto sin respuestas, nada). Tests: unit
+`test_listar_y_marcar_asistencia` ampliado (la lista trae `attendance`) + e2e
+`test_agenda_muestra_quien_ha_confirmado` (sin respuestas no hay línea; al marcar "Voy" aparece el ✅).
+`cachebust` al día. **Diferido (no bloquea):** sección plegable con el detalle completo (no voy / sin
+responder); confirmados en la agenda **agregada** (`/me/events`, que hoy solo trae mi asistencia).
+
+---
+
 ## 🩹 fix(shell) — el marco blanco lateral: hardening del fondo en `html` (2026-06-21)
 
 **Qué:** el fondo de la app ahora va en **`html` Y `body`** (`html, body { background: var(--bf-bg) }`),

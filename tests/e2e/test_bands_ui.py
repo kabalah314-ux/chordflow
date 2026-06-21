@@ -172,6 +172,35 @@ def test_crear_evento_y_marcar_asistencia_en_la_ui(page, live_server, api):
     page.wait_for_selector('#b-agenda .setlist-song button[data-att="yes"].active', timeout=8000)
 
 
+def test_agenda_muestra_quien_ha_confirmado(page, live_server, api):
+    """Cada evento muestra de forma discreta quién ha confirmado asistencia (#4): al marcar 'Voy'
+    aparece una línea `.ev-attendees` con el ✅ y mi nombre. El backend la surte en la lista de
+    eventos (no solo en el detalle)."""
+    api.post("/bands/", json={"name": "Banda Confirmados"})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Confirmados") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    page.wait_for_selector("#b-new-event", timeout=8000)
+
+    # Crear un evento y, antes de responder, NO debe haber línea de confirmados (sin ruido).
+    page.click("#b-new-event")
+    page.wait_for_selector("#ev-title", timeout=8000)
+    page.fill("#ev-title", "Bolo confirmados")
+    page.fill("#ev-date", "2027-03-10T21:00")
+    page.click('.modal-overlay button[data-act="ok"]')
+    song = '#b-agenda .setlist-song:has-text("Bolo confirmados")'
+    page.wait_for_selector(song, timeout=8000)
+    assert page.locator(song + " .ev-attendees").count() == 0
+
+    # Al marcar "Voy", aparece la línea discreta con el ✅.
+    page.click(song + ' button[data-att="yes"]')
+    page.wait_for_selector(song + " .ev-attendees", timeout=8000)
+    assert "✅" in page.inner_text(song + " .ev-attendees")
+
+
 def test_registrar_movimiento_y_ver_saldos_en_la_ui(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Finanzas UI"})
 

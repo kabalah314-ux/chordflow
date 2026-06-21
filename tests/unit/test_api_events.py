@@ -79,6 +79,11 @@ def test_listar_y_marcar_asistencia(client):
     att = client.get(f"/bands/{bid}/events/{eid}").json()["attendance"]
     assert any(a["user_id"] == MEMBER and a["status"] == "maybe" for a in att)
 
+    # La LISTA también surte la asistencia de todos (para mostrar confirmados en la agenda, #4),
+    # no solo el detalle.
+    lst_att = client.get(f"/bands/{bid}/events/").json()[0]["attendance"]
+    assert any(a["user_id"] == MEMBER and a["status"] == "maybe" for a in lst_att)
+
 
 def test_guest_puede_marcar_asistencia(client):
     bid = _band(client)

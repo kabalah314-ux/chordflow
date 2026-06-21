@@ -257,6 +257,8 @@ button {
 
 /* Recordatorios in-app de la agenda (T-112): evento próximo + resumen del funnel de booking */
 .ev-soon { display: inline-block; margin-left: 0.4rem; font-size: 0.72rem; color: var(--accent-color); font-weight: 600; }
+/* Confirmados por evento (#4): línea discreta debajo del título con quién va / cuántos "quizás". */
+.ev-attendees { display: block; margin-top: 0.2rem; font-size: 0.72rem; color: var(--text-secondary, #9a9aa6); }
 .agenda-booking-note {
     margin: 0 0 0.6rem; padding: 0.4rem 0.7rem; font-size: 0.85rem;
     color: var(--accent-color); background: rgba(255, 107, 74, 0.08);

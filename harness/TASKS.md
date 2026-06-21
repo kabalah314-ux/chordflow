@@ -50,9 +50,12 @@ verificar a ojo (capturas) qué páginas/elementos fallan.
 3. 🟠 **Setlist vs Repertorios (decisión de producto).** Son casi lo mismo. Decidir con Oscar: ¿quitar
    setlists?, ¿fusionar?, ¿diferenciarlos (idea: *repertorio* = colección temática de canciones;
    *setlist* = orden concreto de un bolo, con sus notas por canción T-110/tiempos)? Definir antes de 2.
-4. 🟢 **Agenda: confirmados por evento (sutil).** Mostrar en cada evento, de forma discreta, **quién ha
-   confirmado** asistencia. El backend ya lo tiene (`EventAttendance` voy/no/quizás, devuelto en
-   `EventResponse.attendance`); falta solo la UI (una línea/sección plegable con los "voy").
+4. ✅ **Agenda: confirmados por evento — HECHO (2026-06-21).** Cada evento muestra una línea discreta
+   `✅ Ana, Luis · 🤔 2` bajo el título. Hubo que tocar backend (la **lista** de eventos devolvía
+   `EventSummary` SIN asistencia; añadido `EventSummary.attendance` surtido con query agregada sin N+1)
+   + frontend (`attendeesLine` en `bands.js`, escapado; `.ev-attendees` en `style.css`). unit + e2e
+   verdes. Diferido: sección plegable con el detalle completo; confirmados en la agenda agregada
+   (`/me/events`). Detalle en REGISTRO (2026-06-21).
 
 ---
 
