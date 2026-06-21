@@ -463,8 +463,10 @@
       (migración `5481a965f5fb`, `alembic check` limpio) + `band_collections_router.py` (CRUD, miembros
       gestionan/guest lee, aislamiento + gate parametrizado T-098) + UI (`band.js`/`bands.js`). unit
       `test_api_collections` (8) + e2e `test_crear_repertorio_coleccion_y_anadir_cancion`. VERDE.
-      **Diferido:** reordenar dentro de la colección; crear un setlist desde una colección; colecciones
-      personales. ⚠️ Migración pendiente de aplicar a Postgres prod (Vercel BLOCKED).
+      ↳ **Pulido (2026-06-21):** **crear un setlist desde una colección** (botón "🎵 Crear setlist con
+      estas" en el detalle → genera un setlist con esas canciones; cierra el bucle Repertorio→Setlist).
+      e2e `test_crear_setlist_desde_una_coleccion`. **Diferido:** reordenar dentro de la colección;
+      colecciones personales. ⚠️ Migración pendiente de aplicar a Postgres prod (Vercel BLOCKED).
 
 ---
 

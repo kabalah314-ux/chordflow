@@ -878,12 +878,31 @@ async function openCollection(bandId, collectionId, canEdit) {
     detail.innerHTML = `
         <div class="setlist-editor">
             <a href="#" id="col-back" class="back-link">← Volver a Repertorios</a>
-            <h3>📁 ${escapeHtml(col.name)} <small class="bf-muted">· ${currentIds.length} ${currentIds.length === 1 ? 'canción' : 'canciones'}</small></h3>
+            <div class="bf-row bf-row--between" style="align-items:baseline;gap:.6rem;flex-wrap:wrap;">
+                <h3>📁 ${escapeHtml(col.name)} <small class="bf-muted">· ${currentIds.length} ${currentIds.length === 1 ? 'canción' : 'canciones'}</small></h3>
+                ${canEdit && currentIds.length ? `<button class="bf-btn bf-btn--sm" id="col-to-setlist" title="Crear un setlist (orden de bolo) con estas canciones">🎵 Crear setlist con estas</button>` : ''}
+            </div>
             <ul class="setlist-list" id="col-songs"></ul>
             ${canEdit && available.length ? `<h4 style="margin-top:1rem;">Añadir del repertorio</h4>
                 <ul class="setlist-list" id="col-available"></ul>` : ''}
         </div>`;
     document.getElementById('col-back').addEventListener('click', (e) => { e.preventDefault(); loadCollections(bandId, canEdit); });
+
+    // Crear un setlist (orden de bolo) a partir de las canciones de esta colección: cierra el bucle
+    // Repertorio→Setlist (organizas por tema y de ahí sacas el orden del concierto).
+    const toSL = document.getElementById('col-to-setlist');
+    if (toSL) toSL.addEventListener('click', async () => {
+        const name = await promptModal('Nombre del nuevo setlist:',
+            { okText: 'Crear setlist', value: col.name });
+        if (!name || !name.trim()) return;
+        try {
+            const res = await apiFetch(`/bands/${bandId}/setlists/`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim(), song_ids: currentIds }) });
+            if (!res.ok) throw new Error('http');
+            toast('Setlist creado desde el repertorio. Lo tienes en la pestaña Setlists.', 'success');
+        } catch (e) { toast('No se pudo crear el setlist.', 'error'); }
+    });
 
     const elSongs = document.getElementById('col-songs');
     elSongs.innerHTML = col.items.map(it => `

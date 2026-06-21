@@ -143,6 +143,34 @@ def test_crear_repertorio_coleccion_y_anadir_cancion(page, live_server, api):
     assert "Cancion Col" in page.inner_text("#col-songs")
 
 
+def test_crear_setlist_desde_una_coleccion(page, live_server, api):
+    """Pulido T-114: desde una colección se genera un setlist (orden de bolo) con sus canciones →
+    cierra el bucle Repertorio→Setlist."""
+    bid = api.post("/bands/", json={"name": "Banda Col2SL"}).json()["id"]
+    s1 = api.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="C2SL-A")).json()["id"]
+    s2 = api.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="C2SL-B")).json()["id"]
+    api.post(f"/bands/{bid}/collections/", json={"name": "Acustico", "song_ids": [s1, s2]})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Col2SL") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="repertorio"]')
+    page.wait_for_selector('#b-collections .setlist-song:has-text("Acustico")', timeout=8000)
+    page.click('#b-collections .setlist-song:has-text("Acustico") button[data-act="open"]')
+
+    # Generar un setlist desde la colección (acepta el nombre prerrelleno)
+    page.wait_for_selector("#col-to-setlist", timeout=8000)
+    page.click("#col-to-setlist")
+    page.wait_for_selector(".modal-overlay input", timeout=4000)
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # El setlist aparece en la pestaña Setlists
+    page.click('.bf-tab[data-tab="setlists"]')
+    page.wait_for_selector('#b-setlists .setlist-song:has-text("Acustico")', timeout=8000)
+    assert "Acustico" in page.inner_text("#b-setlists")
+
+
 def test_concierto_con_booking_contacto_y_cache(page, live_server, api):
     """Booking (T-115): al crear un CONCIERTO aparecen los campos de booking; el caché + contacto se
     guardan y se muestran discretamente en la agenda (no en ensayos)."""

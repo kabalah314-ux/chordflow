@@ -8,6 +8,22 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎵 Pulido T-114 — crear un setlist desde una colección (2026-06-21)
+
+**Qué:** en el detalle de un repertorio (colección) hay un botón **"🎵 Crear setlist con estas"** que
+genera un **setlist** (orden de bolo) con las canciones de la colección. Pide el nombre (prerrelleno con
+el de la colección) y lo crea en la pestaña Setlists.
+
+**Por qué:** cierra el bucle **Repertorio→Setlist** que motivó la diferenciación (T-114): organizas las
+canciones por tema y, cuando hay bolo, sacas de ahí el orden concreto. Era el "diferido" más útil.
+
+**Cómo/Verificación:** solo frontend (`bands.js`, en `openCollection`): reusa `POST /bands/{id}/setlists`
+con los `song_ids` de la colección (sin backend nuevo). e2e `test_crear_setlist_desde_una_coleccion`
+(colección → botón → el setlist aparece en Setlists). Verificado en navegador. ruff limpio, `cachebust`
+al día.
+
+---
+
 ## 📇 T-115 — Campos de booking en el concierto (contacto + caché) — Fase 14 (2026-06-21)
 
 **Qué:** un **concierto** guarda ahora **contacto del promotor** (nombre + teléfono/email) y **caché**
