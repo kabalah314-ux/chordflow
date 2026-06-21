@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from .api.band_collections_router import router as band_collections_router
 from .api.band_setlists_router import router as band_setlists_router
 from .api.band_songs_router import router as band_songs_router
 from .api.bands_router import router as bands_router
@@ -96,6 +97,7 @@ app.include_router(invites_router)
 app.include_router(profile_router)
 app.include_router(band_songs_router)
 app.include_router(band_setlists_router)
+app.include_router(band_collections_router)
 app.include_router(events_router)
 app.include_router(finance_router)
 app.include_router(messages_router)

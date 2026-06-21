@@ -207,6 +207,48 @@ class SetlistSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ── Repertorios de banda — colecciones temáticas (T-114) ──────────────────────
+# A diferencia del Setlist (orden de bolo + notas por canción), una colección agrupa canciones del
+# repertorio por tema, sin orden de concierto. Solo de banda (sin `owner_id`).
+class CollectionCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    song_ids: List[str] = []  # canciones iniciales (del repertorio de la banda)
+
+
+class CollectionUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    song_ids: Optional[List[str]] = None  # si viene, reemplaza la pertenencia completa
+
+
+class CollectionItemOut(BaseModel):
+    song_id: str
+    position: int
+    title: str
+    artist: Optional[str] = None
+    bpm: Optional[int] = None
+
+
+class CollectionResponse(BaseModel):
+    id: str
+    name: str
+    band_id: str
+    created_at: datetime
+    updated_at: datetime
+    items: List[CollectionItemOut] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CollectionSummary(BaseModel):
+    id: str
+    name: str
+    band_id: str
+    song_count: int = 0
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ── Giro V2 — Núcleo de identidad de banda (Fase 7, T-049) ────────────────────
 # Los Literal de role/status reflejan las fuentes únicas models.BAND_ROLES y
 # models.MEMBERSHIP_STATUSES (mismo patrón que LineBase.type). Si cambian allí, actualizar aquí.

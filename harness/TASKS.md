@@ -44,12 +44,13 @@ verificar a ojo (capturas) qué páginas/elementos fallan.
    está BLOCKED**. Hardening añadido por si quedara una fuente residual (overscroll de macOS revela el
    blanco del `<html>`): fondo ahora en `html` Y `body`. Test reforzado + doctor verde. **➡️ Para que
    Oscar lo vea hay que DESPLEGAR** (Vercel desbloqueado → Redeploy). Detalle en REGISTRO (2026-06-21).
-2. 🟠 **Repertorio → "Repertorios" (varias listas con nombre).** Hoy el repertorio de banda es UNA lista
-   plana de canciones. Oscar quiere **varias listas nombradas** dentro del repertorio ("acústico",
-   "cañero", "bodas"…). ⚠️ Se **solapa con Setlists** → decidir el modelo junto al punto 3 antes de tocar.
-3. 🟠 **Setlist vs Repertorios (decisión de producto).** Son casi lo mismo. Decidir con Oscar: ¿quitar
-   setlists?, ¿fusionar?, ¿diferenciarlos (idea: *repertorio* = colección temática de canciones;
-   *setlist* = orden concreto de un bolo, con sus notas por canción T-110/tiempos)? Definir antes de 2.
+2. ✅ **Repertorio → "Repertorios" — HECHO (T-114, 2026-06-21).** La pestaña "Repertorio" pasa a
+   "Repertorios": varias listas nombradas (colecciones temáticas) que agrupan canciones del pool. Debajo,
+   "Todas las canciones" (el pool de la banda). Modelo `SongCollection`/`SongCollectionItem` (migración
+   `5481a965f5fb`) + `band_collections_router` + UI. unit + e2e verdes. Detalle en REGISTRO (2026-06-21).
+3. ✅ **Setlist vs Repertorios — DECIDIDO: diferenciar (2026-06-21).** *Repertorio/colección* = agrupación
+   temática SIN orden; *setlist* = orden concreto de un bolo (con notas por canción T-110). Setlists
+   intactos. Implementado en T-114 (punto 2). Diferido: crear un setlist directamente desde una colección.
 4. ✅ **Agenda: confirmados por evento — HECHO (2026-06-21).** Cada evento muestra una línea discreta
    `✅ Ana, Luis · 🤔 2` bajo el título. Hubo que tocar backend (la **lista** de eventos devolvía
    `EventSummary` SIN asistencia; añadido `EventSummary.attendance` surtido con query agregada sin N+1)

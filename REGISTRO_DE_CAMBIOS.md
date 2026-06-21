@@ -8,6 +8,35 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📁 T-114 — Repertorios (colecciones temáticas) — diferenciar Repertorio vs Setlist (2026-06-21)
+
+**Qué:** la pestaña de banda **"Repertorio" pasa a "Repertorios"**: ahora puedes crear **varias listas
+nombradas** ("Acústico", "Cañero", "Bodas"…) que **agrupan** canciones del repertorio por tema. Debajo
+sigue **"Todas las canciones"** (el pool de la banda, donde se copian/quitan). Los **Setlists** quedan
+intactos y diferenciados (el **orden** concreto de un bolo, con notas por canción T-110).
+
+**Por qué:** puntos #2 y #3 de la cola de Oscar. Repertorio (pool plano) y Setlist (lista ordenada) se
+solapaban. Decisión de producto: **diferenciar** → *repertorio/colección* = agrupación temática **sin
+orden**; *setlist* = orden de concierto. Una canción puede estar en **varias** colecciones.
+
+**Cómo/Verificación:** todo **aditivo** (no toca songs/setlists).
+- **Modelo:** `SongCollection` (band_id, name, soft-delete) + `SongCollectionItem` (collection_id,
+  song_id, position; único `(collection_id, song_id)`). Migración `5481a965f5fb` (batch, FK CASCADE,
+  índices band_id/FKs). `alembic check` sin drift.
+- **Backend:** `band_collections_router.py` → `/bands/{id}/collections` CRUD (miembros gestionan, guest
+  solo lee), canciones validadas contra el repertorio de la banda. Aislamiento por `require_band_member`
+  + filtro `band_id`; añadidas las 2 rutas al **gate de aislamiento parametrizado** (T-098).
+- **Frontend:** pestaña "Repertorios" en `band.html`/`band.js` (sección colecciones + pool) + `bands.js`
+  (`loadCollections`/`openCollection`/`newCollection`: crear por nombre, abrir, añadir/quitar del pool,
+  ▶ reproducir, borrar). Nombres escapados (XSS).
+- **Tests:** unit `test_api_collections.py` (8: CRUD, solo-repertorio, multi-colección sin duplicar,
+  guest no edita, **diferenciación de setlist**, aislamiento) + gate parametrizado (18 rutas) + e2e
+  `test_crear_repertorio_coleccion_y_anadir_cancion`. Verificado en navegador (crear "Acústico" + añadir
+  Wonderwall). Doctor verde, ruff limpio, `cachebust` al día. **Diferido:** reordenar dentro de la
+  colección; crear un setlist directamente desde una colección; colecciones personales.
+
+---
+
 ## 👥 Agenda — confirmados por evento (quién va) (2026-06-21)
 
 **Qué:** cada evento de la agenda de banda muestra, **de forma discreta** bajo el título, **quién ha

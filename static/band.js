@@ -28,7 +28,7 @@
     const TABS = [
         { key: 'resumen',    label: 'Resumen' },
         { key: 'miembros',   label: 'Miembros' },
-        { key: 'repertorio', label: 'Repertorio' },
+        { key: 'repertorio', label: 'Repertorios' },
         { key: 'setlists',   label: 'Setlists' },
         { key: 'agenda',     label: 'Agenda' },
         { key: 'finanzas',   label: 'Finanzas' },
@@ -127,8 +127,19 @@
                 </div>
 
                 <div class="bs-panel" data-panel="repertorio" hidden>
-                    <div class="bf-row bf-row--between" style="margin-bottom:.6rem;">
-                        <h3 class="bf-h3">Repertorio</h3>
+                    <!-- Repertorios: colecciones temáticas de canciones (T-114) -->
+                    <div id="b-collections-wrap">
+                        <div class="bf-row bf-row--between" style="margin-bottom:.3rem;">
+                            <h3 class="bf-h3">Repertorios</h3>
+                            ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-collection">➕ Nuevo repertorio</button>`}
+                        </div>
+                        <p class="bf-muted" style="margin:.1rem 0 .6rem;font-size:.82rem;">Agrupa tus canciones por tema (acústico, cañero, bodas…). Para el orden de un bolo, usa los <b>Setlists</b>.</p>
+                        <ul class="setlist-list" id="b-collections"><li><small>Cargando…</small></li></ul>
+                    </div>
+                    <div id="b-collection-detail" hidden></div>
+                    <!-- Pool: todas las canciones de la banda -->
+                    <div class="bf-row bf-row--between" style="margin:1.4rem 0 .6rem;">
+                        <h3 class="bf-h3">Todas las canciones</h3>
                         ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-add-song">➕ Copiar de mis partituras</button>`}
                     </div>
                     <ul class="setlist-list" id="b-repertoire"><li><small>Cargando…</small></li></ul>
@@ -220,7 +231,7 @@
     function loadTab(key, ctx) {
         if (loaded.has(key)) return;
         loaded.add(key);
-        if (key === 'repertorio') loadRepertoire(bandId, !ctx.iAmGuest);
+        if (key === 'repertorio') { loadRepertoire(bandId, !ctx.iAmGuest); loadCollections(bandId, !ctx.iAmGuest); }
         else if (key === 'setlists') loadBandSetlists(bandId, !ctx.iAmGuest);
         else if (key === 'agenda') loadAgenda(bandId, ctx.iAmAdmin);
         else if (key === 'finanzas') loadFinance(bandId, ctx.iAmAdmin);
@@ -377,6 +388,9 @@
         if (invite) invite.addEventListener('click', () => generateInvite(bandId));
         const addSong = document.getElementById('b-add-song');
         if (addSong) addSong.addEventListener('click', () => copyFromPersonal(bandId));
+        const newColl = document.getElementById('b-new-collection');
+        if (newColl) newColl.addEventListener('click', () =>
+            newCollection(bandId, { onDone: () => loadCollections(bandId, !ctx.iAmGuest) }));
         const newEv = document.getElementById('b-new-event');
         if (newEv) newEv.addEventListener('click', () => newEvent(bandId));
         const newTx = document.getElementById('b-new-tx');

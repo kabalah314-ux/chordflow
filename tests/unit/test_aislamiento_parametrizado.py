@@ -37,6 +37,8 @@ BAND_ROUTES = [
     ("GET", "/bands/{bid}/songs/"),
     ("POST", "/bands/{bid}/songs/"),
     ("GET", "/bands/{bid}/setlists/"),
+    ("GET", "/bands/{bid}/collections/"),
+    ("POST", "/bands/{bid}/collections/"),
     ("GET", "/bands/{bid}/events/"),
     ("POST", "/bands/{bid}/events/"),
     ("GET", "/bands/{bid}/transactions"),

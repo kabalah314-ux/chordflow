@@ -771,6 +771,130 @@ async function loadRepertoire(bandId, canEdit) {
     });
 }
 
+// ─── Repertorios: colecciones temáticas de la banda (T-114) ────────────────────
+// Diferenciación con los Setlists: una colección AGRUPA canciones por tema (sin orden de bolo); el
+// setlist es el ORDEN concreto de un concierto. Las canciones salen del repertorio de la banda.
+async function loadCollections(bandId, canEdit) {
+    const el = document.getElementById('b-collections');
+    if (!el) return;
+    // Al (re)cargar la lista, volvemos a la vista de lista (ocultamos el detalle).
+    const detail = document.getElementById('b-collection-detail');
+    const wrap = document.getElementById('b-collections-wrap');
+    if (detail) { detail.hidden = true; detail.innerHTML = ''; }
+    if (wrap) wrap.hidden = false;
+    let cols;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/collections/`);
+        if (!res.ok) throw new Error('http');
+        cols = await res.json();
+    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar los repertorios.</small></li>'; return; }
+    if (!cols.length) {
+        el.innerHTML = '<li><small>Aún no hay repertorios.' + (canEdit ? ' Crea uno para agrupar canciones por tema.' : '') + '</small></li>';
+        return;
+    }
+    el.innerHTML = cols.map(c => `
+        <li class="setlist-song" data-id="${escapeHtml(c.id)}">
+            <span class="sl-title">📁 ${escapeHtml(c.name)} <small>${c.song_count} ${c.song_count === 1 ? 'canción' : 'canciones'}</small></span>
+            <button class="setlist-item-btn" data-act="open" title="Abrir">Abrir</button>
+            ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar repertorio" title="Borrar">🗑️</button>` : ''}
+        </li>`).join('');
+    el.querySelectorAll('.setlist-song').forEach(li => {
+        const cid = li.dataset.id;
+        li.querySelector('[data-act="open"]').addEventListener('click', () => openCollection(bandId, cid, canEdit));
+        const del = li.querySelector('[data-act="del"]');
+        if (del) del.addEventListener('click', async () => {
+            const ok = await confirmModal('¿Borrar este repertorio? (Las canciones siguen en la banda.)', { okText: 'Borrar' });
+            if (!ok) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/collections/${cid}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                loadCollections(bandId, canEdit);
+            } catch (e) { toast('No se pudo borrar el repertorio.', 'error'); }
+        });
+    });
+}
+
+async function openCollection(bandId, collectionId, canEdit) {
+    const detail = document.getElementById('b-collection-detail');
+    const wrap = document.getElementById('b-collections-wrap');
+    if (!detail) return;
+    let col, repertoire = [];
+    try {
+        const [rc, rr] = await Promise.all([
+            apiFetch(`/bands/${bandId}/collections/${collectionId}`),
+            apiFetch(`/bands/${bandId}/songs/`),
+        ]);
+        if (!rc.ok) throw new Error('http');
+        col = await rc.json();
+        repertoire = rr.ok ? await rr.json() : [];
+    } catch (e) { toast('No se pudo abrir el repertorio.', 'error'); return; }
+    if (wrap) wrap.hidden = true;
+    detail.hidden = false;
+
+    const currentIds = col.items.map(i => i.song_id);
+    const inIds = new Set(currentIds);
+    const available = repertoire.filter(s => !inIds.has(s.id));
+
+    async function patchSongs(ids) {
+        try {
+            const res = await apiFetch(`/bands/${bandId}/collections/${collectionId}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ song_ids: ids }) });
+            if (!res.ok) throw new Error('http');
+            openCollection(bandId, collectionId, canEdit);   // re-renderiza con el nuevo estado
+        } catch (e) { toast('No se pudo actualizar el repertorio.', 'error'); }
+    }
+
+    detail.innerHTML = `
+        <div class="setlist-editor">
+            <a href="#" id="col-back" class="back-link">← Volver a Repertorios</a>
+            <h3>📁 ${escapeHtml(col.name)} <small class="bf-muted">· ${currentIds.length} ${currentIds.length === 1 ? 'canción' : 'canciones'}</small></h3>
+            <ul class="setlist-list" id="col-songs"></ul>
+            ${canEdit && available.length ? `<h4 style="margin-top:1rem;">Añadir del repertorio</h4>
+                <ul class="setlist-list" id="col-available"></ul>` : ''}
+        </div>`;
+    document.getElementById('col-back').addEventListener('click', (e) => { e.preventDefault(); loadCollections(bandId, canEdit); });
+
+    const elSongs = document.getElementById('col-songs');
+    elSongs.innerHTML = col.items.map(it => `
+        <li class="setlist-song" data-id="${escapeHtml(it.song_id)}">
+            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small></span>
+            <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
+            ${canEdit ? `<button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar de este repertorio" title="Quitar">✕</button>` : ''}
+        </li>`).join('') || '<li><small>Repertorio vacío.' + (canEdit ? ' Añade canciones abajo.' : '') + '</small></li>';
+    elSongs.querySelectorAll('.setlist-song').forEach(li => {
+        const sid = li.dataset.id;
+        li.querySelector('[data-act="play"]').addEventListener('click', () => {
+            window.location.href = `index.html?songId=${encodeURIComponent(sid)}`;
+        });
+        const rm = li.querySelector('[data-act="rm"]');
+        if (rm) rm.addEventListener('click', () => patchSongs(currentIds.filter(x => x !== sid)));
+    });
+
+    const elAvail = document.getElementById('col-available');
+    if (elAvail) {
+        elAvail.innerHTML = available.map(s => `
+            <li><button class="setlist-item-btn" data-add="${escapeHtml(s.id)}">➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('');
+        elAvail.querySelectorAll('button[data-add]').forEach(b =>
+            b.addEventListener('click', () => patchSongs([...currentIds, b.dataset.add])));
+    }
+}
+
+async function newCollection(bandId, opts = {}) {
+    const onDone = opts.onDone || (() => {});
+    const name = await promptModal('¿Cómo se llama el repertorio?',
+        { okText: 'Crear', placeholder: 'Ej: Acústico, Cañero, Bodas…' });
+    if (!name || !name.trim()) return;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/collections/`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name.trim(), song_ids: [] }) });
+        if (!res.ok) throw new Error('http');
+        toast('Repertorio creado. Ábrelo para añadir canciones.', 'success');
+        onDone();
+    } catch (e) { toast('No se pudo crear el repertorio.', 'error'); }
+}
+
 // Copiar una canción personal al repertorio de la banda (decisión §7: por copia).
 async function copyFromPersonal(bandId) {
     let songs = [];

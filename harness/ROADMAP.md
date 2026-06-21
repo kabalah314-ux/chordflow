@@ -450,6 +450,16 @@
   - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
   - [ ] Diferido: campos de booking (contacto, caché/fee, `Venue` como modelo propio).
 
+- [x] **T-114** 🟢 **Repertorios (colecciones temáticas)** — diferenciar Repertorio vs Setlist
+      (2026-06-21, cola de Oscar #2/#3). La pestaña "Repertorio" pasa a "Repertorios": varias listas
+      nombradas que agrupan canciones del pool ("Acústico", "Cañero", "Bodas"…), SIN orden; los Setlists
+      siguen siendo el orden de un bolo (con notas T-110). Aditivo: `SongCollection`/`SongCollectionItem`
+      (migración `5481a965f5fb`, `alembic check` limpio) + `band_collections_router.py` (CRUD, miembros
+      gestionan/guest lee, aislamiento + gate parametrizado T-098) + UI (`band.js`/`bands.js`). unit
+      `test_api_collections` (8) + e2e `test_crear_repertorio_coleccion_y_anadir_cancion`. VERDE.
+      **Diferido:** reordenar dentro de la colección; crear un setlist desde una colección; colecciones
+      personales. ⚠️ Migración pendiente de aplicar a Postgres prod (Vercel BLOCKED).
+
 ---
 
 # 🎸→🌍 V3 — RED MUSICAL CON PLANO PÚBLICO (backlog activo)

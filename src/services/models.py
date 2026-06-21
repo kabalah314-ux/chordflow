@@ -200,6 +200,51 @@ class SetlistItem(Base):
     song = relationship("Song")
 
 
+# ── Repertorios de banda — colecciones temáticas (T-114) ──────────────────────
+# Diferenciación Repertorio vs Setlist: una COLECCIÓN agrupa canciones del repertorio de la banda
+# por tema ("acústico", "cañero", "bodas"), SIN orden de bolo. El Setlist sigue siendo el ORDEN
+# concreto de un concierto (con notas por canción, T-110). Aditivo: no toca songs/setlists.
+
+
+class SongCollection(Base):
+    """Colección temática de canciones dentro del repertorio de UNA banda (T-114). Solo de banda
+    (band_id obligatorio); no hay colecciones personales en v1. Soft-delete (como Setlist)."""
+
+    __tablename__ = "song_collections"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (como Setlist)
+
+    items = relationship("SongCollectionItem", back_populates="collection",
+                         cascade="all, delete-orphan", order_by="SongCollectionItem.position")
+
+
+class SongCollectionItem(Base):
+    """Pertenencia de una canción a una colección. Único (collection_id, song_id): una canción no
+    se repite dentro de la misma colección (pero sí puede estar en varias colecciones)."""
+
+    __tablename__ = "song_collection_items"
+    __table_args__ = (
+        UniqueConstraint("collection_id", "song_id", name="uq_collection_song"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    collection_id = Column(String(36), ForeignKey("song_collections.id", ondelete="CASCADE"),
+                           nullable=False, index=True)
+    song_id = Column(String(36), ForeignKey("songs.id", ondelete="CASCADE"),
+                     nullable=False, index=True)
+    position = Column(Integer, nullable=False, default=0)  # orden estable de visualización
+
+    collection = relationship("SongCollection", back_populates="items")
+    song = relationship("Song")
+
+
 # ── Giro V2 — Núcleo de identidad de banda (Fase 7, T-048) ────────────────────
 # Todo aditivo: tablas nuevas, no toca lo existente. Convenciones §C.4.3 de
 # GUIA_MAESTRA_V2_FUNCIONAL.md (índice band_id, timestamps UTC, soft-delete donde hay

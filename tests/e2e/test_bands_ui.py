@@ -113,6 +113,36 @@ def test_crear_setlist_de_banda_desde_la_ui(page, live_server, api):
     assert "Bolo UI" in page.inner_text("#b-setlists")
 
 
+def test_crear_repertorio_coleccion_y_anadir_cancion(page, live_server, api):
+    """Repertorios (colecciones temáticas, T-114): crear un repertorio nombrado y añadirle una canción
+    del repertorio de la banda; diferenciado de los setlists (pestaña 'Repertorios')."""
+    bid = api.post("/bands/", json={"name": "Banda Repertorios"}).json()["id"]
+    api.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="Cancion Col"))
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda Repertorios") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="repertorio"]')
+    page.wait_for_selector("#b-new-collection", timeout=8000)
+
+    # Crear un repertorio (colección) por nombre vía el modal
+    page.click("#b-new-collection")
+    page.wait_for_selector(".modal-overlay input", timeout=8000)
+    page.fill(".modal-overlay input", "Acústico")
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # Aparece en la lista de repertorios; lo abrimos y le añadimos la canción del repertorio
+    page.wait_for_selector('#b-collections .setlist-song:has-text("Acústico")', timeout=8000)
+    page.click('#b-collections .setlist-song:has-text("Acústico") button[data-act="open"]')
+    page.wait_for_selector("#col-available button[data-add]", timeout=8000)
+    page.click("#col-available button[data-add]")
+
+    # La canción queda DENTRO de la colección
+    page.wait_for_selector("#col-songs .setlist-song", timeout=8000)
+    assert "Cancion Col" in page.inner_text("#col-songs")
+
+
 def test_setlist_de_banda_con_apunte_por_cancion(page, live_server, api):
     """End-to-end del apunte por canción (T-110): el editor de setlist permite una nota por canción,
     se guarda y el reproductor la muestra en la barra del setlist."""
