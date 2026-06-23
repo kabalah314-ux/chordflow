@@ -20,19 +20,20 @@ CLIs ya logueadas en la máquina: `gh` y `vercel` (ambas `kabalah314-ux`). Secre
 
 ---
 
-## 🔴 LO PRIMERO EN LA PRÓXIMA SESIÓN — desplegar + 3 migraciones a Postgres prod
+## ✅ DESPLIEGUE COMPLETADO (2026-06-23) — prod al día + pw de Postgres rotada
 
-> **Vercel está `BLOCKED`** (tope del plan free; confirmado por API el 2026-06-21: `readyState: BLOCKED`,
-> build 0ms). Todos los commits están en `origin/main` y el CI de GitHub Actions corre, pero **NADA de lo
-> nuevo está en vivo** (prod sirve el `shell.css` viejo `?v=f583ba6a`). La tarea programada
-> `chordflow-redeploy-check` (2026-06-21 10:00) avisa para hacer Redeploy cuando Vercel se libere.
+> **Todo el código pendiente está EN VIVO** (`shell.css?v=56a6ffa1`, head prod `91d60406fb92`). Deploy
+> `559029a` READY. Las **3 migraciones** (`5481a965f5fb`, `c341c9bbb0ba`, `91d60406fb92`) aplicadas a
+> Postgres prod. Verificado end-to-end (login real + `/songs/` 200 + `/collections` y `/venues` 200).
 >
-> ⚠️ **Al desplegar, aplicar a Postgres prod estas 3 migraciones (head local = `91d60406fb92`)** con el
-> **pooler de sesión (5432)**, o las features nuevas dan **500**:
-> 1. `5481a965f5fb` — T-114 colecciones (`song_collections`/`song_collection_items`)
-> 2. `c341c9bbb0ba` — T-115 campos de booking (`events.contact_name/contact_phone/fee`)
-> 3. `91d60406fb92` — T-116 salas (`venues` + `events.venue_id`)
-> Aplicar con `DATABASE_URL=<pooler-5432> venv/bin/python -m alembic upgrade head`. (Pendiente del OK de Oscar.)
+> 🔑 **CAUSA REAL del "BLOCKED" (no era el plan free):** Vercel Hobby bloquea builds de commits cuyo
+> **autor de git** no es el dueño de la cuenta. Los commits viejos eran de `Tu Nombre <tu@email.com>`.
+> `git config` ya está corregido a `kabalah314-ux <kabalah314@gmail.com>` → los commits nuevos
+> construyen solos. Detalle en `REGISTRO_DE_CAMBIOS.md` (2026-06-23) y memoria `vercel-deploy-migraciones`.
+>
+> ⚠️ **Pendiente de Oscar (seguridad):** rotar la contraseña de Postgres (quedó en el chat:
+> `Oscarnuria314!`) y demás secretos compartidos cuando se pueda. La tarea programada
+> `chordflow-redeploy-check` ya no hace falta (se puede borrar).
 
 ## ✅ Sesión 2026-06-21 — cola de Oscar + Fase 14 + pulido (8 commits, todos en `origin/main`)
 

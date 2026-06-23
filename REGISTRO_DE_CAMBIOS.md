@@ -2,9 +2,39 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-06-21
+> Última actualización: 2026-06-23
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🚀 Despliegue a producción + rotación de contraseña de Postgres (2026-06-23) ✅
+
+**Qué:** se desplegó a producción todo el código pendiente (commits `539930a..26c6b3b`: T-114
+Repertorios, T-115 booking, T-116 Salas, fixes) y se aplicaron a Postgres prod las **3 migraciones
+pendientes** (`5481a965f5fb` colecciones, `c341c9bbb0ba` booking, `91d60406fb92` salas). Oscar **reseteó
+la contraseña de la BD de Supabase**; se actualizó la `DATABASE_URL` de Vercel y se verificó todo en vivo.
+
+**Por qué (causa raíz del "Vercel BLOCKED"):** durante varios días los deploys salían `state: BLOCKED`
+y se creía que era el **tope del plan free**. **Era falso.** La causa real: **Vercel (Hobby) bloquea
+los builds de commits cuyo autor de git no es el dueño de la cuenta.** Los commits recientes se hicieron
+con identidad placeholder `Tu Nombre <tu@email.com>` (GitHub `marjosavi481`) → bloqueados; los de
+`kabalah314-ux <kabalah314@gmail.com>` construyen bien (por eso el repo hermano `brokenheartos`, mismo
+team, sí desplegaba). Diagnóstico: comparar `githubCommitAuthorEmail` de los deploys READY vs BLOCKED.
+
+**Cómo/Verificación:**
+1. **Migraciones:** `DATABASE_URL=<session-pooler-5432>` (host real `aws-1-eu-central-1.pooler.supabase.com`,
+   ¡no `aws-0`!) → `alembic upgrade head`. Prod pasó de `e9f1a2b3c4d5` a `91d60406fb92`. La URL se
+   **construyó solo con la contraseña** (no hace falta pedir la cadena entera).
+2. **Vercel env:** `vercel env rm/add DATABASE_URL production` con la pw nueva (transaction pooler 6543).
+3. **Desbloqueo + deploy:** commit vacío con autor correcto (`git commit --allow-empty`) + `git push
+   origin main` → auto-deploy **READY en 9s** (commit `559029a`). Prod pasó a servir `shell.css?v=56a6ffa1`.
+4. **Verificación end-to-end en vivo:** login real Supabase (cuenta de prueba) → `GET /songs/` **200**
+   (3 canciones) → **BD conecta con la pw nueva**; `/bands/{id}/collections` (T-114) y `/venues` (T-116)
+   **200** (migraciones operativas, sin 500). `/health` 200, `test_mode:false`.
+
+**Pendiente de Oscar (seguridad):** rotar las claves compartidas en chat (la pw de Postgres
+`Oscarnuria314!` quedó en el historial del chat) cuando se pueda; revocar PAT `sbp_` si sigue vivo.
 
 ---
 

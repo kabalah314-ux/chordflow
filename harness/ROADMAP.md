@@ -451,14 +451,14 @@
         `contact_phone`/`fee` (migración `c341c9bbb0ba`, `alembic check` limpio); campos en el modal de
         evento (solo conciertos) + línea discreta `💶 caché · 📇 contacto` en la agenda. Schemas
         (Create/Update/Response + Summary), `fee` ge=0 → 422. Router sin cambios (model_dump genérico,
-        admin-only). unit `test_booking_fields_contacto_y_cache` + e2e. VERDE. ⚠️ Migración pendiente en
-        Postgres prod (Vercel BLOCKED).
+        admin-only). unit `test_booking_fields_contacto_y_cache` + e2e. VERDE. ✅ Migración `c341c9bbb0ba`
+        aplicada a Postgres prod (deploy 2026-06-23).
   - [x] **T-116** 🟢 **Salas (Venue) reutilizables** (2026-06-21): `Venue` (band_id, name, city, capacity,
         contact, notes) + `Event.venue_id` (FK SET NULL, migración `91d60406fb92`). `venues_router` (CRUD,
         admin gestiona, miembros leen, aislamiento + gate T-098); `events_router` valida la sala (solo
         conciertos + de la banda) y denormaliza `venue_name`. UI: sección "Salas" en Agenda + selector en
         el modal de concierto + `📍` en la agenda. Fix UX: `.modal-card` scrollable. unit
-        `test_api_venues` (6) + e2e. VERDE. ⚠️ Migración pendiente en Postgres prod.
+        `test_api_venues` (6) + e2e. VERDE. ✅ Migración `91d60406fb92` aplicada a Postgres prod (deploy 2026-06-23).
   - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
   - [ ] Diferido: resumen de caché por gira/temporada; editar sala desde la UI; mapa de salas.
 
@@ -472,7 +472,7 @@
       ↳ **Pulido (2026-06-21):** **crear un setlist desde una colección** (botón "🎵 Crear setlist con
       estas" en el detalle → genera un setlist con esas canciones; cierra el bucle Repertorio→Setlist).
       e2e `test_crear_setlist_desde_una_coleccion`. **Diferido:** reordenar dentro de la colección;
-      colecciones personales. ⚠️ Migración pendiente de aplicar a Postgres prod (Vercel BLOCKED).
+      colecciones personales. ✅ Migración `5481a965f5fb` aplicada a Postgres prod (deploy 2026-06-23).
 
 ---
 
