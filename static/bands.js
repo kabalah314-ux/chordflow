@@ -672,11 +672,17 @@ async function loadVenues(bandId, isAdmin) {
         const meta = [v.city, v.capacity ? v.capacity + ' pers.' : '', v.contact].filter(Boolean).map(escapeHtml).join(' · ');
         return `<li class="setlist-song" data-id="${escapeHtml(v.id)}">
             <span class="sl-title">📍 ${escapeHtml(v.name)}${meta ? ` <small>${meta}</small>` : ''}</span>
-            ${isAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar sala" title="Borrar">🗑️</button>` : ''}
+            ${isAdmin ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar sala" title="Editar">✏️</button>
+            <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar sala" title="Borrar">🗑️</button>` : ''}
         </li>`;
     }).join('');
     el.querySelectorAll('.setlist-song').forEach(li => {
         const vid = li.dataset.id;
+        const edit = li.querySelector('[data-act="edit"]');
+        if (edit) edit.addEventListener('click', () => {
+            const venue = venues.find(v => v.id === vid);
+            if (venue) newVenue(bandId, { venue, onDone: () => loadVenues(bandId, isAdmin) });
+        });
         const del = li.querySelector('[data-act="del"]');
         if (del) del.addEventListener('click', async () => {
             const ok = await confirmModal('¿Borrar esta sala? (Los conciertos que la usaban quedan sin sala.)', { okText: 'Borrar' });
@@ -690,20 +696,26 @@ async function loadVenues(bandId, isAdmin) {
     });
 }
 
+// Modal de sala: crea (POST) o, si `opts.venue` viene, edita (PATCH). Para editar se envían los 4
+// campos siempre (null si están vacíos) → el PATCH permite también vaciar ciudad/aforo/contacto; en
+// el POST el backend descarta los null (exclude_none).
 async function newVenue(bandId, opts = {}) {
     const onDone = opts.onDone || (() => {});
+    const venue = opts.venue || null;
+    const editing = !!venue;
+    const v = (x) => (x == null ? '' : escapeHtml(String(x)));
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
         <div class="modal-card glass-panel" role="dialog" aria-modal="true">
-            <p class="modal-msg">Nueva sala</p>
-            <input type="text" id="v-name" class="search-box" placeholder="Nombre (p. ej. Sala Apolo)" maxlength="255">
-            <input type="text" id="v-city" class="search-box" placeholder="Ciudad" maxlength="255">
-            <input type="number" id="v-cap" class="search-box" min="0" placeholder="Aforo">
-            <input type="text" id="v-contact" class="search-box" placeholder="Contacto de la sala (técnico…)" maxlength="255">
+            <p class="modal-msg">${editing ? 'Editar sala' : 'Nueva sala'}</p>
+            <input type="text" id="v-name" class="search-box" placeholder="Nombre (p. ej. Sala Apolo)" maxlength="255" value="${editing ? v(venue.name) : ''}">
+            <input type="text" id="v-city" class="search-box" placeholder="Ciudad" maxlength="255" value="${editing ? v(venue.city) : ''}">
+            <input type="number" id="v-cap" class="search-box" min="0" placeholder="Aforo" value="${editing && venue.capacity != null ? v(venue.capacity) : ''}">
+            <input type="text" id="v-contact" class="search-box" placeholder="Contacto de la sala (técnico…)" maxlength="255" value="${editing ? v(venue.contact) : ''}">
             <div class="modal-actions">
                 <button class="secondary-btn" data-act="cancel">Cancelar</button>
-                <button class="primary-btn" data-act="ok">Crear</button>
+                <button class="primary-btn" data-act="ok">${editing ? 'Guardar' : 'Crear'}</button>
             </div>
         </div>`;
     const close = () => overlay.remove();
@@ -712,22 +724,26 @@ async function newVenue(bandId, opts = {}) {
         if (e.target.getAttribute('data-act') !== 'ok') return;
         const name = overlay.querySelector('#v-name').value.trim();
         if (!name) { toast('Pon un nombre a la sala.', 'error'); return; }
-        const body = { name };
         const city = overlay.querySelector('#v-city').value.trim();
         const cap = overlay.querySelector('#v-cap').value;
         const contact = overlay.querySelector('#v-contact').value.trim();
-        if (city) body.city = city;
-        if (cap !== '') body.capacity = parseInt(cap, 10);
-        if (contact) body.contact = contact;
+        const body = {
+            name,
+            city: city || null,
+            capacity: cap !== '' ? parseInt(cap, 10) : null,
+            contact: contact || null,
+        };
         close();
         try {
-            const res = await apiFetch(`/bands/${bandId}/venues/`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body) });
+            const res = await apiFetch(
+                editing ? `/bands/${bandId}/venues/${venue.id}` : `/bands/${bandId}/venues/`,
+                { method: editing ? 'PATCH' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body) });
             if (!res.ok) throw new Error('http');
-            toast('Sala creada.', 'success');
+            toast(editing ? 'Sala actualizada.' : 'Sala creada.', 'success');
             onDone();
-        } catch (e) { toast('No se pudo crear la sala.', 'error'); }
+        } catch (e) { toast(editing ? 'No se pudo actualizar la sala.' : 'No se pudo crear la sala.', 'error'); }
     });
     document.body.appendChild(overlay);
 }

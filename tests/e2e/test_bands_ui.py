@@ -230,6 +230,34 @@ def test_sala_venue_reutilizable_en_concierto(page, live_server, api):
     assert "Sala Apolo" in page.inner_text(sel)
 
 
+def test_editar_sala_desde_la_ui(page, live_server, api):
+    """Editar una sala desde la UI (Fase 14, completa T-116): el botón ✏️ abre el modal con los datos
+    prerrellenados y al guardar hace PATCH → la sala se renombra y actualiza en la sección Salas."""
+    bid = api.post("/bands/", json={"name": "Banda EditSala"}).json()["id"]
+    api.post(f"/bands/{bid}/venues/",
+             json={"name": "Sala Vieja", "city": "Madrid", "capacity": 200})
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda EditSala") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="agenda"]')
+    page.wait_for_selector('#b-venues .setlist-song:has-text("Sala Vieja")', timeout=8000)
+
+    # Abrir el editor de la sala → el modal viene prerrellenado
+    page.click('#b-venues .setlist-song:has-text("Sala Vieja") button[data-act="edit"]')
+    page.wait_for_selector("#v-name", timeout=4000)
+    assert page.input_value("#v-name") == "Sala Vieja"
+    page.fill("#v-name", "Sala Nueva")
+    page.fill("#v-city", "Barcelona")
+    page.click('.modal-overlay button[data-act="ok"]')
+
+    # PATCH aplicado y lista recargada: nuevo nombre/ciudad, el viejo ya no está
+    page.wait_for_selector('#b-venues .setlist-song:has-text("Sala Nueva")', timeout=8000)
+    assert "Sala Vieja" not in page.inner_text("#b-venues")
+    assert "Barcelona" in page.inner_text('#b-venues .setlist-song:has-text("Sala Nueva")')
+
+
 def test_setlist_de_banda_con_apunte_por_cancion(page, live_server, api):
     """End-to-end del apunte por canción (T-110): el editor de setlist permite una nota por canción,
     se guarda y el reproductor la muestra en la barra del setlist."""

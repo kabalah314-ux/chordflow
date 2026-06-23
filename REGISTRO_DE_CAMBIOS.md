@@ -8,6 +8,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🏟️ Fase 14 — Editar una sala (Venue) desde la UI (2026-06-23) ✅
+
+**Qué:** la sección "Salas" (pestaña Agenda) gana un botón **✏️ Editar** (solo admin) que abre el modal
+de sala con los datos **prerrellenados**; al guardar hace `PATCH` y refresca la lista. Completa el CRUD
+de salas de cara al usuario (antes solo crear/borrar). Cierra un diferido de T-116.
+
+**Por qué:** las salas se reutilizan entre conciertos; no poder corregir aforo/ciudad/contacto sin
+borrar y recrear era una carencia obvia.
+
+**Cómo/Verificación:** **solo frontend** (`bands.js`) — el backend ya tenía `PATCH /bands/{id}/venues/{vid}`
+(admin, cubierto por `test_api_venues`: editar/aislamiento). `newVenue` se generalizó a modal
+**crear/editar** (`opts.venue` → PATCH; envía los 4 campos, `null` si vacíos, para poder también limpiar
+ciudad/aforo/contacto — el POST descarta los `null`) y `loadVenues` añade el botón ✏️ (valores escapados
+en `value=`, anti-XSS). e2e `test_editar_sala_desde_la_ui` (abre el modal prerrellenado → renombra →
+la lista refleja el cambio). `cachebust` al día (`band.html`/`bands.html`). **De paso:** arreglado un
+test caducado (`test_home` usaba fecha hardcodeada `2026-06-20`, ya pasada → ahora fecha futura
+**dinámica** `now()+2d`, no vuelve a caducar). run_checks **TODO VERDE**.
+
+---
+
 ## 🚀 Despliegue a producción + rotación de contraseña de Postgres (2026-06-23) ✅
 
 **Qué:** se desplegó a producción todo el código pendiente (commits `539930a..26c6b3b`: T-114

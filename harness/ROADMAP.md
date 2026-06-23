@@ -459,8 +459,11 @@
         conciertos + de la banda) y denormaliza `venue_name`. UI: sección "Salas" en Agenda + selector en
         el modal de concierto + `📍` en la agenda. Fix UX: `.modal-card` scrollable. unit
         `test_api_venues` (6) + e2e. VERDE. ✅ Migración `91d60406fb92` aplicada a Postgres prod (deploy 2026-06-23).
+  - [x] **Editar sala desde la UI** (2026-06-23, completa T-116): botón ✏️ en la sección Salas → abre el
+        modal prerrellenado → `PATCH`. Solo frontend (`bands.js`, `newVenue` crea/edita). e2e
+        `test_editar_sala_desde_la_ui`. run_checks VERDE.
   - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
-  - [ ] Diferido: resumen de caché por gira/temporada; editar sala desde la UI; mapa de salas.
+  - [ ] Diferido: resumen de caché por gira/temporada; mapa de salas.
 
 - [x] **T-114** 🟢 **Repertorios (colecciones temáticas)** — diferenciar Repertorio vs Setlist
       (2026-06-21, cola de Oscar #2/#3). La pestaña "Repertorio" pasa a "Repertorios": varias listas

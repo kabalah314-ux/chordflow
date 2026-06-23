@@ -102,13 +102,16 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
   booking sin confirmar" en la agenda (cliente). e2e. run_checks VERDE.
 - ✅ **T-115 — Campos de booking en el concierto** (2026-06-21): `Event.contact_name`/`contact_phone`/
   `fee` (migración `c341c9bbb0ba`) + campos en el modal (solo conciertos) + línea `💶 caché · 📇 contacto`
-  en la agenda. unit + e2e. VERDE. ⚠️ Migración pendiente en Postgres prod.
+  en la agenda. unit + e2e. VERDE. ✅ Migración aplicada a Postgres prod (2026-06-23).
 - ✅ **T-116 — Salas (Venue) reutilizables** (2026-06-21): `Venue` + `Event.venue_id` (migración
   `91d60406fb92`) + `venues_router` (CRUD admin/aislamiento) + sección "Salas" en Agenda + selector en el
   modal de concierto + `📍` en la agenda. Fix UX: modal scrollable. unit `test_api_venues` (6) + e2e.
-  VERDE. ⚠️ Migración pendiente en Postgres prod.
+  VERDE. ✅ Migración aplicada a Postgres prod (2026-06-23).
+- ✅ **Editar sala desde la UI** (2026-06-23, completa T-116): botón ✏️ en la sección Salas → modal
+  prerrellenado → `PATCH` (solo frontend `bands.js`, `newVenue` crea/edita). e2e
+  `test_editar_sala_desde_la_ui`. + `fix(test)` `test_home` caducado (fecha hardcodeada → dinámica). VERDE.
 - ⏳ **T-113** `EmailTemplate` (bloqueado-ish: el envío real necesita infra) · diferido: recordatorios
-  por email/push reales, editar sala desde la UI, mapa de salas.
+  por email/push reales, mapa de salas, resumen de caché por gira/temporada.
 
 ### ✅ T-110 — Apunte por canción en el setlist (SetlistItem.note) (2026-06-20)
 Los setlists de banda admiten una nota por canción ("capo 2", "acústica"). El modelo+lectura existían
