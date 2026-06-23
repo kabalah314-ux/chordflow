@@ -331,7 +331,11 @@
         lectura existían, pero NO había vía de escritura. Schema `SetlistItemIn`+`items` (compat con
         `song_ids`), `band_setlists_router` persiste la nota (filtrada al repertorio), input por canción
         en el editor y apunte en la barra del reproductor. unit + e2e end-to-end + revisión adversarial
-        (compat/aislamiento/XSS/correctitud) ✅. VERDE. Diferido: notas en setlists personales; editar notas.
+        (compat/aislamiento/XSS/correctitud) ✅. VERDE.
+  - [x] **Editar un setlist desde la UI** (2026-06-24): botón ✏️ → editor prerrellenado (nombre +
+        canciones + notas) → `PATCH`. Solo frontend (`bands.js`, `newBandSetlist` crea/edita). e2e
+        `test_editar_setlist_de_banda`. Cierra el diferido "editar notas". Diferido aún: notas en
+        setlists personales.
 - [x] **Fase 10** 🟢 Agenda (`Event`, `EventAttendance`). Áreas 2, 3, 4. **NÚCLEO COMPLETO**:
   - [x] **T-063** 🔴 Migración aditiva `events` + `event_attendance` (`22c7ea96b921`): tipo
         (rehearsal|concert|other), status-pipeline, `setlist_id` (SET NULL), CHECK + único

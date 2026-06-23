@@ -293,6 +293,42 @@ def test_setlist_de_banda_con_apunte_por_cancion(page, live_server, api):
     assert "Capo 2" in page.inner_text("#setlist-nav .sl-nav-note")
 
 
+def test_editar_setlist_de_banda(page, live_server, api):
+    """Editar un setlist existente desde la UI: el botón ✏️ abre el editor PRERRELLENADO (nombre +
+    canciones + notas) y al guardar hace PATCH → cambia el nombre y la nota."""
+    bid = api.post("/bands/", json={"name": "Banda EditSL"}).json()["id"]
+    song = api.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="Cancion SL")).json()
+    sid = api.post(f"/bands/{bid}/setlists/",
+                   json={"name": "Setlist Original",
+                         "items": [{"song_id": song["id"], "note": "nota vieja"}]}).json()["id"]
+
+    page.goto(live_server + "/static/bands.html", wait_until="networkidle")
+    page.wait_for_selector(".song-card", timeout=8000)
+    page.click('.song-card:has-text("Banda EditSL") .card-main[data-act="open"]')
+    page.wait_for_url("**/band.html**", timeout=8000)
+    page.click('.bf-tab[data-tab="setlists"]')
+    page.wait_for_selector('#b-setlists .setlist-song:has-text("Setlist Original")', timeout=8000)
+
+    # Abrir el editor del setlist → viene prerrellenado (nombre + canción + nota)
+    page.click('#b-setlists .setlist-song:has-text("Setlist Original") button[data-act="edit"]')
+    page.wait_for_selector("#sl-name", timeout=8000)
+    assert page.input_value("#sl-name") == "Setlist Original"
+    page.wait_for_selector('#sl-selected .sl-note', timeout=5000)
+    assert page.input_value('#sl-selected .sl-note') == "nota vieja"
+
+    # Cambiar nombre y nota, guardar (PATCH)
+    page.fill("#sl-name", "Setlist Editado")
+    page.fill('#sl-selected .sl-note', "nota nueva")
+    page.click("#sl-save")
+    page.wait_for_selector('#b-setlists .setlist-song:has-text("Setlist Editado")', timeout=8000)
+
+    # Persistió vía PATCH (nombre + nota), sin duplicar el setlist
+    detail = api.get(f"/bands/{bid}/setlists/{sid}").json()
+    assert detail["name"] == "Setlist Editado"
+    assert detail["items"][0]["note"] == "nota nueva"
+    assert len(api.get(f"/bands/{bid}/setlists/").json()) == 1
+
+
 def test_crear_evento_y_marcar_asistencia_en_la_ui(page, live_server, api):
     api.post("/bands/", json={"name": "Banda Agenda UI"})
 

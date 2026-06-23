@@ -121,7 +121,9 @@ Los setlists de banda admiten una nota por canción ("capo 2", "acústica"). El 
 (Fase 9) pero faltaba la vía de escritura. Schema `items:[{song_id,note}]` (compat con `song_ids`),
 `band_setlists_router` la persiste (filtrada al repertorio), input por canción en el editor y apunte en
 la barra del reproductor. unit + e2e end-to-end + revisión adversarial sin hallazgos. run_checks VERDE.
-Diferido: notas en setlists personales; editar notas de un setlist existente.
+✅ **Editar setlist desde la UI (2026-06-24):** botón ✏️ → editor prerrellenado (nombre+canciones+notas)
+→ `PATCH` (solo frontend `bands.js`, `newBandSetlist` crea/edita). e2e `test_editar_setlist_de_banda`.
+Diferido aún: notas en setlists personales.
 
 ### ✅ T-109 — Export CSV de finanzas (cliente) (2026-06-20)
 Botón ⬇️ CSV en Finanzas: descarga los movimientos (Fecha/Tipo/Descripción/Importe/Categoría/Evento/

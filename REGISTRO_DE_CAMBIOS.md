@@ -2,9 +2,28 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-06-23
+> Última actualización: 2026-06-24
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🎵 Editar un setlist de banda desde la UI (2026-06-24) ✅
+
+**Qué:** la pestaña Setlists gana un botón **✏️ Editar** (no-guest) que abre el editor de setlist
+**prerrellenado** (nombre + canciones en orden + apuntes por canción); al guardar hace `PATCH` y
+refresca. Antes solo se podía crear/borrar (para corregir había que recrear). Cierra el diferido de
+T-110 ("editar notas de un setlist existente") y, de paso, permite renombrar/reordenar/añadir-quitar.
+
+**Por qué:** carencia obvia (mismo dolor que las salas): no poder editar un setlist obligaba a borrarlo
+y rehacerlo. El backend ya tenía el `PATCH` (Fase 9/T-110); solo faltaba exponerlo en el front.
+
+**Cómo/Verificación:** **solo frontend** (`bands.js`). `newBandSetlist` se generalizó a crear/editar:
+con `opts.setlistId` carga el setlist (GET en paralelo con el repertorio), precarga nombre + canciones
+(en orden) + notas, y guarda con `PATCH` (`items:[{song_id,note}]`, que el backend filtra al repertorio).
+`loadBandSetlists` añade el botón ✏️ con handler autocontenido (toggle lista/editor con los ids de
+`band.html`, sin tocar `band.js`). Valores escapados (XSS). e2e `test_editar_setlist_de_banda` (abre
+prerrellenado → cambia nombre y nota → PATCH, sin duplicar). `cachebust` al día. run_checks **TODO VERDE**.
 
 ---
 

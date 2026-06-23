@@ -767,11 +767,28 @@ async function loadBandSetlists(bandId, canEdit) {
         <li class="setlist-song" data-id="${escapeHtml(sl.id)}">
             <span class="sl-title">${escapeHtml(sl.name)} <small>${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}</small></span>
             <button class="setlist-item-btn" data-act="play" title="Reproducir en orden">▶</button>
-            ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">🗑️</button>` : ''}
+            ${canEdit ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar setlist" title="Editar">✏️</button>
+            <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">🗑️</button>` : ''}
         </li>`).join('');
     el.querySelectorAll('.setlist-song').forEach(li => {
         const sid = li.dataset.id;
         li.querySelector('[data-act="play"]').addEventListener('click', () => playBandSetlist(bandId, sid));
+        const edit = li.querySelector('[data-act="edit"]');
+        if (edit) edit.addEventListener('click', () => {
+            const listWrap = document.getElementById('b-setlist-list-wrap');
+            const editor = document.getElementById('b-setlist-editor');
+            if (!listWrap || !editor) return;
+            listWrap.hidden = true; editor.hidden = false;
+            newBandSetlist(bandId, {
+                container: editor,
+                setlistId: sid,
+                onDone: () => {
+                    editor.hidden = true; editor.innerHTML = '';
+                    listWrap.hidden = false;
+                    loadBandSetlists(bandId, canEdit);
+                },
+            });
+        });
         const del = li.querySelector('[data-act="del"]');
         if (del) del.addEventListener('click', async () => {
             const ok = await confirmModal('¿Borrar este setlist?', { okText: 'Borrar' });
@@ -798,30 +815,41 @@ async function playBandSetlist(bandId, setlistId) {
 // Editor de setlist de banda: elige del repertorio en orden y guarda.
 async function newBandSetlist(bandId, opts = {}) {
     // band.html pasa su propio `container` (dónde pintar el editor) y `onDone` (qué hacer al
-    // guardar/cancelar) para integrarlo en la pestaña Setlists. Es el único llamador vivo.
+    // guardar/cancelar). Si `opts.setlistId` viene, EDITA ese setlist (PATCH); si no, CREA (POST).
     const target = opts.container;
     const onDone = opts.onDone || (() => {});
+    const setlistId = opts.setlistId || null;
+    const editing = !!setlistId;
     if (!target) return;   // sin contenedor no hay dónde pintar (el detalle legacy ya no existe)
     let repertoire = [];
+    let existing = null;
     try {
-        const res = await apiFetch(`/bands/${bandId}/songs/`);
-        repertoire = await res.json();
-    } catch (e) { toast('No se pudo cargar el repertorio.', 'error'); return; }
+        const reqs = [apiFetch(`/bands/${bandId}/songs/`)];
+        if (editing) reqs.push(apiFetch(`/bands/${bandId}/setlists/${setlistId}`));
+        const [rRep, rSl] = await Promise.all(reqs);
+        repertoire = await rRep.json();
+        if (editing) {
+            if (!rSl.ok) throw new Error('http');
+            existing = await rSl.json();
+        }
+    } catch (e) { toast(editing ? 'No se pudo cargar el setlist.' : 'No se pudo cargar el repertorio.', 'error'); return; }
     if (!repertoire.length) { toast('Primero añade canciones al repertorio de la banda.', 'info'); return; }
 
-    const selected = [];
+    // En edición: precarga las canciones (en orden) y las notas del setlist existente.
+    const selected = editing ? (existing.items || []).map(it => it.song_id) : [];
     const notes = {};   // apunte por canción (song_id → texto), persiste entre re-renders
+    if (editing) (existing.items || []).forEach(it => { if (it.note) notes[it.song_id] = it.note; });
     const byId = Object.fromEntries(repertoire.map(s => [s.id, s]));
     target.innerHTML = `
         <div class="setlist-editor">
             <a href="#" id="sl-back" class="back-link">← Volver a la banda</a>
-            <h3>Nuevo setlist de banda</h3>
-            <input type="text" id="sl-name" class="search-box" placeholder="Nombre (p. ej. Bolo sábado)">
+            <h3>${editing ? 'Editar setlist de banda' : 'Nuevo setlist de banda'}</h3>
+            <input type="text" id="sl-name" class="search-box" placeholder="Nombre (p. ej. Bolo sábado)" value="${editing ? escapeHtml(existing.name) : ''}">
             <div class="setlist-cols">
                 <div><h4>Repertorio</h4><ul id="sl-available" class="setlist-list"></ul></div>
                 <div><h4>En el setlist (en orden)</h4><ul id="sl-selected" class="setlist-list"></ul></div>
             </div>
-            <div class="form-actions"><button id="sl-save" class="primary-btn">💾 Crear setlist</button></div>
+            <div class="form-actions"><button id="sl-save" class="primary-btn">${editing ? '💾 Guardar cambios' : '💾 Crear setlist'}</button></div>
         </div>`;
     document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); onDone(); });
 
@@ -853,14 +881,15 @@ async function newBandSetlist(bandId, opts = {}) {
         if (!name) { toast('Pon un nombre al setlist.', 'error'); return; }
         try {
             const items = selected.map(id => ({ song_id: id, note: (notes[id] || '').trim() || null }));
-            const res = await apiFetch(`/bands/${bandId}/setlists/`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, items })
-            });
+            const res = await apiFetch(
+                editing ? `/bands/${bandId}/setlists/${setlistId}` : `/bands/${bandId}/setlists/`,
+                { method: editing ? 'PATCH' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name, items }) });
             if (!res.ok) throw new Error('http');
-            toast('Setlist creado.', 'success');
+            toast(editing ? 'Setlist actualizado.' : 'Setlist creado.', 'success');
             onDone();
-        } catch (e) { toast('No se pudo crear el setlist.', 'error'); }
+        } catch (e) { toast(editing ? 'No se pudo actualizar el setlist.' : 'No se pudo crear el setlist.', 'error'); }
     });
 }
 
