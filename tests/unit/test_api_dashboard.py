@@ -102,6 +102,21 @@ def test_me_events_aislamiento_excluye_banda_ajena(client):
     assert "Evento Propio" in titles and "Evento Ajeno" not in titles
 
 
+def test_me_events_incluye_confirmados(client):
+    """La agenda agregada trae la lista de asistencia (confirmados, con nombre real) de cada evento,
+    igual que la agenda de cada banda."""
+    client.put("/profile/me", json={"display_name": "Ana"})
+    bid = client.post("/bands/", json={"name": "Banda Conf"}).json()["id"]
+    eid = client.post(f"/bands/{bid}/events/",
+                      json={"type": "concert", "title": "Bolo Conf",
+                            "starts_at": "2099-05-05T20:00:00"}).json()["id"]
+    client.put(f"/bands/{bid}/events/{eid}/attendance", json={"status": "yes"})
+
+    ev = next(e for e in client.get("/me/events").json() if e["id"] == eid)
+    going = [a for a in ev["attendance"] if a["status"] == "yes"]
+    assert len(going) == 1 and going[0]["display_name"] == "Ana"
+
+
 def test_me_balances_lista_mis_bandas_aislado(client):
     bid = client.post("/bands/", json={"name": "Banda Pasta"}).json()["id"]
     client.post(f"/bands/{bid}/transactions",

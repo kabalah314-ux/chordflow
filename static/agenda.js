@@ -23,12 +23,25 @@
             { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     }
 
+    // Resumen discreto de confirmados ("✅ Ana, Luis · 🤔 2"); '' si nadie respondió. Nombres escapados.
+    function attendeesText(e) {
+        const att = Array.isArray(e.attendance) ? e.attendance : [];
+        const going = att.filter(a => a.status === 'yes').map(a => escapeHtml(a.display_name || 'Alguien'));
+        const maybe = att.filter(a => a.status === 'maybe').length;
+        if (!going.length && !maybe) return '';
+        const bits = [];
+        if (going.length) bits.push(`✅ ${going.join(', ')}`);
+        if (maybe) bits.push(`🤔 ${maybe}`);
+        return `<span class="ev-attendees" style="display:block;">${bits.join(' · ')}</span>`;
+    }
+
     function eventRow(e) {
         return `<a class="bf-list-item" href="band.html?id=${encodeURIComponent(e.band_id)}"
                    style="text-decoration:none;color:inherit;">
             <span class="bf-badge">${escapeHtml(e.band_name)}</span>
             <span class="bf-grow">${EV_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
-                <span class="bf-faint">· ${escapeHtml(fmtDate(e.starts_at))}</span></span>
+                <span class="bf-faint">· ${escapeHtml(fmtDate(e.starts_at))}</span>
+                ${attendeesText(e)}</span>
             ${e.my_status ? `<span class="bf-badge">${ATT[e.my_status] || ''}</span>` : ''}
         </a>`;
     }

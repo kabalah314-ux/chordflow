@@ -632,6 +632,7 @@ class DashboardEvent(BaseModel):
     type: str
     starts_at: Optional[datetime] = None
     my_status: Optional[str] = None
+    attendance: List[AttendanceOut] = []  # quién ha respondido (confirmados en la agenda agregada)
 
 
 class DashboardMessage(BaseModel):

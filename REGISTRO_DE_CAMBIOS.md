@@ -8,6 +8,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📅 Confirmados de asistencia en la agenda AGREGADA (2026-06-24) ✅
+
+**Qué:** la agenda agregada del contexto TÚ (`agenda.html`, `GET /me/events`) muestra ahora, bajo cada
+evento, una línea discreta de **quién ha confirmado** ("✅ Ana, Luis · 🤔 2"), igual que la agenda de
+cada banda. Cierra el diferido de la cola #4 ("confirmados en la agenda agregada").
+
+**Por qué:** ver de un vistazo quién va a cada bolo/ensayo de TODAS tus bandas sin entrar en cada una.
+
+**Cómo/Verificación:** aditivo, sin migración.
+- **Backend:** `DashboardEvent` gana `attendance: List[AttendanceOut]`; `me_router.list_my_events` la
+  surte con **UNA query agregada** (`EventAttendance` ⨝ `MusicianProfile` por nombre real, sin N+1),
+  igual que `events_router`. Aislamiento intacto (solo mis bandas activas).
+- **Frontend:** `agenda.js` añade `attendeesText(e)` (mismo resumen que `bands.js`, nombres escapados).
+- **Tests:** unit `test_me_events_incluye_confirmados` + e2e `test_agenda_agregada_muestra_confirmados`.
+  `cachebust` al día. run_checks **TODO VERDE**.
+
+---
+
 ## 🎵 Notas (y edición completa) en los setlists PERSONALES (2026-06-24) ✅
 
 **Qué:** los repertorios personales (`setlists.html`) ganan **apunte por canción** ("capo 2",

@@ -26,6 +26,7 @@ from ..services.models import (
     Transaction,
 )
 from ..services.schemas import (
+    AttendanceOut,
     DashboardEvent,
     DashboardMessage,
     DashboardResponse,
@@ -159,10 +160,26 @@ def list_my_events(
         if rows
         else {}
     )
+    # Asistencia de TODOS por evento (con nombre real) en UNA query agregada (sin N+1), para mostrar
+    # los confirmados en la agenda agregada igual que en la de cada banda (cola #4).
+    by_event: dict[str, list[AttendanceOut]] = {}
+    if rows:
+        att_rows = (
+            db.query(EventAttendance, MusicianProfile.display_name)
+            .outerjoin(MusicianProfile, MusicianProfile.id == EventAttendance.user_id)
+            .filter(EventAttendance.event_id.in_([e.id for e in rows]))
+            .all()
+        )
+        for att, display_name in att_rows:
+            by_event.setdefault(att.event_id, []).append(
+                AttendanceOut(user_id=att.user_id, status=att.status,
+                              display_name=display_name, responded_at=att.responded_at)
+            )
     return [
         DashboardEvent(
             band_id=e.band_id, band_name=my_bands[e.band_id], id=e.id,
             title=e.title, type=e.type, starts_at=e.starts_at, my_status=my_att.get(e.id),
+            attendance=by_event.get(e.id, []),
         )
         for e in rows
     ]

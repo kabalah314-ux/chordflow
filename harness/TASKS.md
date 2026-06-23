@@ -80,8 +80,9 @@ verificar a ojo (capturas) qué páginas/elementos fallan.
    `✅ Ana, Luis · 🤔 2` bajo el título. Hubo que tocar backend (la **lista** de eventos devolvía
    `EventSummary` SIN asistencia; añadido `EventSummary.attendance` surtido con query agregada sin N+1)
    + frontend (`attendeesLine` en `bands.js`, escapado; `.ev-attendees` en `style.css`). unit + e2e
-   verdes. Diferido: sección plegable con el detalle completo; confirmados en la agenda agregada
-   (`/me/events`). Detalle en REGISTRO (2026-06-21).
+   verdes. ✅ **Confirmados en la agenda agregada (`/me/events`) — HECHO (2026-06-24):** `DashboardEvent`
+   gana `attendance`; `agenda.js` muestra "✅ nombres · 🤔 N". unit + e2e. Diferido aún: sección plegable
+   con el detalle completo. Detalle en REGISTRO (2026-06-21 / 2026-06-24).
 
 ---
 

@@ -34,3 +34,19 @@ def test_agenda_agrega_proximos_y_pasados_con_filtro(page, live_server, api):
     page.wait_for_function(
         "!document.querySelector('#agenda-upcoming').innerText.includes('Bolo Futuro A')", timeout=8000)
     assert "Bolo Futuro B" in page.inner_text("#agenda-upcoming")
+
+
+def test_agenda_agregada_muestra_confirmados(page, live_server, api):
+    """La agenda agregada muestra los confirmados de cada evento (✅ nombre), como la de banda."""
+    api.put("/profile/me", json={"display_name": "Ana E2E"})
+    bid = api.post("/bands/", json={"name": "Banda Conf Agg"}).json()["id"]
+    eid = api.post(f"/bands/{bid}/events/",
+                   json={"type": "concert", "title": "Bolo Confirmado Agg",
+                         "starts_at": "2099-06-06T21:00:00"}).json()["id"]
+    api.put(f"/bands/{bid}/events/{eid}/attendance", json={"status": "yes"})
+
+    page.goto(live_server + "/static/agenda.html", wait_until="networkidle")
+    fila = '#agenda-upcoming a:has-text("Bolo Confirmado Agg")'
+    page.wait_for_selector(fila + " .ev-attendees", timeout=8000)
+    linea = page.inner_text(fila + " .ev-attendees")
+    assert "✅" in linea and "Ana E2E" in linea
