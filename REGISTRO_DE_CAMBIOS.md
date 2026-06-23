@@ -8,6 +8,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 💶 Fase 14 — Resumen de caché por gira (2026-06-23) ✅
+
+**Qué:** cada **gira** (pestaña Giras) muestra ahora el **caché total de sus conciertos** (Σ del `fee`
+de los conciertos ligados a las paradas), en el detalle ("Caché conciertos: X") y en la fila de la lista
+(💶, si > 0). Complementa el "Presupuesto estimado" (gasto previsto) con el ingreso por caché.
+
+**Por qué:** cierra un diferido de Fase 14 ("resumen de caché por gira") y da valor financiero a las
+giras reutilizando datos que ya existen (el `fee` de T-115) — sin migración.
+
+**Cómo/Verificación:** **sin migración** (campo calculado). `TourResponse`/`TourSummary` ganan
+`total_fee`; `tours_router._to_response` lo suma al cargar los eventos ligados (filtra borrados) y
+`list_tours` lo calcula con **UNA query agregada** (`sum(Event.fee)` join `TourStop`, group by gira →
+sin N+1). Front `band.js` (`tourRow` + banner del detalle, escapado). unit
+`test_cache_por_gira_suma_el_fee_de_los_conciertos` (suma 500+300.50; ignora conciertos sin caché y
+paradas sin concierto; detalle y lista). `cachebust` al día. run_checks **TODO VERDE**.
+
+---
+
 ## 🏟️ Fase 14 — Editar una sala (Venue) desde la UI (2026-06-23) ✅
 
 **Qué:** la sección "Salas" (pestaña Agenda) gana un botón **✏️ Editar** (solo admin) que abre el modal

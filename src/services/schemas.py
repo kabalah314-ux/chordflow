@@ -737,6 +737,7 @@ class TourSummary(BaseModel):
     end_date: Optional[datetime] = None
     stop_count: int = 0
     total_budget: Decimal = Decimal("0.00")
+    total_fee: Decimal = Decimal("0.00")       # Σ del caché (fee) de los conciertos ligados a la gira
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -748,6 +749,7 @@ class TourResponse(TourBase):
     stops: List[TourStopResponse] = []
     budget_lines: List[TourBudgetLineResponse] = []
     total_budget: Decimal = Decimal("0.00")
+    total_fee: Decimal = Decimal("0.00")       # Σ del caché (fee) de los conciertos ligados a la gira
     model_config = ConfigDict(from_attributes=True)
 
 

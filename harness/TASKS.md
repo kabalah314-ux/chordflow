@@ -110,8 +110,11 @@ El editor y el reproductor ya renderizan tablaturas: parser (`isTabLine`/`parseR
 - ✅ **Editar sala desde la UI** (2026-06-23, completa T-116): botón ✏️ en la sección Salas → modal
   prerrellenado → `PATCH` (solo frontend `bands.js`, `newVenue` crea/edita). e2e
   `test_editar_sala_desde_la_ui`. + `fix(test)` `test_home` caducado (fecha hardcodeada → dinámica). VERDE.
+- ✅ **Resumen de caché por gira** (2026-06-23): cada gira suma el `fee` de sus conciertos ligados
+  (`total_fee`, 1 query agregada sin N+1; UI en detalle + fila). unit
+  `test_cache_por_gira_suma_el_fee_de_los_conciertos`. Sin migración. VERDE.
 - ⏳ **T-113** `EmailTemplate` (bloqueado-ish: el envío real necesita infra) · diferido: recordatorios
-  por email/push reales, mapa de salas, resumen de caché por gira/temporada.
+  por email/push reales, mapa de salas, resumen de caché por temporada.
 
 ### ✅ T-110 — Apunte por canción en el setlist (SetlistItem.note) (2026-06-20)
 Los setlists de banda admiten una nota por canción ("capo 2", "acústica"). El modelo+lectura existían

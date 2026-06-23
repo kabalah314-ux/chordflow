@@ -462,8 +462,11 @@
   - [x] **Editar sala desde la UI** (2026-06-23, completa T-116): botón ✏️ en la sección Salas → abre el
         modal prerrellenado → `PATCH`. Solo frontend (`bands.js`, `newVenue` crea/edita). e2e
         `test_editar_sala_desde_la_ui`. run_checks VERDE.
+  - [x] **Resumen de caché por gira** (2026-06-23): cada gira suma el `fee` de sus conciertos ligados
+        (`total_fee` en `TourResponse`/`TourSummary`; `list_tours` con 1 query agregada, sin N+1; UI en
+        detalle + fila). unit `test_cache_por_gira_suma_el_fee_de_los_conciertos`. Sin migración. VERDE.
   - [ ] **T-113** 🟢 `EmailTemplate` (plantillas de email de booking; encaja con T-047 emails con marca).
-  - [ ] Diferido: resumen de caché por gira/temporada; mapa de salas.
+  - [ ] Diferido: resumen de caché por temporada; mapa de salas.
 
 - [x] **T-114** 🟢 **Repertorios (colecciones temáticas)** — diferenciar Repertorio vs Setlist
       (2026-06-21, cola de Oscar #2/#3). La pestaña "Repertorio" pasa a "Repertorios": varias listas

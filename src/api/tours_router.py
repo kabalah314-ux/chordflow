@@ -23,6 +23,7 @@ from decimal import Decimal
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..services.band_auth import require_band_admin, require_band_member
@@ -68,13 +69,18 @@ def _to_response(db: Session, tour: Tour) -> TourResponse:
     # Enriquecer cada parada con los datos del evento ligado (si lo hay), sin otra llamada.
     ev_ids = [s.event_id for s in tour.stops if s.event_id]
     titles = {}
+    total_fee = Decimal("0.00")
     if ev_ids:
-        for ev in db.query(Event).filter(Event.id.in_(ev_ids)).all():
+        for ev in (db.query(Event)
+                   .filter(Event.id.in_(ev_ids), Event.deleted_at.is_(None)).all()):
             titles[ev.id] = (ev.title, ev.starts_at)
+            if ev.fee is not None:
+                total_fee += ev.fee
     for stop_resp, stop in zip(resp.stops, tour.stops):
         if stop.event_id in titles:
             stop_resp.event_title, stop_resp.event_starts_at = titles[stop.event_id]
     resp.total_budget = _total_budget(tour)
+    resp.total_fee = total_fee
     return resp
 
 
@@ -88,11 +94,21 @@ def list_tours(
     tours = (db.query(Tour)
              .filter(Tour.band_id == band_id, Tour.deleted_at.is_(None))
              .order_by(Tour.start_date.desc().nullslast(), Tour.created_at.desc()).all())
+    # Caché por gira (Σ del fee de los conciertos ligados) en UNA query agregada (sin N+1).
+    fee_by_tour = {}
+    tour_ids = [t.id for t in tours]
+    if tour_ids:
+        rows = (db.query(TourStop.tour_id, func.sum(Event.fee))
+                .join(Event, Event.id == TourStop.event_id)
+                .filter(TourStop.tour_id.in_(tour_ids), Event.deleted_at.is_(None))
+                .group_by(TourStop.tour_id).all())
+        fee_by_tour = {tid: (amt or Decimal("0.00")) for tid, amt in rows}
     out = []
     for t in tours:
         s = TourSummary.model_validate(t)
         s.stop_count = len(t.stops)
         s.total_budget = _total_budget(t)
+        s.total_fee = fee_by_tour.get(t.id, Decimal("0.00"))
         out.append(s)
     return out
 

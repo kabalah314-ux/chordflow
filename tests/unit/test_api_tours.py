@@ -92,6 +92,30 @@ def test_presupuesto_suma_total(client):
     assert float(summ["total_budget"]) == pytest.approx(450.50) and summ["stop_count"] == 0
 
 
+def test_cache_por_gira_suma_el_fee_de_los_conciertos(client):
+    """La gira resume el caché (Σ fee de los conciertos ligados) en detalle y en la lista; las paradas
+    sin concierto y los conciertos sin caché no suman."""
+    bid = _band(client)
+    tid = client.post(f"/bands/{bid}/tours/", json={"name": "Gira"}).json()["id"]
+    e1 = client.post(f"/bands/{bid}/events/",
+                     json={"type": "concert", "title": "Bolo 1", "fee": "500.00"}).json()["id"]
+    e2 = client.post(f"/bands/{bid}/events/",
+                     json={"type": "concert", "title": "Bolo 2", "fee": "300.50"}).json()["id"]
+    e3 = client.post(f"/bands/{bid}/events/",
+                     json={"type": "concert", "title": "Bolo sin caché"}).json()["id"]
+    for eid in (e1, e2, e3):
+        client.post(f"/bands/{bid}/tours/{tid}/stops", json={"event_id": eid})
+    client.post(f"/bands/{bid}/tours/{tid}/stops", json={"city": "Sin concierto"})
+
+    # Detalle: 500.00 + 300.50 (el sin-fee y la parada sin concierto no suman)
+    r = client.get(f"/bands/{bid}/tours/{tid}")
+    assert r.status_code == 200, r.text
+    assert float(r.json()["total_fee"]) == pytest.approx(800.50)
+    # El resumen (lista) también trae total_fee
+    summ = next(t for t in client.get(f"/bands/{bid}/tours/").json() if t["id"] == tid)
+    assert float(summ["total_fee"]) == pytest.approx(800.50)
+
+
 def test_listar_ver_editar_borrar(client):
     bid = _band(client)
     tid = client.post(f"/bands/{bid}/tours/", json={"name": "Gira"}).json()["id"]

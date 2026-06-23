@@ -272,7 +272,7 @@
             ? `<small>${fmtDay(t.start_date)}${t.end_date ? ' – ' + fmtDay(t.end_date) : ''}</small>` : '';
         return `<li class="setlist-song" data-tour="${escapeHtml(t.id)}" style="cursor:pointer;">
             <span class="sl-title">${escapeHtml(t.name)}
-                <small>${escapeHtml(TOUR_STATUS[t.status] || t.status)} · ${t.stop_count} ${t.stop_count === 1 ? 'parada' : 'paradas'} · ${money(t.total_budget)}</small></span>
+                <small>${escapeHtml(TOUR_STATUS[t.status] || t.status)} · ${t.stop_count} ${t.stop_count === 1 ? 'parada' : 'paradas'} · ${money(t.total_budget)}${Number(t.total_fee) > 0 ? ' · 💶 ' + money(t.total_fee) + ' caché' : ''}</small></span>
             ${dates}
         </li>`;
     }
@@ -323,7 +323,7 @@
             <div class="bf-band-banner" style="margin-bottom:1rem;">
                 <div class="bf-grow">
                     <div class="bf-band-banner__name">${escapeHtml(tour.name)}</div>
-                    <div class="bf-band-banner__meta">${escapeHtml(TOUR_STATUS[tour.status] || tour.status)} · Presupuesto estimado: <span class="bf-num">${money(tour.total_budget)}</span></div>
+                    <div class="bf-band-banner__meta">${escapeHtml(TOUR_STATUS[tour.status] || tour.status)} · Presupuesto estimado: <span class="bf-num">${money(tour.total_budget)}</span> · Caché conciertos: <span class="bf-num">${money(tour.total_fee)}</span></div>
                 </div>
             </div>
 
