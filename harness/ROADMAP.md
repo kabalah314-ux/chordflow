@@ -334,8 +334,11 @@
         (compat/aislamiento/XSS/correctitud) ✅. VERDE.
   - [x] **Editar un setlist desde la UI** (2026-06-24): botón ✏️ → editor prerrellenado (nombre +
         canciones + notas) → `PATCH`. Solo frontend (`bands.js`, `newBandSetlist` crea/edita). e2e
-        `test_editar_setlist_de_banda`. Cierra el diferido "editar notas". Diferido aún: notas en
-        setlists personales.
+        `test_editar_setlist_de_banda`. Cierra el diferido "editar notas".
+  - [x] **Notas + edición en setlists PERSONALES** (2026-06-24): `setlists.html` gana apunte por canción
+        y edición (✏️ → editor prerrellenado → `PATCH`); backend honra `items` (antes solo `song_ids`);
+        fix: quitar canción preserva notas. unit `test_setlist_personal_con_notas` + e2e
+        `test_editar_repertorio_personal_con_nota`. Cierra el diferido "notas en setlists personales".
 - [x] **Fase 10** 🟢 Agenda (`Event`, `EventAttendance`). Áreas 2, 3, 4. **NÚCLEO COMPLETO**:
   - [x] **T-063** 🔴 Migración aditiva `events` + `event_attendance` (`22c7ea96b921`): tipo
         (rehearsal|concert|other), status-pipeline, `setlist_id` (SET NULL), CHECK + único

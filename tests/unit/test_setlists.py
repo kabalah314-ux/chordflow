@@ -48,6 +48,29 @@ def test_crud_setlist(client):
     assert client.get("/setlists/").json() == []
 
 
+def test_setlist_personal_con_notas(client):
+    """Un setlist PERSONAL admite nota por canción (`items`) en create y patch; el detalle la devuelve."""
+    a = _crear_cancion(client, "Cancion A")
+    b = _crear_cancion(client, "Cancion B")
+
+    # Crear con items + notas (orden a, b)
+    r = client.post("/setlists/", json={
+        "name": "Con notas",
+        "items": [{"song_id": a, "note": "capo 2"}, {"song_id": b, "note": None}]})
+    assert r.status_code == 201, r.text
+    sid = r.json()["id"]
+    items = r.json()["items"]
+    assert [i["song_id"] for i in items] == [a, b]
+    assert items[0]["note"] == "capo 2" and items[1]["note"] is None
+
+    # Editar las notas (PATCH con items), conservando el orden
+    r2 = client.patch(f"/setlists/{sid}", json={
+        "items": [{"song_id": a, "note": "acustica"}, {"song_id": b, "note": "coros"}]})
+    assert r2.status_code == 200
+    notes = {i["song_id"]: i["note"] for i in client.get(f"/setlists/{sid}").json()["items"]}
+    assert notes[a] == "acustica" and notes[b] == "coros"
+
+
 def test_filtra_canciones_no_validas(client):
     a = _crear_cancion(client, "Real")
     r = client.post("/setlists/", json={"name": "X", "song_ids": [a, "id-inventado-1234"]})

@@ -8,6 +8,29 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎵 Notas (y edición completa) en los setlists PERSONALES (2026-06-24) ✅
+
+**Qué:** los repertorios personales (`setlists.html`) ganan **apunte por canción** ("capo 2",
+"acústica") y **edición completa**: el botón ✏️ en cada tarjeta abre el editor prerrellenado
+(nombre + canciones + notas) y guarda con `PATCH`; el detalle muestra la nota (📝). Antes solo se podía
+crear, ver y quitar canciones (sin notas ni edición). Cierra el diferido "notas en setlists personales"
+de T-110 y da **paridad** con los setlists de banda.
+
+**Por qué:** simetría con los setlists de banda (que ya tenían notas y edición) y carencia real: no se
+podía corregir un repertorio personal ni anotar nada.
+
+**Cómo/Verificación:**
+- **Backend** (`setlists_router.py`): create/update honran `items:[{song_id,note}]` (antes solo
+  `song_ids`); `_set_items` reescrito para persistir la nota + `_pairs_from_payload` (mismo patrón que
+  los de banda). El schema ya tenía `items` y `_to_response` ya devolvía `note`.
+- **Frontend** (`setlists.js`): `openCreate`→`openEditor(setlistId)` (crea/edita, con input de nota por
+  canción); botón ✏️ en las tarjetas; el detalle pinta la nota; **fix de bug latente**: quitar una
+  canción ahora envía `items` → **preserva las notas** de las demás (con `song_ids` las borraba).
+- **Tests:** unit `test_setlist_personal_con_notas` (create+patch con notas, orden) + e2e
+  `test_editar_repertorio_personal_con_nota`. `cachebust` al día. run_checks **TODO VERDE**.
+
+---
+
 ## 🎵 Editar un setlist de banda desde la UI (2026-06-24) ✅
 
 **Qué:** la pestaña Setlists gana un botón **✏️ Editar** (no-guest) que abre el editor de setlist

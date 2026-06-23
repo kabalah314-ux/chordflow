@@ -36,3 +36,34 @@ def test_crear_y_ver_repertorio(page, live_server, api):
     page.wait_for_selector("#sl-playall", timeout=8000)
     detalle = page.inner_text("#setlist-detail")
     assert "SL Cancion Uno" in detalle and "SL Cancion Dos" in detalle
+
+
+def test_editar_repertorio_personal_con_nota(page, live_server, api):
+    """Editar un repertorio personal desde la UI: el botón ✏️ abre el editor prerrellenado y permite
+    poner una nota por canción; al guardar (PATCH) el detalle la muestra."""
+    a = api.post("/songs/", json=sample_song_payload(title="SL Edit Cancion")).json()["id"]
+    sid = api.post("/setlists/", json={"name": "Repertorio Original",
+                                       "items": [{"song_id": a, "note": None}]}).json()["id"]
+
+    page.goto(live_server + "/static/setlists.html", wait_until="networkidle")
+    page.wait_for_selector('.song-card:has-text("Repertorio Original")', timeout=8000)
+    page.click('.song-card:has-text("Repertorio Original") [data-act="edit"]')
+    page.wait_for_selector("#sl-name", timeout=8000)
+    assert page.input_value("#sl-name") == "Repertorio Original"
+
+    # Poner una nota por canción (prerrellenada vacía) y renombrar
+    page.wait_for_selector('#sl-selected .sl-note', timeout=5000)
+    page.fill('#sl-selected .sl-note', "capo 2 acustica")
+    page.fill("#sl-name", "Repertorio Editado")
+    page.click("#sl-save")
+    page.wait_for_selector('.song-card:has-text("Repertorio Editado")', timeout=8000)
+
+    # Persistió vía PATCH (nombre + nota)
+    det = api.get(f"/setlists/{sid}").json()
+    assert det["name"] == "Repertorio Editado"
+    assert det["items"][0]["note"] == "capo 2 acustica"
+
+    # El detalle muestra la nota
+    page.click('.song-card:has-text("Repertorio Editado") .card-main[data-act="open"]')
+    page.wait_for_selector("#setlist-detail .setlist-song", timeout=8000)
+    assert "capo 2 acustica" in page.inner_text("#setlist-detail")

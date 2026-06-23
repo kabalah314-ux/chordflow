@@ -46,13 +46,25 @@ def _valid_song_ids(db: Session, user_id: str, song_ids: List[str]) -> List[str]
     return [sid for sid in song_ids if sid in propias]
 
 
-def _set_items(db: Session, setlist: Setlist, song_ids: List[str], user_id: str) -> None:
-    """Reemplaza las entradas del repertorio por las de `song_ids` (validadas), en orden."""
+def _pairs_from_payload(payload) -> list:
+    """[(song_id, note)] en orden: prioriza `items` (con nota); si no, `song_ids` (compat, sin nota)."""
+    if payload.items is not None:
+        return [(i.song_id, i.note) for i in payload.items]
+    return [(sid, None) for sid in (payload.song_ids or [])]
+
+
+def _set_items(db: Session, setlist: Setlist, pairs: list, user_id: str) -> None:
+    """Reemplaza las entradas del repertorio por `pairs` [(song_id, note)] (validadas), en orden."""
     for it in list(setlist.items):
         db.delete(it)
     db.flush()
-    for pos, sid in enumerate(_valid_song_ids(db, user_id, song_ids)):
-        setlist.items.append(SetlistItem(song_id=sid, position=pos))
+    valid = set(_valid_song_ids(db, user_id, [sid for sid, _ in pairs]))
+    pos = 0
+    for sid, note in pairs:
+        if sid not in valid:
+            continue
+        setlist.items.append(SetlistItem(song_id=sid, position=pos, note=note))
+        pos += 1
 
 
 def _to_response(setlist: Setlist) -> SetlistResponse:
@@ -93,7 +105,7 @@ def create_setlist(payload: SetlistCreate, db: Session = Depends(get_db),
     try:
         sl = Setlist(name=payload.name, owner_id=user_id)
         db.add(sl)
-        _set_items(db, sl, payload.song_ids, user_id)
+        _set_items(db, sl, _pairs_from_payload(payload), user_id)
         db.commit()
         db.refresh(sl)
         logger.info(f"Setlist creado: {sl.id}")
@@ -139,8 +151,8 @@ def update_setlist(setlist_id: str, payload: SetlistUpdate, db: Session = Depend
             raise HTTPException(status_code=404, detail="Repertorio no encontrado")
         if payload.name is not None:
             sl.name = payload.name
-        if payload.song_ids is not None:
-            _set_items(db, sl, payload.song_ids, user_id)
+        if payload.song_ids is not None or payload.items is not None:
+            _set_items(db, sl, _pairs_from_payload(payload), user_id)
         db.commit()
         db.refresh(sl)
         return _to_response(sl)

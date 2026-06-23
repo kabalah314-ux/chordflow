@@ -5,7 +5,7 @@ const elGrid = document.getElementById('setlist-grid');
 const elDetail = document.getElementById('setlist-detail');
 const elBtnNew = document.getElementById('btn-new-setlist');
 
-elBtnNew.addEventListener('click', openCreate);
+elBtnNew.addEventListener('click', () => openEditor());
 
 function showGrid() { elDetail.style.display = 'none'; elGrid.style.display = ''; }
 function showDetail() { elGrid.style.display = 'none'; elDetail.style.display = ''; }
@@ -26,6 +26,7 @@ async function loadSetlists() {
         elGrid.innerHTML = setlists.map(sl => `
             <div class="song-card" data-id="${escapeHtml(sl.id)}">
                 <div class="card-actions">
+                    <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(sl.name)}" title="Editar">✏️</button>
                     <button class="card-action-btn danger" data-act="del" aria-label="Borrar ${escapeHtml(sl.name)}" title="Borrar">🗑️</button>
                 </div>
                 <div class="card-main" data-act="open" style="cursor:pointer;">
@@ -36,6 +37,10 @@ async function loadSetlists() {
         elGrid.querySelectorAll('.song-card').forEach(card => {
             const id = card.dataset.id;
             card.querySelector('[data-act="open"]').addEventListener('click', () => openSetlist(id));
+            card.querySelector('[data-act="edit"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                openEditor(id);
+            });
             card.querySelector('[data-act="del"]').addEventListener('click', (e) => {
                 e.stopPropagation();
                 const name = card.querySelector('.card-title').textContent;
@@ -57,22 +62,35 @@ async function deleteSetlist(id, name) {
     } catch (e) { toast('No se pudo borrar el repertorio.', 'error'); }
 }
 
-// ─── Crear repertorio ─────────────────────────────────────────────────────────
-async function openCreate() {
+// ─── Crear / editar repertorio ──────────────────────────────────────────────────
+// Sin `setlistId` crea (POST); con `setlistId` edita (PATCH), precargando nombre + canciones + notas.
+async function openEditor(setlistId = null) {
+    const editing = !!setlistId;
     showDetail();
     elDetail.innerHTML = `<p class="loading-text">Cargando tus canciones…</p>`;
     let songs = [];
+    let existing = null;
     try {
-        const res = await apiFetch('/songs/');
-        songs = await res.json();
-    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ Error cargando canciones.</p>'; return; }
+        const reqs = [apiFetch('/songs/')];
+        if (editing) reqs.push(apiFetch(`/setlists/${setlistId}`));
+        const [rSongs, rSl] = await Promise.all(reqs);
+        songs = await rSongs.json();
+        if (editing) {
+            if (!rSl.ok) throw new Error('http');
+            existing = await rSl.json();
+        }
+    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ Error cargando datos.</p>'; return; }
 
-    const selected = []; // ids en orden
+    const selected = editing ? (existing.items || []).map(it => it.song_id) : []; // ids en orden
+    const notes = {};   // song_id → apunte, persiste entre re-renders
+    if (editing) (existing.items || []).forEach(it => { if (it.note) notes[it.song_id] = it.note; });
+    const byId = Object.fromEntries(songs.map(s => [s.id, s]));
+
     elDetail.innerHTML = `
         <div class="setlist-editor">
             <a href="#" id="sl-back" class="back-link">← Volver</a>
-            <h3>Nuevo repertorio</h3>
-            <input type="text" id="sl-name" class="search-box" placeholder="Nombre del repertorio (p. ej. Bolo sábado)">
+            <h3>${editing ? 'Editar repertorio' : 'Nuevo repertorio'}</h3>
+            <input type="text" id="sl-name" class="search-box" placeholder="Nombre del repertorio (p. ej. Bolo sábado)" value="${editing ? escapeHtml(existing.name) : ''}">
             <div class="setlist-cols">
                 <div>
                     <h4>Canciones disponibles</h4>
@@ -83,13 +101,12 @@ async function openCreate() {
                     <ul id="sl-selected" class="setlist-list"></ul>
                 </div>
             </div>
-            <div class="form-actions"><button id="sl-save" class="primary-btn">💾 Crear repertorio</button></div>
+            <div class="form-actions"><button id="sl-save" class="primary-btn">${editing ? '💾 Guardar cambios' : '💾 Crear repertorio'}</button></div>
         </div>`;
     document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); loadSetlists(); });
 
     const elAvail = document.getElementById('sl-available');
     const elSel = document.getElementById('sl-selected');
-    const byId = Object.fromEntries(songs.map(s => [s.id, s]));
 
     function renderAvail() {
         elAvail.innerHTML = songs.map(s => `
@@ -101,9 +118,13 @@ async function openCreate() {
     }
     function renderSel() {
         elSel.innerHTML = selected.map((id, i) => `
-            <li><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
+            <li class="sl-sel-row"><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
+                <input type="text" class="search-box sl-note" data-note="${escapeHtml(id)}" maxlength="255"
+                       placeholder="Apunte (capo 2, acústica…)" value="${escapeHtml(notes[id] || '')}">
                 <button class="setlist-item-btn danger" data-rm="${escapeHtml(id)}" aria-label="Quitar">✕</button></li>`).join('')
             || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
+        elSel.querySelectorAll('.sl-note').forEach(inp =>
+            inp.addEventListener('input', () => { notes[inp.dataset.note] = inp.value; }));
         elSel.querySelectorAll('button[data-rm]').forEach(b =>
             b.addEventListener('click', () => {
                 const idx = selected.indexOf(b.dataset.rm); if (idx > -1) selected.splice(idx, 1); renderAll();
@@ -116,14 +137,16 @@ async function openCreate() {
         const name = document.getElementById('sl-name').value.trim();
         if (!name) { toast('Pon un nombre al repertorio.', 'error'); return; }
         try {
-            const res = await apiFetch('/setlists/', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, song_ids: selected })
-            });
+            const items = selected.map(id => ({ song_id: id, note: (notes[id] || '').trim() || null }));
+            const res = await apiFetch(
+                editing ? `/setlists/${setlistId}` : '/setlists/',
+                { method: editing ? 'PATCH' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name, items }) });
             if (!res.ok) throw new Error('http');
-            toast('Repertorio creado.', 'success');
+            toast(editing ? 'Repertorio actualizado.' : 'Repertorio creado.', 'success');
             loadSetlists();
-        } catch (e) { toast('No se pudo crear el repertorio.', 'error'); }
+        } catch (e) { toast(editing ? 'No se pudo actualizar el repertorio.' : 'No se pudo crear el repertorio.', 'error'); }
     });
 }
 
@@ -141,7 +164,7 @@ async function openSetlist(id) {
     const rows = sl.items.map((it, i) => `
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}" data-pos="${i}">
             <span class="sl-num">${i + 1}</span>
-            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small></span>
+            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small>${it.note ? `<br><small class="sl-note-view">📝 ${escapeHtml(it.note)}</small>` : ''}</span>
             <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
             <button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">✕</button>
         </li>`).join('') || '<li><small>Este repertorio está vacío. Edítalo para añadir canciones.</small></li>';
@@ -167,11 +190,13 @@ async function openSetlist(id) {
         const songId = li.dataset.id, pos = parseInt(li.dataset.pos, 10);
         li.querySelector('[data-act="play"]').addEventListener('click', () => playAt(songId, pos));
         li.querySelector('[data-act="rm"]').addEventListener('click', async () => {
-            const nuevos = sl.items.filter(x => x.song_id !== songId).map(x => x.song_id);
+            // Enviar items (no song_ids) para PRESERVAR las notas de las demás canciones.
+            const items = sl.items.filter(x => x.song_id !== songId)
+                .map(x => ({ song_id: x.song_id, note: x.note || null }));
             try {
                 const res = await apiFetch(`/setlists/${id}`, {
                     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ song_ids: nuevos })
+                    body: JSON.stringify({ items })
                 });
                 if (!res.ok) throw new Error('http');
                 openSetlist(id);
