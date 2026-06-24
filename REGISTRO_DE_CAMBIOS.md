@@ -8,6 +8,27 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎛️ V4-F2 · T-130 — Resumen de banda útil (Opción B) (2026-06-24) ✅
+
+**Qué:** el Resumen de banda deja de ser un bloque estático ("Sobre la banda") y pasa a un **dashboard
+de dos columnas** que da valor al entrar. Consume `GET /bands/{id}/summary` (T-129).
+
+**Cómo/Verificación:** solo front (`band.js` + `design-system.css`).
+- `band.js`: el panel `data-panel="resumen"` pasa a un contenedor `#b-summary`; `loadSummary(bandId,ctx)`
+  hace el fetch y pinta la rejilla `.bs-summary`. Se saca `'resumen'` del `Set loaded` y se añade su caso
+  a `loadTab` (recarga al reabrir); además se llama en `init` (es la pestaña activa por defecto).
+  - **Izquierda:** "Próximo evento" (cuenta atrás cliente + `fmtDate` + `bookingLine` + `attendeesLine` +
+    botones **"¿Vas?"** que hacen `PUT …/attendance` y recargan) y "Último mensaje".
+  - **Derecha:** "Tu saldo" (verde/rojo, clic → Finanzas) y contadores canciones/setlists/colecciones
+    (con `bfIcon`, clic → su pestaña). Reusa helpers globales de `bands.js` (EVENT_ICON/ATT_LABEL/
+    attendeesLine/bookingLine/fmtDate).
+- `design-system.css`: `.bs-summary` (grid 2 col, colapsa a 1 en móvil), `.bs-count`, saldo coloreado.
+- Test e2e `test_resumen_banda_dashboard` (carga la rejilla, muestra el evento + "Tu saldo", "¿Vas?"
+  marca "Voy" y recarga, acceso rápido cambia de pestaña). Doctor verde + e2e (resumen + band_space)
+  **en verde**. `cachebust` al día.
+
+---
+
 ## 🎛️ V4-F2 · T-129 — Endpoint `GET /bands/{id}/summary` (Resumen de banda) (2026-06-24) ✅
 
 **Qué:** arranca la **V4-F2 (paneles de control)**. Un endpoint que devuelve TODO el Resumen de banda

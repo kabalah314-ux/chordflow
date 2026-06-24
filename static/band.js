@@ -75,6 +75,7 @@
         renderShell(band, active, ctx);
         renderMembers(active);
         wire(band, active, ctx);
+        loadSummary(bandId, ctx);   // Resumen = pestaña activa por defecto (T-130)
     }
 
     function renderShell(band, active, ctx) {
@@ -102,16 +103,7 @@
 
             <div id="bs-panels">
                 <div class="bs-panel" data-panel="resumen">
-                    <div class="bf-card bf-stack">
-                        <div>
-                            <h3 class="bf-h3">Sobre la banda</h3>
-                            <p class="bf-muted" style="margin-top:.4rem;">${desc ? escapeHtml(desc) : 'Sin descripción todavía.'}</p>
-                        </div>
-                        <div class="bf-row bf-wrap">
-                            <span class="bf-badge">${active.length} ${active.length === 1 ? 'miembro' : 'miembros'}</span>
-                            <span class="bf-badge bf-badge--${ctx.myRole}">Tú: ${escapeHtml(roleLabel)}</span>
-                        </div>
-                    </div>
+                    <div id="b-summary"><p class="loading-text">Cargando…</p></div>
                 </div>
 
                 <div class="bs-panel" data-panel="miembros" hidden>
@@ -224,17 +216,117 @@
     }
 
     // Carga perezosa: las pestañas con datos remotos se cargan la primera vez que se abren.
-    // resumen/miembros/ajustes ya se pintan en renderShell.
-    const loaded = new Set(['resumen', 'miembros', 'ajustes']);
+    // miembros/ajustes ya se pintan en renderShell; resumen se carga en init y al reabrir la pestaña.
+    const loaded = new Set(['miembros', 'ajustes']);
     function loadTab(key, ctx) {
         if (loaded.has(key)) return;
         loaded.add(key);
-        if (key === 'repertorio') { loadRepertoire(bandId, !ctx.iAmGuest); loadCollections(bandId, !ctx.iAmGuest); }
+        if (key === 'resumen') loadSummary(bandId, ctx);
+        else if (key === 'repertorio') { loadRepertoire(bandId, !ctx.iAmGuest); loadCollections(bandId, !ctx.iAmGuest); }
         else if (key === 'setlists') loadBandSetlists(bandId, !ctx.iAmGuest);
         else if (key === 'agenda') { loadAgenda(bandId, ctx.iAmAdmin); loadVenues(bandId, ctx.iAmAdmin); }
         else if (key === 'finanzas') loadFinance(bandId, ctx.iAmAdmin);
         else if (key === 'chat') initChat(bandId, ctx.iAmAdmin);
         else if (key === 'giras') loadTours(ctx.iAmAdmin);
+    }
+
+    // ── Resumen de banda (T-130, Opción B: dos columnas) ─────────────────────
+    // Pinta #b-summary desde GET /bands/{id}/summary. Reusa helpers globales de bands.js
+    // (EVENT_ICON, ATT_LABEL, attendeesLine, bookingLine, fmtDate) + util/icons. `money` es de band.js.
+    function bsCountdown(iso) {
+        if (!iso) return '';
+        const ms = new Date(iso).getTime() - Date.now();
+        if (isNaN(ms)) return '';
+        if (ms < 0) return 'ya';
+        const d = Math.floor(ms / 86400000), h = Math.floor((ms % 86400000) / 3600000);
+        if (d >= 1) return `en ${d} ${d === 1 ? 'día' : 'días'}`;
+        const m = Math.floor((ms % 3600000) / 60000);
+        return h >= 1 ? `en ${h} h ${m} min` : `en ${m} min`;
+    }
+    function goTab(key) {
+        const t = elSpace.querySelector(`.bf-tab[data-tab="${key}"]`);
+        if (t) t.click();
+    }
+    async function loadSummary(bandId, ctx) {
+        const el = document.getElementById('b-summary');
+        if (!el) return;
+        let s;
+        try {
+            const res = await apiFetch(`/bands/${bandId}/summary`);
+            if (!res.ok) throw new Error('http');
+            s = await res.json();
+        } catch (e) {
+            el.innerHTML = '<div class="bf-card"><p class="bf-muted">⚠️ No se pudo cargar el resumen.</p></div>';
+            return;
+        }
+        const ev = s.next_event, msg = s.last_message;
+        const c = s.counts || { songs: 0, setlists: 0, collections: 0 };
+        const bal = Number(s.my_balance || 0);
+        const balCls = bal > 0 ? 'pos' : (bal < 0 ? 'neg' : '');
+
+        const eventCard = ev ? `
+            <div class="bf-card bf-stack">
+                <div class="bf-row bf-row--between bf-wrap" style="align-items:baseline;">
+                    <h3 class="bf-h3">Próximo evento</h3>
+                    <span class="bf-badge">${escapeHtml(bsCountdown(ev.starts_at))}</span>
+                </div>
+                <div>
+                    <div style="font-size:var(--bf-fs-lg);font-weight:var(--bf-fw-semibold);">${EVENT_ICON[ev.type] || '📌'} ${escapeHtml(ev.title)}</div>
+                    <p class="bf-muted" style="margin:.2rem 0;">${escapeHtml(fmtDate(ev.starts_at))}</p>
+                    ${bookingLine(ev)}${attendeesLine(ev)}
+                </div>
+                <div>
+                    <p class="bf-faint" style="font-size:.78rem;margin-bottom:.3rem;">¿Vas?</p>
+                    <span class="att-buttons" id="bs-att">${['yes', 'maybe', 'no'].map(st => `<button class="setlist-item-btn att-btn${ev.my_status === st ? ' active' : ''}" data-att="${st}" title="${ATT_LABEL[st]}">${ATT_LABEL[st]}</button>`).join('')}</span>
+                </div>
+            </div>` : `<div class="bf-card">${bfEmpty('calendar', 'Sin eventos próximos', ctx.iAmAdmin ? 'Crea un ensayo o concierto en la Agenda.' : 'Aún no hay nada en la agenda.')}</div>`;
+
+        const msgCard = `
+            <div class="bf-card bf-stack">
+                <h3 class="bf-h3">Último mensaje</h3>
+                ${msg ? `<p style="min-width:0;overflow-wrap:anywhere;"><strong>${escapeHtml(msg.author_name || 'Alguien')}</strong>: ${escapeHtml(msg.body)}</p>` : '<p class="bf-muted">Aún no hay mensajes.</p>'}
+                <div><button class="bf-btn bf-btn--sm" data-go="chat">${bfIcon('chat', { size: 15 })} ${msg ? 'Ir al chat' : 'Abrir el chat'}</button></div>
+            </div>`;
+
+        const balanceCard = `
+            <div class="bf-card bs-summary__balance bs-summary__balance--${balCls}" data-go="finanzas" style="cursor:pointer;">
+                <h3 class="bf-h3">Tu saldo</h3>
+                <div class="bs-summary__amount">${money(bal)}</div>
+                <p class="bf-faint" style="font-size:.78rem;">${bal > 0 ? 'Te deben' : (bal < 0 ? 'Debes' : 'Estás en paz')} · ver Finanzas →</p>
+            </div>`;
+
+        const countItem = (icon, n, label, go) => `
+            <button class="bs-count" data-go="${go}">
+                <span class="bs-count__icon">${bfIcon(icon, { size: 18 })}</span>
+                <span class="bs-count__n">${n}</span>
+                <span class="bs-count__label">${label}</span>
+            </button>`;
+        const countsCard = `
+            <div class="bf-card bf-stack">
+                <h3 class="bf-h3">La banda</h3>
+                <div class="bs-counts">
+                    ${countItem('music', c.songs, c.songs === 1 ? 'canción' : 'canciones', 'repertorio')}
+                    ${countItem('library', c.setlists, c.setlists === 1 ? 'setlist' : 'setlists', 'setlists')}
+                    ${countItem('folder', c.collections, c.collections === 1 ? 'colección' : 'colecciones', 'repertorio')}
+                </div>
+            </div>`;
+
+        el.innerHTML = `
+            <div class="bs-summary">
+                <div class="bs-summary__col">${eventCard}${msgCard}</div>
+                <div class="bs-summary__col">${balanceCard}${countsCard}</div>
+            </div>`;
+
+        el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => goTab(b.dataset.go)));
+        if (ev) el.querySelectorAll('#bs-att [data-att]').forEach(b => b.addEventListener('click', async () => {
+            try {
+                const res = await apiFetch(`/bands/${bandId}/events/${ev.id}/attendance`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: b.dataset.att }) });
+                if (!res.ok) throw new Error('http');
+                loadSummary(bandId, ctx);
+            } catch (e) { toast('No se pudo guardar tu asistencia.', 'error'); }
+        }));
     }
 
     // ── Giras (V3-F5, T-096) ────────────────────────────────────────────────
