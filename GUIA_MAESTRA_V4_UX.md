@@ -1,158 +1,252 @@
-# GUÍA MAESTRA V4 — Experiencia de uso y diseño (V2: el QUÉ + el CÓMO)
+# GUÍA MAESTRA V4 — Experiencia de uso y diseño (V3: validada y optimizada)
 
-> **Propósito.** Mejorar BandFlow en **coherencia, experiencia de uso, diseño visual y diseño de
-> interacción**, en la piel de un músico que se la descarga por primera vez.
+> **Propósito.** Hacer BandFlow **fácil, directo, intuitivo y muy agradable** para cualquiera, cuidando
+> coherencia, experiencia, diseño visual y diseño de interacción.
 >
-> **De dónde viene.** V1 (el QUÉ) salió de un estudio visual de las 14 páginas (escritorio + móvil)
-> con datos de demo. Esta **V2 añade el CÓMO** a cada punto: solución concreta + ficheros + esfuerzo
-> + dependencias. Falta cerrar prioridades contigo y, donde toque, afinar el diseño fino.
+> **De dónde viene.** V1 (el QUÉ, estudio visual de 14 páginas) → V2 (el CÓMO) → **V3 (esta): tras
+> investigar A FONDO el código real** (4 auditorías en paralelo de design-system+shell, reproductor,
+> espacio de banda, e Inicio/`/me`/tarjetas). La V3 **valida, corrige y optimiza** cada punto con
+> ficheros y líneas concretas, reparto cliente/servidor y notas de seguridad de tests.
 >
 > **Convenciones.** Prioridad 🔴 alto · 🟠 medio · 🟢 nice-to-have · 🔌 necesita config/infra.
-> Tipo [F]uncionalidad · [V]isual · [I]nteracción. Esfuerzo **S** (≤½ día) · **M** (1 día) · **L** (varios).
-> Todo **aditivo** y con el bucle de siempre (doctor + test + cachebust + deploy + verificación).
+> Tipo [F] · [V] · [I]. Esfuerzo **S** (≤½ día) · **M** (1 día) · **L** (varios). Todo aditivo + bucle
+> de siempre (doctor + test + `cachebust` + deploy + verificación).
 >
-> _V2 — 2026-06-24._
+> _V3 — 2026-06-24._
 
 ---
 
-## 0. Principios de diseño que guían la V4 (acordados antes de tocar)
+## 0. Principios de diseño (no negociables)
 
-Para que el CÓMO sea coherente, fijamos estas reglas (van a `design-system.css`):
-1. **Un solo lenguaje de iconos:** SVG de `icons.js` (Lucide). Cero emoji en UI de chrome (sí en
-   contenido del usuario y estados festivos puntuales).
-2. **Densidad cómoda, no vacía:** contenedor de contenido más ancho y rejillas; nada de columnas
-   estrechas con medio pantallazo en negro.
+1. **Un solo lenguaje de iconos:** SVG de `icons.js` (`bfIcon`). Cero emoji en chrome.
+2. **Densidad cómoda:** contenedor más ancho + rejillas; nada de columna estrecha con medio pantallazo negro.
 3. **Todo lo clicable lo parece:** hover (elevación + borde acento), `:focus-visible`, `cursor`.
 4. **Movimiento con propósito:** transiciones 150–200 ms, `prefers-reduced-motion` respetado.
-5. **Un acento, dos pesos:** coral `--bf-accent` para acciones primarias; nada de segundos naranjas.
-6. **Cada pantalla responde "¿y ahora qué?":** dato principal + acción principal siempre visibles.
+5. **Una sola fuente de verdad del acento:** coral `--bf-primary`; legacy hereda de ahí.
+6. **Cada pantalla responde "¿y ahora qué?":** dato principal + acción principal siempre a la vista.
+
+---
+
+## 0.bis Realidad técnica (hallazgos de la investigación — leer antes de aplicar)
+
+- **Dos universos de CSS.** (a) **Nuevo `bf-*`**: `design-system.css` + `shell.css`, tokenizado, con
+  hover/focus/transición y **tema claro** — lo usan app/band/agenda/finanzas/chat/bands/explorar.
+  (b) **Legacy `style.css`**: player, editor, biblioteca, **setlists**, perfil, login; define su PROPIO
+  coral (`--accent-color:#ff6b4a`, `style.css:11-14`) **duplicando** `--bf-primary` (`design-system.css:38`),
+  con docenas de `#ff6b4a`/`rgba(255,107,74,…)` **hardcodeados** y fallbacks muertos verde-menta
+  (`#6ee7b7` en `style.css:653,1094`). **Optimización clave:** hacer que `style.css` herede
+  (`--accent-color: var(--bf-primary)`, etc.) **arregla el modo claro en TODAS las páginas legacy
+  gratis** y deja un solo acento. → Esto cumple a la vez los puntos 1.2-color, 7.2 y 7.4.
+- **Sistema de iconos.** `bfIcon(name)` (`icons.js:36`) devuelve SVG Lucide con `currentColor`; 18
+  iconos hoy (`home, library, calendar, wallet, chat, users, user, sun, moon, logout, settings, music,
+  search, inbox, globe, star, download, menu`). Añadir más = pegar paths en `PATHS` (`icons.js:15`),
+  sin build. **`icons.js` NO está cargado en `index.html` (player) ni `editor.html`** → hay que añadir
+  el `<script>`. Faltan ~18 nombres: `play, pause, stop, plus, minus, save, printer, mic, film, drum
+  (o timer), maximize, minimize, folder, arrow-left, edit, trash, x, note`. `bfEmpty` ya existe.
+- **Reproductor — corrección de la V2:** **no hay icono "🐈 gato" ni "🔧 llave".** Los emoji reales
+  son: arriba `💾`(guardar tono) `🎤`(afinador) `🎬`(vídeo ref.) `🖨️`(imprimir) `🏠 📚 ➕`; abajo
+  `🥁`(**metrónomo** — el que parecía un gato) `⏹ ▶/⏸ ⛶`. Todos son emoji inline en `index.html`;
+  `btn-play-pause` reescribe su `innerHTML` en `app.js:75/78`. Refresco visual = **0 cambios** en
+  `sync_engine.js`/`score_render.js` (contrato DOM a respetar: clases `.chord-container/.chord-pill/
+  .active/.line-lyric(.inactive)/.section-name` e ids `#chord-*`, `#score-*`, `#song-progress-*`, `#btn-*`).
+- **Color por banda.** Ya existe `hueFromId` pero **encerrado** en el IIFE de `band.js:18` (no reusable),
+  y `initialsFrom` está **duplicado** (`band.js:23` y `shell.js:89`). → Promoverlos a `util.js`
+  (`bandColor(id)`, `bandHue(id)`, `initialsFrom(name)`), que se carga en todas partes. Base de 2.3, 3.1, 3.4.
+- **Agregación.** `me_router.py` ya es el patrón de dashboard agregado (`/me/dashboard|events|balances|
+  conversations`). Casi todo lo nuevo se resuelve **en cliente** con lo que ya devuelven. Adiciones de
+  **servidor** reales y pequeñas (sin migración): (1) `GET /bands/{id}/summary` para el Resumen de banda;
+  (2) `song_count` en `BandSummary` (`schemas.py:305`) + query agregada en `list_my_bands`
+  (`bands_router.py:84`, patrón `_active_member_counts`); (3) opcional: rellenar `attendance[]` en
+  `get_dashboard` (copiar el bloque anti-N+1 de `me_router.py:163-177`) para "quién va" en el hero.
+- **Seguridad de tests (regla de oro de esta fase):** los e2e buscan por **selectores e ids estables**,
+  no por texto/emoji visible. Conservar: clases `.song-card/.card-action-btn/.setlist-song/.ev-*`,
+  ids `#b-*/#sl-*/#col-*/#ev-*/#btn-*`, atributos `data-tab/data-att/data-act`. Antes de cambiar
+  `btn-play-pause` (texto "▶ Play"/"⏸"), revisar `tests/e2e`. Tras tocar js/css: `python harness/cachebust.py`.
 
 ---
 
 ## 1. Coherencia estructural y navegación
 
-- **1.1** 🟠 [V] **Setlists dentro del shell.** *Hoy:* `setlists.html` usa la top-bar antigua, sin lateral.
-  **Cómo (M):** migrar `setlists.html` a la estructura `bf-shell` (como `library.html`): `<div class="bf-shell"><main class="bf-shell-main"><div class="bf-page">…`, cargar `design-system.css`+`shell.css`+`icons.js`+`shell.js`, y mover la cabecera (título + "➕ Nuevo setlist") al patrón `bf-row bf-row--between`. `setlists.js` no cambia de lógica (mismos ids). Quitar los enlaces 🏠/📚 (los da el lateral). El editor y el reproductor **siguen** fuera del shell (pantallas enfocadas).
-- **1.2** 🟠 [V] **Terminología unificada → "Colecciones".** *Hoy:* banda dice "Repertorios", personal "Colecciones".
-  **Cómo (S):** en el espacio de banda renombrar la pestaña y textos "Repertorio(s)" → "**Colecciones**" (`band.js` TABS label, panel header y textos en `bands.js` `loadCollections`/`newCollection`/empty-states). Dejar la palabra "repertorio" SOLO para "Todas las canciones de la banda" (el pool). Tests e2e que buscan `data-tab="repertorio"` siguen valiendo (cambiamos label visible, no la key). Verificar `test_bands_ui`/`test_band_space` por si asertan el texto.
-- **1.3** 🟠 [V] **Iconos SVG en todas partes.** *Hoy:* emoji en reproductor, setlists, perfil, y acciones (🗑️💬📊💾).
-  **Cómo (M):** ampliar `icons.js` con los iconos que falten (Lucide: `home, library, printer, guitar/tuner, plus, save, trash, message-circle, download, edit, play, square, maximize`). Reemplazar emoji por `bfIcon('name')` en `index.html`/`app.js` (top+bottom bar), `setlists.html`, `profile.html`, y los botones de acción de `bands.js`. Tooltips (`title=`/`aria-label`) en todos. **Cazar el "🐈"** del reproductor (averiguar qué es y darle icono correcto).
-- **1.4** 🟠 [I] **Pestañas de banda en móvil.** *Hoy:* 9 pestañas con scroll horizontal y las últimas ocultas sin pista.
-  **Cómo (S):** en `shell.css`/`design-system.css` (`.bf-tabs`): `overflow-x:auto` + **fade/máscara** en el borde derecho que insinúe scroll + `scroll-snap`. Marcar la pestaña activa siempre visible (scrollIntoView al activar en `band.js`). Alternativa L: agrupar las menos usadas (Giras/Ajustes) en un "⋯ Más".
-- **1.5** 🟢 [F] **Acceso a la banda activa desde el lateral.** *Hoy:* Bandas → la banda (2 saltos).
-  **Cómo (M):** bajo "Bandas" en `shell.js`, listar mis bandas (avatar + nombre) como sub-items que llevan a `band.html?id=`. Reusa `GET /bands/`. Colapsable si hay muchas.
+- **1.1** 🟠 [V] **Setlists dentro del shell.** **Cómo (M):** migrar `setlists.html` a `bf-shell`
+  (espejo de `library.html`): cargar `design-system.css`+`shell.css`+`icons.js`+`shell.js`, envolver en
+  `.bf-shell > main.bf-shell-main > .bf-page`, cabecera al patrón `bf-row--between`. `setlists.js` no
+  cambia su lógica (mismos ids `#setlist-grid`/`#setlist-detail`/`#sl-*`); quitar la top-bar antigua y
+  sus 🏠/📚. El test `test_setlists_accesible_desde_la_biblioteca` (busca `h1` con "Setlists") sigue ok.
+- **1.2** 🟠 [V] **Terminología.** **Cómo (S):** decisión validada — la pestaña `data-tab="repertorio"`
+  muestra colecciones **+ el pool**, así que: **label de pestaña → "Repertorio"** (= todas las canciones)
+  y **sección interna → "Colecciones"**. Cambios SOLO de texto en `band.js:31,133,134,136` y
+  `bands.js:951,953,960,967,973,1011,1020,1065,1073,1075`. **No tocar** `key:'repertorio'`/`data-tab`
+  ni ids `b-collections`/`b-new-collection`. Ningún e2e asierta la cadena "Repertorio" → seguro.
+- **1.3** 🟠 [V] **Iconos SVG en todo.** **Cómo (M):** (1) ampliar `PATHS` en `icons.js` con los ~18
+  nombres que faltan (Lucide); (2) **cargar `icons.js`** en `index.html` y `editor.html` (hoy no está);
+  (3) reemplazar emoji por `bfIcon('name')` en `index.html`/`app.js` (incl. `btn-play-pause`),
+  `setlists.js`, `profile.js`, `library.js`, `catalogo.js`, y los botones de acción de `bands.js`.
+  Tooltips (`title`+`aria-label`) en todos. `♭/♯/+/−` pueden quedarse como glifo (se leen mejor).
+- **1.4** 🟠 [I] **Pestañas de banda en móvil.** **Cómo (S):** `.bf-tabs` ya tiene `overflow-x:auto`
+  con scrollbar oculta (`design-system.css:248`); solo falta affordance → añadir `mask-image` (+
+  `-webkit-`) con fade en ambos bordes y `scroll-snap-type:x proximity`. `scrollIntoView` de la pestaña
+  activa en `band.js`. **Solo CSS** (+1 línea JS).
+- **1.5** 🟢 [F] **Banda(s) en el lateral.** **Cómo (M):** sub-items bajo "Bandas" en `shell.js`
+  (avatar `bandColor`+iniciales → `band.html?id=`). Reusa `GET /bands/`.
 
 ---
 
 ## 2. Paneles que dan valor de un vistazo
 
-- **2.1** 🔴 [V/F] **Inicio = panel de control.** *Hoy:* saludo + eventos + mensajes, pasivo y con mucho vacío.
-  **Cómo (M):** rediseñar `home.js` a **rejilla de 2 columnas** (escritorio): (a) **Próximo evento destacado** (card grande: cuenta atrás, sala, tu asistencia con botón "¿Vas?"), (b) **Tu saldo** agregado (reusa `GET /me/balances`, total debes/te deben → enlace a Finanzas), (c) **Accesos rápidos** (chips: "➕ Nueva canción", "🎵 Setlists", "Mi banda"), (d) últimos mensajes (como ahora, más compacto). Nuevo endpoint opcional `GET /me/summary` que agregue todo en una llamada (o componer con los `/me/*` ya existentes). Skeletons ya hay.
-- **2.2** 🔴 [V/F] **Resumen de banda útil.** *Hoy:* solo "Sobre la banda" + 2 chips.
-  **Cómo (M):** en `band.js` panel `resumen`, montar un dashboard: **próximo evento + confirmados**, **último mensaje del chat**, **saldos resumidos** (3 líneas + "ver finanzas"), **contadores** (canciones / setlists / colecciones), y botones de salto a cada pestaña. Reusa los loaders existentes (`loadAgenda`, `loadFinance`, `messages`, `band_songs`) o un `GET /bands/{id}/summary` nuevo (1 query agregada, sin N+1). Mantener "Sobre la banda" arriba pequeño.
-- **2.3** 🟠 [V/F] **Tarjeta de banda enriquecida ("Mis bandas").** *Hoy:* nombre + rol + nº miembros.
-  **Cómo (S/M):** en `bands.js` `loadBands`, tarjeta con **avatar/color** de la banda (iniciales sobre color derivado del id), **próximo evento** (texto corto) y **nº de canciones**. El próximo evento por banda → ampliar `GET /bands/` (campo `next_event`) o una llamada ligera. Empty-state ilustrado con CTA (crear / código de invitación) — **2.3b**.
-- **2.4** 🟢 [V/F] **Perfil con más cuerpo.** *Hoy:* 2 campos.
-  **Cómo (S):** en `profile.html`/`profile.js`, mostrar **avatar** (iniciales/color por ahora), **mis bandas** (chips con rol), e instrumentos como **chips** editables en vez de texto con comas. Avatar subido → **🔌 Storage (V4-F6)**.
+- **2.1** 🔴 [V/F] **Inicio = panel de control.** **Cómo (M, casi todo cliente):** en `home.js` añadir
+  `apiFetch('/me/balances')` al `Promise.all` (`home.js:60`). Render en rejilla: (a) **hero del próximo
+  evento** = `dashboard.upcoming_events[0]` con **cuenta atrás** (cliente desde `starts_at`), sala, y tu
+  asistencia (`my_status`→🟢/🟡/⚪) + botón "¿Vas?"; (b) **saldo total** = `Σ /me/balances` (verde/rojo →
+  Finanzas); (c) **accesos rápidos** (reusar patrón del onboarding `home.js:76-92`); (d) últimos mensajes
+  compactos. *(Opcional servidor: rellenar `attendance[]` en `get_dashboard` para "quién va" en el hero.)*
+- **2.2** 🔴 [V/F] **Resumen de banda útil.** **Cómo (M):** hoy es **estático** (`band.js:112-123`,
+  excluido de carga en `band.js:236`). Añadir **`GET /bands/{id}/summary`** (patrón `me_router`, 1 ida y
+  vuelta, sin N+1): `{ next_event(+attendance,my_status), last_message, my_balance/deudores,
+  counts:{songs,setlists,collections} }` con `Depends(require_band_member)` + **test de aislamiento**
+  (regla de oro). En `band.js`: sacar `'resumen'` del `loaded` Set y pintar el dashboard reusando
+  `attendeesLine`/`bookingLine`/`renderMessageList`. *(Reusa schemas `EventSummary/MessageOut/BalanceOut/
+  CollectionSummary`.)*
+- **2.3** 🟠 [V/F] **Tarjeta de banda rica ("Mis bandas").** **Cómo (S/M):** en `bands.js loadBands`,
+  avatar `bandColor(b.id)`+`initialsFrom` (cliente), **próximo evento** agrupando `/me/dashboard` por
+  `band_id` (cliente), y **nº de canciones** = única adición servidor: `song_count` en `BandSummary`
+  (`schemas.py:305`) + query agregada en `list_my_bands` (patrón `_active_member_counts`, `bands_router.py:37`).
+  **2.3b** empty-state ilustrado con CTA (crear / código).
+- **2.4** 🟢 [V/F] **Perfil con cuerpo.** **Cómo (S):** avatar (iniciales/color), **mis bandas** (chips
+  con rol, de `/bands/`), instrumentos como **chips**. Avatar subido → 🔌 Storage (V4-F6).
 
 ---
 
 ## 3. Tarjetas, listas y densidad
 
-- **3.1** 🟠 [V/I] **Tarjeta de canción con play y jerarquía.** *Hoy:* plana, sin play visible.
-  **Cómo (M):** en `library.js` `renderGrid` + `style.css` `.song-card`: en **hover** mostrar un botón **▶** flotante (abre el reproductor) y elevar la card; título más grande, artista atenuado, las pills (BPM/secciones) más sutiles (una sola fila, menos peso). Franja/ío de color por fuente (👤 personal vs 🎸 banda). Acciones (editar/borrar/**añadir a colección**) en esquina, visibles en hover.
-- **3.2** 🟠 [I] **Filas de Agenda más limpias.** *Hoy:* asistencia + estado + 💬 + 🗑️ todo en línea.
-  **Cómo (M):** en `bands.js` `loadAgenda`, reorganizar la fila: **principal** = icono tipo + título + fecha + tu asistencia (3 botones). **Secundario** (estado de booking admin, 💬 hilo, 🗑️ borrar) detrás de un menú **"⋯"** por evento. La línea de confirmados, debajo, discreta (ya está).
-- **3.3** 🟢 [V] **"Quitar" ≠ "Borrar".** *Hoy:* ✕ rojo para quitar de repertorio/setlist.
-  **Cómo (S):** quitar (de una lista) usa icono neutro (`minus`/`x` gris); el rojo solo para borrado real (soft delete). Ajuste en `bands.js`/`setlists.js`/`library.js` (clases de botón).
-- **3.4** 🟠 [V] **Color de identidad por banda, consistente.** *Hoy:* el banner tiene avatar de color; no se reutiliza.
-  **Cómo (S):** función `bandColor(id)` (hash → HSL estable) en un helper compartido; usarla en el avatar del banner, la tarjeta de "Mis bandas", las etiquetas de banda en Inicio/Agenda/Chat. Logo real → 🔌 Storage.
+- **3.1** 🟠 [V/I] **Tarjeta de canción con play.** **Cómo (M):** en `library.js renderGrid`
+  (`library.js:235-264`) + `style.css:946-1037`: botón **▶ flotante** `.card-play` (clon de
+  `.card-action-btn`, hover-reveal, abajo-dcha para no chocar con `.card-actions` top-dcha); franja de
+  color por fuente vía `--card-accent` (`isPersonal ? var(--accent-color) : bandColor(_bandId)`) +
+  `.song-card::before` (4px izq.). Datos ya presentes (`_scope/_bandId`). **Mantener** el `_badge` como
+  texto en `#song-grid` (test `test_library.py:80`).
+- **3.2** 🟠 [I] **Agenda más limpia.** **Cómo (S/M):** fila en `bands.js:510-521`. **Sin riesgo:** mover
+  SOLO `🗑️ data-act="del"` a un menú **"⋯"** (ningún e2e lo usa). Mantener visibles asistencia (3
+  `att-btn`) + `💬 thread`. El `select.ev-status-sel` mejor dejarlo visible (moverlo obliga a tocar
+  `test_booking_pipeline…`). Mismos nodos/clases dentro del popover.
+- **3.3** 🟢 [V] **Quitar ≠ borrar.** **Cómo (S):** "quitar de lista" con icono neutro (gris); rojo solo
+  para borrado real. Ajuste de clases en `bands.js`/`setlists.js`/`library.js`.
+- **3.4** 🟠 [V] **Color de banda consistente.** **Cómo (S):** promover `hueFromId`→`util.js` como
+  `bandColor`/`bandHue` + consolidar `initialsFrom` (hoy duplicado en `band.js:23` y `shell.js:89`).
+  Usar en avatar del banner, tarjeta de "Mis bandas" y etiquetas de banda (Inicio/Agenda/Chat).
 
 ---
 
 ## 4. Interacción y "vida"
 
-- **4.1** 🔴 [I] **Hover/active/focus ricos.** **Cómo (S):** en `design-system.css`, estados unificados para `.bf-card`, `.song-card`, `.bf-list-item`, `.setlist-song`, `.bf-tab`: hover = `translateY(-1px)` + borde `--bf-accent-weak` + sombra; `:focus-visible` claro; `cursor:pointer`. Una sola fuente de verdad.
-- **4.2** 🟠 [I] **Transiciones suaves.** **Cómo (S):** `transition` en tabs (subrayado deslizante), modales (fade+scale de `.modal-overlay`/`.modal-card`), y aparición de listas. Guard `@media (prefers-reduced-motion: reduce)`.
-- **4.3** 🟠 [I] **Microinteracciones de feedback.** **Cómo (M):** al añadir/guardar, animación breve en el elemento (no solo toast); al marcar "Voy", transición de color. Pequeña librería de keyframes en `design-system.css` (`bf-pop`, `bf-flash`).
-- **4.4** 🟠 [I] **Skeletons en todas las vistas.** *Hoy:* solo Inicio; Giras y otras muestran "Cargando…".
-  **Cómo (S):** reutilizar `.bf-skeleton` en `band.js` (giras, agenda, finanzas, repertorio…), `agenda.js`, `finanzas.js`, `chat.js`, `library.js`. Helper `bfSkeletonList(n)`.
-- **4.5** 🟢 [I/F] **Drag & drop para reordenar setlist.** **Cómo (M):** en el editor de setlist (`bands.js`/`setlists.js`), HTML5 drag (o pointer events) sobre `#sl-selected`; al soltar, reordenar el array `selected` y `render()`. El PATCH ya acepta el nuevo orden (`items` en orden). Touch-friendly.
-- **4.6** 🟢 [I] **Hoja de atajos.** **Cómo (S):** un botón "?" en el reproductor que abre un modal con los atajos (espacio, flechas/pedalera, Esc).
+- **4.1** 🔴 [I] **Hover/active/focus unificados.** **Cómo (S):** el nuevo sistema casi lo tiene; **falta**:
+  hover en `.bf-list-item` (usar token `--bf-hover`, ya existe), y **`:focus-visible`** en lo legacy
+  (`.song-card` —tiene hover pero no focus—, `.setlist-song` —no tiene nada—, `.icon-btn/.card-action-btn/
+  .primary-btn/.secondary-btn`). Un único bloque de foco accesible reutilizado. Igualar el "lift"
+  (cards suben 2px vs 3px).
+- **4.2** 🟠 [I] **Transiciones suaves.** **Cómo (S):** subrayado deslizante en `.bf-tab`, fade+scale en
+  `.modal-overlay/.modal-card`, aparición de listas. Token `--bf-transition`. Guard `prefers-reduced-motion`.
+- **4.3** 🟠 [I] **Microinteracciones.** **Cómo (M):** keyframes `bf-pop`/`bf-flash` en `design-system.css`;
+  animar al añadir/guardar y al marcar "Voy". (`chord-pulse` ya respeta reduced-motion: imitar guard.)
+- **4.4** 🟠 [I] **Skeletons en todo.** **Cómo (S):** helper `bfSkeletonList(n)`; aplicar `.bf-skeleton`
+  en band (giras/agenda/finanzas/repertorio), agenda/finanzas/chat agregadas y biblioteca (hoy solo Inicio).
+- **4.5** 🟢 [I/F] **Drag & drop reordenar setlist.** **Cómo (M):** en `#sl-selected` (editor de setlist),
+  pointer events → reordenar `selected` + `render()`. El PATCH ya acepta el orden. Touch-friendly.
+- **4.6** 🟢 [I] **Hoja de atajos.** **Cómo (S):** botón "?" en el reproductor → modal con atajos.
 
 ---
 
 ## 5. La joya — reproductor en directo
 
-- **5.1** 🔴 [V] **Iconos del reproductor a SVG.** (Ver 1.3.) **Cómo (M):** `index.html`/`app.js`: top-bar (BPM, tono, herramientas, navegación) y bottom-bar (transporte) con `bfIcon`. Identificar el 🐈 y el 🔧 y nombrarlos bien (afinador, diagramas…). Tooltips + `aria-label`.
-- **5.2** 🟠 [V] **Top-bar ordenada.** **Cómo (M):** agrupar en 3 zonas con separadores: **transporte/tempo** (BPM, tono), **herramientas** (afinador, diagramas, imprimir, vídeo ref.), **navegación** (inicio, biblioteca, +). En móvil, colapsar herramientas en un "⋯".
-- **5.3** 🟠 [V/I] **Más espectacular en escenario.** **Cómo (M):** en `style.css` (modo escenario/`stage-mode`): acordes más grandes y con más contraste, transición suave al cambiar de línea activa, animación de la "bolita" de posición, y un **modo alto contraste** para poca luz. La lógica de la joya (`sync_engine.js`/`score_render.js`) **no se toca**, solo CSS/clases.
-- **5.4** 🟢 [F] **Loop A-B / metrónomo audible / autoscroll fino.** **Cómo (L):** requieren tocar el motor (seek/bucle) → **se hace en V3-F6**, no en V4. Anotado para no perderlo.
+- **5.1** 🔴 [V] **Iconos del reproductor a SVG.** **Cómo (M):** cargar `icons.js` en `index.html`;
+  añadir paths Lucide; sustituir los 11 emoji (top: 💾🎤🎬🖨️🏠📚➕ · bottom: 🥁⏹▶/⏸⛶) por `bfIcon`
+  con tooltips. Cuidado con `app.js:75/78` (innerHTML de play/pause) y revisar e2e por el texto "Play".
+- **5.2** 🟠 [V] **Top-bar ordenada.** **Cómo (M):** mover los `style="…"` inline (`index.html:38-43`) a
+  una clase `.tool-btn`; agrupar en 3 zonas (transporte/tempo · herramientas · navegación) con
+  separadores; en móvil colapsar herramientas/navegación tras un `menu` (ya en icons.js).
+- **5.3** 🟠 [V/I] **Escenario más espectacular (solo CSS).** **Cómo (M):** ampliar `.stage-mode`
+  (`style.css:441-451`): acordes más grandes/contraste, inactivas a `opacity:.25`, realce de la línea
+  activa (`:has(.chord-container.active)`), glow pulsante en `.song-progress__dot`, y **modo alto
+  contraste** (clase/`data-theme`) para poca luz. Sin tocar el motor. Respetar `prefers-reduced-motion`.
+- **5.4** 🟢 [F] **Loop A-B / metrónomo lookahead / autoscroll fino.** Tocan el motor → **V3-F6**, no V4.
 
 ---
 
 ## 6. Onboarding y primera impresión
 
-- **6.1** ✅ [F] **Inicio sin bandas → "Primeros pasos"** (hecho). Mantener; revisar visual al rediseñar Inicio (2.1).
-- **6.2** 🟠 [V] **Login pulido.** **Cómo (S/M):** revisar `login.html`/`login.js`: branding (logo BandFlow), claim claro ("Gestiona tu banda: repertorio, bolos y cuentas"), botón Google prominente, y modo oscuro coherente. (No lo vimos en el estudio por el modo test.)
-- **6.3** 🟢 [F] **Tour la primera vez en una banda.** **Cómo (M):** tooltips secuenciales (qué es cada pestaña) la 1ª visita, guardados en `localStorage`. Sin dependencias.
-- **6.4** 🟢 [V] **Todos los vacíos con CTA.** **Cómo (S):** auditar empty-states; usar siempre `bfEmpty(icono, título, texto, {cta})` con botón de acción (no solo texto).
+- **6.1** ✅ [F] **Inicio sin bandas → "Primeros pasos"** (hecho). Encaja con el rediseño 2.1.
+- **6.2** 🟠 [V] **Login pulido.** **Cómo (S/M):** `login.html`/`login.js` (legacy `style.css`): branding,
+  claim ("Gestiona tu banda: repertorio, bolos y cuentas"), botón Google prominente, modo oscuro coherente
+  (se beneficia de la unificación de tokens 0.bis).
+- **6.3** 🟢 [F] **Tour la 1ª vez en una banda.** **Cómo (M):** tooltips secuenciales + `localStorage`.
+- **6.4** 🟢 [V] **Vacíos con CTA.** **Cómo (S):** auditar empty-states; usar `bfEmpty(...,{cta})` siempre.
 
 ---
 
 ## 7. Sistema de diseño y acabado fino
 
-- **7.1** 🟠 [V] **Aprovechar el ancho.** **Cómo (M):** subir el `max-width` del `.bf-page`/contenedor y usar rejillas (`grid` 2–3 col) en Inicio, Bandas, Explorar, Perfil. Definir un ancho de contenido estándar en `design-system.css`. Revisar que no rompa lectura en pantallas anchas.
-- **7.2** 🟢 [V] **Un solo acento.** **Cómo (S):** localizar los botones con naranja "brillante" (p. ej. "Buscar" en `biblioteca-global.html`, "Importar con IA" en `editor.html`) y pasarlos a `--bf-accent`. Quitar colores hardcodeados.
-- **7.3** 🟢 [V] **Escala tipográfica.** **Cómo (S):** revisar tokens de tamaño/peso (h1/h2/h3/body/small/badge) en `design-system.css` para una escala consistente; aplicarla donde haya tamaños sueltos.
-- **7.4** 🟢 [V] **Modo claro a la par.** **Cómo (S):** auditar todas las páginas en `data-theme="light"` (capturas) y corregir contrastes/colores sueltos.
-- **7.5** 🟢 [♿] **Accesibilidad.** **Cómo (M):** pasada con la checklist WCAG AA (contraste de grises secundarios, foco visible, objetivos táctiles ≥44px, `aria-label` en iconos). Se puede apoyar en la skill `design:accessibility-review`.
+- **7.1** 🟠 [V] **Aprovechar el ancho.** **Cómo (M):** `.bf-page` hoy `max-width:920px` (`shell.css:210`)
+  → **decisión validada:** mantener 920 para lectura/formularios y añadir modificador **`.bf-page--wide`
+  (~1120-1200px)** para listados; nueva utilidad `.bf-grid` (`repeat(auto-fill,minmax(260px,1fr))`,
+  espejo de `.song-grid`) para Inicio/Bandas/Explorar.
+- **7.2** 🟢 [V] **Un solo acento (ver 0.bis).** **Cómo (S):** `style.css:11-14` → `var(--bf-*)`; sustituir
+  literales `#ff6b4a`/`rgba(255,107,74,…)` por tokens; borrar fallbacks `#6ee7b7`. **Desbloquea modo
+  claro en legacy** (7.4) de regalo.
+- **7.3** 🟢 [V] **Escala tipográfica.** **Cómo (S):** revisar tokens de tamaño/peso y aplicarlos donde
+  haya valores sueltos.
+- **7.4** 🟢 [V] **Modo claro a la par.** **Cómo (S):** sale casi gratis con 7.2; auditar páginas legacy en
+  `data-theme="light"` y corregir restos.
+- **7.5** 🟢 [♿] **Accesibilidad.** **Cómo (M):** contraste de grises secundarios, foco visible (4.1),
+  objetivos táctiles ≥44px, `aria-label` en iconos. Apoyo en skill `design:accessibility-review`.
 
 ---
 
 ## 8. Funcionalidad detectada
 
-- **8.1** 🟢 [F] **"Añadir a colección/setlist" desde la tarjeta** de canción. **Cómo (M):** botón en `.song-card` (Biblioteca) → modal con mis colecciones/setlists (checkbox) → PATCH. Reusa endpoints existentes.
-- **8.2** 🟢 [F] **Buscador en repertorio de banda y setlists.** **Cómo (S):** input de filtro cliente en `bands.js` (repertorio) y en `setlists.js`.
-- **8.3** 🟢 [F] **Reordenar dentro de colección/setlist.** (Ver 4.5; en colecciones es opcional por ser "sin orden".)
-- **8.4** 🔌 [F] **Avatar/logo de banda y perfil.** **Cómo (L):** **Storage** (Supabase bucket + políticas) → subir imagen → `Band.logo_url`/`MusicianProfile.avatar_url` (migración). **V4-F6.**
-- **8.5** 🔌 [F] **Notificaciones/recordatorios** (email/push). **V4-F6** (infra de envío).
-- **8.6** 🔌 [F] **Página pública/EPK (V3-F8)** y **ensayo en tiempo real (V3-F6).** Fuera de V4 (fases V3 grandes).
-- **8.7** 🟢 [F] **Caché por temporada.** **Cómo (M):** agregación por rango de fechas en finanzas/giras.
-- **8.8** 🟢 [F] **Duplicar** canción/setlist/colección. **Cómo (S):** botón → POST con los datos del original.
+- **8.1** 🟢 [F] **"Añadir a colección/setlist" desde la tarjeta** de canción (modal con checkboxes → PATCH).
+- **8.2** 🟢 [F] **Buscador** en repertorio de banda y en setlists (filtro cliente).
+- **8.3** 🟢 [F] **Reordenar** dentro de colección/setlist (ver 4.5).
+- **8.4** 🔌 [F] **Avatar/logo de banda y perfil** (Storage + `logo_url`/`avatar_url` + migración). V4-F6.
+- **8.5** 🔌 [F] **Notificaciones/recordatorios** (email/push). V4-F6.
+- **8.6** 🔌 [F] **Página pública/EPK (V3-F8)** y **ensayo en tiempo real (V3-F6).** Fuera de V4.
+- **8.7** 🟢 [F] **Caché por temporada** (agregación por fechas).
+- **8.8** 🟢 [F] **Duplicar** canción/setlist/colección.
 
 ---
 
-## 9. Plan por fases (propuesta para aplicar)
+## 9. Plan por fases (validado)
 
-> Orden por **impacto/esfuerzo** y **sin dependencias externas primero**. Cada fase = varias tareas
-> T-NNN en `TASKS.md`, con doctor verde + test + deploy + verificación.
+> **Reparto:** ~90% **cliente/CSS**. Servidor nuevo (sin migración): `GET /bands/{id}/summary` (2.2),
+> `song_count` en `BandSummary` (2.3), opcional `attendance[]` en `/me/dashboard` (2.1). Cada fase = T-NNN
+> en `TASKS.md` con doctor + test + cachebust + deploy + verificación.
 
-- **V4-F1 — Acabado coherente (S/M, solo front/CSS, alto impacto visual):**
-  1.3 iconos SVG (incl. reproductor 5.1) · 1.1 setlists al shell · 1.2 terminología "Colecciones" ·
-  7.2 un solo acento · 4.1 hover/focus · 4.2 transiciones · 3.3 quitar≠borrar. → *La app se siente
-  "de una pieza".*
-- **V4-F2 — Paneles de control (M, algo de backend agregado):**
-  2.2 Resumen de banda útil · 2.1 Inicio panel de control · 2.3 tarjeta de banda + 2.3b empty-state ·
-  3.4 color de banda consistente. → *Cada pantalla da valor al entrar.*
+- **V4-F1 — Cimientos coherentes (S/M, solo front/CSS; arregla mucho de golpe):**
+  7.2/0.bis **unificar token de acento** (→ modo claro legacy gratis) · 1.3 **iconos SVG** (incl. cargar
+  `icons.js` en player/editor + reproductor 5.1) · 1.1 **setlists al shell** · 1.2 **terminología** ·
+  3.4 **`bandColor`/`initialsFrom` a `util.js`** · 4.1 **hover/focus** · 4.2 transiciones · 1.4 fade en
+  pestañas · 3.3 quitar≠borrar. → *La app se siente "de una pieza" y con vida.*
+- **V4-F2 — Paneles de control (M; el mayor salto de percepción):**
+  2.2 **`/bands/{id}/summary` + Resumen útil** · 2.1 **Inicio panel de control** · 2.3 **tarjeta de banda
+  rica** (+`song_count`) + 2.3b empty-state. → *Cada pantalla da valor al entrar.*
 - **V4-F3 — Tarjetas, densidad y carga (S/M, front):**
-  3.1 tarjeta de canción con play · 3.2 agenda más limpia · 4.4 skeletons en todo · 7.1 ancho/rejillas ·
-  4.3 microinteracciones. → *Más bonita y con vida.*
+  3.1 **tarjeta de canción con play** · 3.2 agenda más limpia (⋯) · 4.4 skeletons en todo · 7.1 ancho +
+  `.bf-grid` · 4.3 microinteracciones.
 - **V4-F4 — La joya en directo (M, CSS + algo de JS):**
   5.2 top-bar ordenada · 5.3 escenario espectacular · 4.5 drag&drop setlist · 4.6 atajos · 6.4 vacíos con CTA.
 - **V4-F5 — Funcionalidad y remate (S/M):**
-  8.1 añadir-a desde tarjeta · 8.2 buscadores · 8.8 duplicar · 1.4 pestañas móvil · 1.5 banda en lateral ·
-  6.2 login · 6.3 tour · 7.3 tipografía · 7.4 modo claro · 7.5 accesibilidad · 8.7 caché por temporada.
-- **V4-F6 — Lo que necesita tu config (🔌):**
-  8.4 avatares/logos (Storage) · 2.4 avatar perfil · 8.5 notificaciones · 8.6 EPK/realtime (V3).
+  8.1 añadir-a desde tarjeta · 8.2 buscadores · 8.8 duplicar · 1.5 banda en lateral · 6.2 login · 6.3 tour ·
+  7.3 tipografía · 7.4 modo claro (remate) · 7.5 accesibilidad · 8.7 caché por temporada.
+- **V4-F6 — Lo que necesita tu config (🔌):** 8.4 avatares/logos (Storage) · 2.4 avatar perfil · 8.5
+  notificaciones · 8.6 EPK/realtime (V3).
 
-> **Recomendación:** empezar por **V4-F1** (rápida, se nota muchísimo, cero backend) y **V4-F2**
-> (convierte las pantallas vacías en útiles). Con eso la app pega un salto de percepción.
+> **Confianza:** todo lo de F1–F5 está **verificado contra el código** (ficheros, líneas, contratos DOM,
+> selectores de test). Riesgo de regresión bajo si se respetan las notas de §0.bis. **Recomendación:
+> empezar por V4-F1** (rápida, sin backend, y arregla la sensación general) seguida de V4-F2.
 
 ---
 
 ## 10. Proceso
 
-1. **(Esta V2.)** Oscar la repasa: confirma/ajusta el CÓMO y el orden de fases.
-2. **V3 (si hace falta):** afinar diseño fino de los puntos 🔴 (bocetos/decisiones concretas).
-3. **Aplicar fase a fase** con el bucle de siempre. Cada tarea cierra con su test + deploy + verificación.
+1. **(Esta V3.)** Oscar la repasa y da OK / ajusta prioridades.
+2. **Aplicar fase a fase** con el bucle de siempre. Cada tarea: test que la cubre + deploy + verificación en vivo.
+3. Si algún punto 🔴 necesita decisión de diseño fino (p. ej. el layout del Resumen o del hero del Inicio),
+   lo bocetamos antes de implementar.
