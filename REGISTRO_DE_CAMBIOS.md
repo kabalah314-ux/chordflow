@@ -8,6 +8,29 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎛️ V4-F2 · T-129 — Endpoint `GET /bands/{id}/summary` (Resumen de banda) (2026-06-24) ✅
+
+**Qué:** arranca la **V4-F2 (paneles de control)**. Un endpoint que devuelve TODO el Resumen de banda
+en una sola ida y vuelta, sin N+1 y con aislamiento multi-tenant. **Único endpoint nuevo de la V4.**
+
+**Por qué:** el Resumen de banda era estático; para hacerlo útil (T-130) hace falta un agregado:
+próximo evento + último mensaje + mi saldo + contadores.
+
+**Cómo/Verificación:** backend, **sin migración** (solo lecturas).
+- `schemas.py`: `BandDashboard` (`next_event: EventSummary?`, `last_message: MessageOut?`,
+  `my_balance: Decimal`, `counts: BandCounts{songs,setlists,collections}`) — **reusa** `EventSummary`/
+  `MessageOut`, cero schemas de datos nuevos.
+- `bands_router.py`: `GET /{band_id}/summary` con `Depends(require_band_member)`. Próximo evento
+  (espejo de `events_router.list_events`: `EventSummary.model_validate` + asistencia anti-N+1 +
+  `my_status` + `venue_name`), último mensaje del chat general, `my_balance` vía `compute_balances`,
+  y contadores con `func.count` sobre `Song`/`Setlist`/`SongCollection` (`band_id` + `deleted_at IS NULL`).
+- **Aislamiento (regla de oro):** la ruta se añadió al gate transversal `test_aislamiento_parametrizado`
+  (`("GET","/bands/{bid}/summary")`) → un usuario ajeno recibe **403/404**. Test de forma
+  `test_api_band_summary.py` (próximo evento, último mensaje `is_mine`, saldo 0, `counts`; vacío;
+  excluye eventos pasados). Doctor verde + ruff + **24 unit** verdes.
+
+---
+
 ## 🎨 V4-F1 · T-128 — Pestañas de banda: fade + scroll-snap en móvil (2026-06-24) ✅
 
 **Qué:** que en móvil se intuya que hay más pestañas a la derecha del espacio de banda.

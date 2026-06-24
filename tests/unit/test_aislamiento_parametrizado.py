@@ -31,6 +31,7 @@ def acting_as(user_id):
 # (método, plantilla de ruta). El {bid} se rellena con una banda real creada por su dueño.
 BAND_ROUTES = [
     ("GET", "/bands/{bid}"),
+    ("GET", "/bands/{bid}/summary"),
     ("PATCH", "/bands/{bid}"),
     ("DELETE", "/bands/{bid}"),
     ("GET", "/bands/{bid}/members"),

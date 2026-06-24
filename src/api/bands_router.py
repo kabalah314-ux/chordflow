@@ -8,6 +8,7 @@ Crear banda (el creador entra como `admin`), listar "mis bandas", ver, editar y 
 
 import logging
 import secrets
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,18 +16,39 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
+from ..services.balances import compute_balances
 from ..services.band_auth import require_band_admin, require_band_member
 from ..services.db import get_db
-from ..services.models import Band, BandInvite, BandMembership, MusicianProfile, _utcnow
+from ..services.models import (
+    Band,
+    BandInvite,
+    BandMembership,
+    Event,
+    EventAttendance,
+    Message,
+    MusicianProfile,
+    Setlist,
+    Settlement,
+    Song,
+    SongCollection,
+    Transaction,
+    Venue,
+    _utcnow,
+)
 from ..services.schemas import (
+    AttendanceOut,
+    BandCounts,
     BandCreate,
+    BandDashboard,
     BandInviteCreate,
     BandInviteResponse,
     BandMembershipResponse,
     BandResponse,
     BandSummary,
     BandUpdate,
+    EventSummary,
     MembershipRoleUpdate,
+    MessageOut,
 )
 
 logger = logging.getLogger(__name__)
@@ -103,6 +125,91 @@ def get_band(
 ):
     """Ver una banda (cualquier miembro activo). El aislamiento lo garantiza la dependencia."""
     return db.query(Band).filter(Band.id == band_id, Band.deleted_at.is_(None)).first()
+
+
+@router.get("/{band_id}/summary", response_model=BandDashboard)
+def get_band_summary(
+    band_id: str,
+    db: Session = Depends(get_db),
+    membership: BandMembership = Depends(require_band_member),
+):
+    """Resumen de banda en UNA ida y vuelta (T-129), sin N+1: próximo evento (con asistencia,
+    mi estado y sala), último mensaje del chat general, mi saldo y contadores. El aislamiento lo
+    da `require_band_member` (un ajeno recibe 403/404 → regla de oro multi-tenant)."""
+    user_id = membership.user_id
+    # `now` naive (UTC) para comparar con `starts_at`, que se guarda naive desde el input.
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # Próximo evento (futuro, no cancelado) con asistencia + mi estado + nombre de sala.
+    ev = (
+        db.query(Event)
+        .filter(
+            Event.band_id == band_id,
+            Event.deleted_at.is_(None),
+            Event.status != "cancelled",
+            Event.starts_at.isnot(None),
+            Event.starts_at >= now,
+        )
+        .order_by(Event.starts_at.asc())
+        .first()
+    )
+    next_event = None
+    if ev is not None:
+        rows = (
+            db.query(EventAttendance, MusicianProfile.display_name)
+            .outerjoin(MusicianProfile, MusicianProfile.id == EventAttendance.user_id)
+            .filter(EventAttendance.event_id == ev.id)
+            .all()
+        )
+        next_event = EventSummary.model_validate(ev)
+        next_event.attendance = [
+            AttendanceOut(user_id=a.user_id, status=a.status,
+                          display_name=name, responded_at=a.responded_at)
+            for a, name in rows
+        ]
+        next_event.my_status = next((a.status for a, _ in rows if a.user_id == user_id), None)
+        next_event.venue_name = (
+            db.query(Venue.name).filter(Venue.id == ev.venue_id).scalar() if ev.venue_id else None
+        )
+
+    # Último mensaje del chat general (event_id IS NULL), con nombre real e is_mine.
+    last = (
+        db.query(Message, MusicianProfile.display_name)
+        .outerjoin(MusicianProfile, MusicianProfile.id == Message.author_id)
+        .filter(Message.band_id == band_id, Message.deleted_at.is_(None),
+                Message.event_id.is_(None))
+        .order_by(Message.created_at.desc())
+        .first()
+    )
+    last_message = None
+    if last is not None:
+        m, name = last
+        last_message = MessageOut.model_validate(m)
+        last_message.author_name = name
+        last_message.is_mine = m.author_id == user_id
+
+    # Mi saldo en esta banda (servicio único `compute_balances`).
+    members = [r[0] for r in db.query(BandMembership.user_id)
+               .filter(BandMembership.band_id == band_id,
+                       BandMembership.status == "active").all()]
+    txs = (db.query(Transaction)
+           .filter(Transaction.band_id == band_id, Transaction.deleted_at.is_(None)).all())
+    settles = (db.query(Settlement)
+               .filter(Settlement.band_id == band_id, Settlement.deleted_at.is_(None)).all())
+    my_balance = compute_balances(txs, settles, members).get(user_id, 0)
+
+    # Contadores (activos) de la banda.
+    counts = BandCounts(
+        songs=db.query(func.count(Song.id))
+        .filter(Song.band_id == band_id, Song.deleted_at.is_(None)).scalar() or 0,
+        setlists=db.query(func.count(Setlist.id))
+        .filter(Setlist.band_id == band_id, Setlist.deleted_at.is_(None)).scalar() or 0,
+        collections=db.query(func.count(SongCollection.id))
+        .filter(SongCollection.band_id == band_id, SongCollection.deleted_at.is_(None)).scalar() or 0,
+    )
+
+    return BandDashboard(next_event=next_event, last_message=last_message,
+                         my_balance=my_balance, counts=counts)
 
 
 @router.patch("/{band_id}", response_model=BandResponse)

@@ -621,6 +621,25 @@ class MessageOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ── Resumen de banda (panel del espacio de banda) — V4-F2, T-129 ──────────────
+class BandCounts(BaseModel):
+    """Contadores del Resumen de banda (canciones/setlists/colecciones activas)."""
+
+    songs: int = 0
+    setlists: int = 0
+    collections: int = 0
+
+
+class BandDashboard(BaseModel):
+    """Resumen de banda en UNA ida y vuelta: próximo evento, último mensaje, mi saldo y
+    contadores. Reusa EventSummary/MessageOut → sin schemas de datos nuevos."""
+
+    next_event: Optional[EventSummary] = None
+    last_message: Optional[MessageOut] = None
+    my_balance: Decimal = Decimal("0")
+    counts: BandCounts = Field(default_factory=BandCounts)
+
+
 # ── Inicio (dashboard agregado, contexto TÚ) — Fase 13, T-076 ─────────────────
 # Agregan datos de TODAS mis bandas (con etiqueta de banda). El aislamiento es inherente:
 # solo se consultan las bandas donde soy miembro activo.
