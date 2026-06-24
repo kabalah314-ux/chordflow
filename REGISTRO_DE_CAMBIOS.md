@@ -8,6 +8,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-122 — Ampliar `icons.js` + cargarlo en player/editor (2026-06-24) ✅
+
+**Qué:** todos los iconos SVG que necesita la V4 disponibles, y `bfIcon` en TODAS las páginas.
+
+**Por qué:** faltaban ~18 trazos (play, pause, stop, plus, minus, save, printer, mic, film, drum, timer,
+maximize, minimize, folder, arrow-left, edit, trash, x, note) y **`icons.js` no se cargaba en
+`index.html` (reproductor) ni `editor.html`** → sin él no se pueden sustituir los emoji por SVG
+(T-123/T-124).
+
+**Cómo/Verificación:** solo front, **aditivo** (aún no cambia nada visible).
+- `icons.js`: 19 entradas nuevas en `PATHS` (Lucide, MIT, viewBox 24×24).
+- `index.html` y `editor.html`: `<script src="icons.js">` (tras `auth.js`, antes de `app.js`/`editor.js`).
+- Test e2e `test_iconos.py`: `typeof bfIcon==='function'` en player y editor; `bfIcon('play'|'pause'|
+  'stop'|…)` contiene `<svg`. Doctor verde + e2e (iconos + regresión player/editor) **en verde**.
+  `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-121 — Helpers de identidad de banda a `util.js` (2026-06-24) ✅
 
 **Qué:** color e iniciales por banda como **fuente única** y reutilizable.
