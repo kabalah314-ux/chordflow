@@ -9,12 +9,12 @@
 > `python harness/run_checks.py` verde → registrar en `REGISTRO_DE_CAMBIOS.md` → desplegar (push a
 > `main`) → verificar en vivo. Cada tarea es **un commit/deploy** independiente y reversible.
 >
-> **Estado:** 🟢 **V4-F1…F6 desarrolladas (listas para ejecutar).** Las seis fases están desglosadas en
-> tareas **T-120…T-156**, con ficheros/líneas, test y verificación. Falta **ejecutarlas** con el bucle de
-> oro, en orden F1 → F6 (cada tarea = un commit/deploy reversible). Decisiones de diseño cerradas:
+> **Estado:** 🟢 **V4-F1 EJECUTADA** (T-120…T-128 + T-124b) — `run_checks` TODO VERDE (199 unit + 103 e2e)
+> y desplegada a producción. **F2…F6 desarrolladas y listas para ejecutar** (T-129…T-156). Orden de
+> ejecución restante: F2 → F6 (cada tarea = un commit/deploy reversible). Decisiones de diseño cerradas:
 > **Resumen de banda = Opción B** (dos columnas) · **Inicio = Opción A** (hero protagonista).
 >
-> _Implementación V2 — 2026-06-24 (F2–F6 desarrolladas)._
+> _Implementación V3 — 2026-06-24 (F1 ejecutada y desplegada; F2–F6 desarrolladas)._
 
 ---
 
