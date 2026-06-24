@@ -230,6 +230,19 @@ clicándose (reutiliza `test_band_space`).
 
 ---
 
+## Decisiones de diseño para F2 (elegidas con Oscar)
+
+- **Resumen de banda → Opción B (dos columnas).** Izquierda: próximo evento (con confirmados + "¿Vas?")
+  + último mensaje. Derecha: mi saldo + contadores (canciones/setlists/colecciones) + accesos rápidos.
+  *"Adecuarla con lo más útil"* → libertad para mejorarla (cuenta atrás, etc.).
+- **Inicio → PENDIENTE de elegir** (mostrados 3 bocetos A/B/C con la herramienta de mockups; recomendado
+  A "hero protagonista"). **Preguntar a Oscar la letra al retomar.**
+
+> **Retomar aquí (conversación nueva):** 1) confirmar layout del Inicio; 2) desarrollar F2 con esos
+> layouts (tarea a tarea); 3) seguir F3–F6 con el mismo detalle; 4) aplicar por fases con el bucle.
+
+---
+
 ## FASES V4-F2 … V4-F6 — (por desarrollar)
 
 > Se desarrollarán con el mismo nivel de detalle (tarea a tarea) a continuación. Resumen de lo que
