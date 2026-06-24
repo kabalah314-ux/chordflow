@@ -8,32 +8,32 @@
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>BandFlow — Setlists</title>
-    <link rel="stylesheet" href="design-system.css?v=bc124cda">
+    <!-- style.css: estilos del contenido (tarjetas, editor de setlist). design-system+shell: el shell. -->
     <link rel="stylesheet" href="style.css?v=e1d0c4c3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css?v=bc124cda">
+    <link rel="stylesheet" href="shell.css?v=56a6ffa1">
 </head>
 <body>
-    <div id="app">
-        <header class="glass-panel top-bar">
-            <div class="song-info">
-                <h1>🎵 Setlists</h1>
-                <h2>Tus listas de canciones en orden para cada bolo</h2>
-            </div>
-            <div class="global-controls" style="display:flex; align-items:center; gap:1rem;">
-                <a href="app.html" class="primary-btn square" title="Inicio" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
-                <a href="library.html" class="primary-btn square" title="Biblioteca" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
-                <button id="btn-new-setlist" class="primary-btn">➕ Nuevo setlist</button>
-            </div>
-        </header>
+    <div class="bf-shell">
+        <main class="bf-shell-main">
+            <div class="bf-page">
+                <div class="bf-row bf-row--between bf-wrap" style="margin-bottom:1.25rem;">
+                    <div>
+                        <h1 class="bf-h1">🎵 Setlists</h1>
+                        <p class="bf-muted">Tus listas de canciones en orden para cada bolo.</p>
+                    </div>
+                    <div class="bf-row" style="gap:.5rem;">
+                        <button id="btn-new-setlist" class="bf-btn bf-btn--primary">➕ Nuevo setlist</button>
+                    </div>
+                </div>
 
-        <main id="library-container">
-            <div class="library-content">
-                <!-- Vista lista de repertorios -->
+                <!-- Vista lista de setlists -->
                 <div id="setlist-grid" class="song-grid">
                     <p class="loading-text">Cargando setlists…</p>
                 </div>
 
-                <!-- Vista detalle de un repertorio (oculta por defecto) -->
+                <!-- Vista detalle de un setlist (oculta por defecto) -->
                 <div id="setlist-detail" style="display:none;"></div>
             </div>
         </main>
@@ -43,8 +43,9 @@
             integrity="sha384-EjUdIVmzWliPzdzhxZ9ZoO0etXLKWuUPUftAGxP6qH6Lm4oLwoLaJR0Ba4pIDiDL"
             crossorigin="anonymous"></script>
     <script src="auth.js?v=32867392"></script>
-    <script src="icons.js?v=30d08e1e"></script>
     <script src="util.js?v=e55091b0"></script>
+    <script src="icons.js?v=30d08e1e"></script>
+    <script src="shell.js?v=097a330c"></script>
     <script src="setlists.js?v=65614266"></script>
 </body>
 </html>

@@ -8,6 +8,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-125 — `setlists.html` dentro del shell (2026-06-24) ✅
+
+**Qué:** los Setlists usan el **lateral** como el resto de la app (antes: top-bar antigua con 🏠/📚).
+
+**Por qué:** coherencia estructural — `setlists.html` era la única página de "contenido propio" que aún
+vivía fuera del shell, con su barra superior y enlaces duplicados que ya da el lateral.
+
+**Cómo/Verificación:** solo `setlists.html` (la lógica de `setlists.js` no cambia).
+- `<body>` reescrito al patrón shell (espejo de `library.html`): `.bf-shell > main.bf-shell-main >
+  .bf-page`, cabecera `bf-row bf-row--between` con "🎵 Setlists" + botón `#btn-new-setlist`
+  ("➕ Nuevo setlist", ahora `bf-btn--primary`). Quitada la top-bar antigua y sus 🏠/📚 (los da el lateral).
+- `<head>`/scripts del shell: `shell.css`, `shell.js` (+ `icons.js`, ya en T-124). Se conservan los ids
+  `#setlist-grid`/`#setlist-detail`/`#btn-new-setlist` que usa `setlists.js`.
+- Test: `test_setlists_accesible_desde_la_biblioteca` ampliado (existe `.bf-shell` y `.bf-nav-item`);
+  `test_setlists_ui` (crear/ver/editar) sigue verde. Doctor verde + e2e **en verde**. `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-124 — Iconos SVG en el resto + "quitar ≠ borrar" (2026-06-24) ✅
 
 **Qué:** erradicar los emoji de **chrome** (botones de acción) de setlists/perfil/biblioteca/catálogo y

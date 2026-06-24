@@ -130,3 +130,7 @@ def test_setlists_accesible_desde_la_biblioteca(page, live_server, api):
     page.wait_for_selector("h1", timeout=8000)
     h1 = page.inner_text("h1")
     assert "Setlists" in h1 and "Repertorios" not in h1
+    # T-125: Setlists ya vive DENTRO del shell (lateral), coherente con la Biblioteca.
+    assert page.locator(".bf-shell").count() == 1
+    page.wait_for_selector(".bf-nav-item", timeout=8000)
+    assert page.locator(".bf-nav-item").count() >= 1
