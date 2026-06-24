@@ -72,7 +72,7 @@
             <div class="bf-card bf-stack" style="margin-bottom:1rem;">
                 <div class="bf-row bf-wrap" style="gap:.5rem;">
                     <select class="bf-select" id="cat-import-dest" style="max-width:240px;">${bandOpts}</select>
-                    <button class="bf-btn bf-btn--primary" id="cat-import">⬇ Importar</button>
+                    <button class="bf-btn bf-btn--primary" id="cat-import">${bfIcon('download')} Importar</button>
                 </div>
                 <p class="bf-faint" style="font-size:var(--bf-fs-xs);">Al importar obtienes la versión completa (con toda la letra) en tu espacio.</p>
             </div>
@@ -176,7 +176,7 @@
                 <div class="bf-row bf-wrap" style="gap:.5rem;">
                     <input class="bf-input" id="cat-search" placeholder="Busca por canción o artista…" style="max-width:340px;">
                     <button class="bf-btn bf-btn--primary" id="cat-search-btn">Buscar</button>
-                    <a class="bf-btn" href="editor.html">➕ ¿No la encuentras? Ponla aquí</a>
+                    <a class="bf-btn" href="editor.html">${bfIcon('plus')} ¿No la encuentras? Ponla aquí</a>
                 </div>
                 <ul class="setlist-list" id="cat-results"></ul>
             </div>`;

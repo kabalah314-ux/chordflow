@@ -69,20 +69,20 @@ function renderCollections() {
     const elC = document.getElementById('library-collections');
     if (!elC) return;
     const chips = collections.map(c =>
-        `<button class="lib-filter${currentCollection && currentCollection.id === c.id ? ' active' : ''}" data-collection="${escapeHtml(c.id)}">📁 ${escapeHtml(c.name)} <span style="opacity:.6;">${c.song_count}</span></button>`
+        `<button class="lib-filter${currentCollection && currentCollection.id === c.id ? ' active' : ''}" data-collection="${escapeHtml(c.id)}">${bfIcon('folder', { size: 14 })} ${escapeHtml(c.name)} <span style="opacity:.6;">${c.song_count}</span></button>`
     ).join('');
     const bar = currentCollection
         ? `<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.5rem;">
-               <span>📁 <strong>${escapeHtml(currentCollection.name)}</strong></span>
-               <button class="bf-btn bf-btn--sm" data-act="edit-col">✏️ Editar</button>
-               <button class="bf-btn bf-btn--sm bf-btn--danger" data-act="del-col">🗑️ Borrar</button>
+               <span>${bfIcon('folder', { size: 16 })} <strong>${escapeHtml(currentCollection.name)}</strong></span>
+               <button class="bf-btn bf-btn--sm" data-act="edit-col">${bfIcon('edit', { size: 16 })} Editar</button>
+               <button class="bf-btn bf-btn--sm bf-btn--danger" data-act="del-col">${bfIcon('trash', { size: 16 })} Borrar</button>
            </div>`
         : '';
     elC.innerHTML = `
         <div style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.25rem 0 1rem;">
             <span class="bf-muted" style="font-size:.85rem;">Colecciones:</span>
             ${chips || '<span style="opacity:.6;font-size:.85rem;">ninguna todavía</span>'}
-            <button class="lib-filter" data-act="new-col" style="border-style:dashed;">➕ Nueva colección</button>
+            <button class="lib-filter" data-act="new-col" style="border-style:dashed;">${bfIcon('plus', { size: 14 })} Nueva colección</button>
         </div>${bar}`;
     elC.querySelectorAll('[data-collection]').forEach(btn =>
         btn.addEventListener('click', () => openCollectionView(btn.dataset.collection)));
@@ -234,8 +234,8 @@ function renderGrid(songs, query) {
 
         card.innerHTML = `
             ${isPersonal ? `<div class="card-actions">
-                <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(song.title)}" title="Editar">✏️</button>
-                <button class="card-action-btn danger" data-act="delete" aria-label="Borrar ${escapeHtml(song.title)}" title="Borrar">🗑️</button>
+                <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(song.title)}" title="Editar">${bfIcon('edit')}</button>
+                <button class="card-action-btn danger" data-act="delete" aria-label="Borrar ${escapeHtml(song.title)}" title="Borrar">${bfIcon('trash')}</button>
             </div>` : ''}
             <div class="card-main">
                 <h3 class="card-title">${escapeHtml(song.title)}</h3>

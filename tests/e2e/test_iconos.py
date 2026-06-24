@@ -39,6 +39,30 @@ def test_player_iconos_svg(page, live_server, api):
     assert valor > 0.0, "el play con icono SVG no arrancó la reproducción"
 
 
+def test_setlists_iconos_y_quitar_no_es_borrar(page, live_server, api):
+    """T-124: en setlists los botones de acción muestran SVG; 'quitar de la lista' es NEUTRO
+    (sin clase danger) y solo el BORRADO real conserva el rojo (danger)."""
+    a = api.post("/songs/", json=sample_song_payload(title="SL Icon Song")).json()["id"]
+    api.post("/setlists/", json={"name": "SL Iconos", "items": [{"song_id": a, "note": None}]})
+
+    page.goto(live_server + "/static/setlists.html", wait_until="networkidle")
+    page.wait_for_selector('.song-card:has-text("SL Iconos")', timeout=8000)
+    card = page.locator('.song-card:has-text("SL Iconos")')
+
+    # Editar y Borrar: ambos con SVG. Borrar (del) conserva danger; editar es neutro.
+    assert card.locator('[data-act="edit"] svg').count() == 1
+    assert card.locator('[data-act="del"] svg').count() == 1
+    assert "danger" in (card.locator('[data-act="del"]').get_attribute("class") or "")
+    assert "danger" not in (card.locator('[data-act="edit"]').get_attribute("class") or "")
+
+    # En el editor, el botón "quitar" (data-rm) es neutro (sin danger) y con SVG.
+    card.locator('[data-act="edit"]').click()
+    page.wait_for_selector('#sl-selected [data-rm]', timeout=8000)
+    rm = page.locator('#sl-selected [data-rm]').first
+    assert rm.locator("svg").count() == 1
+    assert "danger" not in (rm.get_attribute("class") or ""), "quitar no debe ser danger (rojo)"
+
+
 def test_iconos_disponibles_en_player(page, live_server):
     page.goto(live_server + "/static/index.html", wait_until="networkidle")
     assert page.evaluate("typeof bfIcon") == "function"

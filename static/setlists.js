@@ -26,8 +26,8 @@ async function loadSetlists() {
         elGrid.innerHTML = setlists.map(sl => `
             <div class="song-card" data-id="${escapeHtml(sl.id)}">
                 <div class="card-actions">
-                    <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(sl.name)}" title="Editar">✏️</button>
-                    <button class="card-action-btn danger" data-act="del" aria-label="Borrar ${escapeHtml(sl.name)}" title="Borrar">🗑️</button>
+                    <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(sl.name)}" title="Editar">${bfIcon('edit')}</button>
+                    <button class="card-action-btn danger" data-act="del" aria-label="Borrar ${escapeHtml(sl.name)}" title="Borrar">${bfIcon('trash')}</button>
                 </div>
                 <div class="card-main" data-act="open" style="cursor:pointer;">
                     <h3 class="card-title">${escapeHtml(sl.name)}</h3>
@@ -101,7 +101,7 @@ async function openEditor(setlistId = null) {
                     <ul id="sl-selected" class="setlist-list"></ul>
                 </div>
             </div>
-            <div class="form-actions"><button id="sl-save" class="primary-btn">${editing ? '💾 Guardar cambios' : '💾 Crear setlist'}</button></div>
+            <div class="form-actions"><button id="sl-save" class="primary-btn">${bfIcon('save')} ${editing ? 'Guardar cambios' : 'Crear setlist'}</button></div>
         </div>`;
     document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); loadSetlists(); });
 
@@ -111,7 +111,7 @@ async function openEditor(setlistId = null) {
     function renderAvail() {
         elAvail.innerHTML = songs.map(s => `
             <li><button class="setlist-item-btn" data-id="${escapeHtml(s.id)}" ${selected.includes(s.id) ? 'disabled' : ''}>
-                ➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('')
+                ${bfIcon('plus')} ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('')
             || '<li><small>No tienes canciones todavía.</small></li>';
         elAvail.querySelectorAll('button[data-id]').forEach(b =>
             b.addEventListener('click', () => { selected.push(b.dataset.id); renderAll(); }));
@@ -121,7 +121,7 @@ async function openEditor(setlistId = null) {
             <li class="sl-sel-row"><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
                 <input type="text" class="search-box sl-note" data-note="${escapeHtml(id)}" maxlength="255"
                        placeholder="Apunte (capo 2, acústica…)" value="${escapeHtml(notes[id] || '')}">
-                <button class="setlist-item-btn danger" data-rm="${escapeHtml(id)}" aria-label="Quitar">✕</button></li>`).join('')
+                <button class="setlist-item-btn" data-rm="${escapeHtml(id)}" aria-label="Quitar" title="Quitar">${bfIcon('x')}</button></li>`).join('')
             || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
         elSel.querySelectorAll('.sl-note').forEach(inp =>
             inp.addEventListener('input', () => { notes[inp.dataset.note] = inp.value; }));
@@ -164,9 +164,9 @@ async function openSetlist(id) {
     const rows = sl.items.map((it, i) => `
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}" data-pos="${i}">
             <span class="sl-num">${i + 1}</span>
-            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small>${it.note ? `<br><small class="sl-note-view">📝 ${escapeHtml(it.note)}</small>` : ''}</span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
-            <button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar del setlist" title="Quitar">✕</button>
+            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small>${it.note ? `<br><small class="sl-note-view">${bfIcon('note', { size: 14 })} ${escapeHtml(it.note)}</small>` : ''}</span>
+            <button class="setlist-item-btn" data-act="play" title="Reproducir">${bfIcon('play')}</button>
+            <button class="setlist-item-btn" data-act="rm" aria-label="Quitar del setlist" title="Quitar">${bfIcon('x')}</button>
         </li>`).join('') || '<li><small>Este setlist está vacío. Edítalo para añadir canciones.</small></li>';
 
     elDetail.innerHTML = `
@@ -174,7 +174,7 @@ async function openSetlist(id) {
             <a href="#" id="sl-back" class="back-link">← Volver</a>
             <div class="setlist-detail-head">
                 <h3>${escapeHtml(sl.name)}</h3>
-                ${sl.items.length ? `<button id="sl-playall" class="primary-btn">▶ Reproducir todo</button>` : ''}
+                ${sl.items.length ? `<button id="sl-playall" class="primary-btn">${bfIcon('play')} Reproducir todo</button>` : ''}
             </div>
             <ul class="setlist-list">${rows}</ul>
         </div>`;

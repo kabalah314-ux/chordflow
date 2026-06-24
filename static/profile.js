@@ -20,7 +20,7 @@ async function init() {
         <input type="text" id="pf-name" class="search-box" placeholder="Cómo te ven tus compañeros" value="${escapeHtml(p.display_name || '')}">
         <label class="field-label" for="pf-inst">Instrumentos <small>(separados por comas)</small></label>
         <input type="text" id="pf-inst" class="search-box" placeholder="guitarra, voz, teclado" value="${escapeHtml(instruments)}">
-        <div class="form-actions"><button id="pf-save" class="primary-btn">💾 Guardar perfil</button></div>`;
+        <div class="form-actions"><button id="pf-save" class="primary-btn">${bfIcon('save')} Guardar perfil</button></div>`;
     document.getElementById('pf-save').addEventListener('click', save);
 }
 

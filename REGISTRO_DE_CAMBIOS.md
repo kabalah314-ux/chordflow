@@ -8,6 +8,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-124 — Iconos SVG en el resto + "quitar ≠ borrar" (2026-06-24) ✅
+
+**Qué:** erradicar los emoji de **chrome** (botones de acción) de setlists/perfil/biblioteca/catálogo y
+diferenciar **quitar** (neutro) de **borrar** (rojo).
+
+**Cómo/Verificación:** solo front.
+- `setlists.js`: ✏️→`edit`, 🗑️→`trash` (borrar setlist, **danger**), 💾→`save`, ➕→`plus`, ▶→`play`,
+  📝→`note`. **Quitar ≠ borrar:** los botones "quitar de la lista" (`data-rm`, `data-act="rm"`) pasan de
+  `setlist-item-btn danger` (rojo) a **neutro** con icono `x`. `setlists.html`: carga `icons.js`.
+- `library.js`: ✏️→`edit`, 🗑️→`trash` (borrar, **danger**), ➕→`plus`, 📁→`folder` (chips/colección).
+- `profile.js`: 💾→`save`. `catalogo.js`: ⬇→`download` (importar), ➕→`plus`.
+- **Se deja como CONTENIDO** (no chrome): los badges de fuente `👤 Personal`/`🎸 Banda` (los e2e leen su
+  texto, `test_library`), los emoji en `<option>` (no admiten SVG), los contadores `⬇ N`, el 🌍 del título
+  "Explorar" y los `empty-icon` (se rehacen en T-142).
+- Test e2e `test_setlists_iconos_y_quitar_no_es_borrar` (botones con `<svg>`; `data-rm` sin `danger`;
+  borrar conserva `danger`). Doctor verde + e2e (iconos + setlists + library + catálogo) **en verde**.
+  Selectores intactos (`data-act`/`data-rm`/`data-collection`/ids). `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-123 — Iconos SVG en el reproductor (la joya) (2026-06-24) ✅
 
 **Qué:** los 11 emoji del reproductor pasan a SVG de `icons.js`, con tooltips y sin tocar el motor.
