@@ -8,6 +8,19 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-128 — Pestañas de banda: fade + scroll-snap en móvil (2026-06-24) ✅
+
+**Qué:** que en móvil se intuya que hay más pestañas a la derecha del espacio de banda.
+
+**Cómo/Verificación:** `design-system.css` + 1 línea en `band.js`.
+- `.bf-tabs`: `scroll-snap-type: x proximity`; `.bf-tab`: `scroll-snap-align: start`; y en
+  `@media (max-width:768px)` un `mask-image` (+ `-webkit-`) con **fade en ambos bordes** (16px).
+- `band.js`: al activar una pestaña, `tab.scrollIntoView({ inline:'nearest', block:'nearest' })`.
+- Test e2e `test_pestanas_fade_movil` (viewport 390px: `.bf-tabs` con `mask-image` ≠ none, desborda,
+  y las pestañas siguen clicándose). Doctor verde + e2e (pestañas + band_space + responsive) **en verde**.
+
+---
+
 ## 🎨 V4-F1 · T-127 — Hover/foco/transiciones unificados (2026-06-24) ✅
 
 **Qué:** que todo lo clicable lo parezca y se sienta fluido (hover, foco por teclado, transición).

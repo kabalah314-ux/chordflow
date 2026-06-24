@@ -465,6 +465,8 @@
             const key = tab.dataset.tab;
             tabs.forEach(t => t.setAttribute('aria-selected', t === tab ? 'true' : 'false'));
             panels.forEach(p => { p.hidden = p.dataset.panel !== key; });
+            // En móvil, traer la pestaña activa a la vista (T-128).
+            tab.scrollIntoView({ inline: 'nearest', block: 'nearest' });
             loadTab(key, ctx);
         }));
     }
