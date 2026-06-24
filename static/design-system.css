@@ -275,7 +275,10 @@
   background: var(--bf-surface-2);
   border: 1px solid var(--bf-border);
   border-radius: var(--bf-radius);
+  transition: background var(--bf-transition), border-color var(--bf-transition);
 }
+/* Hover: afordancia de "clicable" (T-127). */
+.bf-list-item:hover { background: var(--bf-surface-3); border-color: var(--bf-border-strong); }
 
 /* ── nav-item (elemento del lateral) ───────────────────────────────────── */
 .bf-nav-item {

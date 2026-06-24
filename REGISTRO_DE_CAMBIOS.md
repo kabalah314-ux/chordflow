@@ -8,6 +8,25 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-127 — Hover/foco/transiciones unificados (2026-06-24) ✅
+
+**Qué:** que todo lo clicable lo parezca y se sienta fluido (hover, foco por teclado, transición).
+
+**Por qué:** el sistema `bf-*` ya tenía hover/foco/transición, pero faltaban: el hover de
+`.bf-list-item`, el **`:focus-visible`** en lo legacy (`style.css`) y la animación de modales.
+
+**Cómo/Verificación:** solo CSS.
+- `design-system.css`: `.bf-list-item` gana `transition` + `:hover` (fondo `--bf-surface-3`, borde
+  `--bf-border-strong`).
+- `style.css` (legacy): bloque **`:focus-visible`** accesible reutilizado (`.song-card`, `.setlist-song`,
+  `.icon-btn`, `.card-action-btn`, `.setlist-item-btn`, `.primary-btn`, `.secondary-btn`, `.lib-filter`
+  → `outline: 2px solid var(--accent-color)`); hover+transición en `.setlist-song` (antes estática);
+  **aparición suave de modales** (`modal-fade`/`modal-pop`) con guard `prefers-reduced-motion`.
+- Test e2e `test_bf_list_item_hover_cambia_fondo` (`tests/e2e/test_interaccion.py`). Doctor verde + e2e
+  (interacción + home + shell) **en verde**. `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-124b — Iconos SVG + "quitar ≠ borrar" en `bands.js` (espacio de banda) (2026-06-24) ✅
 
 **Qué:** cerrar el barrido de iconos en el **espacio de banda** (`bands.js`), que T-124 había dejado

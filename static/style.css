@@ -1126,6 +1126,31 @@ button {
 .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
 .primary-btn.danger { background: #ff6b6b; color: #1a1a1a; }
 
+/* ─── T-127: interacción y "vida" en lo legacy (el sistema bf-* ya lo tiene) ─── */
+/* Foco accesible unificado: navegación por teclado VISIBLE en todo lo clicable legacy. */
+.song-card:focus-visible,
+.setlist-song:focus-visible,
+.icon-btn:focus-visible,
+.card-action-btn:focus-visible,
+.setlist-item-btn:focus-visible,
+.primary-btn:focus-visible,
+.secondary-btn:focus-visible,
+.lib-filter:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+/* Hover de filas de lista (antes estáticas). */
+.setlist-song { transition: background 160ms ease; }
+.setlist-song:hover { background: rgba(255, 255, 255, 0.05); }
+/* Aparición suave de modales, respetando reduced-motion. */
+@keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-pop  { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+.modal-overlay { animation: modal-fade 150ms ease; }
+.modal-card    { animation: modal-pop 180ms ease; }
+@media (prefers-reduced-motion: reduce) {
+    .modal-overlay, .modal-card { animation: none; }
+}
+
 /* ─── Importar desde URL con IA (T-045) ───────────────────────────────────── */
 .import-row { display: flex; gap: 0.6rem; align-items: center; }
 .import-row input[type="url"] { flex: 1; }
