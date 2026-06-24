@@ -40,6 +40,7 @@
   --bf-primary-contrast: #0d0d10;
   --bf-on-primary:     #ffffff;
   --bf-accent-weak:    rgba(255, 107, 74, 0.16);   /* fondo translúcido del acento */
+  --bf-accent-glow:    rgba(255, 107, 74, 0.45);   /* glow/sombra del acento (T-120) */
 
   /* Estados semánticos (+ variante translúcida -weak para fondos) */
   --bf-success: #2dd4a7;  --bf-success-weak: rgba(45, 212, 167, 0.15);
@@ -110,6 +111,7 @@
   --bf-primary:       #ee5530;
   --bf-primary-hover: #d6471f;
   --bf-accent-weak:   rgba(238, 85, 48, 0.12);
+  --bf-accent-glow:   rgba(238, 85, 48, 0.40);
   /* Estados en claro */
   --bf-success: #11a37a;  --bf-success-weak: rgba(17, 163, 122, 0.13);
   --bf-danger:  #e0364a;  --bf-danger-weak:  rgba(224, 54, 74, 0.12);

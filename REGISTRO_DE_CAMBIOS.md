@@ -8,6 +8,35 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-120 — Un solo acento (+ modo claro legacy gratis) (2026-06-24) ✅
+
+**Qué:** primera tarea de la **V4 (experiencia + diseño)**. Se unifica el color de acento en UNA sola
+fuente de verdad y, de regalo, **el modo claro empieza a funcionar en las páginas legacy**.
+
+**Por qué:** había **dos** corales duplicados —`--accent-color:#ff6b4a` en `style.css` (player, editor,
+biblioteca, setlists, perfil, login) y `--bf-primary` en `design-system.css` (resto)— más docenas de
+`#ff6b4a`/`rgba(255,107,74,…)` hardcodeados y fallbacks muertos verde-menta (`#6ee7b7`). Recolorar la app
+obligaba a tocar dos sitios y el tema claro no llegaba al legacy.
+
+**Cómo/Verificación:** solo front/CSS.
+- `style.css:11-14` → los tokens de acento **heredan** de `--bf-*` con fallback coral:
+  `--accent-color: var(--bf-primary, #ff6b4a)` (+ hover/chord/chord-active-bg). Como `.primary-btn`,
+  `.icon-btn`, acordes, etc. ya usan `var(--accent-color)`, **todos** recoloran y adaptan al claro por
+  herencia.
+- **Prerrequisito:** se carga `design-system.css` en las 4 páginas legacy que no lo tenían
+  (`index.html`, `editor.html`, `setlists.html`, `login.html`) para que `var(--bf-primary)` resuelva.
+- Token reutilizable `--bf-accent-glow` en `design-system.css` (`:root` + tema claro); usado en el pulso
+  del `song-progress__dot`. Borrados los fallbacks muertos `#6ee7b7` (`style.css:653,1094`).
+- Test e2e `test_acento_unificado_y_tema` (`tests/e2e/test_acento_tema.py`): en `setlists.html` (legacy),
+  el acento resuelve al coral (`rgb(255,107,74)`) y al togglear `data-theme="light"` **cambia**
+  (`rgb(238,85,48)`). `cachebust` al día. **Doctor verde (10/10)** + e2e del cambio y de regresión
+  (player/setlists/editor) **en verde**.
+
+**Nota:** los glows decorativos restantes (varias alfas) se dejan como literales coral —siguen
+funcionando— para no alterar intensidades; tokenización fina diferida. Riesgo bajo (solo color).
+
+---
+
 ## 🧭 Pulido de coherencia UX — el recorrido del músico (2026-06-24) ✅
 
 **Qué:** auditoría poniéndome en la piel de un músico que abre la app por primera vez, + arreglo de los

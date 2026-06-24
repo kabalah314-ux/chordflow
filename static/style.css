@@ -8,10 +8,13 @@
     --bg-panel: rgba(22, 22, 27, 0.72);
     --text-primary: #ededf1;
     --text-secondary: #9a9aa6;
-    --accent-color: #ff6b4a;
-    --accent-hover: #ff7d5f;
-    --chord-color: #ff6b4a;
-    --chord-active-bg: rgba(255, 107, 74, 0.2);
+    /* Acento: una sola fuente de verdad (T-120). Heredan de los tokens bf-* del
+       design-system (que las páginas legacy ya cargan), con fallback coral por si
+       alguna no lo tuviera. Efecto regalo: el modo claro funciona aquí también. */
+    --accent-color: var(--bf-primary, #ff6b4a);
+    --accent-hover: var(--bf-primary-hover, #ff7d5f);
+    --chord-color: var(--bf-primary, #ff6b4a);
+    --chord-active-bg: var(--bf-accent-weak, rgba(255, 107, 74, 0.2));
     --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
     --font-score: 'IBM Plex Mono', ui-monospace, monospace;
 }
@@ -353,7 +356,7 @@ button {
 /* Teleprompter espectacular (T-086, V3-F1): el acorde activo "respira" con un glow
    coral pulsante. Solo CSS; la lógica del motor (ids/BPM) no se toca. */
 @keyframes chord-pulse {
-    0%, 100% { box-shadow: 0 0 10px rgba(255, 107, 74, 0.45); }
+    0%, 100% { box-shadow: 0 0 10px var(--bf-accent-glow, rgba(255, 107, 74, 0.45)); }
     50%      { box-shadow: 0 0 24px 4px rgba(255, 107, 74, 0.7); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -650,7 +653,7 @@ button {
 .setlist-editor { max-width: 900px; margin: 0 auto; }
 .setlist-editor h3 { margin: 0.5rem 0 1rem; font-size: 1.3rem; }
 .setlist-editor h4 { margin: 0 0 0.5rem; color: var(--text-secondary, #aaa); font-size: 0.9rem; }
-.back-link { color: var(--accent-color, #6ee7b7); text-decoration: none; font-size: 0.9rem; }
+.back-link { color: var(--accent-color); text-decoration: none; font-size: 0.9rem; }
 .setlist-detail-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .setlist-cols { display: flex; gap: 1.5rem; margin-top: 1rem; }
 .setlist-cols > div { flex: 1; min-width: 0; }
@@ -1091,7 +1094,7 @@ button {
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast-error { border-left: 4px solid #ff6b6b; }
 .toast-success { border-left: 4px solid #51cf66; }
-.toast-info { border-left: 4px solid var(--accent-color, #6ee7b7); }
+.toast-info { border-left: 4px solid var(--accent-color); }
 
 .modal-overlay {
     position: fixed;
