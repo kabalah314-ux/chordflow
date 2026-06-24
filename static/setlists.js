@@ -1,5 +1,5 @@
 /**
- * setlists.js — Repertorios: crear, ver, reproducir en orden y borrar (Fase 5).
+ * setlists.js — Setlists: crear, ver, reproducir en orden y borrar (Fase 5).
  */
 const elGrid = document.getElementById('setlist-grid');
 const elDetail = document.getElementById('setlist-detail');
@@ -10,7 +10,7 @@ elBtnNew.addEventListener('click', () => openEditor());
 function showGrid() { elDetail.style.display = 'none'; elGrid.style.display = ''; }
 function showDetail() { elGrid.style.display = 'none'; elDetail.style.display = ''; }
 
-// ─── Lista de repertorios ─────────────────────────────────────────────────────
+// ─── Lista de setlists ─────────────────────────────────────────────────────
 async function loadSetlists() {
     showGrid();
     try {
@@ -19,7 +19,7 @@ async function loadSetlists() {
         const setlists = await res.json();
         if (!setlists.length) {
             elGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🎼</div>
-                <h3>Aún no tienes repertorios</h3>
+                <h3>Aún no tienes setlists</h3>
                 <p>Crea uno para agrupar canciones y tocarlas en orden en tus bolos.</p></div>`;
             return;
         }
@@ -48,21 +48,21 @@ async function loadSetlists() {
             });
         });
     } catch (e) {
-        elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudieron cargar los repertorios.</p>`;
+        elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudieron cargar los setlists.</p>`;
     }
 }
 
 async function deleteSetlist(id, name) {
-    const ok = await confirmModal(`¿Borrar el repertorio "${name}"?`, { okText: 'Borrar' });
+    const ok = await confirmModal(`¿Borrar el setlist "${name}"?`, { okText: 'Borrar' });
     if (!ok) return;
     try {
         const res = await apiFetch(`/setlists/${id}`, { method: 'DELETE' });
         if (!res.ok && res.status !== 204) throw new Error('http');
         loadSetlists();
-    } catch (e) { toast('No se pudo borrar el repertorio.', 'error'); }
+    } catch (e) { toast('No se pudo borrar el setlist.', 'error'); }
 }
 
-// ─── Crear / editar repertorio ──────────────────────────────────────────────────
+// ─── Crear / editar setlist ──────────────────────────────────────────────────
 // Sin `setlistId` crea (POST); con `setlistId` edita (PATCH), precargando nombre + canciones + notas.
 async function openEditor(setlistId = null) {
     const editing = !!setlistId;
@@ -89,19 +89,19 @@ async function openEditor(setlistId = null) {
     elDetail.innerHTML = `
         <div class="setlist-editor">
             <a href="#" id="sl-back" class="back-link">← Volver</a>
-            <h3>${editing ? 'Editar repertorio' : 'Nuevo repertorio'}</h3>
-            <input type="text" id="sl-name" class="search-box" placeholder="Nombre del repertorio (p. ej. Bolo sábado)" value="${editing ? escapeHtml(existing.name) : ''}">
+            <h3>${editing ? 'Editar setlist' : 'Nuevo setlist'}</h3>
+            <input type="text" id="sl-name" class="search-box" placeholder="Nombre del setlist (p. ej. Bolo sábado)" value="${editing ? escapeHtml(existing.name) : ''}">
             <div class="setlist-cols">
                 <div>
                     <h4>Canciones disponibles</h4>
                     <ul id="sl-available" class="setlist-list"></ul>
                 </div>
                 <div>
-                    <h4>En el repertorio (en orden)</h4>
+                    <h4>En el setlist (en orden)</h4>
                     <ul id="sl-selected" class="setlist-list"></ul>
                 </div>
             </div>
-            <div class="form-actions"><button id="sl-save" class="primary-btn">${editing ? '💾 Guardar cambios' : '💾 Crear repertorio'}</button></div>
+            <div class="form-actions"><button id="sl-save" class="primary-btn">${editing ? '💾 Guardar cambios' : '💾 Crear setlist'}</button></div>
         </div>`;
     document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); loadSetlists(); });
 
@@ -135,7 +135,7 @@ async function openEditor(setlistId = null) {
 
     document.getElementById('sl-save').addEventListener('click', async () => {
         const name = document.getElementById('sl-name').value.trim();
-        if (!name) { toast('Pon un nombre al repertorio.', 'error'); return; }
+        if (!name) { toast('Pon un nombre al setlist.', 'error'); return; }
         try {
             const items = selected.map(id => ({ song_id: id, note: (notes[id] || '').trim() || null }));
             const res = await apiFetch(
@@ -144,13 +144,13 @@ async function openEditor(setlistId = null) {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ name, items }) });
             if (!res.ok) throw new Error('http');
-            toast(editing ? 'Repertorio actualizado.' : 'Repertorio creado.', 'success');
+            toast(editing ? 'Setlist actualizado.' : 'Setlist creado.', 'success');
             loadSetlists();
-        } catch (e) { toast(editing ? 'No se pudo actualizar el repertorio.' : 'No se pudo crear el repertorio.', 'error'); }
+        } catch (e) { toast(editing ? 'No se pudo actualizar el setlist.' : 'No se pudo crear el setlist.', 'error'); }
     });
 }
 
-// ─── Ver / reproducir un repertorio ───────────────────────────────────────────
+// ─── Ver / reproducir un setlist ───────────────────────────────────────────
 async function openSetlist(id) {
     showDetail();
     elDetail.innerHTML = `<p class="loading-text">Cargando…</p>`;
@@ -159,15 +159,15 @@ async function openSetlist(id) {
         const res = await apiFetch(`/setlists/${id}`);
         if (!res.ok) throw new Error('http');
         sl = await res.json();
-    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ No se pudo abrir el repertorio.</p>'; return; }
+    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ No se pudo abrir el setlist.</p>'; return; }
 
     const rows = sl.items.map((it, i) => `
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}" data-pos="${i}">
             <span class="sl-num">${i + 1}</span>
             <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small>${it.note ? `<br><small class="sl-note-view">📝 ${escapeHtml(it.note)}</small>` : ''}</span>
             <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
-            <button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">✕</button>
-        </li>`).join('') || '<li><small>Este repertorio está vacío. Edítalo para añadir canciones.</small></li>';
+            <button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar del setlist" title="Quitar">✕</button>
+        </li>`).join('') || '<li><small>Este setlist está vacío. Edítalo para añadir canciones.</small></li>';
 
     elDetail.innerHTML = `
         <div class="setlist-editor">

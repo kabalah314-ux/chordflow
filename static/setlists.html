@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0d0d10">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>BandFlow — Repertorios</title>
+    <title>BandFlow — Setlists</title>
     <link rel="stylesheet" href="style.css?v=d2ca1610">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
@@ -15,13 +15,13 @@
     <div id="app">
         <header class="glass-panel top-bar">
             <div class="song-info">
-                <h1>🎼 Repertorios</h1>
-                <h2>Agrupa canciones y tócalas en orden</h2>
+                <h1>🎵 Setlists</h1>
+                <h2>Tus listas de canciones en orden para cada bolo</h2>
             </div>
             <div class="global-controls" style="display:flex; align-items:center; gap:1rem;">
                 <a href="app.html" class="primary-btn square" title="Inicio" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
                 <a href="library.html" class="primary-btn square" title="Biblioteca" style="text-decoration:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
-                <button id="btn-new-setlist" class="primary-btn">➕ Nuevo repertorio</button>
+                <button id="btn-new-setlist" class="primary-btn">➕ Nuevo setlist</button>
             </div>
         </header>
 
@@ -29,7 +29,7 @@
             <div class="library-content">
                 <!-- Vista lista de repertorios -->
                 <div id="setlist-grid" class="song-grid">
-                    <p class="loading-text">Cargando repertorios…</p>
+                    <p class="loading-text">Cargando setlists…</p>
                 </div>
 
                 <!-- Vista detalle de un repertorio (oculta por defecto) -->
@@ -43,6 +43,6 @@
             crossorigin="anonymous"></script>
     <script src="auth.js?v=32867392"></script>
     <script src="util.js?v=c0e1df98"></script>
-    <script src="setlists.js?v=e3defcdf"></script>
+    <script src="setlists.js?v=faa6569b"></script>
 </body>
 </html>

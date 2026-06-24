@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
+from tests.conftest import wipe_bands
+
 pytestmark = pytest.mark.e2e
 
 
@@ -26,3 +28,18 @@ def test_home_muestra_eventos_y_mensajes(page, live_server, api):
     assert "Concierto Inicio" in page.inner_text("#home-events")
     assert "Banda Inicio" in page.inner_text("#home-events")   # etiqueta de banda
     assert "Mensaje de inicio E2E" in page.inner_text("#home-messages")
+
+
+def test_inicio_onboarding_sin_bandas(page, live_server, api):
+    """Un músico recién llegado (sin bandas) ve los 'primeros pasos' en el Inicio (no un panel vacío
+    y band-céntrico). Antes el Inicio solo hablaba de bandas que aún no tienes."""
+    wipe_bands(api)
+    page.goto(live_server + "/static/app.html", wait_until="networkidle")
+    page.wait_for_selector("#home-onboarding", timeout=8000)
+    txt = page.inner_text("#home")
+    assert "bienvenida" in txt.lower()
+    assert "Crea o únete a una banda" in txt
+    # Acciones claras hacia la biblioteca, las bandas y el catálogo
+    assert page.locator('#home-onboarding a[href="library.html"]').count() == 1
+    assert page.locator('#home-onboarding a[href="bands.html"]').count() == 1
+    assert page.locator('#home-onboarding a[href="biblioteca-global.html"]').count() == 1

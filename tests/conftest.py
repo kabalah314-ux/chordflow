@@ -179,3 +179,10 @@ def wipe_songs(api):
     songs = api.get("/songs/").json()
     for s in songs:
         api.delete(f"/songs/{s['id']}")
+
+
+def wipe_bands(api):
+    """Borra todas las bandas del usuario de prueba (para tests de estado 'sin bandas'). En los tests
+    el usuario crea sus propias bandas, así que es admin de todas → DELETE (soft delete) basta."""
+    for b in api.get("/bands/").json():
+        api.delete(f"/bands/{b['id']}")

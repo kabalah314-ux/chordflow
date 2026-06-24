@@ -118,3 +118,15 @@ def test_coleccion_personal_en_la_biblioteca(page, live_server, api):
         "!document.querySelector('#song-grid').innerText.includes('Tema Fuera Col')", timeout=8000)
     grid = page.inner_text("#song-grid")
     assert "Tema Acustico Col" in grid and "Tema Fuera Col" not in grid
+
+
+def test_setlists_accesible_desde_la_biblioteca(page, live_server, api):
+    """Los Setlists personales se alcanzan desde la Biblioteca (antes la página estaba huérfana) y la
+    página ya se llama 'Setlists', no 'Repertorios'."""
+    page.goto(live_server + "/static/library.html", wait_until="networkidle")
+    page.wait_for_selector('a[href="setlists.html"]', timeout=8000)
+    page.click('a[href="setlists.html"]')
+    page.wait_for_url("**/setlists.html", timeout=8000)
+    page.wait_for_selector("h1", timeout=8000)
+    h1 = page.inner_text("h1")
+    assert "Setlists" in h1 and "Repertorios" not in h1

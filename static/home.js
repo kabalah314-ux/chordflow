@@ -55,18 +55,43 @@
     async function load() {
         renderSkeleton();
         if (!(await requireAuth())) return;
-        let data, name = '';
+        let data, name = '', bands = [];
         try {
-            const [rd, rp] = await Promise.all([apiFetch('/me/dashboard'), apiFetch('/profile/me')]);
+            const [rd, rp, rb] = await Promise.all([
+                apiFetch('/me/dashboard'), apiFetch('/profile/me'), apiFetch('/bands/')]);
             if (!rd.ok) throw new Error('http');
             data = await rd.json();
             if (rp.ok) { const me = await rp.json(); name = (me.display_name || '').trim(); }
+            if (rb.ok) bands = await rb.json();
         } catch (e) {
             el.innerHTML = '<p class="bf-muted">⚠️ No se pudo cargar tu inicio. Inténtalo de nuevo.</p>';
             return;
         }
         const events = data.upcoming_events || [];
         const msgs = data.recent_messages || [];
+
+        // Primeros pasos: si aún no estás en ninguna banda, guía al recién llegado con acciones
+        // claras en vez de un panel vacío y band-céntrico que no sabe qué hacer.
+        if (!bands.length) {
+            const step = (href, icon, title, hint) =>
+                `<a class="bf-list-item" href="${href}" style="text-decoration:none;color:inherit;">
+                    <span class="bf-grow">${icon} <strong>${title}</strong>
+                        <span class="bf-faint">— ${hint}</span></span>
+                    <span class="bf-faint">→</span></a>`;
+            el.innerHTML = `
+                <div class="bf-stack">
+                    <div>
+                        <h1 class="bf-h1">¡Te damos la bienvenida${name ? ', ' + escapeHtml(name) : ''}! 👋</h1>
+                        <p class="bf-muted">BandFlow es tu cuartel general como músico. Empieza por aquí:</p>
+                    </div>
+                    <div class="bf-card"><div class="bf-list" id="home-onboarding">
+                        ${step('library.html', '🎸', 'Añade tu primera canción', 'pega acordes o impórtalos de internet')}
+                        ${step('bands.html', '👥', 'Crea o únete a una banda', 'repertorio, agenda y cuentas compartidos')}
+                        ${step('biblioteca-global.html', '🌍', 'Explora la biblioteca global', 'miles de partituras de la comunidad')}
+                    </div></div>
+                </div>`;
+            return;
+        }
         el.innerHTML = `
             <div class="bf-stack">
                 <div>

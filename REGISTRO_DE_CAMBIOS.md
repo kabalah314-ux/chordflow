@@ -8,6 +8,35 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧭 Pulido de coherencia UX — el recorrido del músico (2026-06-24) ✅
+
+**Qué:** auditoría poniéndome en la piel de un músico que abre la app por primera vez, + arreglo de los
+dos puntos de fricción más graves que encontré:
+1. **Setlists personales rescatados.** `setlists.html` estaba **huérfana** (ningún enlace de la app
+   llevaba a ella desde que se introdujo el shell en Fase 13) y **mal titulada "Repertorios"** aunque
+   contiene setlists (orden de bolo) → chocaba con los "Repertorios" de banda y las "Colecciones".
+   Ahora: renombrada a **"Setlists"** en toda la página (título, cabecera, botones, textos y
+   `setlists.js`) y **accesible desde la Biblioteca** (botón "🎵 Setlists" en la cabecera).
+2. **Onboarding del Inicio.** Un usuario sin bandas aterrizaba en un panel band-céntrico vacío sin saber
+   qué hacer. Ahora, si no estás en ninguna banda, el Inicio muestra **"Primeros pasos"** con 3 acciones
+   claras (añadir canción → Biblioteca · crear/unirse a banda → Bandas · explorar → catálogo global).
+
+**Por qué:** que la app tenga más sentido y sea más fácil de usar desde el minuto uno: ninguna función
+debería ser inalcanzable, ningún término debería significar dos cosas, y el recién llegado debe saber
+qué hacer.
+
+**Cómo/Verificación:** solo frontend.
+- `setlists.html`/`setlists.js`: "Repertorios/repertorio" → "Setlists/setlist" (IDs/clases ya eran
+  `setlist-*`, rename de texto seguro). `library.html`: botón "🎵 Setlists" → `setlists.html`.
+- `home.js`: carga `/bands`; si está vacío, pinta el panel de primeros pasos (`#home-onboarding`).
+- Tests: e2e `test_setlists_accesible_desde_la_biblioteca` + `test_inicio_onboarding_sin_bandas`
+  (+ helper `wipe_bands` en conftest). `cachebust` al día. run_checks **TODO VERDE**.
+
+**Diferido (coherencia menor):** unificar "Repertorios" (banda) vs "Colecciones" (personal) para el
+mismo concepto de grupo temático; reskin de `setlists.html` al shell (hoy usa la top-bar antigua).
+
+---
+
 ## 📁 Colecciones PERSONALES en la Biblioteca (2026-06-24) ✅
 
 **Qué:** la Biblioteca (`library.html`) gana **colecciones personales**: grupos temáticos de TUS
