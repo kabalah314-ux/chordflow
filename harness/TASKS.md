@@ -274,7 +274,8 @@ Una vez desplegado, opciones de roadmap (todas aditivas, en `ROADMAP.md`):
 
 1. 🟢 **Pulir Fase 14 (Booking):** editar una sala desde la UI (hoy solo crear/borrar); resumen de caché
    por gira/temporada; `EmailTemplate` (T-113) **bloqueado** hasta tener infra de envío (Supabase/email).
-2. 🟢 **Pulir Repertorios/Setlists:** reordenar canciones dentro de una colección; colecciones personales.
+2. 🟢 **Pulir Repertorios/Setlists:** reordenar canciones dentro de una colección. (✅ colecciones
+   personales hechas el 2026-06-24, en la Biblioteca.)
 3. 🟠 **Arrancar una fase V3 grande:** V3-F6 (sala de ensayo sincronizada, Supabase Realtime) o V3-F8 (EPK
    + página pública). Necesitan **config de Oscar** (Storage/Realtime) → ver `T-099` (Storage BLOQUEADO).
 4. ✉️ **T-047** emails de auth con marca (Supabase Email Templates) — pequeño, mejora percepción.

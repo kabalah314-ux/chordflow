@@ -11,6 +11,7 @@ from .api.band_setlists_router import router as band_setlists_router
 from .api.band_songs_router import router as band_songs_router
 from .api.bands_router import router as bands_router
 from .api.catalog_router import router as catalog_router
+from .api.collections_router import router as collections_router
 from .api.events_router import router as events_router
 from .api.finance_router import router as finance_router
 from .api.import_router import router as import_router
@@ -93,6 +94,7 @@ app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 app.include_router(songs_router)
 app.include_router(import_router)
 app.include_router(setlists_router)
+app.include_router(collections_router)
 app.include_router(bands_router)
 app.include_router(invites_router)
 app.include_router(profile_router)

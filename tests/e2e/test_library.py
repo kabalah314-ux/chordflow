@@ -90,3 +90,31 @@ def test_biblioteca_unificada_filtra_por_banda(page, live_server, api):
     page.wait_for_function(
         "!document.querySelector('#song-grid').innerText.includes('Tema De Banda Uni')", timeout=8000)
     assert "Tema Personal Uni" in page.inner_text("#song-grid")
+
+
+def test_coleccion_personal_en_la_biblioteca(page, live_server, api):
+    """Crear una colección personal desde la Biblioteca, verla como chip y filtrar el grid por ella."""
+    wipe_songs(api)
+    api.post("/songs/", json=sample_song_payload(title="Tema Acustico Col"))
+    api.post("/songs/", json=sample_song_payload(title="Tema Fuera Col"))
+
+    page.goto(live_server + "/static/library.html", wait_until="networkidle")
+    page.wait_for_selector('#library-collections [data-act="new-col"]', timeout=8000)
+
+    # Crear la colección con SOLO una de las dos canciones
+    page.click('#library-collections [data-act="new-col"]')
+    page.wait_for_selector("#col-name", timeout=8000)
+    page.fill("#col-name", "Acustico E2E")
+    page.check('#col-picker label:has-text("Tema Acustico Col") input')
+    page.click('.modal-overlay [data-act="ok"]')
+
+    # Aparece el chip de la colección
+    chip = '#library-collections [data-collection]:has-text("Acustico E2E")'
+    page.wait_for_selector(chip, timeout=8000)
+
+    # Al activarla, el grid muestra solo su canción (no la que quedó fuera)
+    page.click(chip)
+    page.wait_for_function(
+        "!document.querySelector('#song-grid').innerText.includes('Tema Fuera Col')", timeout=8000)
+    grid = page.inner_text("#song-grid")
+    assert "Tema Acustico Col" in grid and "Tema Fuera Col" not in grid

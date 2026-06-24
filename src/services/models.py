@@ -207,15 +207,18 @@ class SetlistItem(Base):
 
 
 class SongCollection(Base):
-    """Colección temática de canciones dentro del repertorio de UNA banda (T-114). Solo de banda
-    (band_id obligatorio); no hay colecciones personales en v1. Soft-delete (como Setlist)."""
+    """Colección temática de canciones (T-114). Como `Setlist`: `band_id` con valor = colección de esa
+    banda (canciones del repertorio); `band_id` NULL + `owner_id` = colección PERSONAL del usuario
+    (sus propias canciones). Soft-delete (como Setlist)."""
 
     __tablename__ = "song_collections"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     band_id = Column(
-        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    # owner_id: dueño de la colección PERSONAL (band_id NULL). En las de banda queda NULL.
+    owner_id = Column(String(36), nullable=True, index=True)
     name = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

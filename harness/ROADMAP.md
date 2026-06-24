@@ -484,8 +484,13 @@
       `test_api_collections` (8) + e2e `test_crear_repertorio_coleccion_y_anadir_cancion`. VERDE.
       ↳ **Pulido (2026-06-21):** **crear un setlist desde una colección** (botón "🎵 Crear setlist con
       estas" en el detalle → genera un setlist con esas canciones; cierra el bucle Repertorio→Setlist).
-      e2e `test_crear_setlist_desde_una_coleccion`. **Diferido:** reordenar dentro de la colección;
-      colecciones personales. ✅ Migración `5481a965f5fb` aplicada a Postgres prod (deploy 2026-06-23).
+      e2e `test_crear_setlist_desde_una_coleccion`. ✅ Migración `5481a965f5fb` aplicada a Postgres prod
+      (deploy 2026-06-23).
+      ↳ **Colecciones PERSONALES (2026-06-24):** llevadas a la **Biblioteca** (decisión de Oscar).
+      `SongCollection` con `band_id` nullable + `owner_id` (migración `b6434fe1096d`, aplicada a prod);
+      `collections_router` (`/collections`, owner-scoped, ajeno→404); UI en `library.js` (fila de
+      colecciones + modal crear/editar + filtrar el grid). unit `test_api_collections_personal` + e2e
+      `test_coleccion_personal_en_la_biblioteca`. **Diferido:** reordenar dentro de la colección.
 
 ---
 

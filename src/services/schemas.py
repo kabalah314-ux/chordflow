@@ -231,7 +231,7 @@ class CollectionItemOut(BaseModel):
 class CollectionResponse(BaseModel):
     id: str
     name: str
-    band_id: str
+    band_id: Optional[str] = None  # None = colección personal; con valor = de una banda
     created_at: datetime
     updated_at: datetime
     items: List[CollectionItemOut] = []
@@ -242,7 +242,7 @@ class CollectionResponse(BaseModel):
 class CollectionSummary(BaseModel):
     id: str
     name: str
-    band_id: str
+    band_id: Optional[str] = None  # None = colección personal
     song_count: int = 0
     updated_at: datetime
 

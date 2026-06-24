@@ -8,6 +8,30 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📁 Colecciones PERSONALES en la Biblioteca (2026-06-24) ✅
+
+**Qué:** la Biblioteca (`library.html`) gana **colecciones personales**: grupos temáticos de TUS
+canciones ("Acústico", "Bodas"…), el equivalente personal de los Repertorios de banda. Una fila de
+"Colecciones" con chips + "➕ Nueva colección"; al activar un chip el grid muestra solo sus canciones;
+se puede editar (✏️ nombre + selección de canciones) y borrar. Cierra el diferido de T-114. **Ubicación
+decidida con Oscar:** dentro de Biblioteca (el único hub personal de canciones en el lateral).
+
+**Por qué:** organizar el repertorio personal por tema, igual que ya podían las bandas.
+
+**Cómo/Verificación:** aditivo.
+- **Modelo:** `SongCollection` pasa a soportar lo personal como `Setlist` (`band_id` nullable +
+  `owner_id`). Migración `b6434fe1096d` (batch: add `owner_id` + `band_id` nullable + índice),
+  `alembic check` limpio. ✅ Aplicada a Postgres prod (2026-06-24).
+- **Backend:** `collections_router.py` (`/collections` CRUD, owner-scoped; las canciones solo MÍAS y
+  personales —`owner_id` + `band_id` NULL—; ajeno → 404). Schemas `Collection*` con `band_id` opcional.
+  Registrado en `main.py`.
+- **Frontend:** `library.js` carga `/collections`, pinta la fila de colecciones, modal crear/editar
+  (nombre + checkboxes de mis canciones), vista filtrada por colección y borrado (nombres escapados).
+- **Tests:** unit `test_api_collections_personal` (CRUD, solo-mis-canciones, aislamiento ajeno→404)
+  + e2e `test_coleccion_personal_en_la_biblioteca`. `cachebust` al día. run_checks **TODO VERDE**.
+
+---
+
 ## 📅 Confirmados de asistencia en la agenda AGREGADA (2026-06-24) ✅
 
 **Qué:** la agenda agregada del contexto TÚ (`agenda.html`, `GET /me/events`) muestra ahora, bajo cada
