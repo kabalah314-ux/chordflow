@@ -8,7 +8,35 @@ que `bfIcon` es una función en ambas páginas y que devuelve un `<svg>` para lo
 
 import pytest
 
+from tests.conftest import sample_song_payload, wipe_songs
+
 pytestmark = pytest.mark.e2e
+
+
+def test_player_iconos_svg(page, live_server, api):
+    """T-123: los botones de control del reproductor muestran SVG (no emoji), conservan su
+    aria-label y el play/pausa sigue arrancando la reproducción (el motor no se toca)."""
+    wipe_songs(api)
+    sid = api.post("/songs/", json=sample_song_payload(title="Iconos SVG")).json()["id"]
+    page.goto(live_server + f"/static/index.html?songId={sid}", wait_until="networkidle")
+    page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
+
+    # Cada botón de control contiene exactamente un <svg> (ya no un emoji).
+    for sel in ["#btn-stop", "#btn-metronome", "#btn-stage", "#btn-key-save",
+                "#btn-print", "#btn-tuner", "#btn-play-pause"]:
+        assert page.locator(f"{sel} svg").count() == 1, f"{sel} no tiene SVG"
+
+    # aria-label preservado (accesibilidad, regresión T-021).
+    assert page.get_attribute("#btn-stop", "aria-label") == "Detener"
+    assert page.get_attribute("#btn-key-save", "aria-label") == "Guardar tono"
+
+    # El play/pausa sigue arrancando la reproducción.
+    page.locator("#score-container").click()
+    page.click("#btn-play-pause")
+    page.wait_for_timeout(700)
+    page.click("#btn-play-pause")
+    valor = float(page.inner_text("#current-beat-display").split(":")[1].strip())
+    assert valor > 0.0, "el play con icono SVG no arrancó la reproducción"
 
 
 def test_iconos_disponibles_en_player(page, live_server):

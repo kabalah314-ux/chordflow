@@ -8,6 +8,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-123 — Iconos SVG en el reproductor (la joya) (2026-06-24) ✅
+
+**Qué:** los 11 emoji del reproductor pasan a SVG de `icons.js`, con tooltips y sin tocar el motor.
+
+**Por qué:** subir el nivel visual de la pantalla estrella (la joya) sin riesgo: el contrato DOM de
+`sync_engine.js`/`score_render.js` no cambia.
+
+**Cómo/Verificación:** solo `static/app.js` (lógica), `index.html` ya cargaba `icons.js` (T-122).
+- `paintPlayerIcons()` en `app.js` repinta al cargar el `innerHTML` de cada botón con `bfIcon`:
+  💾→`save` · 🎤→`mic` · 🎬→`film` · 🖨️→`printer` · 🥁→`drum` · ⏹→`stop` · ⛶→`maximize`, y la
+  navegación 🏠→`home` · 📚→`library` · ➕→`plus`. `+/−/♭/♯` se quedan como glifo.
+- `btn-play-pause`: `engine.subscribe` ahora pinta `bfIcon('pause') + ' Pause'` / `bfIcon('play') +
+  ' Play'` (`app.js:75/78`); estado inicial pintado en `paintPlayerIcons`.
+- Se conservan **todos** los `aria-label`/`title` e ids (accesibilidad; ningún e2e dependía del emoji).
+- Test e2e `test_player_iconos_svg` (`tests/e2e/test_iconos.py`): cada botón de control tiene `<svg>`,
+  `aria-label` intacto y el play sigue arrancando la reproducción. Doctor verde + e2e (iconos + player
+  completo) **en verde**. `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-122 — Ampliar `icons.js` + cargarlo en player/editor (2026-06-24) ✅
 
 **Qué:** todos los iconos SVG que necesita la V4 disponibles, y `bfIcon` en TODAS las páginas.

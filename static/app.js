@@ -13,6 +13,34 @@ const elProgressFill = document.getElementById("song-progress-fill");
 const elProgressDot = document.getElementById("song-progress-dot");
 const elSection = document.getElementById("current-section-display");
 
+// Iconos SVG del reproductor (T-123): sustituyen los emoji estáticos del HTML por SVG de
+// icons.js (`bfIcon` global, cargado antes que app.js). Se conservan los aria-label/title de cada
+// botón (accesibilidad) y los ids; el motor (sync_engine.js) NO se toca. El play/pause se repinta
+// además en engine.subscribe. Los glifos +/−/♭/♯ se quedan como texto (se leen mejor).
+function paintPlayerIcons() {
+    if (typeof bfIcon !== 'function') return;   // defensivo: sin icons.js, deja los emoji
+    const byId = (id, name, label) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = bfIcon(name) + (label ? ' ' + label : '');
+    };
+    const byHref = (href, name) => {
+        const el = document.querySelector(`.global-controls a[href="${href}"]`);
+        if (el) el.innerHTML = bfIcon(name);
+    };
+    byId('btn-key-save', 'save');
+    byId('btn-tuner', 'mic');
+    byId('btn-reference', 'film');
+    byId('btn-print', 'printer');
+    byId('btn-metronome', 'drum');
+    byId('btn-stop', 'stop');
+    byId('btn-stage', 'maximize');
+    byId('btn-play-pause', 'play', 'Play');     // estado inicial; subscribe lo actualiza al reproducir
+    byHref('app.html', 'home');
+    byHref('library.html', 'library');
+    byHref('editor.html', 'plus');
+}
+paintPlayerIcons();
+
 // Instanciar el motor
 const engine = new SyncEngine();
 
@@ -72,10 +100,10 @@ engine.subscribe((state) => {
     }
 
     if (state.status === "playing") {
-        elBtnPlayPause.innerHTML = "⏸ Pause";
+        elBtnPlayPause.innerHTML = bfIcon('pause') + " Pause";
         elBtnPlayPause.style.background = "var(--accent-hover)";
     } else {
-        elBtnPlayPause.innerHTML = "▶ Play";
+        elBtnPlayPause.innerHTML = bfIcon('play') + " Play";
         elBtnPlayPause.style.background = "var(--accent-color)";
     }
 
