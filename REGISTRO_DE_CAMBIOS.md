@@ -8,6 +8,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-126 — Terminología: pestaña "Repertorio" + sección "Colecciones" (2026-06-24) ✅
+
+**Qué:** quitar la ambigüedad de "Repertorios". La **pestaña** (que muestra el pool + las colecciones)
+se llama **"Repertorio"**; los grupos temáticos, **"Colecciones"**.
+
+**Por qué:** "Repertorios" (pestaña de banda) chocaba con los Setlists y con las "Colecciones" personales
+de la Biblioteca; el mismo concepto (grupo temático) tenía dos nombres.
+
+**Cómo/Verificación:** SOLO texto visible (no se tocan `key:'repertorio'`/`data-tab` ni los ids
+`b-collections`/`b-new-collection`, ni el pool "Todas las canciones"/`#b-repertoire`).
+- `band.js`: label de pestaña `Repertorios`→`Repertorio`; `<h3>` `Repertorios`→`Colecciones`; botón
+  `➕ Nuevo repertorio`→`➕ Nueva colección`.
+- `bands.js`: 14 cadenas de colección (toasts, prompts, back-link "← Volver a Colecciones",
+  aria-labels, vacíos) `repertorio→colección`. **Se conserva** "Añadir del repertorio" (eso es el pool).
+- Test e2e `test_terminologia_repertorio_colecciones` (pestaña "Repertorio", sección "Colecciones",
+  botón "Nueva colección", `data-tab="repertorio"` intacto, pool "Todas las canciones" intacto).
+  `test_bands_ui` (crear colección) sigue verde. Doctor verde + e2e **en verde**. `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-125 — `setlists.html` dentro del shell (2026-06-24) ✅
 
 **Qué:** los Setlists usan el **lateral** como el resto de la app (antes: top-bar antigua con 🏠/📚).

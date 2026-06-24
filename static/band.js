@@ -20,7 +20,7 @@
     const TABS = [
         { key: 'resumen',    label: 'Resumen' },
         { key: 'miembros',   label: 'Miembros' },
-        { key: 'repertorio', label: 'Repertorios' },
+        { key: 'repertorio', label: 'Repertorio' },
         { key: 'setlists',   label: 'Setlists' },
         { key: 'agenda',     label: 'Agenda' },
         { key: 'finanzas',   label: 'Finanzas' },
@@ -122,8 +122,8 @@
                     <!-- Repertorios: colecciones temáticas de canciones (T-114) -->
                     <div id="b-collections-wrap">
                         <div class="bf-row bf-row--between" style="margin-bottom:.3rem;">
-                            <h3 class="bf-h3">Repertorios</h3>
-                            ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-collection">➕ Nuevo repertorio</button>`}
+                            <h3 class="bf-h3">Colecciones</h3>
+                            ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-collection">➕ Nueva colección</button>`}
                         </div>
                         <p class="bf-muted" style="margin:.1rem 0 .6rem;font-size:.82rem;">Agrupa tus canciones por tema (acústico, cañero, bodas…). Para el orden de un bolo, usa los <b>Setlists</b>.</p>
                         <ul class="setlist-list" id="b-collections"><li><small>Cargando…</small></li></ul>

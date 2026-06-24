@@ -948,29 +948,29 @@ async function loadCollections(bandId, canEdit) {
         const res = await apiFetch(`/bands/${bandId}/collections/`);
         if (!res.ok) throw new Error('http');
         cols = await res.json();
-    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar los repertorios.</small></li>'; return; }
+    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar las colecciones.</small></li>'; return; }
     if (!cols.length) {
-        el.innerHTML = '<li><small>Aún no hay repertorios.' + (canEdit ? ' Crea uno para agrupar canciones por tema.' : '') + '</small></li>';
+        el.innerHTML = '<li><small>Aún no hay colecciones.' + (canEdit ? ' Crea una para agrupar canciones por tema.' : '') + '</small></li>';
         return;
     }
     el.innerHTML = cols.map(c => `
         <li class="setlist-song" data-id="${escapeHtml(c.id)}">
             <span class="sl-title">📁 ${escapeHtml(c.name)} <small>${c.song_count} ${c.song_count === 1 ? 'canción' : 'canciones'}</small></span>
             <button class="setlist-item-btn" data-act="open" title="Abrir">Abrir</button>
-            ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar repertorio" title="Borrar">🗑️</button>` : ''}
+            ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar colección" title="Borrar">🗑️</button>` : ''}
         </li>`).join('');
     el.querySelectorAll('.setlist-song').forEach(li => {
         const cid = li.dataset.id;
         li.querySelector('[data-act="open"]').addEventListener('click', () => openCollection(bandId, cid, canEdit));
         const del = li.querySelector('[data-act="del"]');
         if (del) del.addEventListener('click', async () => {
-            const ok = await confirmModal('¿Borrar este repertorio? (Las canciones siguen en la banda.)', { okText: 'Borrar' });
+            const ok = await confirmModal('¿Borrar esta colección? (Las canciones siguen en la banda.)', { okText: 'Borrar' });
             if (!ok) return;
             try {
                 const res = await apiFetch(`/bands/${bandId}/collections/${cid}`, { method: 'DELETE' });
                 if (!res.ok && res.status !== 204) throw new Error('http');
                 loadCollections(bandId, canEdit);
-            } catch (e) { toast('No se pudo borrar el repertorio.', 'error'); }
+            } catch (e) { toast('No se pudo borrar la colección.', 'error'); }
         });
     });
 }
@@ -988,7 +988,7 @@ async function openCollection(bandId, collectionId, canEdit) {
         if (!rc.ok) throw new Error('http');
         col = await rc.json();
         repertoire = rr.ok ? await rr.json() : [];
-    } catch (e) { toast('No se pudo abrir el repertorio.', 'error'); return; }
+    } catch (e) { toast('No se pudo abrir la colección.', 'error'); return; }
     if (wrap) wrap.hidden = true;
     detail.hidden = false;
 
@@ -1003,12 +1003,12 @@ async function openCollection(bandId, collectionId, canEdit) {
                 body: JSON.stringify({ song_ids: ids }) });
             if (!res.ok) throw new Error('http');
             openCollection(bandId, collectionId, canEdit);   // re-renderiza con el nuevo estado
-        } catch (e) { toast('No se pudo actualizar el repertorio.', 'error'); }
+        } catch (e) { toast('No se pudo actualizar la colección.', 'error'); }
     }
 
     detail.innerHTML = `
         <div class="setlist-editor">
-            <a href="#" id="col-back" class="back-link">← Volver a Repertorios</a>
+            <a href="#" id="col-back" class="back-link">← Volver a Colecciones</a>
             <div class="bf-row bf-row--between" style="align-items:baseline;gap:.6rem;flex-wrap:wrap;">
                 <h3>📁 ${escapeHtml(col.name)} <small class="bf-muted">· ${currentIds.length} ${currentIds.length === 1 ? 'canción' : 'canciones'}</small></h3>
                 ${canEdit && currentIds.length ? `<button class="bf-btn bf-btn--sm" id="col-to-setlist" title="Crear un setlist (orden de bolo) con estas canciones">🎵 Crear setlist con estas</button>` : ''}
@@ -1031,7 +1031,7 @@ async function openCollection(bandId, collectionId, canEdit) {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name.trim(), song_ids: currentIds }) });
             if (!res.ok) throw new Error('http');
-            toast('Setlist creado desde el repertorio. Lo tienes en la pestaña Setlists.', 'success');
+            toast('Setlist creado desde la colección. Lo tienes en la pestaña Setlists.', 'success');
         } catch (e) { toast('No se pudo crear el setlist.', 'error'); }
     });
 
@@ -1040,8 +1040,8 @@ async function openCollection(bandId, collectionId, canEdit) {
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}">
             <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small></span>
             <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
-            ${canEdit ? `<button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar de este repertorio" title="Quitar">✕</button>` : ''}
-        </li>`).join('') || '<li><small>Repertorio vacío.' + (canEdit ? ' Añade canciones abajo.' : '') + '</small></li>';
+            ${canEdit ? `<button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar de esta colección" title="Quitar">✕</button>` : ''}
+        </li>`).join('') || '<li><small>Colección vacía.' + (canEdit ? ' Añade canciones abajo.' : '') + '</small></li>';
     elSongs.querySelectorAll('.setlist-song').forEach(li => {
         const sid = li.dataset.id;
         li.querySelector('[data-act="play"]').addEventListener('click', () => {
@@ -1062,7 +1062,7 @@ async function openCollection(bandId, collectionId, canEdit) {
 
 async function newCollection(bandId, opts = {}) {
     const onDone = opts.onDone || (() => {});
-    const name = await promptModal('¿Cómo se llama el repertorio?',
+    const name = await promptModal('¿Cómo se llama la colección?',
         { okText: 'Crear', placeholder: 'Ej: Acústico, Cañero, Bodas…' });
     if (!name || !name.trim()) return;
     try {
@@ -1070,9 +1070,9 @@ async function newCollection(bandId, opts = {}) {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: name.trim(), song_ids: [] }) });
         if (!res.ok) throw new Error('http');
-        toast('Repertorio creado. Ábrelo para añadir canciones.', 'success');
+        toast('Colección creada. Ábrela para añadir canciones.', 'success');
         onDone();
-    } catch (e) { toast('No se pudo crear el repertorio.', 'error'); }
+    } catch (e) { toast('No se pudo crear la colección.', 'error'); }
 }
 
 // Copiar una canción personal al repertorio de la banda (decisión §7: por copia).
