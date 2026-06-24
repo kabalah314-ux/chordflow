@@ -98,7 +98,7 @@ function renderMessageList(el, msgs, bandId, iAmAdmin, reload) {
                 ${m.edited_at ? '<small>(editado)</small>' : ''}</span>
             <span class="msg-actions">
                 ${iAmAdmin ? `<button class="setlist-item-btn" data-act="pin" title="${m.is_pinned ? 'Desfijar' : 'Fijar como nota'}">${m.is_pinned ? '📌' : '📍'}</button>` : ''}
-                ${(m.is_mine || iAmAdmin) ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar" title="Borrar">🗑️</button>` : ''}
+                ${(m.is_mine || iAmAdmin) ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar" title="Borrar">${bfIcon('trash')}</button>` : ''}
             </span>
         </li>`).join('')}</ul>`;
 
@@ -249,12 +249,12 @@ async function loadFinance(bandId, iAmAdmin) {
         <li class="setlist-song" data-id="${escapeHtml(t.id)}">
             <span class="sl-title">${t.type === 'income' ? '➕' : '➖'} ${escapeHtml(t.description || (t.type === 'income' ? 'Ingreso' : 'Gasto'))}
                 <small>${fmtMoney(t.amount)}${t.category ? ' · ' + escapeHtml(t.category) : ''}${t.event_id && evById[t.event_id] ? ' · 🎵 ' + escapeHtml(evById[t.event_id].title) : ''}</small></span>
-            ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar movimiento" title="Borrar">🗑️</button>` : ''}
+            ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar movimiento" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`).join('') || '<li><small>Sin movimientos todavía.</small></li>';
 
     el.innerHTML = `
         <h5>Saldos</h5><ul class="setlist-list">${balRows}</ul>
-        <h5>Movimientos ${txs.length ? `<button id="b-export-csv" class="setlist-item-btn" title="Exportar movimientos a CSV">⬇️ CSV</button>` : ''}</h5>
+        <h5>Movimientos ${txs.length ? `<button id="b-export-csv" class="setlist-item-btn" title="Exportar movimientos a CSV">${bfIcon('download', { size: 14 })} CSV</button>` : ''}</h5>
         <ul class="setlist-list" id="b-tx-list">${txRows}</ul>`;
 
     const exportBtn = el.querySelector('#b-export-csv');   // disponible a cualquier miembro que ve las finanzas
@@ -514,9 +514,9 @@ async function loadAgenda(bandId, iAmAdmin) {
                 <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${attendeesLine(e)}${bookingLine(e)}</span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
-                <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">💬</button>
+                <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">${bfIcon('chat')}</button>
                 ${iAmAdmin ? `<select class="ev-status-sel" data-ev="${escapeHtml(e.id)}" title="Estado de booking">${EVENT_STATUS_ORDER.map(s => `<option value="${s}" ${e.status === s ? 'selected' : ''}>${EVENT_STATUS_LABEL[s]}</option>`).join('')}</select>` : ''}
-                ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">🗑️</button>` : ''}
+                ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">${bfIcon('trash')}</button>` : ''}
             </span>
         </li>`;
     el.innerHTML = `
@@ -672,8 +672,8 @@ async function loadVenues(bandId, isAdmin) {
         const meta = [v.city, v.capacity ? v.capacity + ' pers.' : '', v.contact].filter(Boolean).map(escapeHtml).join(' · ');
         return `<li class="setlist-song" data-id="${escapeHtml(v.id)}">
             <span class="sl-title">📍 ${escapeHtml(v.name)}${meta ? ` <small>${meta}</small>` : ''}</span>
-            ${isAdmin ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar sala" title="Editar">✏️</button>
-            <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar sala" title="Borrar">🗑️</button>` : ''}
+            ${isAdmin ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar sala" title="Editar">${bfIcon('edit')}</button>
+            <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar sala" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`;
     }).join('');
     el.querySelectorAll('.setlist-song').forEach(li => {
@@ -766,9 +766,9 @@ async function loadBandSetlists(bandId, canEdit) {
     el.innerHTML = setlists.map(sl => `
         <li class="setlist-song" data-id="${escapeHtml(sl.id)}">
             <span class="sl-title">${escapeHtml(sl.name)} <small>${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}</small></span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir en orden">▶</button>
-            ${canEdit ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar setlist" title="Editar">✏️</button>
-            <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">🗑️</button>` : ''}
+            <button class="setlist-item-btn" data-act="play" title="Reproducir en orden">${bfIcon('play')}</button>
+            ${canEdit ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar setlist" title="Editar">${bfIcon('edit')}</button>
+            <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`).join('');
     el.querySelectorAll('.setlist-song').forEach(li => {
         const sid = li.dataset.id;
@@ -858,14 +858,14 @@ async function newBandSetlist(bandId, opts = {}) {
     function render() {
         elAvail.innerHTML = repertoire.map(s => `
             <li><button class="setlist-item-btn" data-id="${escapeHtml(s.id)}" ${selected.includes(s.id) ? 'disabled' : ''}>
-                ➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('');
+                ${bfIcon('plus')} ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('');
         elAvail.querySelectorAll('button[data-id]').forEach(b =>
             b.addEventListener('click', () => { selected.push(b.dataset.id); render(); }));
         elSel.innerHTML = selected.map((id, i) => `
             <li class="sl-sel-row"><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
                 <input type="text" class="search-box sl-note" data-note="${escapeHtml(id)}" maxlength="255"
                        placeholder="Apunte (capo 2, acústica…)" value="${escapeHtml(notes[id] || '')}">
-                <button class="setlist-item-btn danger" data-rm="${escapeHtml(id)}" aria-label="Quitar">✕</button></li>`).join('')
+                <button class="setlist-item-btn" data-rm="${escapeHtml(id)}" aria-label="Quitar" title="Quitar">${bfIcon('x')}</button></li>`).join('')
             || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
         elSel.querySelectorAll('.sl-note').forEach(inp =>
             inp.addEventListener('input', () => { notes[inp.dataset.note] = inp.value; }));
@@ -911,8 +911,8 @@ async function loadRepertoire(bandId, canEdit) {
     elRep.innerHTML = songs.map(s => `
         <li class="setlist-song" data-id="${escapeHtml(s.id)}">
             <span class="sl-title">${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
-            ${canEdit ? `<button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">✕</button>` : ''}
+            <button class="setlist-item-btn" data-act="play" title="Reproducir">${bfIcon('play')}</button>
+            ${canEdit ? `<button class="setlist-item-btn" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">${bfIcon('x')}</button>` : ''}
         </li>`).join('');
     elRep.querySelectorAll('.setlist-song').forEach(li => {
         const sid = li.dataset.id;
@@ -957,7 +957,7 @@ async function loadCollections(bandId, canEdit) {
         <li class="setlist-song" data-id="${escapeHtml(c.id)}">
             <span class="sl-title">📁 ${escapeHtml(c.name)} <small>${c.song_count} ${c.song_count === 1 ? 'canción' : 'canciones'}</small></span>
             <button class="setlist-item-btn" data-act="open" title="Abrir">Abrir</button>
-            ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar colección" title="Borrar">🗑️</button>` : ''}
+            ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar colección" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`).join('');
     el.querySelectorAll('.setlist-song').forEach(li => {
         const cid = li.dataset.id;
@@ -1039,8 +1039,8 @@ async function openCollection(bandId, collectionId, canEdit) {
     elSongs.innerHTML = col.items.map(it => `
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}">
             <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small></span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir">▶</button>
-            ${canEdit ? `<button class="setlist-item-btn danger" data-act="rm" aria-label="Quitar de esta colección" title="Quitar">✕</button>` : ''}
+            <button class="setlist-item-btn" data-act="play" title="Reproducir">${bfIcon('play')}</button>
+            ${canEdit ? `<button class="setlist-item-btn" data-act="rm" aria-label="Quitar de esta colección" title="Quitar">${bfIcon('x')}</button>` : ''}
         </li>`).join('') || '<li><small>Colección vacía.' + (canEdit ? ' Añade canciones abajo.' : '') + '</small></li>';
     elSongs.querySelectorAll('.setlist-song').forEach(li => {
         const sid = li.dataset.id;
@@ -1054,7 +1054,7 @@ async function openCollection(bandId, collectionId, canEdit) {
     const elAvail = document.getElementById('col-available');
     if (elAvail) {
         elAvail.innerHTML = available.map(s => `
-            <li><button class="setlist-item-btn" data-add="${escapeHtml(s.id)}">➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('');
+            <li><button class="setlist-item-btn" data-add="${escapeHtml(s.id)}">${bfIcon('plus')} ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('');
         elAvail.querySelectorAll('button[data-add]').forEach(b =>
             b.addEventListener('click', () => patchSongs([...currentIds, b.dataset.add])));
     }
@@ -1092,7 +1092,7 @@ async function copyFromPersonal(bandId) {
             <p class="modal-msg">Elige una canción para copiar al repertorio:</p>
             <ul class="setlist-list" id="copy-list">${songs.map(s => `
                 <li><button class="setlist-item-btn" data-id="${escapeHtml(s.id)}">
-                    ➕ ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('')}</ul>
+                    ${bfIcon('plus')} ${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></button></li>`).join('')}</ul>
             <div class="modal-actions"><button class="secondary-btn" data-act="cancel">Cerrar</button></div>
         </div>`;
     const close = () => overlay.remove();

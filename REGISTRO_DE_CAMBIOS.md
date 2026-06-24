@@ -8,6 +8,26 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-124b — Iconos SVG + "quitar ≠ borrar" en `bands.js` (espacio de banda) (2026-06-24) ✅
+
+**Qué:** cerrar el barrido de iconos en el **espacio de banda** (`bands.js`), que T-124 había dejado
+fuera, para que F1 quede coherente de verdad en la pantalla más usada.
+
+**Cómo/Verificación:** solo `static/bands.js`.
+- Botones de acción → `bfIcon`: borrar mensaje/movimiento/evento/sala/setlist/colección (🗑️→`trash`,
+  conservan `danger`), editar sala/setlist (✏️→`edit`), reproducir (▶→`play`), hilo de evento (💬→`chat`),
+  exportar CSV (⬇️→`download`), añadir (➕→`plus`).
+- **Quitar ≠ borrar:** los tres "quitar" (setlist de banda `data-rm`, repertorio y colección
+  `data-act="rm"`) pasan de `danger` (rojo) a **neutro** con icono `x`.
+- **Contenido (se deja):** indicadores de tipo/estado (`EVENT_ICON` 🎼🎤, `ATT_LABEL` ✅🤔❌, ➕/➖ de
+  importes, 📌 de mensaje fijado, 📍 de sala, 🎵 de evento), `<option>` (no admiten SVG) y el 💬 del
+  título del modal de hilo.
+- Verificación: regresión amplia del espacio de banda **en verde** (`test_bands_ui`, `test_chat`,
+  `test_agenda`, `test_finanzas`, `test_band_space` — usan selectores `data-act`/`data-rm`/ids).
+  Doctor verde. `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-126 — Terminología: pestaña "Repertorio" + sección "Colecciones" (2026-06-24) ✅
 
 **Qué:** quitar la ambigüedad de "Repertorios". La **pestaña** (que muestra el pool + las colecciones)
