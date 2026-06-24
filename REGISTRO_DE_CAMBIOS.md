@@ -8,6 +8,29 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V4-F1 · T-121 — Helpers de identidad de banda a `util.js` (2026-06-24) ✅
+
+**Qué:** color e iniciales por banda como **fuente única** y reutilizable.
+
+**Por qué:** `hueFromId` estaba **encerrado** en el IIFE de `band.js` (no reutilizable) e `initialsFrom`
+**duplicado** (`band.js` + `shell.js`), con dos fallbacks distintos para nombre vacío (`'🎸'` vs `null`).
+Las tarjetas, avatares y etiquetas de banda de la V4 (Inicio, "Mis bandas", Resumen) necesitan el mismo
+color/iniciales en todas partes.
+
+**Cómo/Verificación:** solo front.
+- `util.js`: nuevos globales `bandHue(id)` (hash char-code → 0-359), `bandColor(id,{s=55,l=48})` →
+  `hsl(...)` (por defecto 55% 48%, idéntico al banner → sin regresión), `initialsFrom(name)` (1-2
+  iniciales o `null` si no hay nombre; el llamante decide el fallback).
+- `band.js`: quita el `hueFromId`/`initialsFrom` locales; usa `bandColor(bandId)` y
+  `initialsFrom(band.name) || '🎸'`.
+- `shell.js`: quita su `initialsFrom` local (usa el global; `util.js` se carga antes que `shell.js` en
+  todas las páginas del shell — verificado).
+- Test e2e `test_helpers_identidad_en_util` (`tests/e2e/test_js_logic.py`): los 3 son funciones globales,
+  `bandColor` determinista, formato HSL correcto, `initialsFrom('Los Demo Riff')==='LD'`, `null` en vacío.
+  Doctor verde + e2e (helpers + regresión band/shell) **en verde**. `cachebust` al día.
+
+---
+
 ## 🎨 V4-F1 · T-120 — Un solo acento (+ modo claro legacy gratis) (2026-06-24) ✅
 
 **Qué:** primera tarea de la **V4 (experiencia + diseño)**. Se unifica el color de acento en UNA sola

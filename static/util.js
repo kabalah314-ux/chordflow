@@ -17,6 +17,31 @@ function escapeHtml(s) {
         .replace(/'/g, '&#39;');
 }
 
+// ─── Identidad visual por banda: color + iniciales — fuente única (T-121) ────
+// Derivados del id/nombre, reutilizables en avatar, tarjetas y etiquetas de banda.
+// Antes: `hueFromId` encerrado en band.js e `initialsFrom` duplicado (band.js + shell.js).
+
+// Hash determinista del id → matiz HSL 0-359 (misma banda → siempre el mismo color).
+function bandHue(id) {
+    let h = 0;
+    const s = String(id);
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+    return h;
+}
+
+// Color HSL de la banda. s/l configurables; por defecto los del banner (55% 48%).
+function bandColor(id, { s = 55, l = 48 } = {}) {
+    return `hsl(${bandHue(id)} ${s}% ${l}%)`;
+}
+
+// 1-2 iniciales en mayúscula a partir de un nombre. Devuelve null si no hay nombre:
+// el llamante decide el fallback (p. ej. '🎸' en el avatar de banda).
+function initialsFrom(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return null;
+    return parts.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
 // ─── Toasts y modales (reemplazan alert()/confirm(), T-017) ──────────────────
 // Lenguaje glassmorphism (clases en style.css). El texto del usuario SIEMPRE se escapa.
 

@@ -161,6 +161,27 @@ def test_render_escapa_letra_y_acorde_maliciosos(js_page):
     assert "hola" in result["text"]            # la letra se conserva literal
 
 
+def test_helpers_identidad_en_util(js_page):
+    """T-121: bandColor/bandHue/initialsFrom son globales en util.js (antes encerrados/duplicados
+    en band.js/shell.js). Deterministas y reutilizables en avatar, tarjetas y etiquetas de banda."""
+    assert js_page.evaluate("typeof bandColor") == "function"
+    assert js_page.evaluate("typeof bandHue") == "function"
+    assert js_page.evaluate("typeof initialsFrom") == "function"
+
+    # Determinista: misma banda → mismo color; bandas distintas → color distinto.
+    assert js_page.evaluate("bandColor('x') === bandColor('x')") is True
+    assert js_page.evaluate("bandColor('a') !== bandColor('b')") is True
+
+    # Formato HSL con el matiz por defecto del banner (55% 48%, sin regresión visual).
+    color = js_page.evaluate("bandColor('x')")
+    assert color.startswith("hsl(") and "55% 48%" in color
+
+    # Iniciales: 1-2 en mayúscula; null si no hay nombre (el llamante pone el fallback 🎸).
+    assert js_page.evaluate("initialsFrom('Los Demo Riff')") == "LD"
+    assert js_page.evaluate("initialsFrom('Queen')") == "Q"
+    assert js_page.evaluate("initialsFrom('   ')") is None
+
+
 def test_popup_diagrama_escapa_nombre_malicioso(page, live_server):
     """El popup de diagramas de acorde escapa el nombre (XSS de 2º orden, T-026).
     renderChordDiagramSVG vive en chord_shapes.js, que carga index.html."""

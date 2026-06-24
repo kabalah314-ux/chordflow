@@ -14,16 +14,8 @@
 
     const bandId = new URLSearchParams(location.search).get('id');
 
-    // Color de banda derivado del id (el backend no expone color hoy — ver BANDFLOW_SPEC §gap #1).
-    function hueFromId(s) {
-        let h = 0;
-        for (let i = 0; i < String(s).length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
-        return h;
-    }
-    function initialsFrom(name) {
-        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-        return parts.length ? parts.slice(0, 2).map(w => w[0]).join('').toUpperCase() : '🎸';
-    }
+    // Color e iniciales de banda: helpers compartidos en util.js (T-121) — `bandColor`,
+    // `bandHue`, `initialsFrom` (el backend no expone color hoy — ver BANDFLOW_SPEC §gap #1).
 
     const TABS = [
         { key: 'resumen',    label: 'Resumen' },
@@ -77,7 +69,7 @@
             iAmAdmin: active.some(m => m.role === 'admin' && m.is_me),
             iAmGuest: active.some(m => m.is_me && m.role === 'guest'),
             myRole: (active.find(m => m.is_me) || {}).role || 'member',
-            accent: `hsl(${hueFromId(bandId)} 55% 48%)`,
+            accent: bandColor(bandId),
         };
 
         renderShell(band, active, ctx);
@@ -86,7 +78,7 @@
     }
 
     function renderShell(band, active, ctx) {
-        const ini = initialsFrom(band.name);
+        const ini = initialsFrom(band.name) || '🎸';
         const roleLabel = ROLE_LABEL[ctx.myRole] || ctx.myRole;
         const desc = (band.description || '').trim();
         elSpace.innerHTML = `

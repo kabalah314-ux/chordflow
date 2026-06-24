@@ -86,11 +86,8 @@
         return aside;
     }
 
-    function initialsFrom(name) {
-        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-        if (!parts.length) return null;
-        return parts.slice(0, 2).map(w => w[0]).join('').toUpperCase();
-    }
+    // `initialsFrom` es global (util.js, T-121); util.js se carga antes que shell.js en todas
+    // las páginas del shell.
 
     async function loadProfile() {
         try {
