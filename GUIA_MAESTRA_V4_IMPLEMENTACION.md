@@ -9,13 +9,13 @@
 > `python harness/run_checks.py` verde → registrar en `REGISTRO_DE_CAMBIOS.md` → desplegar (push a
 > `main`) → verificar en vivo. Cada tarea es **un commit/deploy** independiente y reversible.
 >
-> **Estado:** 🟢 **V4-F1 y F2 EJECUTADAS** — F1 (T-120…T-128 + T-124b) y F2 (T-129…T-132, paneles de
-> control), ambas con `run_checks` TODO VERDE y desplegadas a producción. **F3…F6 desarrolladas y listas
-> para ejecutar** (T-133…T-156). Orden de ejecución restante: F3 → F6 (cada tarea = un commit/deploy
-> reversible). Decisiones de diseño cerradas: **Resumen de banda = Opción B** · **Inicio = Opción A**.
-> *(Nota: la utilidad `.bf-grid` ya se adelantó en T-131; T-136 solo añade `.bf-page--wide`.)*
+> **Estado:** 🟢 **V4-F1, F2 y F3 EJECUTADAS** — F1 (T-120…T-128 + T-124b), F2 (T-129…T-132, paneles de
+> control) y F3 (T-133…T-137, tarjetas/densidad/carga), las tres con `run_checks` TODO VERDE y desplegadas
+> a producción. **F4…F6 desarrolladas y listas para ejecutar** (T-138…T-156). Orden restante: F4 → F6
+> (cada tarea = un commit/deploy reversible). Decisiones cerradas: **Resumen = Opción B** · **Inicio =
+> Opción A**.
 >
-> _Implementación V4 — 2026-06-25 (F1 y F2 ejecutadas y desplegadas; F3–F6 desarrolladas)._
+> _Implementación V5 — 2026-06-25 (F1–F3 ejecutadas y desplegadas; F4–F6 desarrolladas)._
 
 ---
 
