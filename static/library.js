@@ -245,9 +245,12 @@ function renderGrid(songs, query) {
                 <span class="meta-pill card-source">${escapeHtml(song._badge)}</span>
                 <span class="meta-pill">${song.bpm || 120} BPM</span>
                 <span class="meta-pill">${sectionCount} ${sectionCount === 1 ? 'sección' : 'secciones'}</span>
-            </div>`;
+            </div>
+            <button class="card-play" data-act="play" aria-label="Reproducir ${escapeHtml(song.title)}" title="Reproducir">${bfIcon('play')}</button>`;
+        // Franja de color por fuente (T-133): personal = acento; banda = color de la banda.
+        card.style.setProperty('--card-accent', isPersonal ? 'var(--accent-color)' : bandColor(song._bandId || song.id));
 
-        // Abrir el reproductor al pulsar la tarjeta (salvo en los botones de acción)
+        // Abrir el reproductor al pulsar la tarjeta o el ▶ (salvo en los botones de acción).
         card.addEventListener('click', (e) => {
             if (e.target.closest('.card-action-btn')) return;
             window.location.href = `index.html?songId=${song.id}`;

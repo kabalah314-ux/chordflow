@@ -8,6 +8,22 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🗂️ V4-F3 · T-133 — Tarjeta de canción con ▶ + franja de color por fuente (2026-06-25) ✅
+
+**Qué:** la Biblioteca se vuelve más viva y reproducible en un clic: ▶ flotante (hover-reveal) + franja
+de color que distingue personal vs. banda de un vistazo.
+
+**Cómo/Verificación:** solo front.
+- `library.js renderGrid`: botón `.card-play` (abajo-dcha) que abre `index.html?songId=…` (burbujea al
+  handler de la tarjeta) + `card.style.setProperty('--card-accent', isPersonal ? var(--accent-color) :
+  bandColor(_bandId))`. Se conserva el `_badge` como **texto** (test `test_library`).
+- `style.css`: `.song-card::before` (barra 4px izq. con `--card-accent`, radios heredados) y `.card-play`
+  (botón circular coral, hover-reveal + `:focus-visible`).
+- Test e2e `test_card_play_y_franja_de_color` (▶ existe, `--card-accent` puesto, badge sigue texto, clic
+  abre el reproductor). Doctor verde + e2e (card-play + library) **en verde**. `cachebust` al día.
+
+---
+
 ## 🗂️ V4-F3 · T-136 — Aprovechar el ancho en los listados (`.bf-page--wide`) (2026-06-25) ✅
 
 **Qué:** arranca **V4-F3 (tarjetas, densidad y carga)**. Los listados respiran: `.bf-page` sigue a 920px

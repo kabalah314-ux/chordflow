@@ -1010,6 +1010,42 @@ button {
     box-shadow: 0 6px 18px rgba(255, 107, 74, 0.15);
 }
 
+/* T-133: franja de color por fuente (--card-accent) + ▶ flotante (hover-reveal, abajo-dcha). */
+.song-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--card-accent, transparent);
+    border-top-left-radius: inherit;
+    border-bottom-left-radius: inherit;
+    pointer-events: none;
+}
+.card-play {
+    position: absolute;
+    bottom: 0.7rem;
+    right: 0.7rem;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: #000;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+.song-card:hover .card-play,
+.card-play:focus-visible {
+    opacity: 1;
+    transform: none;
+}
+.card-play:hover { background: var(--accent-hover); }
+
 .card-title {
     font-size: 1.2rem;
     font-weight: 800;
