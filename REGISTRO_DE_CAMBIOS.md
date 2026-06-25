@@ -8,6 +8,17 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-144 — Buscador en el repertorio de banda (2026-06-25) ✅
+
+**Qué:** filtrar listas largas de canciones en la pestaña Repertorio.
+
+**Cómo/Verificación:** solo front. `bands.js`: `ensureRepertoireSearch()` inserta (una vez) una caja
+`#b-rep-search` sobre `#b-repertoire`; al teclear, **filtro cliente** que oculta las filas que no casan
+por título/artista. Test e2e `test_buscador_repertorio_filtra`. Doctor verde + e2e (buscador +
+`test_bands_ui`) **en verde**. `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-146 — Banda(s) en el lateral (2026-06-25) ✅
 
 **Qué:** arranca **V4-F5 (funcionalidad y remate)**. Saltar a una banda desde el shell, sin pasar por

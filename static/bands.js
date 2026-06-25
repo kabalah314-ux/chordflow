@@ -927,6 +927,27 @@ async function newBandSetlist(bandId, opts = {}) {
     });
 }
 
+// Buscador del repertorio de banda (T-144): filtro CLIENTE por título/artista. Se inserta una caja
+// antes de la lista (una sola vez) y oculta/mostra las filas que no casan.
+function ensureRepertoireSearch() {
+    const elRep = document.getElementById('b-repertoire');
+    if (!elRep || document.getElementById('b-rep-search')) return;
+    const search = document.createElement('input');
+    search.id = 'b-rep-search';
+    search.type = 'search';
+    search.className = 'search-box';
+    search.placeholder = '🔍 Buscar en el repertorio…';
+    search.style.marginBottom = '.5rem';
+    elRep.parentNode.insertBefore(search, elRep);
+    search.addEventListener('input', () => {
+        const q = search.value.trim().toLowerCase();
+        elRep.querySelectorAll('.setlist-song').forEach(li => {
+            const txt = (li.querySelector('.sl-title')?.textContent || '').toLowerCase();
+            li.style.display = (!q || txt.includes(q)) ? '' : 'none';
+        });
+    });
+}
+
 // ─── Repertorio de la banda ───────────────────────────────────────────────────
 async function loadRepertoire(bandId, canEdit) {
     const elRep = document.getElementById('b-repertoire');
@@ -942,6 +963,7 @@ async function loadRepertoire(bandId, canEdit) {
         elRep.innerHTML = '<li><small>Repertorio vacío. Copia canciones de tus partituras.</small></li>';
         return;
     }
+    ensureRepertoireSearch();
     elRep.innerHTML = songs.map(s => `
         <li class="setlist-song" data-id="${escapeHtml(s.id)}">
             <span class="sl-title">${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></span>
