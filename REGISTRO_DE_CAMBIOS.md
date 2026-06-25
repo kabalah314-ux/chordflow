@@ -8,6 +8,20 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V4-F4 · T-139 — Escenario más espectacular (solo CSS) (2026-06-25) ✅
+
+**Qué:** el Modo Directo (`.stage-mode`) se lee mejor desde lejos: líneas inactivas más apagadas, línea
+activa realzada, acordes con más presencia y la bolita de progreso pulsando.
+
+**Cómo/Verificación:** solo `style.css`, **sin tocar el motor**. Amplía `.stage-mode`: inactivas
+`opacity:.22`, `.line-lyric:has(.chord-container.active)` con realce (blanco + glow), acordes
+`font-weight:700` + glow en el activo, y `@keyframes stage-dot-pulse` en `.song-progress__dot`. Guard
+`prefers-reduced-motion`. Test e2e `test_escenario_realce_y_bolita_pulsante` (bolita con animación
+`stage-dot-pulse`, inactivas <0.3). Doctor verde + e2e (escenario + player, incl. `test_modo_directo`)
+**en verde**. `cachebust` al día.
+
+---
+
 ## 🎸 V4-F4 · T-138 — Top-bar del reproductor ordenada (2026-06-25) ✅
 
 **Qué:** arranca **V4-F4 (la joya en directo)**. La barra superior del reproductor pasa de botones con

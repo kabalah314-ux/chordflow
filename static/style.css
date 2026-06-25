@@ -453,6 +453,27 @@ button {
 .stage-mode .chord-container.active,
 .stage-mode .line-chord-only .chord-pill.active { transform: scale(1.18) translateY(-2px); }
 
+/* T-139: escenario más espectacular. Solo CSS; el motor no se toca. Respeta reduced-motion. */
+.stage-mode .line-lyric.inactive { opacity: 0.22; }   /* aún más apagado que en player normal */
+.stage-mode .line-lyric:has(.chord-container.active) {
+    color: #fff;
+    text-shadow: 0 0 18px var(--bf-accent-glow, rgba(255, 107, 74, 0.45));
+}
+.stage-mode .chord-container,
+.stage-mode .line-chord-only .chord-pill { font-weight: 700; }
+.stage-mode .chord-container.active,
+.stage-mode .line-chord-only .chord-pill.active {
+    text-shadow: 0 0 16px var(--bf-accent-glow, rgba(255, 107, 74, 0.6));
+}
+@keyframes stage-dot-pulse {
+    0%, 100% { box-shadow: 0 0 8px 1px var(--bf-accent-glow, rgba(255, 107, 74, 0.7)); }
+    50%      { box-shadow: 0 0 20px 5px var(--bf-accent-glow, rgba(255, 107, 74, 0.9)); }
+}
+.stage-mode .song-progress__dot { animation: stage-dot-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+    .stage-mode .song-progress__dot { animation: none; }
+}
+
 /* Bolita de posición (V3-F2, T-088): barra de progreso en el borde superior de la barra inferior.
    Muestra dónde vas en la canción; el motor (sync_engine) no se toca, solo se lee currentBeat. */
 .bottom-bar { position: relative; }
