@@ -443,3 +443,9 @@
 @keyframes bf-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 @keyframes bf-eq    { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
 @keyframes bf-spin  { to { transform: rotate(360deg); } }
+/* Microinteracciones (T-137): premio breve al añadir/guardar/marcar "Voy". */
+@keyframes bf-pop   { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes bf-flash { 0% { background-color: var(--bf-accent-weak); } 100% { background-color: transparent; } }
+.bf-pop   { animation: bf-pop 220ms ease; }
+.bf-flash { animation: bf-flash 600ms ease; }
+@media (prefers-reduced-motion: reduce) { .bf-pop, .bf-flash { animation: none; } }

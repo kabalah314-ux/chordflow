@@ -319,6 +319,7 @@
 
         el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => goTab(b.dataset.go)));
         if (ev) el.querySelectorAll('#bs-att [data-att]').forEach(b => b.addEventListener('click', async () => {
+            bfPop(b);   // microinteracción (T-137)
             try {
                 const res = await apiFetch(`/bands/${bandId}/events/${ev.id}/attendance`, {
                     method: 'PUT', headers: { 'Content-Type': 'application/json' },

@@ -50,6 +50,16 @@ function bfSkeletonList(n = 3) {
         () => '<div class="bf-skeleton bf-skeleton--card" style="margin-bottom:.6rem;"></div>').join('');
 }
 
+// Microinteracción "pop" (T-137): premia una acción con un breve rebote. Reinicia la animación si ya
+// estaba puesta y se autolimpia al terminar (re-disparable). Respeta prefers-reduced-motion vía CSS.
+function bfPop(el) {
+    if (!el) return;
+    el.classList.remove('bf-pop');
+    void el.offsetWidth;   // fuerza reflow → reinicia la animación
+    el.classList.add('bf-pop');
+    el.addEventListener('animationend', () => el.classList.remove('bf-pop'), { once: true });
+}
+
 // ─── Toasts y modales (reemplazan alert()/confirm(), T-017) ──────────────────
 // Lenguaje glassmorphism (clases en style.css). El texto del usuario SIEMPRE se escapa.
 

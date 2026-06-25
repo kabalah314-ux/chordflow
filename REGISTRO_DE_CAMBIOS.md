@@ -8,6 +8,19 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🗂️ V4-F3 · T-137 — Microinteracciones (pop) con propósito (2026-06-25) ✅ — cierra F3
+
+**Qué:** premiar las acciones con un micro-feedback, respetando `prefers-reduced-motion`.
+
+**Cómo/Verificación:** solo front. `design-system.css`: keyframes `bf-pop` (rebote) y `bf-flash`
+(destello de `--bf-accent-weak`) + clases `.bf-pop`/`.bf-flash` + guard `@media (prefers-reduced-motion:
+reduce)`. `util.js`: helper `bfPop(el)` (reinicia + autolimpia). Aplicado a los botones **"¿Vas?"** del
+Resumen de banda (`band.js`) y del Inicio (`home.js`). Test e2e `test_microinteraccion_pop_y_reduced_motion`
+(anima con `bf-pop`; con reduced-motion `animation-name: none`). Doctor verde + e2e (micro + resumen +
+home) **en verde**. `cachebust` al día. **Cierra V4-F3.**
+
+---
+
 ## 🗂️ V4-F3 · T-134 — Agenda más limpia: borrar en menú "⋯" (2026-06-25) ✅
 
 **Qué:** quitar ruido de la fila de evento sin perder funciones: solo el **borrar** se esconde tras un

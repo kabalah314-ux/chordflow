@@ -175,6 +175,7 @@
         // "¿Vas?" del hero: marca asistencia (PUT) y recarga el Inicio.
         const att = document.getElementById('home-att');
         if (att) att.querySelectorAll('[data-att]').forEach(b => b.addEventListener('click', async () => {
+            bfPop(b);   // microinteracción (T-137)
             try {
                 const res = await apiFetch(`/bands/${att.dataset.band}/events/${att.dataset.ev}/attendance`, {
                     method: 'PUT', headers: { 'Content-Type': 'application/json' },
