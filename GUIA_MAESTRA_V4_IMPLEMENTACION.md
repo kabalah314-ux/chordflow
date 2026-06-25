@@ -9,13 +9,14 @@
 > `python harness/run_checks.py` verde → registrar en `REGISTRO_DE_CAMBIOS.md` → desplegar (push a
 > `main`) → verificar en vivo. Cada tarea es **un commit/deploy** independiente y reversible.
 >
-> **Estado:** 🟢 **V4-F1, F2 y F3 EJECUTADAS** — F1 (T-120…T-128 + T-124b), F2 (T-129…T-132, paneles de
-> control) y F3 (T-133…T-137, tarjetas/densidad/carga), las tres con `run_checks` TODO VERDE y desplegadas
-> a producción. **F4…F6 desarrolladas y listas para ejecutar** (T-138…T-156). Orden restante: F4 → F6
+> **Estado:** 🟢 **V4-F1…F4 EJECUTADAS** — F1 (T-120…T-128 + T-124b), F2 (T-129…T-132), F3 (T-133…T-137)
+> y F4 (T-138…T-142, la joya en directo), las cuatro con `run_checks` TODO VERDE y desplegadas a
+> producción. **F5 y F6 desarrolladas y listas para ejecutar** (T-143…T-156). Orden restante: F5 → F6
 > (cada tarea = un commit/deploy reversible). Decisiones cerradas: **Resumen = Opción B** · **Inicio =
-> Opción A**.
+> Opción A**. *(F4: top-bar en 3 zonas, escenario realzado, drag&drop del setlist, hoja de atajos, vacíos
+> con CTA; sin tocar el motor.)*
 >
-> _Implementación V5 — 2026-06-25 (F1–F3 ejecutadas y desplegadas; F4–F6 desarrolladas)._
+> _Implementación V6 — 2026-06-25 (F1–F4 ejecutadas y desplegadas; F5–F6 desarrolladas)._
 
 ---
 
