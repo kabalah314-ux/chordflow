@@ -8,6 +8,19 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-147 — Login pulido (2026-06-25) ✅
+
+**Qué:** primera impresión a la altura del producto: el claim refleja la **gestión de banda**, no el
+teleprompter antiguo.
+
+**Cómo/Verificación:** `login.html`: el sub-claim pasa de "Tus partituras, en cualquier dispositivo" a
+**"Gestiona tu banda: repertorio, bolos y cuentas — en un solo sitio."**. El **modo oscuro coherente** ya
+llegó con T-120 (login.html carga `design-system.css` → el acento resuelve al coral). Botón de Google ya
+prominente. Test e2e `test_login_claim_y_google_en_html` (sobre el HTML servido: el login redirige en modo
+test). Doctor verde + e2e **en verde**. *(OAuth real se prueba en producción.)* `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-143 — "Añadir a colección" desde la tarjeta (2026-06-25) ✅
 
 **Qué:** meter una canción personal en una o varias colecciones sin entrar a editarlas.
