@@ -296,6 +296,20 @@
 .bs-count__n { font-size: var(--bf-fs-lg); font-weight: var(--bf-fw-semibold); }
 .bs-count__label { font-size: var(--bf-fs-xs); color: var(--bf-text-muted); }
 
+/* ── Inicio: hero del próximo evento (T-131, Opción A) + rejilla utilitaria ── */
+/* `.bf-grid` (utilidad de listados, también usada por Bandas/Explorar; T-136 añade .bf-page--wide). */
+.bf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--bf-space-4); align-items: start; }
+.home-hero {
+  background: var(--bf-surface-2); border: 1px solid var(--bf-border);
+  border-left: 3px solid var(--bf-primary); border-radius: var(--bf-radius);
+  padding: var(--bf-space-5);
+}
+.home-hero--empty { border-left-color: var(--bf-border-strong); }
+.home-hero__when { font-size: var(--bf-fs-sm); color: var(--bf-primary); font-weight: var(--bf-fw-semibold); }
+.home-hero__title { font-size: var(--bf-fs-2xl); font-weight: var(--bf-fw-bold); margin: 0.15rem 0 0.35rem; }
+.home-hero__meta { margin-bottom: var(--bf-space-4); }
+.home-hero__att { display: flex; align-items: center; flex-wrap: wrap; gap: var(--bf-space-2); }
+
 /* ── Lista ──────────────────────────────────────────────────────────────── */
 .bf-list { display: flex; flex-direction: column; gap: var(--bf-space-2); }
 .bf-list-item {

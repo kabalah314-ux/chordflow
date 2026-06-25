@@ -8,6 +8,28 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎛️ V4-F2 · T-131 — Inicio = panel de control (Opción A, hero) (2026-06-25) ✅
+
+**Qué:** el Inicio (`app.html`) deja de ser dos listas y pasa a un **panel de control con hero
+protagonista**: el próximo bolo manda arriba, y debajo una rejilla con saldo total, accesos rápidos y
+últimos mensajes. **Casi todo cliente.**
+
+**Cómo/Verificación:** solo front (`home.js` + `design-system.css`).
+- `home.js`: añade `apiFetch('/me/balances')` al `Promise.all`. Render Opción A:
+  - **HERO** = `upcoming_events[0]`: cuenta atrás cliente, etiqueta de banda + fecha, y botones **"¿Vas?"**
+    (`bf-btn`; el activo es `bf-btn--primary`) que hacen `PUT …/attendance` y recargan; + "Abrir banda".
+    Sin eventos → hero "Sin bolos a la vista" con CTA.
+  - **Rejilla `.bf-grid`:** "Tu saldo total" = Σ `/me/balances` (verde/rojo → Finanzas), "Accesos rápidos"
+    (helper `step` compartido con el onboarding) y "Últimos mensajes" (`#home-messages`).
+  - **Importante:** `app.html` NO carga `style.css` → el hero usa SOLO clases `bf-*` (no `.att-btn`).
+- `design-system.css`: `.home-hero*` + se adelanta la utilidad **`.bf-grid`** (la usan T-131/T-132; T-136
+  añadirá `.bf-page--wide`).
+- Test e2e `test_home.py` actualizado (`test_home_hero_saldo_y_mensajes`: hero + evento + "Tu saldo
+  total" + mensajes + "¿Vas?" marca "Voy"); el onboarding sin bandas sigue intacto. Doctor verde + e2e
+  **en verde**. `cachebust` al día.
+
+---
+
 ## 🎛️ V4-F2 · T-130 — Resumen de banda útil (Opción B) (2026-06-24) ✅
 
 **Qué:** el Resumen de banda deja de ser un bloque estático ("Sobre la banda") y pasa a un **dashboard
