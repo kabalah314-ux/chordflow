@@ -241,6 +241,15 @@
 .bf-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .bf-avatar--lg { width: 56px; height: 56px; font-size: var(--bf-fs-lg); }
 
+/* Tour de bienvenida la 1ª vez en una banda (T-148). */
+.bf-tour-tip {
+  display: flex; align-items: center; gap: var(--bf-space-3); flex-wrap: wrap;
+  margin: 0.2rem 0 1rem; padding: var(--bf-space-3) var(--bf-space-4);
+  background: var(--bf-accent-weak); border: 1px solid var(--bf-primary);
+  border-radius: var(--bf-radius); font-size: var(--bf-fs-sm); color: var(--bf-text);
+}
+.bf-tour-tip span { flex: 1; min-width: 0; }
+
 /* ── Tabs (pestañas del espacio de banda) ──────────────────────────────── */
 .bf-tabs {
   display: flex;

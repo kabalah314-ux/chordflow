@@ -8,6 +8,18 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-148 — Tour la primera vez en una banda (2026-06-25) ✅
+
+**Qué:** orientar al recién llegado a un espacio de banda.
+
+**Cómo/Verificación:** solo front. `band.js`: `maybeShowTour()` (tras `renderShell`) inserta, la **1ª
+vez** (guardado en `localStorage` `bf-band-tour`), un aviso bajo las pestañas con qué hay en cada una;
+se descarta con "Entendido" y no vuelve. `design-system.css`: `.bf-tour-tip`. Test e2e
+`test_tour_primera_vez_y_no_repite` (aparece, se descarta, no reaparece al recargar). Doctor verde + e2e
+(tour + band_space + resumen) **en verde**. `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-147 — Login pulido (2026-06-25) ✅
 
 **Qué:** primera impresión a la altura del producto: el claim refleja la **gestión de banda**, no el

@@ -76,6 +76,23 @@
         renderMembers(active);
         wire(band, active, ctx);
         loadSummary(bandId, ctx);   // Resumen = pestaña activa por defecto (T-130)
+        maybeShowTour();            // aviso de bienvenida la 1ª vez (T-148)
+    }
+
+    // Tour la primera vez en un espacio de banda (T-148): un aviso único bajo las pestañas, que orienta
+    // al recién llegado. Se descarta con "Entendido" y no vuelve (localStorage).
+    function maybeShowTour() {
+        if (localStorage.getItem('bf-band-tour')) return;
+        const tabs = elSpace.querySelector('.bf-tabs');
+        if (!tabs) return;
+        const tip = document.createElement('div');
+        tip.className = 'bf-tour-tip';
+        tip.innerHTML = `<span>👋 Todo lo de tu banda está en estas pestañas: <b>Resumen</b>, <b>Repertorio</b>,
+            <b>Setlists</b>, <b>Agenda</b>, <b>Finanzas</b> y <b>Chat</b>. Empieza por el Resumen.</span>
+            <button class="bf-btn bf-btn--sm bf-btn--primary" id="bf-tour-ok">Entendido</button>`;
+        tabs.insertAdjacentElement('afterend', tip);
+        const ok = document.getElementById('bf-tour-ok');
+        if (ok) ok.addEventListener('click', () => { localStorage.setItem('bf-band-tour', '1'); tip.remove(); });
     }
 
     function renderShell(band, active, ctx) {
