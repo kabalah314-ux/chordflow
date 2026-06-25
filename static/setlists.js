@@ -220,7 +220,7 @@ async function openSetlist(id) {
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}" data-pos="${i}">
             <span class="sl-num">${i + 1}</span>
             <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small>${it.note ? `<br><small class="sl-note-view">${bfIcon('note', { size: 14 })} ${escapeHtml(it.note)}</small>` : ''}</span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir">${bfIcon('play')}</button>
+            <button class="setlist-item-btn" data-act="play" aria-label="Reproducir" title="Reproducir">${bfIcon('play')}</button>
             <button class="setlist-item-btn" data-act="rm" aria-label="Quitar del setlist" title="Quitar">${bfIcon('x')}</button>
         </li>`).join('') || '<li><small>Este setlist está vacío. Edítalo para añadir canciones.</small></li>';
 

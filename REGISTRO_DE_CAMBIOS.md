@@ -8,6 +8,35 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## ♿ V4-F5 · T-151 — Accesibilidad (remate) (2026-06-25) ✅
+
+**Qué:** pasada de accesibilidad sobre los cuatro frentes de la tarea: contraste de grises secundarios,
+foco de teclado visible donde faltaba, objetivos táctiles ≥44px en dedo, y `aria-label` en los botones
+solo-icono.
+
+**Por qué:** la app ya tenía la base (foco accesible de T-127, `aria-label` en el reproductor de T-021,
+44px táctiles en móvil), pero quedaban huecos: el gris `--bf-text-faint` no llegaba a AA, los controles
+del lateral (tema/cerrar sesión) no mostraban foco, y varios botones generados por JS (▶ play, 📌 fijar,
+💬 hilo) sólo tenían `title` (soporte irregular en lectores).
+
+**Cómo:**
+- **Contraste** (`design-system.css`): `--bf-text-faint` oscuro `#6a6a76`→`#82828e` (≈5.1:1 sobre el
+  fondo, antes 3.7) y claro `#8c8c96`→`#6f6f7a` (≈4.5:1). Texto secundario AA.
+- **Foco visible**: `shell.css` añade `:focus-visible` a `.bf-theme-toggle` (tema/logout del lateral);
+  `style.css` suma `.google-btn` y los cierres del player (`.reference-panel__close`) al bloque de foco.
+- **Táctil ≥44px**: `@media (pointer: coarse)` en `style.css` (`.icon-btn`/`.card-action-btn` 44×44;
+  `.setlist-item-btn`/`.lib-filter`/`.card-play`/`.att-btn` min-height 44) y en `design-system.css`
+  (`.bf-btn`/`.bf-tab`/`.bf-nav-item` min-height 44). El ratón mantiene el tamaño compacto.
+- **`aria-label`**: 6 botones solo-icono — `bands.js` (pin/desfijar, hilo de evento, ▶ de setlist ×2 y
+  de colección) y `setlists.js` (▶ de canción).
+
+**Verificación:** test e2e `test_accesibilidad.py` (4): el ▶ de setlist tiene `aria-label`; el contraste
+`--bf-text-faint/--bf-bg` calculado en el navegador es ≥4.5:1; todo `<button>` del reproductor tiene
+nombre accesible; el toggle de tema del lateral tiene regla `:focus-visible` con outline. `run_checks`
+**TODO VERDE** (204 unit · 127 e2e). `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-149 — Cifras tabulares en los displays numéricos (2026-06-25) ✅
 
 **Qué:** refinamiento tipográfico — los números del reproductor (beat, BPM, tono) usan

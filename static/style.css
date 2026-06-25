@@ -1207,9 +1207,17 @@ button {
 .setlist-item-btn:focus-visible,
 .primary-btn:focus-visible,
 .secondary-btn:focus-visible,
+.google-btn:focus-visible,
+.reference-panel__close:focus-visible,
 .lib-filter:focus-visible {
     outline: 2px solid var(--accent-color);
     outline-offset: 2px;
+}
+/* T-151: objetivos táctiles ≥44px en punteros gruesos (dedo). El ratón mantiene
+   el tamaño compacto; sólo táctil/lápiz amplía el área de toque. */
+@media (pointer: coarse) {
+    .icon-btn, .card-action-btn { min-width: 44px; min-height: 44px; }
+    .setlist-item-btn, .lib-filter, .card-play, .att-btn { min-height: 44px; }
 }
 /* Hover de filas de lista (antes estáticas). */
 .setlist-song { transition: background 160ms ease; }

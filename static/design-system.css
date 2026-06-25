@@ -32,7 +32,7 @@
   /* Texto */
   --bf-text:        #ededf1;
   --bf-text-muted:  #9a9aa6;
-  --bf-text-faint:  #6a6a76;
+  --bf-text-faint:  #82828e;   /* T-151: subido de #6a6a76 → contraste AA (≈5:1 sobre el fondo) */
 
   /* Marca / acento (token único: swap aquí para recolorar toda la app) */
   --bf-primary:        #ff6b4a;   /* naranja coral BandFlow */
@@ -106,7 +106,7 @@
   --bf-hover:         rgba(20, 20, 30, 0.04);
   --bf-text:        #1a1a20;
   --bf-text-muted:  #5d5d68;
-  --bf-text-faint:  #8c8c96;
+  --bf-text-faint:  #6f6f7a;   /* T-151: bajado de #8c8c96 → contraste AA (≈4.5:1 sobre el fondo claro) */
   /* Acento en claro: coral algo más saturado/oscuro */
   --bf-primary:       #ee5530;
   --bf-primary-hover: #d6471f;
@@ -442,6 +442,12 @@
 .bf-tab:focus-visible,
 .bf-list-item:focus-visible {
   outline: 2px solid var(--bf-primary); outline-offset: 2px;
+}
+
+/* T-151: objetivos táctiles ≥44px en punteros gruesos (dedo). El ratón mantiene
+   los controles compactos; sólo táctil/lápiz amplía el área de toque. */
+@media (pointer: coarse) {
+  .bf-btn, .bf-tab, .bf-nav-item { min-height: 44px; }
 }
 
 /* Datos numéricos en mono con cifras de ancho fijo (importes, BPM, contadores) */

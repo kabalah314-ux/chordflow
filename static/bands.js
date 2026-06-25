@@ -120,7 +120,7 @@ function renderMessageList(el, msgs, bandId, iAmAdmin, reload) {
             <span class="sl-title">${m.is_pinned ? '📌 ' : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: ${escapeHtml(m.body)}
                 ${m.edited_at ? '<small>(editado)</small>' : ''}</span>
             <span class="msg-actions">
-                ${iAmAdmin ? `<button class="setlist-item-btn" data-act="pin" title="${m.is_pinned ? 'Desfijar' : 'Fijar como nota'}">${m.is_pinned ? '📌' : '📍'}</button>` : ''}
+                ${iAmAdmin ? `<button class="setlist-item-btn" data-act="pin" aria-label="${m.is_pinned ? 'Desfijar nota' : 'Fijar como nota'}" title="${m.is_pinned ? 'Desfijar' : 'Fijar como nota'}">${m.is_pinned ? '📌' : '📍'}</button>` : ''}
                 ${(m.is_mine || iAmAdmin) ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar" title="Borrar">${bfIcon('trash')}</button>` : ''}
             </span>
         </li>`).join('')}</ul>`;
@@ -537,7 +537,7 @@ async function loadAgenda(bandId, iAmAdmin) {
                 <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${attendeesLine(e)}${bookingLine(e)}</span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
-                <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">${bfIcon('chat')}</button>
+                <button class="setlist-item-btn" data-act="thread" aria-label="Discusión del evento" title="Discusión del evento">${bfIcon('chat')}</button>
                 ${iAmAdmin ? `<select class="ev-status-sel" data-ev="${escapeHtml(e.id)}" title="Estado de booking">${EVENT_STATUS_ORDER.map(s => `<option value="${s}" ${e.status === s ? 'selected' : ''}>${EVENT_STATUS_LABEL[s]}</option>`).join('')}</select>` : ''}
                 ${iAmAdmin ? `<span class="ev-more">
                     <button class="setlist-item-btn" data-act="more" aria-label="Más acciones" title="Más">${bfIcon('more')}</button>
@@ -800,7 +800,7 @@ async function loadBandSetlists(bandId, canEdit) {
     el.innerHTML = setlists.map(sl => `
         <li class="setlist-song" data-id="${escapeHtml(sl.id)}">
             <span class="sl-title">${escapeHtml(sl.name)} <small>${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}</small></span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir en orden">${bfIcon('play')}</button>
+            <button class="setlist-item-btn" data-act="play" aria-label="Reproducir en orden" title="Reproducir en orden">${bfIcon('play')}</button>
             ${canEdit ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar setlist" title="Editar">${bfIcon('edit')}</button>
             <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`).join('');
@@ -967,7 +967,7 @@ async function loadRepertoire(bandId, canEdit) {
     elRep.innerHTML = songs.map(s => `
         <li class="setlist-song" data-id="${escapeHtml(s.id)}">
             <span class="sl-title">${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir">${bfIcon('play')}</button>
+            <button class="setlist-item-btn" data-act="play" aria-label="Reproducir" title="Reproducir">${bfIcon('play')}</button>
             ${canEdit ? `<button class="setlist-item-btn" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">${bfIcon('x')}</button>` : ''}
         </li>`).join('');
     elRep.querySelectorAll('.setlist-song').forEach(li => {
@@ -1095,7 +1095,7 @@ async function openCollection(bandId, collectionId, canEdit) {
     elSongs.innerHTML = col.items.map(it => `
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}">
             <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small></span>
-            <button class="setlist-item-btn" data-act="play" title="Reproducir">${bfIcon('play')}</button>
+            <button class="setlist-item-btn" data-act="play" aria-label="Reproducir" title="Reproducir">${bfIcon('play')}</button>
             ${canEdit ? `<button class="setlist-item-btn" data-act="rm" aria-label="Quitar de esta colección" title="Quitar">${bfIcon('x')}</button>` : ''}
         </li>`).join('') || '<li><small>Colección vacía.' + (canEdit ? ' Añade canciones abajo.' : '') + '</small></li>';
     elSongs.querySelectorAll('.setlist-song').forEach(li => {
