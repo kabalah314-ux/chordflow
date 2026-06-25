@@ -1281,6 +1281,13 @@ button {
 .import-row .secondary-btn { white-space: nowrap; }
 .import-row .secondary-btn:disabled { opacity: 0.6; cursor: progress; }
 
+/* V3-F7 (oEmbed): carátula del vídeo de referencia al pegar el enlace en el editor. */
+.ref-preview { margin-top: 0.6rem; }
+.ref-thumb { position: relative; display: block; max-width: 240px; border-radius: 10px; overflow: hidden; border: 1px solid var(--bf-border); line-height: 0; }
+.ref-thumb img { width: 100%; height: auto; display: block; }
+.ref-thumb__play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #fff; background: rgba(0, 0, 0, 0.28); transition: background 160ms ease; }
+.ref-thumb:hover .ref-thumb__play { background: rgba(0, 0, 0, 0.12); }
+
 /* ─── Agenda de banda: botones de asistencia (Fase 10) ────────────────────── */
 .att-buttons { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; align-items: center; }
 

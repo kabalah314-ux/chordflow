@@ -367,6 +367,7 @@ async function initEditor() {
         document.getElementById('reference-url').value = song.reference_url || '';
         document.getElementById('raw-text').value = songToRawText(song);
         updatePreview();
+        updateReferencePreview();   // carátula si la canción ya trae enlace de referencia
 
         // Ajustar textos de la UI a "edición"
         document.querySelector('.song-info h1').textContent = 'Editar Partitura';
@@ -398,6 +399,28 @@ function updatePreview() {
 }
 
 elRawText.addEventListener('input', updatePreview);
+
+// ─── V3-F7 (oEmbed): carátula del vídeo de referencia al pegar el enlace ──────
+const elRefUrl = document.getElementById('reference-url');
+const elRefPreview = document.getElementById('reference-preview');
+
+function updateReferencePreview() {
+    if (!elRefUrl || !elRefPreview) return;
+    const thumb = bfYoutubeThumb(elRefUrl.value.trim());
+    if (thumb) {
+        elRefPreview.innerHTML =
+            `<a class="ref-thumb" href="${escapeHtml(elRefUrl.value.trim())}" target="_blank" rel="noopener noreferrer" title="Abrir en YouTube">
+                <img src="${escapeHtml(thumb)}" alt="Carátula del vídeo de referencia" loading="lazy">
+                <span class="ref-thumb__play">▶</span>
+            </a>`;
+        elRefPreview.hidden = false;
+    } else {
+        elRefPreview.innerHTML = '';
+        elRefPreview.hidden = true;
+    }
+}
+
+if (elRefUrl) elRefUrl.addEventListener('input', updateReferencePreview);
 
 // ─── Importar desde URL con IA (T-045) ────────────────────────────────────────
 const elImportUrl = document.getElementById('import-url');

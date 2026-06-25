@@ -8,6 +8,29 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎬 V3-F7 · T-160 — oEmbed: carátula al pegar el enlace de referencia (2026-06-25) ✅ (código)
+
+**Qué:** al pegar un enlace de **YouTube** en el editor (campo "Enlace de referencia"), aparece su
+**carátula** (miniatura) en vivo. Confirma de un vistazo que es el vídeo correcto.
+
+**Por qué:** "carátula al pegar URL" (V3-F7) — enriquece el repertorio sin coste. Se usa la miniatura
+**determinista** de `img.youtube.com/vi/{id}/hqdefault.jpg` derivada del id del vídeo → **sin red, sin
+CORS, sin backend**. (El título/autor vía proxy oEmbed real queda como follow-up.)
+
+**Cómo:** helpers puros `bfYoutubeId`/`bfYoutubeThumb` en [util.js](static/util.js); preview
+`#reference-preview` en [editor.html](static/editor.html) que [editor.js](static/editor.js) actualiza al
+escribir (y al cargar una canción con referencia). CSS `.ref-thumb` en [style.css](static/style.css).
+**Sin migración.**
+
+**Verificación:** e2e [test_oembed_caratula.py](tests/e2e/test_oembed_caratula.py) (carátula con
+`watch?v=` y `youtu.be`, y se oculta con un enlace no-YouTube). `run_checks` **TODO VERDE**
+(208 unit · 135 e2e). `cachebust` al día.
+
+> ⏳ Va en la misma rama que T-157…T-159 (apilado sobre la migración), así que **se despliega junto** con
+> ellos cuando se aplique la migración `6323c5929bfc` a Postgres prod. No necesita migración por sí mismo.
+
+---
+
 ## 🔗 V3-F7 · T-157/158/159 — Compartir un evento por enlace público (`unlisted`) (2026-06-25) ✅ (código) · ⏳ migración a prod
 
 **Qué:** primer **efecto red** (D1): un admin comparte un evento por un **enlace público** (sin login).

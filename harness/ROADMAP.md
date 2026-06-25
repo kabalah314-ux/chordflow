@@ -604,8 +604,13 @@
   - [x] **T-159** 🟢 **Compartir desde la agenda** (admin, menú "⋯") → `unlisted` + enlace copiado +
         insignia 🔗; **página pública** `evento.html`/`evento.js` (sin login, reclamo "Hecho con BandFlow").
         SW no cachea `/public`. e2e `test_compartir_evento.py` (3). run_checks VERDE (208 unit · 134 e2e).
+  - [x] **T-160** 🟢 **oEmbed (carátula al pegar URL)**: al pegar un enlace de YouTube en el editor
+        (vídeo de referencia) aparece su **carátula** (miniatura determinista de `img.youtube.com`, sin
+        red ni CORS). Helpers `bfYoutubeId`/`bfYoutubeThumb` en `util.js`; preview en `editor.html`/
+        `editor.js`. Solo código (sin migración). e2e `test_oembed_caratula.py`. VERDE.
   - [ ] **Pendiente F7:** `visibility` en `MusicianProfile`/EPK (perfil público), onboarding viral
-        (invitación al abrir el enlace), oEmbed (carátula al pegar URL). Y **aplicar la migración a prod**.
+        (invitación al abrir el enlace), título/autor vía proxy oEmbed real (hoy solo carátula). Y
+        **aplicar la migración `6323c5929bfc` a prod** (desbloquea el deploy de T-157…T-160).
 - [ ] **V3-F8** 🟢 EPK + página pública + perfil indexable + RSVP + seguir/fans (entra el rol usuario-fan + RLS).
 - [x] **V3-F9** 🟢 Biblioteca global — **EL RECLAMO** (D9: contribución por defecto). **COMPLETA (backend + revisión + frontend):**
   - [x] **T-100** 🔴 Modelos `MusicalWork`/`PublicScore`/`ScoreRating`/`ScoreComment` + migración

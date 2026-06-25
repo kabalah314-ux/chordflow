@@ -210,3 +210,20 @@ function bfFinanceBySeason(txs) {
         .map((s) => ({ ...s, net: s.income - s.expense }))
         .sort((a, b) => b.year - a.year);
 }
+
+/**
+ * V3-F7 (oEmbed) — Carátula de YouTube a partir de un enlace, sin red ni CORS.
+ * `bfYoutubeId` extrae el id de vídeo (11 chars) de las formas comunes de URL; `bfYoutubeThumb`
+ * construye la URL de la miniatura (determinista: img.youtube.com). Devuelven null si no es YouTube.
+ */
+function bfYoutubeId(url) {
+    if (!url) return null;
+    const m = String(url).match(
+        /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+}
+
+function bfYoutubeThumb(url) {
+    const id = bfYoutubeId(url);
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
