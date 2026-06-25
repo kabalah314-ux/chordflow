@@ -8,6 +8,21 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-150 — Modo claro a la par (remate en legacy) (2026-06-25) ✅
+
+**Qué:** que el contenido legacy (no solo el shell) se vea bien en **modo claro**.
+
+**Por qué:** T-120 hizo heredar el ACENTO, pero el texto y los fondos de `style.css` seguían oscuros
+literales → en claro, las tarjetas de la Biblioteca/Setlists quedaban oscuras y el texto poco legible.
+
+**Cómo/Verificación:** `style.css`: los tokens `--text-primary`/`--text-secondary`/`--bg-dark` **heredan**
+de `--bf-text`/`--bf-text-muted`/`--bf-bg` (con fallback oscuro); `.song-card` usa
+`var(--bf-surface-2)`/`var(--bf-border)`. Así el contenido legacy adapta texto y fondo al claro. Test e2e
+`test_tarjeta_legacy_adapta_al_claro` (al togglear `data-theme=light`, color y fondo de la tarjeta
+cambian). Doctor verde + e2e (claro + library + player) **en verde**. `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-148 — Tour la primera vez en una banda (2026-06-25) ✅
 
 **Qué:** orientar al recién llegado a un espacio de banda.

@@ -4,10 +4,12 @@
 :root {
     /* Paleta BandFlow (reskin T-081): acento coral, fondo casi-negro, IBM Plex.
        Las páginas legacy conservan su estructura (glassmorphism); solo cambia el tema. */
-    --bg-dark: #0d0d10;
+    /* Heredan de los tokens bf-* (T-150): el texto y el fondo legacy se adaptan al modo claro,
+       con fallback oscuro por si el design-system no estuviera cargado. */
+    --bg-dark: var(--bf-bg, #0d0d10);
     --bg-panel: rgba(22, 22, 27, 0.72);
-    --text-primary: #ededf1;
-    --text-secondary: #9a9aa6;
+    --text-primary: var(--bf-text, #ededf1);
+    --text-secondary: var(--bf-text-muted, #9a9aa6);
     /* Acento: una sola fuente de verdad (T-120). Heredan de los tokens bf-* del
        design-system (que las páginas legacy ya cargan), con fallback coral por si
        alguna no lo tuviera. Efecto regalo: el modo claro funciona aquí también. */
@@ -992,8 +994,8 @@ button {
     flex-direction: column;
     justify-content: space-between;
     min-height: 130px;
-    background: rgba(20, 20, 25, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bf-surface-2, rgba(20, 20, 25, 0.8));   /* adapta al modo claro (T-150) */
+    border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
     border-radius: 12px;
     padding: 1.2rem;
     text-decoration: none;
