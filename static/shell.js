@@ -65,7 +65,7 @@
             </a>
             <div class="bf-eyebrow">Tú</div>
             <nav class="bf-sidebar-nav" aria-label="Navegación principal">
-                ${NAV.map(n => navItemHtml(n, here)).join('')}
+                ${NAV.map(n => navItemHtml(n, here) + (n.href === 'bands.html' ? '<div class="bf-subnav" id="bf-bands-subnav"></div>' : '')).join('')}
             </nav>
             <div class="bf-sidebar-foot">
                 <a class="bf-profile-card" href="profile.html" title="Mi perfil">
@@ -105,6 +105,25 @@
         } catch (e) { /* perfil opcional: el shell funciona sin nombre */ }
     }
 
+    // Banda(s) en el lateral (T-146): sub-items bajo "Bandas" con avatar de color → band.html?id=.
+    async function loadBandsNav() {
+        const wrap = document.getElementById('bf-bands-subnav');
+        if (!wrap) return;
+        try {
+            const res = await apiFetch('/bands/');
+            if (!res.ok) return;
+            const bands = await res.json();
+            const onBand = currentPage() === 'band.html';
+            const activeId = new URLSearchParams(location.search).get('id');
+            wrap.innerHTML = bands.map(b => {
+                const active = onBand && b.id === activeId ? ' active' : '';
+                return `<a class="bf-subnav-item${active}" href="band.html?id=${encodeURIComponent(b.id)}" title="${escapeHtml(b.name)}">
+                    <span class="bf-avatar bf-avatar--sm" style="background:${bandColor(b.id)};color:#fff;">${escapeHtml(initialsFrom(b.name) || '🎸')}</span>
+                    <span class="bf-subnav-name">${escapeHtml(b.name)}</span></a>`;
+            }).join('');
+        } catch (e) { /* el lateral funciona sin las sub-bandas */ }
+    }
+
     async function mount() {
         const shell = document.querySelector('.bf-shell');
         if (!shell) return;                 // página sin shell: no hacemos nada
@@ -142,6 +161,7 @@
         aside.addEventListener('click', (e) => { if (e.target.closest('a, .bf-nav-item')) closeNav(); });
 
         loadProfile();
+        loadBandsNav();
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);

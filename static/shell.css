@@ -172,6 +172,19 @@ html, body { margin: 0; background: var(--bf-bg); }
 }
 .bf-profile-card:hover { background: var(--bf-hover); }
 .bf-profile-card .bf-avatar { width: 30px; height: 30px; font-size: 12px; background: var(--bf-primary); color: var(--bf-on-primary); }
+
+/* Banda(s) en el lateral (T-146): sub-items bajo "Bandas". */
+.bf-avatar--sm { width: 24px; height: 24px; font-size: 0.7rem; }
+.bf-subnav { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 4px 1.1rem; padding-left: 0.5rem; border-left: 1px solid var(--bf-border); }
+.bf-subnav-item {
+  display: flex; align-items: center; gap: 0.5rem; min-width: 0;
+  padding: 0.3rem 0.45rem; border-radius: var(--bf-radius-sm);
+  color: var(--bf-text-muted); text-decoration: none; font-size: var(--bf-fs-sm);
+  transition: background var(--bf-transition), color var(--bf-transition);
+}
+.bf-subnav-item:hover { background: var(--bf-surface-2); color: var(--bf-text); }
+.bf-subnav-item.active { background: var(--bf-surface-2); color: var(--bf-text); }
+.bf-subnav-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bf-profile-meta { min-width: 0; }
 .bf-profile-name {
   font-size: 13.5px;

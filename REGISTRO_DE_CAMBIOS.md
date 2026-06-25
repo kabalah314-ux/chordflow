@@ -8,6 +8,19 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-146 — Banda(s) en el lateral (2026-06-25) ✅
+
+**Qué:** arranca **V4-F5 (funcionalidad y remate)**. Saltar a una banda desde el shell, sin pasar por
+"Mis bandas".
+
+**Cómo/Verificación:** solo front. `shell.js`: bajo el item "Bandas" se inyecta `#bf-bands-subnav` y
+`loadBandsNav()` (reusa `GET /bands/`) lista mis bandas con **avatar de color** (`bandColor`+iniciales) →
+`band.html?id=`; resalta la banda activa. `shell.css`: `.bf-subnav`/`.bf-subnav-item`/`.bf-avatar--sm`.
+Test e2e `test_banda_en_lateral`. Doctor verde + e2e (lateral + shell + band_space) **en verde**.
+`cachebust` al día.
+
+---
+
 ## 🎸 V4-F4 · T-140 — Reordenar el setlist arrastrando (2026-06-25) ✅ — cierra F4
 
 **Qué:** reordenar las canciones de un setlist **arrastrando**, con ratón y táctil, sin librerías.
