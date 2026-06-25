@@ -8,6 +8,18 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🗂️ V4-F3 · T-136 — Aprovechar el ancho en los listados (`.bf-page--wide`) (2026-06-25) ✅
+
+**Qué:** arranca **V4-F3 (tarjetas, densidad y carga)**. Los listados respiran: `.bf-page` sigue a 920px
+para lectura/formularios, y un modificador **`.bf-page--wide` (~1180px)** ensancha los listados.
+
+**Cómo/Verificación:** solo CSS/HTML. `shell.css`: `.bf-page--wide { max-width: 1180px; }`. Aplicado a
+**Inicio** (`app.html`), **Bandas** (`bands.html`), **Explorar** (`biblioteca-global.html`) y
+**Biblioteca** (`library.html`). *(La utilidad `.bf-grid` ya se adelantó en T-131.)* Test e2e
+`test_bf_page_wide_es_mas_ancho`. Doctor verde + e2e (ancho + home + library) **en verde**. `cachebust` al día.
+
+---
+
 ## 🎛️ V4-F2 · T-132 — Tarjeta de banda rica en "Mis bandas" + `song_count` (2026-06-25) ✅
 
 **Qué:** las tarjetas de `bands.html` dejan de ser texto plano: **avatar de color** + iniciales,

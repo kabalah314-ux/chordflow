@@ -212,6 +212,8 @@ html, body { margin: 0; background: var(--bf-bg); }
   margin: 0 auto;
   padding: var(--bf-space-6) var(--bf-space-5);
 }
+/* Listados: más ancho para que respiren las rejillas (T-136). Lectura/formularios siguen a 920. */
+.bf-page--wide { max-width: 1180px; }
 
 /* ── Responsive: lateral → drawer deslizante (≤768px) ────────────────────── */
 @media (max-width: 768px) {
