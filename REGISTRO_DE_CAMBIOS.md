@@ -8,6 +8,17 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-145 — Duplicar un setlist (2026-06-25) ✅
+
+**Qué:** partir de una copia en vez de empezar de cero.
+
+**Cómo/Verificación:** solo front. `icons.js`: icono `copy`. `setlists.js`: botón "duplicar" en la
+tarjeta → `duplicateSetlist(id)` (GET el setlist + POST una copia "<nombre> (copia)" con sus canciones y
+notas). Test e2e `test_duplicar_setlist` (la copia aparece y tiene el mismo contenido vía API). Doctor
+verde + e2e (duplicar + `test_setlists_ui`) **en verde**. `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-144 — Buscador en el repertorio de banda (2026-06-25) ✅
 
 **Qué:** filtrar listas largas de canciones en la pestaña Repertorio.

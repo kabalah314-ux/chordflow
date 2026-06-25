@@ -26,6 +26,7 @@ async function loadSetlists() {
         elGrid.innerHTML = setlists.map(sl => `
             <div class="song-card" data-id="${escapeHtml(sl.id)}">
                 <div class="card-actions">
+                    <button class="card-action-btn" data-act="dup" aria-label="Duplicar ${escapeHtml(sl.name)}" title="Duplicar">${bfIcon('copy')}</button>
                     <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(sl.name)}" title="Editar">${bfIcon('edit')}</button>
                     <button class="card-action-btn danger" data-act="del" aria-label="Borrar ${escapeHtml(sl.name)}" title="Borrar">${bfIcon('trash')}</button>
                 </div>
@@ -46,6 +47,10 @@ async function loadSetlists() {
                 const name = card.querySelector('.card-title').textContent;
                 deleteSetlist(id, name);
             });
+            card.querySelector('[data-act="dup"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                duplicateSetlist(id);
+            });
         });
     } catch (e) {
         elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudieron cargar los setlists.</p>`;
@@ -60,6 +65,22 @@ async function deleteSetlist(id, name) {
         if (!res.ok && res.status !== 204) throw new Error('http');
         loadSetlists();
     } catch (e) { toast('No se pudo borrar el setlist.', 'error'); }
+}
+
+// Duplicar un setlist (T-145): copia su nombre + canciones (con notas) como "<nombre> (copia)".
+async function duplicateSetlist(id) {
+    try {
+        const res = await apiFetch(`/setlists/${id}`);
+        if (!res.ok) throw new Error('http');
+        const sl = await res.json();
+        const items = (sl.items || []).map(it => ({ song_id: it.song_id, note: it.note || null }));
+        const r = await apiFetch('/setlists/', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `${sl.name} (copia)`, items }) });
+        if (!r.ok) throw new Error('http');
+        toast('Setlist duplicado.', 'success');
+        loadSetlists();
+    } catch (e) { toast('No se pudo duplicar el setlist.', 'error'); }
 }
 
 // ─── Crear / editar setlist ──────────────────────────────────────────────────
