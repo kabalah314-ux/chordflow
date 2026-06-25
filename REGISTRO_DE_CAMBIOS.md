@@ -8,6 +8,18 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V4-F4 · T-141 — Hoja de atajos del reproductor (2026-06-25) ✅
+
+**Qué:** descubribilidad de los atajos de teclado del reproductor.
+
+**Cómo/Verificación:** `index.html`: botón **"?"** (`#btn-shortcuts`, `.tool-btn`) en la zona de
+navegación. `app.js`: al pulsarlo, `alertModal` con la tabla de atajos (Espacio = play/pausa; Av/Re Pág
+y flechas = páginas/setlist; Esc = salir del directo). `style.css`: estilo de `kbd`/`.shortcuts-table`.
+Cierra con Esc/clic fuera (lo da `alertModal`). Test e2e `test_atajos_modal`. Doctor verde + e2e
+(atajos + player + top-bar) **en verde**. `cachebust` al día.
+
+---
+
 ## 🎸 V4-F4 · T-139 — Escenario más espectacular (solo CSS) (2026-06-25) ✅
 
 **Qué:** el Modo Directo (`.stage-mode`) se lee mejor desde lejos: líneas inactivas más apagadas, línea

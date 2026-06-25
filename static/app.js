@@ -223,6 +223,18 @@ if (elBtnReferenceClose) elBtnReferenceClose.addEventListener('click', closeRefe
 const elBtnPrint = document.getElementById('btn-print');
 if (elBtnPrint) elBtnPrint.addEventListener('click', () => window.print());
 
+// Hoja de atajos (T-141): "?" abre un modal con los atajos de teclado del reproductor.
+const elBtnShortcuts = document.getElementById('btn-shortcuts');
+if (elBtnShortcuts) elBtnShortcuts.addEventListener('click', () => {
+    alertModal(`<h3 style="margin:0 0 .8rem;">Atajos de teclado</h3>
+        <table class="shortcuts-table">
+            <tr><td><kbd>Espacio</kbd></td><td>Reproducir / Pausar</td></tr>
+            <tr><td><kbd>Av Pág</kbd> · <kbd>→</kbd></td><td>Pasar página (o siguiente en el setlist)</td></tr>
+            <tr><td><kbd>Re Pág</kbd> · <kbd>←</kbd></td><td>Página anterior (o anterior en el setlist)</td></tr>
+            <tr><td><kbd>Esc</kbd></td><td>Salir del Modo Directo</td></tr>
+        </table>`, { okText: 'Entendido' });
+});
+
 // Barra de repertorio: si se llega con ?setlist=<id>, muestra anterior/siguiente y la posición.
 async function setupSetlistNav() {
     const params = new URLSearchParams(window.location.search);

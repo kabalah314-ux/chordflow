@@ -1245,6 +1245,19 @@ button {
 }
 .ev-more-menu[hidden] { display: none; }   /* el display:flex de autor gana al [hidden] del UA */
 .ev-more-menu .setlist-item-btn { width: auto; padding: 0.3rem 0.5rem; }
+
+/* T-141: hoja de atajos del reproductor. */
+.shortcuts-table { width: 100%; font-size: 0.95rem; line-height: 2; }
+.shortcuts-table td:first-child { white-space: nowrap; padding-right: 1rem; }
+kbd {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    font-family: var(--font-score);
+    font-size: 0.85em;
+}
 .att-btn { opacity: 0.6; }
 .att-btn.active {
     opacity: 1;
