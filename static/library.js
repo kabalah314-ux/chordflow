@@ -235,6 +235,7 @@ function renderGrid(songs, query) {
 
         card.innerHTML = `
             ${isPersonal ? `<div class="card-actions">
+                <button class="card-action-btn" data-act="add-to" aria-label="Añadir ${escapeHtml(song.title)} a una colección" title="Añadir a colección">${bfIcon('folder')}</button>
                 <button class="card-action-btn" data-act="edit" aria-label="Editar ${escapeHtml(song.title)}" title="Editar">${bfIcon('edit')}</button>
                 <button class="card-action-btn danger" data-act="delete" aria-label="Borrar ${escapeHtml(song.title)}" title="Borrar">${bfIcon('trash')}</button>
             </div>` : ''}
@@ -262,6 +263,7 @@ function renderGrid(songs, query) {
                 window.location.href = `editor.html?songId=${song.id}`;
             });
             card.querySelector('[data-act="delete"]').addEventListener('click', () => deleteSong(song));
+            card.querySelector('[data-act="add-to"]').addEventListener('click', () => openAddToCollection(song));
         }
 
         elGrid.appendChild(card);
@@ -282,6 +284,57 @@ async function deleteSong(song) {
         console.error(err);
         toast('No se pudo borrar la canción: ' + err.message, 'error');
     }
+}
+
+// --- Añadir una canción a una o varias colecciones personales desde la tarjeta (T-143) ---
+async function openAddToCollection(song) {
+    if (!collections.length) {
+        toast('Crea una colección primero (botón «Nueva colección»).', 'info');
+        return;
+    }
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-card glass-panel" role="dialog" aria-modal="true">
+            <p class="modal-msg">Añadir «${escapeHtml(song.title)}» a:</p>
+            <div class="add-to-list">
+                ${collections.map(c => `<label class="add-to-row">
+                    <input type="checkbox" data-cid="${escapeHtml(c.id)}">
+                    <span>${escapeHtml(c.name)}</span><small>${c.song_count}</small></label>`).join('')}
+            </div>
+            <div class="modal-actions">
+                <button class="secondary-btn" data-act="cancel">Cancelar</button>
+                <button class="primary-btn" data-act="ok">Añadir</button>
+            </div>
+        </div>`;
+    const close = () => { document.removeEventListener('keydown', onKey); overlay.remove(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay || e.target.getAttribute('data-act') === 'cancel') close();
+    });
+    overlay.querySelector('[data-act="ok"]').addEventListener('click', async () => {
+        const cids = [...overlay.querySelectorAll('input[data-cid]:checked')].map(i => i.dataset.cid);
+        close();
+        if (!cids.length) return;
+        let ok = 0;
+        for (const cid of cids) {
+            try {
+                const r = await apiFetch(`/collections/${cid}`);
+                if (!r.ok) continue;
+                const col = await r.json();
+                const ids = (col.items || []).map(it => it.song_id);
+                if (ids.includes(song.id)) { ok++; continue; }   // ya estaba
+                const pr = await apiFetch(`/collections/${cid}`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ song_ids: [...ids, song.id] }) });
+                if (pr.ok) ok++;
+            } catch (e) { /* sigue con las demás */ }
+        }
+        toast(ok ? `Añadida a ${ok} ${ok === 1 ? 'colección' : 'colecciones'}.` : 'No se pudo añadir.',
+            ok ? 'success' : 'error');
+    });
+    document.body.appendChild(overlay);
 }
 
 // --- Búsqueda en vivo (respeta el filtro activo) ---

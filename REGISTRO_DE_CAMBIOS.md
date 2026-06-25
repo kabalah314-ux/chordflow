@@ -8,6 +8,18 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-143 — "Añadir a colección" desde la tarjeta (2026-06-25) ✅
+
+**Qué:** meter una canción personal en una o varias colecciones sin entrar a editarlas.
+
+**Cómo/Verificación:** solo front. `library.js`: botón "añadir a colección" en la tarjeta personal →
+`openAddToCollection(song)` (modal con **checkboxes** de mis colecciones); al confirmar, por cada
+colección marcada hace `GET` + `PATCH /collections/{id}` con `song_ids` + la canción (idempotente).
+`style.css`: `.add-to-list`/`.add-to-row`. Test e2e `test_anadir_cancion_a_coleccion` (la canción queda
+en la colección vía API). Doctor verde + e2e (añadir-a + `test_library`) **en verde**. `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-145 — Duplicar un setlist (2026-06-25) ✅
 
 **Qué:** partir de una copia en vez de empezar de cero.

@@ -1262,6 +1262,13 @@ kbd {
     font-family: var(--font-score);
     font-size: 0.85em;
 }
+
+/* T-143: modal "añadir a colección". */
+.add-to-list { display: flex; flex-direction: column; gap: 4px; max-height: 50vh; overflow-y: auto; margin-bottom: 1rem; }
+.add-to-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: 8px; cursor: pointer; }
+.add-to-row:hover { background: rgba(255, 255, 255, 0.06); }
+.add-to-row span { flex: 1; min-width: 0; }
+.add-to-row small { color: var(--text-secondary, #aaa); }
 .att-btn { opacity: 0.6; }
 .att-btn.active {
     opacity: 1;
