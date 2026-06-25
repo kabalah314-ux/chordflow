@@ -8,6 +8,20 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🗂️ V4-F3 · T-134 — Agenda más limpia: borrar en menú "⋯" (2026-06-25) ✅
+
+**Qué:** quitar ruido de la fila de evento sin perder funciones: solo el **borrar** se esconde tras un
+menú **"⋯"**; asistencia, hilo y estado de booking siguen visibles.
+
+**Cómo/Verificación:** solo front. `icons.js`: icono `more` (3 puntos). `bands.js` (fila de agenda): el
+`data-act="del"` pasa a vivir dentro de `.ev-more-menu` (oculto), revelado por un botón `data-act="more"`.
+`style.css`: `.ev-more`/`.ev-more-menu` (popover) **+ `.ev-more-menu[hidden]{display:none}`** (el
+`display:flex` de autor ganaba al `[hidden]` del navegador — cazado por el test). Test e2e
+`test_agenda_menu_oculta_borrar` (asistencia visible, borrar oculto hasta abrir ⋯). Doctor verde + e2e
+(menú + `test_bands_ui`/`test_band_space`) **en verde**. `cachebust` al día.
+
+---
+
 ## 🗂️ V4-F3 · T-135 — Skeletons de carga en todas las listas (2026-06-25) ✅
 
 **Qué:** sensación de respuesta inmediata en todas las listas (antes solo el Inicio tenía skeleton).

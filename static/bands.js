@@ -539,7 +539,12 @@ async function loadAgenda(bandId, iAmAdmin) {
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
                 <button class="setlist-item-btn" data-act="thread" title="Discusión del evento">${bfIcon('chat')}</button>
                 ${iAmAdmin ? `<select class="ev-status-sel" data-ev="${escapeHtml(e.id)}" title="Estado de booking">${EVENT_STATUS_ORDER.map(s => `<option value="${s}" ${e.status === s ? 'selected' : ''}>${EVENT_STATUS_LABEL[s]}</option>`).join('')}</select>` : ''}
-                ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">${bfIcon('trash')}</button>` : ''}
+                ${iAmAdmin ? `<span class="ev-more">
+                    <button class="setlist-item-btn" data-act="more" aria-label="Más acciones" title="Más">${bfIcon('more')}</button>
+                    <span class="ev-more-menu" hidden>
+                        <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">${bfIcon('trash')} Borrar</button>
+                    </span>
+                </span>` : ''}
             </span>
         </li>`;
     el.innerHTML = `
@@ -565,6 +570,12 @@ async function loadAgenda(bandId, iAmAdmin) {
                 toast('Estado actualizado.', 'success');
                 loadAgenda(bandId, iAmAdmin);
             } catch (e) { toast('No se pudo cambiar el estado.', 'error'); }
+        });
+        const more = li.querySelector('[data-act="more"]');   // T-134: menú "⋯" (borrar dentro)
+        const moreMenu = li.querySelector('.ev-more-menu');
+        if (more && moreMenu) more.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            moreMenu.hidden = !moreMenu.hidden;
         });
         const del = li.querySelector('[data-act="del"]');
         if (del) del.addEventListener('click', async () => {

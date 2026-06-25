@@ -1195,6 +1195,26 @@ button {
 
 /* ─── Agenda de banda: botones de asistencia (Fase 10) ────────────────────── */
 .att-buttons { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; align-items: center; }
+
+/* T-134: menú "⋯" en la fila de agenda (el borrar vive dentro del popover). */
+.ev-more { position: relative; display: inline-flex; }
+.ev-more-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(30, 30, 40, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+.ev-more-menu[hidden] { display: none; }   /* el display:flex de autor gana al [hidden] del UA */
+.ev-more-menu .setlist-item-btn { width: auto; padding: 0.3rem 0.5rem; }
 .att-btn { opacity: 0.6; }
 .att-btn.active {
     opacity: 1;
