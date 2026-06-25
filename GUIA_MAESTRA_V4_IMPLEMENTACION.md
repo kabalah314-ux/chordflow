@@ -9,14 +9,14 @@
 > `python harness/run_checks.py` verde → registrar en `REGISTRO_DE_CAMBIOS.md` → desplegar (push a
 > `main`) → verificar en vivo. Cada tarea es **un commit/deploy** independiente y reversible.
 >
-> **Estado:** 🟢 **V4-F1…F4 EJECUTADAS** — F1 (T-120…T-128 + T-124b), F2 (T-129…T-132), F3 (T-133…T-137)
-> y F4 (T-138…T-142, la joya en directo), las cuatro con `run_checks` TODO VERDE y desplegadas a
-> producción. **F5 y F6 desarrolladas y listas para ejecutar** (T-143…T-156). Orden restante: F5 → F6
-> (cada tarea = un commit/deploy reversible). Decisiones cerradas: **Resumen = Opción B** · **Inicio =
-> Opción A**. *(F4: top-bar en 3 zonas, escenario realzado, drag&drop del setlist, hoja de atajos, vacíos
-> con CTA; sin tocar el motor.)*
+> **Estado:** 🟢 **V4-F1…F4 EJECUTADAS y desplegadas** + **F5 al 80% (8/10)**. Hechas y verificadas
+> (`run_checks` verde): F1 (T-120…T-128 + T-124b), F2 (T-129…T-132), F3 (T-133…T-137), F4 (T-138…T-142),
+> y de **F5**: T-143 (añadir-a), T-144 (buscador repertorio), T-145 (duplicar setlist), T-146 (banda en
+> lateral), T-147 (login), T-148 (tour), T-149 (cifras tabulares), T-150 (modo claro legacy). **PENDIENTES
+> de F5:** **T-151 (accesibilidad)** y **T-152 (caché por temporada)**. Luego **F6** (T-153…T-156, 🔌
+> necesita config de Oscar). Decisiones cerradas: Resumen = Opción B · Inicio = Opción A.
 >
-> _Implementación V6 — 2026-06-25 (F1–F4 ejecutadas y desplegadas; F5–F6 desarrolladas)._
+> _Implementación V7 — 2026-06-25 (F1–F4 + F5 al 80% ejecutadas/desplegadas; falta T-151, T-152, F6)._
 
 ---
 
