@@ -310,6 +310,10 @@
 .home-hero__meta { margin-bottom: var(--bf-space-4); }
 .home-hero__att { display: flex; align-items: center; flex-wrap: wrap; gap: var(--bf-space-2); }
 
+/* ── Tarjeta de banda rica en "Mis bandas" (T-132) ───────────────────────── */
+.band-card__head { display: flex; align-items: center; gap: var(--bf-space-3); }
+.band-card__next { margin-top: var(--bf-space-2); font-size: var(--bf-fs-sm); color: var(--bf-text-muted); }
+
 /* ── Lista ──────────────────────────────────────────────────────────────── */
 .bf-list { display: flex; flex-direction: column; gap: var(--bf-space-2); }
 .bf-list-item {

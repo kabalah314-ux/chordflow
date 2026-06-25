@@ -8,6 +8,25 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎛️ V4-F2 · T-132 — Tarjeta de banda rica en "Mis bandas" + `song_count` (2026-06-25) ✅
+
+**Qué:** las tarjetas de `bands.html` dejan de ser texto plano: **avatar de color** + iniciales,
+rol/miembros/**nº de canciones** y **próximo evento**. Empty-state ilustrado con 2 CTA. Cierra la F2.
+
+**Cómo/Verificación:**
+- **Backend (única adición #2, sin migración):** `song_count: int` en `BandSummary` (`schemas.py`) +
+  helper `_song_counts(db, band_ids)` (calcado de `_active_member_counts`, agregado por `Song.band_id`)
+  rellenado en `list_my_bands`.
+- **Front (`bands.js loadBands`):** `/bands/` + `/me/dashboard` en paralelo → avatar `bandColor(b.id)`
+  + `initialsFrom`, `member_count`·`song_count`, y el próximo evento agrupando el dashboard por
+  `band_id`. Empty-state con `bfEmpty('users', …)` + botones "Crear banda" / "Tengo un código"
+  (`join.html`). `design-system.css`: `.band-card__head`/`.band-card__next`.
+- Se conservan los selectores `.song-card`/`.card-main[data-act="open"]`/`.card-title` (tests intactos).
+- Tests: unit `test_list_my_bands_incluye_song_count` (0 → 2); e2e `test_tarjeta_banda_avatar_y_song_count`
+  (avatar + "1 canción" + abre). Doctor + ruff + unit + e2e (`test_bands_ui` incl.) **en verde**.
+
+---
+
 ## 🎛️ V4-F2 · T-131 — Inicio = panel de control (Opción A, hero) (2026-06-25) ✅
 
 **Qué:** el Inicio (`app.html`) deja de ser dos listas y pasa a un **panel de control con hero

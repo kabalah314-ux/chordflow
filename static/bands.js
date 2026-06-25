@@ -16,22 +16,45 @@ const ROLE_LABEL = { admin: 'Admin', member: 'Miembro', guest: 'Invitado' };
 async function loadBands() {
     if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
     try {
-        const res = await apiFetch('/bands/');
-        if (!res.ok) throw new Error('http');
-        const bands = await res.json();
+        // Las bandas + el dashboard agregado en paralelo: el dashboard da el próximo evento por banda.
+        const [rb, rd] = await Promise.all([apiFetch('/bands/'), apiFetch('/me/dashboard')]);
+        if (!rb.ok) throw new Error('http');
+        const bands = await rb.json();
+        const nextByBand = {};
+        if (rd.ok) {
+            const dash = await rd.json();
+            (dash.upcoming_events || []).forEach(e => { if (!nextByBand[e.band_id]) nextByBand[e.band_id] = e; });
+        }
         if (!bands.length) {
-            elGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🎸</div>
-                <h3>Aún no estás en ninguna banda</h3>
-                <p>Crea una banda para compartir repertorio, agenda y cuentas, o pide a un admin que te pase un enlace de invitación.</p></div>`;
+            elGrid.innerHTML = bfEmpty('users', 'Aún no estás en ninguna banda',
+                'Crea una banda para compartir repertorio, agenda y cuentas — o únete con un código de invitación.',
+                { id: 'bands-empty' })
+                + `<div class="bf-row bf-wrap" style="justify-content:center;gap:.5rem;margin-top:1rem;">
+                    <button class="primary-btn" id="empty-new-band">${bfIcon('plus')} Crear banda</button>
+                    <a class="secondary-btn" href="join.html" style="text-decoration:none;">Tengo un código</a>
+                   </div>`;
+            const nb = document.getElementById('empty-new-band');
+            if (nb) nb.addEventListener('click', createBand);
             return;
         }
-        elGrid.innerHTML = bands.map(b => `
-            <div class="song-card" data-id="${escapeHtml(b.id)}">
+        elGrid.innerHTML = bands.map(b => {
+            const ev = nextByBand[b.id];
+            const ini = initialsFrom(b.name) || '🎸';
+            const songs = b.song_count || 0;
+            return `
+            <div class="song-card band-card" data-id="${escapeHtml(b.id)}">
                 <div class="card-main" data-act="open" style="cursor:pointer;">
-                    <h3 class="card-title">${escapeHtml(b.name)}</h3>
-                    <p class="card-artist">${ROLE_LABEL[b.role] || escapeHtml(b.role)} · ${b.member_count} ${b.member_count === 1 ? 'miembro' : 'miembros'}</p>
+                    <div class="band-card__head">
+                        <span class="bf-avatar" style="background:${bandColor(b.id)};color:#fff;">${escapeHtml(ini)}</span>
+                        <div style="min-width:0;">
+                            <h3 class="card-title">${escapeHtml(b.name)}</h3>
+                            <p class="card-artist">${ROLE_LABEL[b.role] || escapeHtml(b.role)} · ${b.member_count} ${b.member_count === 1 ? 'miembro' : 'miembros'} · ${songs} ${songs === 1 ? 'canción' : 'canciones'}</p>
+                        </div>
+                    </div>
+                    ${ev ? `<p class="band-card__next">${EVENT_ICON[ev.type] || '📅'} ${escapeHtml(ev.title)} <small>${escapeHtml(fmtDate(ev.starts_at))}</small></p>` : ''}
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
         // La ficha de banda vive ahora en band.html (espacio de banda con pestañas, T-075).
         elGrid.querySelectorAll('.song-card').forEach(card =>
             card.querySelector('[data-act="open"]').addEventListener('click',

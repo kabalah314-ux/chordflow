@@ -69,6 +69,19 @@ def _active_member_counts(db: Session, band_ids: List[str]) -> dict[str, int]:
     return {bid: n for bid, n in rows}
 
 
+def _song_counts(db: Session, band_ids: List[str]) -> dict[str, int]:
+    """Nº de canciones (activas) por banda en UNA query agregada (evita N+1; T-132)."""
+    if not band_ids:
+        return {}
+    rows = (
+        db.query(Song.band_id, func.count(Song.id))
+        .filter(Song.band_id.in_(band_ids), Song.deleted_at.is_(None))
+        .group_by(Song.band_id)
+        .all()
+    )
+    return {bid: n for bid, n in rows}
+
+
 @router.post("/", response_model=BandResponse, status_code=status.HTTP_201_CREATED)
 def create_band(
     payload: BandCreate,
@@ -103,7 +116,9 @@ def list_my_bands(db: Session = Depends(get_db), user_id: str = Depends(get_curr
         )
         .all()
     )
-    counts = _active_member_counts(db, [b.id for b, _ in rows])
+    band_ids = [b.id for b, _ in rows]
+    counts = _active_member_counts(db, band_ids)
+    scounts = _song_counts(db, band_ids)
     return [
         BandSummary(
             id=b.id,
@@ -112,6 +127,7 @@ def list_my_bands(db: Session = Depends(get_db), user_id: str = Depends(get_curr
             plan=b.plan,
             role=role,
             member_count=counts.get(b.id, 0),
+            song_count=scounts.get(b.id, 0),
         )
         for b, role in rows
     ]

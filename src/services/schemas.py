@@ -311,6 +311,7 @@ class BandSummary(BaseModel):
     plan: BandPlan = "free"
     role: Literal["admin", "member", "guest"]  # mi rol en esta banda
     member_count: int = 0
+    song_count: int = 0  # nº de canciones de la banda (T-132, agregado en list_my_bands)
 
     model_config = ConfigDict(from_attributes=True)
 

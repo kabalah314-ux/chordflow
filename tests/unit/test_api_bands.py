@@ -28,6 +28,19 @@ def acting_as(user_id):
         app.dependency_overrides.pop(get_current_user, None)
 
 
+def test_list_my_bands_incluye_song_count(client):
+    """T-132: GET /bands/ devuelve `song_count` = nº de canciones (activas) de la banda, agregado
+    sin N+1. Recién creada → 0; tras añadir 2 canciones → 2."""
+    from tests.conftest import sample_song_payload
+
+    bid = client.post("/bands/", json={"name": "Con Canciones"}).json()["id"]
+    assert client.get("/bands/").json()[0]["song_count"] == 0
+    client.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="A"))
+    client.post(f"/bands/{bid}/songs/", json=sample_song_payload(title="B"))
+    band = next(b for b in client.get("/bands/").json() if b["id"] == bid)
+    assert band["song_count"] == 2
+
+
 def test_crud_completo_de_banda(client):
     # Crear → el creador entra como admin
     r = client.post("/bands/", json={"name": "Los Tres", "description": "rock"})
