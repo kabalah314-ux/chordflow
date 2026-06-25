@@ -32,6 +32,7 @@
 
     async function load() {
         if (!(await requireAuth())) return;
+        el.innerHTML = bfSkeletonList(4);   // skeleton mientras carga (T-135)
         let convs;
         try {
             const r = await apiFetch('/me/conversations');

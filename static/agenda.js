@@ -101,6 +101,7 @@
 
     async function load() {
         if (!(await requireAuth())) return;
+        el.innerHTML = bfSkeletonList(4);   // skeleton mientras carga (T-135)
         try {
             const r = await apiFetch('/me/events');
             if (!r.ok) throw new Error('http');

@@ -16,6 +16,7 @@ let currentCollection = null; // colección activa { id, name, songIds } o null 
 
 // --- Carga inicial: personal + repertorios de banda en paralelo ---
 async function fetchSongs() {
+    elGrid.innerHTML = bfSkeletonList(8);   // skeleton mientras llega el repertorio (T-135)
     try {
         const [personal, bands, cols] = await Promise.all([
             apiFetch('/songs/').then(r => (r.ok ? r.json() : [])),

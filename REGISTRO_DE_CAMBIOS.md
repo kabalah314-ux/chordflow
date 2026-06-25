@@ -8,6 +8,18 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🗂️ V4-F3 · T-135 — Skeletons de carga en todas las listas (2026-06-25) ✅
+
+**Qué:** sensación de respuesta inmediata en todas las listas (antes solo el Inicio tenía skeleton).
+
+**Cómo/Verificación:** solo front. `util.js`: helper global `bfSkeletonList(n=3)` (n filas
+`.bf-skeleton--card`). Aplicado **antes del fetch** en la Biblioteca (`library.js fetchSongs`) y en las
+vistas agregadas **Agenda/Finanzas/Chat** (`agenda.js`/`finanzas.js`/`chat.js` `load()`). Test e2e
+`test_bf_skeleton_list_helper` (helper determinista). Doctor verde + e2e (skeletons + agregadas) **en
+verde**. `cachebust` al día.
+
+---
+
 ## 🗂️ V4-F3 · T-133 — Tarjeta de canción con ▶ + franja de color por fuente (2026-06-25) ✅
 
 **Qué:** la Biblioteca se vuelve más viva y reproducible en un clic: ▶ flotante (hover-reveal) + franja

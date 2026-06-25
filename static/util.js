@@ -42,6 +42,14 @@ function initialsFrom(name) {
     return parts.slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 
+// ─── Skeletons de carga (T-135) ──────────────────────────────────────────────
+// `n` filas .bf-skeleton (clases en design-system.css) para dar sensación de respuesta inmediata
+// mientras llega el fetch. Antes solo el Inicio tenía skeleton; ahora se reutiliza en todas las listas.
+function bfSkeletonList(n = 3) {
+    return Array.from({ length: Math.max(1, n) },
+        () => '<div class="bf-skeleton bf-skeleton--card" style="margin-bottom:.6rem;"></div>').join('');
+}
+
 // ─── Toasts y modales (reemplazan alert()/confirm(), T-017) ──────────────────
 // Lenguaje glassmorphism (clases en style.css). El texto del usuario SIEMPRE se escapa.
 
