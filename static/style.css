@@ -242,6 +242,10 @@ button {
 /* Setlist de banda: fila con apunte por canción (editor) + apunte en la barra del reproductor (T-110) */
 .sl-sel-row { display: flex; align-items: center; gap: 0.5rem; }
 .sl-sel-row .sl-note { flex: 1; min-width: 0; }
+/* T-140: asa de arrastre para reordenar (touch-action:none es clave para el táctil). */
+.sl-drag { cursor: grab; touch-action: none; background: none; border: none; color: var(--text-secondary, #aaa); font-size: 1.1rem; line-height: 1; padding: 0 0.2rem; }
+.sl-drag:active { cursor: grabbing; }
+.sl-sel-row.dragging { opacity: 0.6; background: rgba(255, 255, 255, 0.06); border-radius: 6px; }
 .sl-nav-note { color: var(--text-secondary); font-size: 0.85rem; }
 
 /* Pipeline de booking: badge de estado del evento + selector de admin (T-111) */

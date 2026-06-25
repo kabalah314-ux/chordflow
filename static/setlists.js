@@ -118,7 +118,9 @@ async function openEditor(setlistId = null) {
     }
     function renderSel() {
         elSel.innerHTML = selected.map((id, i) => `
-            <li class="sl-sel-row"><span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
+            <li class="sl-sel-row" data-sid="${escapeHtml(id)}">
+                <button class="sl-drag" aria-label="Reordenar" title="Arrastra para reordenar">⠿</button>
+                <span>${i + 1}. ${escapeHtml(byId[id]?.title || id)}</span>
                 <input type="text" class="search-box sl-note" data-note="${escapeHtml(id)}" maxlength="255"
                        placeholder="Apunte (capo 2, acústica…)" value="${escapeHtml(notes[id] || '')}">
                 <button class="setlist-item-btn" data-rm="${escapeHtml(id)}" aria-label="Quitar" title="Quitar">${bfIcon('x')}</button></li>`).join('')
@@ -129,6 +131,38 @@ async function openEditor(setlistId = null) {
             b.addEventListener('click', () => {
                 const idx = selected.indexOf(b.dataset.rm); if (idx > -1) selected.splice(idx, 1); renderAll();
             }));
+        wireSelDrag();
+    }
+    // Reordenar arrastrando (T-140): pointer events (ratón + táctil), sin librerías. El arrastre se sigue
+    // a nivel de `document` (robusto, sin setPointerCapture); durante el arrastre se mueve el nodo en el
+    // DOM y al soltar se sincroniza `selected` desde el orden del DOM y se repinta.
+    function wireSelDrag() {
+        elSel.querySelectorAll('.sl-drag').forEach(handle => {
+            handle.addEventListener('pointerdown', (e) => {
+                const row = e.target.closest('.sl-sel-row');
+                if (!row) return;
+                e.preventDefault();
+                row.classList.add('dragging');
+                const onMove = (ev) => {
+                    const y = ev.clientY;
+                    const after = [...elSel.querySelectorAll('.sl-sel-row:not(.dragging)')].find(r => {
+                        const box = r.getBoundingClientRect();
+                        return y < box.top + box.height / 2;
+                    });
+                    if (after) elSel.insertBefore(row, after);
+                    else elSel.appendChild(row);
+                };
+                const onUp = () => {
+                    document.removeEventListener('pointermove', onMove);
+                    row.classList.remove('dragging');
+                    const order = [...elSel.querySelectorAll('.sl-sel-row')].map(r => r.dataset.sid).filter(Boolean);
+                    if (order.length) { selected.length = 0; selected.push(...order); }
+                    renderAll();   // re-numera y reasocia notas
+                };
+                document.addEventListener('pointermove', onMove);
+                document.addEventListener('pointerup', onUp, { once: true });
+            });
+        });
     }
     function renderAll() { renderAvail(); renderSel(); }
     renderAll();

@@ -8,6 +8,21 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V4-F4 · T-140 — Reordenar el setlist arrastrando (2026-06-25) ✅ — cierra F4
+
+**Qué:** reordenar las canciones de un setlist **arrastrando**, con ratón y táctil, sin librerías.
+
+**Cómo/Verificación:** solo front. `setlists.js` (`renderSel`): cada fila gana `data-sid` + un **asa**
+`.sl-drag` (⠿); `wireSelDrag` sigue el arrastre a nivel de **`document`** (pointerdown→pointermove/pointerup,
+sin `setPointerCapture` — más robusto y compatible con Playwright/táctil), mueve el nodo en el DOM y al
+soltar sincroniza `selected` desde el orden del DOM + repinta (re-numera). El `PATCH`/`POST` ya acepta el
+orden. `style.css`: `.sl-drag` (`touch-action:none`, clave para táctil) + `.dragging`.
+- Test e2e `test_reordenar_setlist_arrastrando` (arrastra la 2ª sobre la 1ª → orden invertido persiste vía
+  API). `test_setlists_ui` (crear/notas/quitar) sigue verde. Doctor verde + e2e **en verde**. `cachebust`
+  al día. **Cierra V4-F4.**
+
+---
+
 ## 🎸 V4-F4 · T-142 — Estados vacíos con CTA (2026-06-25) ✅
 
 **Qué:** que ningún estado vacío sea un callejón sin salida: siempre con una acción clara.
