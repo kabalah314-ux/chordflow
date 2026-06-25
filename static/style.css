@@ -1231,6 +1231,28 @@ button {
     .modal-overlay, .modal-card { animation: none; }
 }
 
+/* ─── T-154: cuerpo del perfil (identidad + chips de bandas/instrumentos) ──── */
+.pf-identity { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.25rem; }
+.pf-identity__meta { min-width: 0; }
+.pf-name { margin: 0; font-size: 1.4rem; color: var(--text-primary); }
+.pf-section-title {
+    margin: 1.5rem 0 0.6rem; font-size: 0.8rem; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+.pf-band-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.pf-band-chip {
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--bf-border); border-radius: 10px; background: var(--bf-surface-2, #1c1c23);
+    text-decoration: none; color: var(--text-primary);
+    transition: background 160ms ease, border-color 160ms ease;
+}
+.pf-band-chip:hover { background: var(--bf-hover); border-color: var(--bf-border-strong); }
+.pf-band-chip__name {
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;
+}
+.pf-chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.pf-inst-chip { font-size: 0.9rem; }
+
 /* ─── Importar desde URL con IA (T-045) ───────────────────────────────────── */
 .import-row { display: flex; gap: 0.6rem; align-items: center; }
 .import-row input[type="url"] { flex: 1; }

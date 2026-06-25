@@ -12,10 +12,12 @@
 > **Estado:** 🟢 **V4-F1…F5 COMPLETAS y verificadas** (`run_checks` verde): F1 (T-120…T-128 + T-124b),
 > F2 (T-129…T-132), F3 (T-133…T-137), F4 (T-138…T-142), F5 (T-143…T-152): añadir-a, buscador repertorio,
 > duplicar setlist, banda en lateral, login, tour, cifras tabulares, modo claro legacy, **accesibilidad
-> (T-151)** y **caché por temporada (T-152)**. **PENDIENTE: solo V4-F6** (T-153…T-156, 🔌 necesita config
-> de Oscar: Storage/notificaciones/realtime). Decisiones cerradas: Resumen = Opción B · Inicio = Opción A.
+> (T-151)** y **caché por temporada (T-152)**. De **F6** se adelantó **T-154** (perfil con cuerpo, parte
+> cliente sin Storage). **PENDIENTE de V4-F6 (🔌 necesita config de Oscar):** **T-153** (avatares/logos →
+> Supabase Storage), **T-155** (notificaciones → infra de envío); **T-156** (EPK/realtime) es V3, fuera de
+> V4. Decisiones cerradas: Resumen = Opción B · Inicio = Opción A.
 >
-> _Implementación V8 — 2026-06-25 (F1–F5 ejecutadas/verificadas; falta solo F6, que necesita config)._
+> _Implementación V8 — 2026-06-25 (F1–F5 + T-154 ejecutadas/verificadas; queda T-153/T-155, que necesitan config)._
 
 ---
 
@@ -726,7 +728,11 @@ banner si existe, si no el avatar de color. **+ test de aislamiento** si se aña
 
 ---
 
-### T-154 — Perfil con cuerpo
+### T-154 — Perfil con cuerpo ✅ HECHO (2026-06-25)
+> Parte cliente ejecutada (no depende de Storage): avatar de iniciales/color, chips de bandas con rol y
+> de instrumentos, conservando el form de edición. e2e `test_perfil_cuerpo.py`. `run_checks` verde. La
+> subida de avatar real queda en **T-153** (Storage).
+
 **Objetivo.** Que el perfil muestre identidad: avatar, mis bandas, instrumentos.
 
 **Pasos.** En `profile.html`/`profile.js`: avatar (iniciales/color de T-121, o imagen de T-153), **mis

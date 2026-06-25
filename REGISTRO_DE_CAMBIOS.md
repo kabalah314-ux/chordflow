@@ -8,6 +8,31 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 👤 V4-F6 · T-154 — Perfil con cuerpo (parte cliente, sin Storage) (2026-06-25) ✅
+
+**Qué:** el perfil deja de ser un formulario pelado y muestra **identidad**: avatar de iniciales/color
+(T-121), **mis bandas como chips con rol** (de `GET /bands/`) e **instrumentos como chips**, además del
+formulario de edición de siempre.
+
+**Por qué:** adelanto de F6 que **no depende de config de Oscar** (la subida de avatar real es T-153 →
+Storage). Da cuerpo y sensación de identidad al perfil ya mismo.
+
+**Cómo:** [profile.js](static/profile.js) reescrito: `render(p, bands)` pinta `.pf-identity` (avatar
+`bf-avatar--lg` con `bandColor(p.id)`/`initialsFrom`), `#pf-bands` (chips `.pf-band-chip` con
+`.bf-badge--{rol}`; estado vacío con `bfEmpty` si no hay bandas) y `#pf-instruments` (chips `.bf-badge`).
+**Se conservan los ids del formulario** (`#pf-name`/`#pf-inst`/`#pf-save`) → el test de edición sigue
+verde; tras guardar, re-render para refrescar avatar/chips. CSS nuevo en [style.css](static/style.css)
+(`.pf-identity`, `.pf-band-chip`, `.pf-chip-row`…). **Sin backend ni migración.**
+
+**Verificación:** e2e [test_perfil_cuerpo.py](tests/e2e/test_perfil_cuerpo.py) (2): avatar "AM" + chip de
+banda con badge Admin + 2 instrumentos + form prerrellenado; y estado vacío sin bandas. `run_checks`
+**TODO VERDE** (204 unit · 131 e2e). `cachebust` al día.
+
+> Resto de **V4-F6** sigue 🔌 pendiente de config de Oscar: **T-153** (avatares/logos → Supabase Storage),
+> **T-155** (notificaciones → infra de envío). **T-156** (EPK/realtime) es V3.
+
+---
+
 ## 📅 V4-F5 · T-152 — Caché por temporada (agregación por fechas) (2026-06-25) ✅ — cierra F5
 
 **Qué:** la sección **Finanzas** de la banda gana un bloque "**Por temporada**": agrega los movimientos
