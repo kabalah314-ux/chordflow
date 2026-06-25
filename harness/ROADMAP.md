@@ -594,7 +594,18 @@
   - **Diferido:** **mapa Leaflet+OSM** (evita meter CDN nueva ahora; sin SRI); ligar gasto real
         (`Transaction`) a la gira desde la UI; co-organización con otra banda (Opción 0 informativa).
 - [ ] **V3-F6** 🟠 Realtime + sala de ensayo sincronizada (Supabase Realtime + `/clock`; sincronía visual + metrónomo, D5/D6).
-- [ ] **V3-F7** 🟢 Efecto red sin copyright: compartir `unlisted` + onboarding viral + oEmbed (introduce el eje `visibility`).
+- [~] **V3-F7** 🟢 Efecto red sin copyright: compartir `unlisted` + onboarding viral + oEmbed (introduce el eje `visibility`). **Slice 1 hecho:**
+  - [x] **T-157** 🔴 Eje `visibility` (private/unlisted/public, default private) en `Event` + migración
+        aditiva `6323c5929bfc` (batch, CHECK `ck_events_visibility`; `alembic check` limpio). Expuesto en
+        `EventUpdate`/`EventResponse`/`EventSummary`. ⚠️ **Migración pendiente de aplicar a Postgres prod.**
+  - [x] **T-158** 🔴 **Plano público** `public_router.py` (`GET /public/events/{id}`, **sin auth**):
+        sirve solo `unlisted`/`public` con **proyección segura** (nunca caché/contacto/notas/setlist/
+        band_id). Su propio test de aislamiento (`test_api_public.py`: privado→404, borrado→404, sin fugas).
+  - [x] **T-159** 🟢 **Compartir desde la agenda** (admin, menú "⋯") → `unlisted` + enlace copiado +
+        insignia 🔗; **página pública** `evento.html`/`evento.js` (sin login, reclamo "Hecho con BandFlow").
+        SW no cachea `/public`. e2e `test_compartir_evento.py` (3). run_checks VERDE (208 unit · 134 e2e).
+  - [ ] **Pendiente F7:** `visibility` en `MusicianProfile`/EPK (perfil público), onboarding viral
+        (invitación al abrir el enlace), oEmbed (carátula al pegar URL). Y **aplicar la migración a prod**.
 - [ ] **V3-F8** 🟢 EPK + página pública + perfil indexable + RSVP + seguir/fans (entra el rol usuario-fan + RLS).
 - [x] **V3-F9** 🟢 Biblioteca global — **EL RECLAMO** (D9: contribución por defecto). **COMPLETA (backend + revisión + frontend):**
   - [x] **T-100** 🔴 Modelos `MusicalWork`/`PublicScore`/`ScoreRating`/`ScoreComment` + migración

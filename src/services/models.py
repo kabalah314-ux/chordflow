@@ -45,6 +45,10 @@ TOUR_STATUSES = ("planning", "active", "done", "cancelled")
 BAND_PLANS = ("free", "pro")
 # Biblioteca global (V3-F9). Estado de una partitura del catálogo público.
 PUBLIC_SCORE_STATUSES = ("published", "hidden", "removed")
+# Eje de visibilidad (V3-F7, D1): private = solo la banda (default); unlisted = accesible por enlace
+# (quien tenga el id), no listado/indexado; public = listado/indexable (F8). Las rutas privadas NO
+# cambian; lo público se sirve por rutas /public separadas con proyección SEGURA (nunca datos sensibles).
+VISIBILITY_LEVELS = ("private", "unlisted", "public")
 
 
 def _utcnow():
@@ -374,6 +378,10 @@ class Event(Base):
             "status IN (" + ", ".join(f"'{s}'" for s in EVENT_STATUSES) + ")",
             name="ck_events_status",
         ),
+        CheckConstraint(
+            "visibility IN (" + ", ".join(f"'{v}'" for v in VISIBILITY_LEVELS) + ")",
+            name="ck_events_visibility",
+        ),
     )
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
@@ -388,6 +396,10 @@ class Event(Base):
     notes = Column(Text)
     status = Column(
         String(16), nullable=False, default="confirmed", server_default=text("'confirmed'")
+    )
+    # Visibilidad (V3-F7, D1): private por defecto; unlisted = compartible por enlace; public = listable.
+    visibility = Column(
+        String(16), nullable=False, default="private", server_default=text("'private'")
     )
     # Solo concierto: setlist adjunto (SET NULL si se borra el setlist; los setlists son soft-delete).
     setlist_id = Column(String(36), ForeignKey("setlists.id", ondelete="SET NULL"), nullable=True)

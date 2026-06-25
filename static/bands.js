@@ -545,7 +545,7 @@ async function loadAgenda(bandId, iAmAdmin) {
         <li class="setlist-song" data-id="${escapeHtml(e.id)}">
             <span class="sl-title">${EVENT_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
                 <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}</small>
-                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${attendeesLine(e)}${bookingLine(e)}</span>
+                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${e.visibility && e.visibility !== 'private' ? '<span class="ev-shared" title="Compartido por enlace">🔗 Enlace</span>' : ''}${attendeesLine(e)}${bookingLine(e)}</span>
             <span class="att-buttons">
                 ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
                 <button class="setlist-item-btn" data-act="thread" aria-label="Discusión del evento" title="Discusión del evento">${bfIcon('chat')}</button>
@@ -553,6 +553,10 @@ async function loadAgenda(bandId, iAmAdmin) {
                 ${iAmAdmin ? `<span class="ev-more">
                     <button class="setlist-item-btn" data-act="more" aria-label="Más acciones" title="Más">${bfIcon('more')}</button>
                     <span class="ev-more-menu" hidden>
+                        ${e.visibility && e.visibility !== 'private'
+                            ? `<button class="setlist-item-btn" data-act="copy-link" title="Copiar el enlace público">${bfIcon('globe')} Copiar enlace</button>
+                               <button class="setlist-item-btn" data-act="unshare" title="Dejar de compartir">${bfIcon('x')} Dejar de compartir</button>`
+                            : `<button class="setlist-item-btn" data-act="share" title="Compartir por enlace público">${bfIcon('globe')} Compartir enlace</button>`}
                         <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar evento" title="Borrar">${bfIcon('trash')} Borrar</button>
                     </span>
                 </span>` : ''}
@@ -598,7 +602,52 @@ async function loadAgenda(bandId, iAmAdmin) {
                 loadAgenda(bandId, iAmAdmin);
             } catch (e) { toast('No se pudo borrar el evento.', 'error'); }
         });
+        // V3-F7: compartir el evento por enlace público (unlisted) / copiar / dejar de compartir.
+        const share = li.querySelector('[data-act="share"]');
+        if (share) share.addEventListener('click', () => shareEvent(bandId, eid, iAmAdmin));
+        const copyLink = li.querySelector('[data-act="copy-link"]');
+        if (copyLink) copyLink.addEventListener('click', () => copyEventLink(eid));
+        const unshare = li.querySelector('[data-act="unshare"]');
+        if (unshare) unshare.addEventListener('click', () => setEventVisibility(bandId, eid, 'private', iAmAdmin));
     });
+}
+
+// ── V3-F7: compartir un evento por enlace público (unlisted) ──────────────────
+function publicEventUrl(eid) {
+    return `${location.origin}/static/evento.html?id=${encodeURIComponent(eid)}`;
+}
+
+async function copyToClipboard(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
+}
+
+async function setEventVisibility(bandId, eid, visibility, iAmAdmin) {
+    const res = await apiFetch(`/bands/${bandId}/events/${eid}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visibility })
+    });
+    if (!res.ok) throw new Error('http');
+    if (visibility === 'private') toast('Evento dejado de compartir.', 'success');
+    loadAgenda(bandId, iAmAdmin);
+}
+
+async function shareEvent(bandId, eid, iAmAdmin) {
+    try {
+        await setEventVisibility(bandId, eid, 'unlisted', iAmAdmin);
+        const url = publicEventUrl(eid);
+        const copied = await copyToClipboard(url);
+        await alertModal(
+            `Enlace público creado${copied ? ' y copiado' : ''}:<br><br>` +
+            `<code class="share-link">${escapeHtml(url)}</code><br><br>` +
+            `Cualquiera con el enlace puede verlo, sin cuenta. No incluye caché, contactos ni notas.`);
+    } catch (e) { toast('No se pudo compartir el evento.', 'error'); }
+}
+
+async function copyEventLink(eid) {
+    const url = publicEventUrl(eid);
+    const copied = await copyToClipboard(url);
+    if (copied) toast('Enlace copiado.', 'success');
+    else await alertModal(`Enlace público:<br><br><code class="share-link">${escapeHtml(url)}</code>`);
 }
 
 async function setAttendance(bandId, eventId, status, iAmAdmin) {

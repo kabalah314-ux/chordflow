@@ -373,6 +373,7 @@ class InvitePreview(BaseModel):
 EventType = Literal["rehearsal", "concert", "other"]
 EventStatus = Literal["lead", "contacted", "negotiating", "confirmed", "done", "cancelled"]
 AttendanceStatus = Literal["yes", "no", "maybe"]
+Visibility = Literal["private", "unlisted", "public"]  # V3-F7 (D1): eje de visibilidad
 
 
 class EventCreate(BaseModel):
@@ -406,6 +407,7 @@ class EventUpdate(BaseModel):
     contact_phone: Optional[str] = Field(None, max_length=64)
     fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
     venue_id: Optional[str] = None
+    visibility: Optional[Visibility] = None  # V3-F7: el admin comparte/oculta el evento
 
     _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
 
@@ -436,6 +438,7 @@ class EventSummary(BaseModel):
     fee: Optional[Decimal] = None
     venue_id: Optional[str] = None  # sala (T-116)
     venue_name: Optional[str] = None  # nombre de la sala (denormalizado para la agenda)
+    visibility: Visibility = "private"  # V3-F7: para mostrar el estado de compartición en la agenda
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -460,6 +463,25 @@ class EventResponse(BaseModel):
     fee: Optional[Decimal] = None
     venue_id: Optional[str] = None  # sala (T-116)
     venue_name: Optional[str] = None
+    visibility: Visibility = "private"  # V3-F7: estado de compartición (para la UI de la banda)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicEventResponse(BaseModel):
+    """V3-F7 — Proyección PÚBLICA y SEGURA de un evento (ruta /public/events/{id}, sin auth).
+    SOLO datos no sensibles: nunca caché (`fee`), contacto, notas internas, setlist, asistencia ni
+    `band_id`. La regla de oro pública: una fila privada jamás aparece aquí (filtra por visibility)."""
+
+    id: str
+    type: EventType
+    title: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    band_name: str
+    venue_name: Optional[str] = None
+    city: Optional[str] = None
+    location: Optional[str] = None  # lugar libre (ensayo/otro); seguro de mostrar
 
     model_config = ConfigDict(from_attributes=True)
 

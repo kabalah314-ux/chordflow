@@ -8,6 +8,39 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🔗 V3-F7 · T-157/158/159 — Compartir un evento por enlace público (`unlisted`) (2026-06-25) ✅ (código) · ⏳ migración a prod
+
+**Qué:** primer **efecto red** (D1): un admin comparte un evento por un **enlace público** (sin login).
+Introduce el **eje `visibility`** (`private` por defecto / `unlisted` / `public`) y un **plano público**
+separado con proyección **segura**.
+
+**Por qué:** abre la app al exterior sin tocar lo privado — "comparte tu bolo" → quien abre el enlace ve
+BandFlow ("Hecho con BandFlow", gancho de onboarding viral). Cumple la regla de oro pública: **una fila
+privada jamás aparece en `/public`** y nunca se filtran datos sensibles (caché, contacto, notas, setlist).
+
+**Cómo:**
+- **Backend:** `Event.visibility` (modelo + CHECK `ck_events_visibility`) + **migración aditiva**
+  `6323c5929bfc` (batch SQLite/Postgres; `alembic check` "no new operations"). `Visibility` en
+  `EventUpdate`/`EventResponse`/`EventSummary`. Nuevo [public_router.py](src/api/public_router.py)
+  (`GET /public/events/{id}`, **sin auth**): sirve solo `unlisted`/`public`, devuelve
+  `PublicEventResponse` (id/tipo/título/fechas/banda/sala/ciudad/lugar) — **nada sensible**.
+- **Frontend:** menú "⋯" de la agenda (admin) → **Compartir enlace** (PATCH a `unlisted` + copia el
+  enlace + insignia 🔗) / **Copiar enlace** / **Dejar de compartir** ([bands.js](static/bands.js)).
+  Página pública autónoma [evento.html](static/evento.html)+[evento.js](static/evento.js) (sin shell ni
+  login; fetch directo a `/public/...`). SW deja de cachear `/public`.
+
+**Verificación:** unit [test_api_public.py](tests/unit/test_api_public.py) (4: unlisted/privado/borrado/
+inexistente + **proyección segura sin fugas**) + e2e [test_compartir_evento.py](tests/e2e/test_compartir_evento.py)
+(3: compartir desde la agenda, página pública segura, privado→no accesible). `run_checks` **TODO VERDE**
+(208 unit · 134 e2e). `cachebust` al día.
+
+> ⏳ **Deploy pendiente de un paso:** esta entrega **lleva migración** (`6323c5929bfc`). El código está en
+> la rama pero **NO se ha empujado a `main`**: subirlo sin aplicar la migración a Postgres rompería la
+> agenda en producción (columna inexistente). **Aplicar primero la migración a Postgres** (pooler de
+> sesión, 5432) y luego push → deploy. Resto de F7 (perfil público, onboarding viral, oEmbed) por hacer.
+
+---
+
 ## 👤 V4-F6 · T-154 — Perfil con cuerpo (parte cliente, sin Storage) (2026-06-25) ✅
 
 **Qué:** el perfil deja de ser un formulario pelado y muestra **identidad**: avatar de iniciales/color

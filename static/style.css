@@ -266,6 +266,9 @@ button {
 
 /* Recordatorios in-app de la agenda (T-112): evento próximo + resumen del funnel de booking */
 .ev-soon { display: inline-block; margin-left: 0.4rem; font-size: 0.72rem; color: var(--accent-color); font-weight: 600; }
+/* V3-F7: insignia "compartido por enlace" + enlace público copiable (modal). */
+.ev-shared { display: inline-block; margin-left: 0.4rem; font-size: 0.72rem; color: var(--bf-info, #60a5fa); font-weight: 600; white-space: nowrap; }
+.share-link { display: inline-block; word-break: break-all; background: var(--bf-surface-3, #23232c); padding: 0.3rem 0.5rem; border-radius: 6px; font-family: var(--bf-font-mono, monospace); font-size: 0.85rem; }
 /* Confirmados por evento (#4): línea discreta debajo del título con quién va / cuántos "quizás". */
 .ev-attendees { display: block; margin-top: 0.2rem; font-size: 0.72rem; color: var(--text-secondary, #9a9aa6); }
 /* Booking del concierto (T-115): caché + contacto, discreto, con un toque del acento. */
@@ -1230,6 +1233,25 @@ button {
 @media (prefers-reduced-motion: reduce) {
     .modal-overlay, .modal-card { animation: none; }
 }
+
+/* ─── V3-F7: página pública de un evento (sin login, estilo landing) ───────── */
+.pub-wrap {
+    max-width: 540px; margin: 0 auto; padding: clamp(2rem, 8vh, 6rem) 1.25rem;
+    display: flex; flex-direction: column; align-items: center; gap: 1.5rem;
+    min-height: 100vh; box-sizing: border-box;
+}
+.pub-card {
+    width: 100%; box-sizing: border-box; text-align: center;
+    background: var(--bf-surface, #16161b); border: 1px solid var(--bf-border);
+    border-radius: var(--bf-radius-lg, 16px); padding: 2rem 1.75rem; box-shadow: var(--bf-shadow);
+}
+.pub-type { display: inline-block; font-size: 0.8rem; color: var(--accent-color); font-weight: 600; letter-spacing: 0.03em; }
+.pub-title { margin: 0.5rem 0; font-size: 1.8rem; line-height: 1.2; }
+.pub-band { margin: 0 0 1rem; color: var(--text-secondary); font-weight: 600; }
+.pub-date, .pub-place { margin: 0.4rem 0; color: var(--text-primary); }
+.pub-brand { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+.pub-brand:hover { color: var(--text-primary); }
+.pub-brand strong { color: var(--accent-color); }
 
 /* ─── T-154: cuerpo del perfil (identidad + chips de bandas/instrumentos) ──── */
 .pf-identity { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.25rem; }
