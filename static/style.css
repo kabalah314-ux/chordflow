@@ -832,6 +832,15 @@ button {
 
 .secondary-btn:hover { background: rgba(255, 255, 255, 0.15); }
 
+/* T-138: top-bar del reproductor ordenada — 3 zonas + separadores + botón de herramienta. */
+.global-controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.tb-zone { display: flex; align-items: center; gap: 0.6rem; }
+.tb-sep { width: 1px; align-self: stretch; min-height: 26px; background: rgba(255, 255, 255, 0.12); }
+.tool-btn { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+.tool-btn:hover { background: rgba(255, 255, 255, 0.15); }
+/* Móvil: los controles bajan de línea (flex-wrap) y se ocultan los separadores. */
+@media (max-width: 640px) { .top-bar .tb-sep { display: none; } }
+
 .login-msg {
     min-height: 1.2em;
     font-size: 0.85rem;

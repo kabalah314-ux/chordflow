@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>BandFlow Player</title>
     <link rel="stylesheet" href="design-system.css?v=f2033b77">
-    <link rel="stylesheet" href="style.css?v=ffa229ab">
+    <link rel="stylesheet" href="style.css?v=e88339d2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -20,28 +20,39 @@
                 <h1 id="song-title">Cargando...</h1>
                 <h2 id="song-artist"></h2>
             </div>
-            <div class="global-controls" style="display: flex; gap: 1rem;">
-                <div class="control-group">
-                    <button id="btn-bpm-down" class="icon-btn" aria-label="Bajar BPM" title="Bajar BPM">-</button>
-                    <div class="bpm-display">
-                        <span id="bpm-value">120</span> <span class="label">BPM</span>
+            <div class="global-controls">
+                <!-- Zona 1: transporte/tempo -->
+                <div class="tb-zone">
+                    <div class="control-group">
+                        <button id="btn-bpm-down" class="icon-btn" aria-label="Bajar BPM" title="Bajar BPM">-</button>
+                        <div class="bpm-display">
+                            <span id="bpm-value">120</span> <span class="label">BPM</span>
+                        </div>
+                        <button id="btn-bpm-up" class="icon-btn" aria-label="Subir BPM" title="Subir BPM">+</button>
                     </div>
-                    <button id="btn-bpm-up" class="icon-btn" aria-label="Subir BPM" title="Subir BPM">+</button>
-                </div>
-                <div class="control-group">
-                    <button id="btn-key-down" class="icon-btn" aria-label="Bajar semitono" title="Bajar semitono">♭</button>
-                    <div class="bpm-display">
-                        <span id="key-value">0</span> <span class="label">Tono</span>
+                    <div class="control-group">
+                        <button id="btn-key-down" class="icon-btn" aria-label="Bajar semitono" title="Bajar semitono">♭</button>
+                        <div class="bpm-display">
+                            <span id="key-value">0</span> <span class="label">Tono</span>
+                        </div>
+                        <button id="btn-key-up" class="icon-btn" aria-label="Subir semitono" title="Subir semitono">♯</button>
+                        <button id="btn-key-save" class="icon-btn" aria-label="Guardar tono" title="Guardar tono">💾</button>
                     </div>
-                    <button id="btn-key-up" class="icon-btn" aria-label="Subir semitono" title="Subir semitono">♯</button>
-                    <button id="btn-key-save" class="icon-btn" aria-label="Guardar tono" title="Guardar tono">💾</button>
                 </div>
-                <button id="btn-tuner" class="primary-btn square" aria-label="Afinador" title="Afinador" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🎤</button>
-                <button id="btn-reference" class="primary-btn square" aria-label="Vídeo de referencia" title="Vídeo de referencia" style="display:none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🎬</button>
-                <button id="btn-print" class="primary-btn square" aria-label="Exportar a PDF" title="Exportar / Imprimir (PDF)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🖨️</button>
-                <a href="app.html" class="primary-btn square" aria-label="Ir al inicio" title="Inicio" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">🏠</a>
-                <a href="library.html" class="primary-btn square" aria-label="Ir a la biblioteca" title="Biblioteca" style="text-decoration: none; background: rgba(255,255,255,0.08); color: var(--text-primary);">📚</a>
-                <a href="editor.html" class="primary-btn square" aria-label="Crear partitura" title="Crear Partitura" style="text-decoration: none;">➕</a>
+                <span class="tb-sep" aria-hidden="true"></span>
+                <!-- Zona 2: herramientas -->
+                <div class="tb-zone">
+                    <button id="btn-tuner" class="primary-btn square tool-btn" aria-label="Afinador" title="Afinador">🎤</button>
+                    <button id="btn-reference" class="primary-btn square tool-btn" aria-label="Vídeo de referencia" title="Vídeo de referencia" style="display:none;">🎬</button>
+                    <button id="btn-print" class="primary-btn square tool-btn" aria-label="Exportar a PDF" title="Exportar / Imprimir (PDF)">🖨️</button>
+                </div>
+                <span class="tb-sep" aria-hidden="true"></span>
+                <!-- Zona 3: navegación -->
+                <div class="tb-zone">
+                    <a href="app.html" class="primary-btn square tool-btn" aria-label="Ir al inicio" title="Inicio" style="text-decoration: none;">🏠</a>
+                    <a href="library.html" class="primary-btn square tool-btn" aria-label="Ir a la biblioteca" title="Biblioteca" style="text-decoration: none;">📚</a>
+                    <a href="editor.html" class="primary-btn square" aria-label="Crear partitura" title="Crear Partitura" style="text-decoration: none;">➕</a>
+                </div>
             </div>
         </header>
 

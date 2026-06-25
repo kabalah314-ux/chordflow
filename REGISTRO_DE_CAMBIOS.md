@@ -8,6 +8,24 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V4-F4 · T-138 — Top-bar del reproductor ordenada (2026-06-25) ✅
+
+**Qué:** arranca **V4-F4 (la joya en directo)**. La barra superior del reproductor pasa de botones con
+estilos inline a **3 zonas** (transporte/tempo · herramientas · navegación) con separadores y clase
+`.tool-btn`. **El motor no se toca** (contrato DOM intacto).
+
+**Cómo/Verificación:** solo `index.html` + `style.css`.
+- `index.html`: los controles se agrupan en `.tb-zone` (×3) con `.tb-sep` entre zonas; los botones de
+  herramienta/navegación usan `primary-btn square tool-btn` (sin estilo inline de fondo). Se conservan
+  **todos** los ids, `aria-label`/`title` y los `href` (los usa `app.js paintPlayerIcons`).
+- `style.css`: `.global-controls` (`flex-wrap`), `.tb-zone`, `.tb-sep`, `.tool-btn`. **Móvil:** los
+  controles bajan de línea (flex-wrap) y se ocultan los separadores (alternativa robusta al menú
+  colapsable, para no arriesgar la joya).
+- Test e2e `test_topbar_player_ordenada` (3 zonas, `.tool-btn`, sin fondo inline, aria intactos, SVG
+  presente). Doctor verde + e2e (top-bar + player + iconos) **en verde**. `cachebust` al día.
+
+---
+
 ## 🗂️ V4-F3 · T-137 — Microinteracciones (pop) con propósito (2026-06-25) ✅ — cierra F3
 
 **Qué:** premiar las acciones con un micro-feedback, respetando `prefers-reduced-motion`.
