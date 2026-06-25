@@ -16,6 +16,9 @@ pytestmark = pytest.mark.e2e
 def test_home_hero_saldo_y_mensajes(page, live_server, api):
     """T-131 (Opción A): el Inicio es un panel de control con HERO del próximo evento, saldo total
     y últimos mensajes. El hero muestra el evento + su banda y el "¿Vas?" marca asistencia."""
+    # Aislar: la BD e2e es compartida y el hero muestra SOLO el próximo evento de TODAS mis bandas
+    # (upcoming_events[0]). Sin wipe, un evento de otro test podría ser más inminente y robar el hero.
+    wipe_bands(api)
     bid = api.post("/bands/", json={"name": "Banda Inicio"}).json()["id"]
     # Fecha futura CERCANA y DINÁMICA (no hardcodeada → no caduca); ordena entre los primeros.
     starts_at = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S")
