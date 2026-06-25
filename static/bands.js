@@ -268,6 +268,16 @@ async function loadFinance(bandId, iAmAdmin) {
             <span class="${cls}">${fmtMoney(v)} <small>${label}</small></span></li>`;
     }).join('') || '<li><small>Sin saldos.</small></li>';
 
+    // T-152: visión económica por temporada (año natural). Agregación cliente, sin backend nuevo.
+    const seasons = bfFinanceBySeason(txs);
+    const seasonRows = seasons.map(s => {
+        const cls = s.net > 0 ? 'bal-pos' : (s.net < 0 ? 'bal-neg' : '');
+        return `<li class="setlist-song">
+            <span class="sl-title">📅 Temporada ${s.year}
+                <small>＋${fmtMoney(s.income)} · −${fmtMoney(s.expense)}</small></span>
+            <span class="${cls}">${fmtMoney(s.net)} <small>neto</small></span></li>`;
+    }).join('');
+
     const txRows = txs.map(t => `
         <li class="setlist-song" data-id="${escapeHtml(t.id)}">
             <span class="sl-title">${t.type === 'income' ? '➕' : '➖'} ${escapeHtml(t.description || (t.type === 'income' ? 'Ingreso' : 'Gasto'))}
@@ -277,6 +287,7 @@ async function loadFinance(bandId, iAmAdmin) {
 
     el.innerHTML = `
         <h5>Saldos</h5><ul class="setlist-list">${balRows}</ul>
+        ${seasons.length ? `<h5>Por temporada</h5><ul class="setlist-list" id="b-seasons">${seasonRows}</ul>` : ''}
         <h5>Movimientos ${txs.length ? `<button id="b-export-csv" class="setlist-item-btn" title="Exportar movimientos a CSV">${bfIcon('download', { size: 14 })} CSV</button>` : ''}</h5>
         <ul class="setlist-list" id="b-tx-list">${txRows}</ul>`;
 

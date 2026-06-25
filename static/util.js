@@ -187,3 +187,26 @@ function alertModal(html, { okText = 'Aceptar' } = {}) {
         if (okBtn) okBtn.focus();
     });
 }
+
+/**
+ * T-152 — Agrega movimientos por temporada (año natural) para una visión económica por temporada.
+ * Función PURA y testeable: no toca el DOM ni la red; el llamador formatea los importes.
+ * Devuelve `[{ year, income, expense, net }]` ordenado del año más reciente al más antiguo.
+ * Usa `date` (o `created_at` como respaldo); ignora movimientos sin fecha válida.
+ */
+function bfFinanceBySeason(txs) {
+    const by = {};
+    (txs || []).forEach((t) => {
+        const raw = t && (t.date || t.created_at);
+        if (!raw) return;
+        const year = new Date(raw).getFullYear();
+        if (!Number.isFinite(year)) return;
+        if (!by[year]) by[year] = { year, income: 0, expense: 0, net: 0 };
+        const amt = Number(t.amount) || 0;
+        if (t.type === 'income') by[year].income += amt;
+        else by[year].expense += amt;
+    });
+    return Object.values(by)
+        .map((s) => ({ ...s, net: s.income - s.expense }))
+        .sort((a, b) => b.year - a.year);
+}

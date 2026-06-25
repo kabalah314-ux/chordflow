@@ -8,6 +8,28 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📅 V4-F5 · T-152 — Caché por temporada (agregación por fechas) (2026-06-25) ✅ — cierra F5
+
+**Qué:** la sección **Finanzas** de la banda gana un bloque "**Por temporada**": agrega los movimientos
+por **año natural** (ingresos / gastos / neto) para una visión económica por temporada, junto a la ya
+existente "caché por gira".
+
+**Por qué:** las finanzas se veían como una lista plana de movimientos; faltaba la lectura agregada por
+periodo (cierra el punto 8.7 de la guía V4). El dato de fecha ya estaba en cada movimiento (`Transaction.date`).
+
+**Cómo:** función **pura y testeable** `bfFinanceBySeason(txs)` en `util.js` (agrupa por
+`new Date(date).getFullYear()`, ignora movimientos sin fecha, ordena descendente). `bands.js`
+(`loadFinance`) la usa para pintar `#b-seasons` entre Saldos y Movimientos, formateando con `fmtMoney`.
+**Agregación 100% cliente, sin backend ni migración.**
+
+**Verificación:** e2e `test_cache_temporada.py` (2): con movimientos en 2024 y 2025 aparecen dos
+temporadas separadas y ordenadas (neto correcto); y la función pura separa por año e ignora los sin
+fecha. `run_checks` **TODO VERDE** (204 unit · 129 e2e). `cachebust` al día.
+
+> 🏁 **Con T-152 queda CERRADA V4-F5.** Pendiente solo **V4-F6** (🔌 Storage/notificaciones/realtime, requiere config de Oscar).
+
+---
+
 ## ♿ V4-F5 · T-151 — Accesibilidad (remate) (2026-06-25) ✅
 
 **Qué:** pasada de accesibilidad sobre los cuatro frentes de la tarea: contraste de grises secundarios,

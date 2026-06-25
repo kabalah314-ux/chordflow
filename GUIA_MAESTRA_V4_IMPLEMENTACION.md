@@ -9,14 +9,13 @@
 > `python harness/run_checks.py` verde → registrar en `REGISTRO_DE_CAMBIOS.md` → desplegar (push a
 > `main`) → verificar en vivo. Cada tarea es **un commit/deploy** independiente y reversible.
 >
-> **Estado:** 🟢 **V4-F1…F4 EJECUTADAS y desplegadas** + **F5 al 90% (9/10)**. Hechas y verificadas
-> (`run_checks` verde): F1 (T-120…T-128 + T-124b), F2 (T-129…T-132), F3 (T-133…T-137), F4 (T-138…T-142),
-> y de **F5**: T-143 (añadir-a), T-144 (buscador repertorio), T-145 (duplicar setlist), T-146 (banda en
-> lateral), T-147 (login), T-148 (tour), T-149 (cifras tabulares), T-150 (modo claro legacy), T-151
-> (accesibilidad). **PENDIENTE de F5:** **T-152 (caché por temporada)**. Luego **F6** (T-153…T-156, 🔌
-> necesita config de Oscar). Decisiones cerradas: Resumen = Opción B · Inicio = Opción A.
+> **Estado:** 🟢 **V4-F1…F5 COMPLETAS y verificadas** (`run_checks` verde): F1 (T-120…T-128 + T-124b),
+> F2 (T-129…T-132), F3 (T-133…T-137), F4 (T-138…T-142), F5 (T-143…T-152): añadir-a, buscador repertorio,
+> duplicar setlist, banda en lateral, login, tour, cifras tabulares, modo claro legacy, **accesibilidad
+> (T-151)** y **caché por temporada (T-152)**. **PENDIENTE: solo V4-F6** (T-153…T-156, 🔌 necesita config
+> de Oscar: Storage/notificaciones/realtime). Decisiones cerradas: Resumen = Opción B · Inicio = Opción A.
 >
-> _Implementación V7 — 2026-06-25 (F1–F4 + F5 al 90% ejecutadas/desplegadas; falta T-152, F6)._
+> _Implementación V8 — 2026-06-25 (F1–F5 ejecutadas/verificadas; falta solo F6, que necesita config)._
 
 ---
 
