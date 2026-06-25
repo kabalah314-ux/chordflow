@@ -8,6 +8,17 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V4-F4 · T-142 — Estados vacíos con CTA (2026-06-25) ✅
+
+**Qué:** que ningún estado vacío sea un callejón sin salida: siempre con una acción clara.
+
+**Cómo/Verificación:** `icons.js`: `bfEmpty` gana `opts.cta = { label, href }` (botón primario;
+retrocompatible). Aplicado a los vacíos agregados de **Agenda** y **Finanzas** (CTA "Ir a Bandas"). Test
+e2e `test_agenda_vacia_con_cta`. Doctor verde + e2e (vacíos + agenda + finanzas) **en verde**. `cachebust`
+al día. *(Los empty-states de bandas/biblioteca/setlists ya tenían CTA propios de tareas anteriores.)*
+
+---
+
 ## 🎸 V4-F4 · T-141 — Hoja de atajos del reproductor (2026-06-25) ✅
 
 **Qué:** descubribilidad de los atajos de teclado del reproductor.

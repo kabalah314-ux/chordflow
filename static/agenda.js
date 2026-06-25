@@ -52,7 +52,8 @@
                 <div class="bf-stack">
                     <div><h1 class="bf-h1">Agenda</h1></div>
                     <div class="bf-card">${bfEmpty('calendar', 'Tu agenda está vacía',
-                        'No tienes eventos en ninguna banda. <a href="bands.html">Entra en una banda</a> para crear ensayos o conciertos.')}</div>
+                        'No tienes eventos en ninguna banda. Entra en una banda para crear ensayos o conciertos.',
+                        { cta: { label: 'Ir a Bandas', href: 'bands.html' } })}</div>
                 </div>`;
             return;
         }

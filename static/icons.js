@@ -72,10 +72,15 @@
     window.bfEmpty = function (icon, title, text, opts) {
         opts = opts || {};
         const id = opts.id ? ` id="${opts.id}"` : '';
+        // CTA opcional (T-142): un botón de acción claro. opts.cta = { label, href }.
+        const cta = (opts.cta && opts.cta.label && opts.cta.href)
+            ? `<a class="bf-btn bf-btn--primary bf-empty__cta" href="${opts.cta.href}" style="text-decoration:none;margin-top:.7rem;">${opts.cta.label}</a>`
+            : '';
         return `<div class="bf-empty"${id}>` +
             `<span class="bf-empty__icon">${window.bfIcon(icon, { size: 28 })}</span>` +
             `<span class="bf-empty__title">${title}</span>` +
             (text ? `<span class="bf-empty__text">${text}</span>` : '') +
+            cta +
             `</div>`;
     };
 })();
