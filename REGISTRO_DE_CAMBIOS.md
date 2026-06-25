@@ -8,6 +8,16 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🧩 V4-F5 · T-149 — Cifras tabulares en los displays numéricos (2026-06-25) ✅
+
+**Qué:** refinamiento tipográfico — los números del reproductor (beat, BPM, tono) usan
+`font-variant-numeric: tabular-nums` para que no "bailen" al cambiar de cifra. *(La unificación de
+fuentes a IBM Plex y la escala de tokens ya venían de F1.)* `style.css` (`.bpm-display`,
+`#current-beat-display`, `#bpm-value`, `#key-value`, `.section-chip`). Test e2e
+`test_cifras_tabulares_en_el_reproductor`. Doctor verde + e2e en verde. `cachebust` al día.
+
+---
+
 ## 🧩 V4-F5 · T-150 — Modo claro a la par (remate en legacy) (2026-06-25) ✅
 
 **Qué:** que el contenido legacy (no solo el shell) se vea bien en **modo claro**.

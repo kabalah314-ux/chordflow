@@ -1271,6 +1271,11 @@ kbd {
 .add-to-row:hover { background: rgba(255, 255, 255, 0.06); }
 .add-to-row span { flex: 1; min-width: 0; }
 .add-to-row small { color: var(--text-secondary, #aaa); }
+
+/* T-149: cifras tabulares (alineadas en columna) en los displays numéricos del reproductor. */
+.bpm-display, .section-chip, #current-beat-display, #bpm-value, #key-value {
+    font-variant-numeric: tabular-nums;
+}
 .att-btn { opacity: 0.6; }
 .att-btn.active {
     opacity: 1;
