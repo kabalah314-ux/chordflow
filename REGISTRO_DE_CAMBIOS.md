@@ -2,9 +2,68 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-06-24
+> Última actualización: 2026-07-01
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🔎 T-162 — Buscar canción por nombre en el editor (con IA) (2026-07-01) ✅
+
+**Qué:** en vez de pegar el enlace de CifraClub/LaCuerda, el usuario escribe el **nombre de la
+canción** (y opcionalmente el artista) en un buscador nuevo del editor; la IA consulta ambos sitios y
+devuelve una **preselección de candidatos** (título/artista/origen) para elegir antes de importar.
+
+**Por qué:** pedido directo de Oscar (2026-07-01, ver `GUIA_MAESTRA_V3.md` §8.2) para agilizar la
+búsqueda: hoy hay que ir a buscar el enlace fuera de la app y volver a pegarlo.
+
+**Cómo:**
+- **Backend:** `search_song()` nuevo en [importer.py](src/services/importer.py) — construye la URL de
+  búsqueda de CifraClub y LaCuerda, reutiliza el **mismo lector Jina** ya usado para la extracción
+  (preserva los enlaces como markdown `[texto](url)`, imprescindible para sacar las URLs candidatas), y
+  pide a OpenRouter (prompt nuevo `_SEARCH_SYSTEM_PROMPT`, distinto del de extracción) que devuelva un
+  **array JSON estructurado** `{title, artist, url}` a partir del texto de resultados de cada sitio. Si
+  un sitio falla no rompe la búsqueda (best-effort); solo lanza `ImportError_` si fallan todos. Nuevo
+  endpoint `GET /import/search?q=` en [import_router.py](src/api/import_router.py) (mismo
+  `Depends(get_current_user)` que el resto de `/songs`).
+- **Frontend:** campo **"Buscar canción por nombre"** en [editor.html](static/editor.html), por encima
+  del campo de URL existente (que se mantiene como alternativa manual). [editor.js](static/editor.js)
+  pinta tarjetas con título/artista/origen (todo escapado con `escapeHtml`); al elegir una se rellena el
+  campo de URL y se dispara el import normal (`import_from_url`) — **capa de preselección delante del
+  import ya existente**, no un flujo nuevo. CSS `.import-search-*` en [style.css](static/style.css).
+
+**Verificación:** unit en [test_import.py](tests/unit/test_import.py) (contrato del endpoint + auth +
+`search_song` con fetch/OpenRouter mockeados, incluida la combinación de sitios y el fallo total) + e2e
+en [test_editor.py](tests/e2e/test_editor.py) (buscar → tarjetas → elegir rellena URL e importa; sin
+resultados → mensaje). `run_checks` **TODO VERDE (216 unit · 139 e2e)**. `cachebust` al día. **Sin
+migración.**
+
+**Diferido (no bloquea):** más sitios que CifraClub/LaCuerda, caché de búsquedas repetidas,
+rate-limit del endpoint (cada búsqueda cuesta una llamada a OpenRouter — vigilar cuota gratuita).
+
+---
+
+## 🎤 T-161 — Afinador como sección propia del menú principal (2026-07-01) ✅
+
+**Qué:** nuevo ítem **"Afinador"** en la navegación lateral, justo debajo de "Inicio" → página
+standalone `afinador.html` con el mismo panel de detección de tono del reproductor, sin tener que
+abrir antes una canción.
+
+**Por qué:** pedido directo de Oscar (2026-07-01, ver `GUIA_MAESTRA_V3.md` §8.1); el afinador (T-091)
+solo vivía dentro del player.
+
+**Cómo:** ítem nuevo en `NAV` de [shell.js](static/shell.js) (`Inicio` → `Afinador` → `Explorar`…).
+Página nueva [afinador.html](static/afinador.html) (shell + los mismos ids que usa `tuner.js`:
+`#tuner-panel`/`#tuner-note`/`#tuner-cents`/`#tuner-needle`/`#tuner-start`/`#tuner-msg`, sin duplicar la
+detección por autocorrelación). [tuner.js](static/tuner.js) ahora soporta **modo standalone**: si no
+existe `#btn-tuner` (no hay botón que abra/cierre), el panel ya viene visible en el HTML y no aplica el
+toggle — el botón dentro del player sigue funcionando igual que antes. Icono `mic` (ya existía en
+`icons.js`).
+
+**Verificación:** e2e en [test_shell.py](tests/e2e/test_shell.py) (el ítem está justo bajo "Inicio" y
+navega a `afinador.html`; en la página standalone no hay `#btn-tuner`, el panel está visible y la
+detección de 440 Hz → La4 sigue funcionando). `run_checks` **TODO VERDE (216 unit · 139 e2e)**.
+`cachebust` al día. **Sin migración.**
 
 ---
 

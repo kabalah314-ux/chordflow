@@ -1,5 +1,14 @@
 # 🎸 BandFlow — Guía Maestra V3
 
+> ## 📌 ESTA ES LA GUÍA VIGENTE — lee solo esta para saber dónde estamos
+> Las demás (`GUIA_MAESTRA.md`, `GUIA_MAESTRA_V2.md`, `GUIA_MAESTRA_V2_FUNCIONAL.md`) son
+> **historial cerrado** (ya implementado y en producción) — solo hace falta abrirlas para
+> consultar el detalle de una decisión pasada, nunca para saber "qué toca ahora".
+> **Regla:** los siguientes pasos y decisiones nuevas se añaden como **sección nueva al final de
+> esta misma guía** (numerada correlativamente, p. ej. §8, §9…), NO creando un `GUIA_MAESTRA_V4.md`.
+> Solo se abre una guía nueva (`_V4`) si hay un giro de producto tan grande como V2→V3 (nueva
+> dirección de fondo, no una mejora puntual). Ver regla completa en `CLAUDE.md` §1.
+>
 > **Borrador vivo · creado 2026-06-17.** Dirección de producto de la **V3**: el salto de
 > "SaaS aislado de gestión de banda" a **"red musical con un plano público opt-in"**.
 > Companion de [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md) +
@@ -338,6 +347,75 @@ riesgo legal/operativo (7→10), con la monetización montándose encima.
 - **Infra:** ¿observabilidad mínima (Sentry) ya? ¿cuándo el worker no-serverless para transcripción?
 - **Monetización:** precio ancla Pro (6–9 €/mes por banda con PPA LATAM); entradas/merch con
   comisión (Stripe Connect) diferido por coste regulatorio.
+
+---
+
+## 8. Próximos pasos anotados por Oscar (2026-07-01)
+
+> ✅ **Implementadas (2026-07-01)** — T-161 y T-162 en `harness/ROADMAP.md`, `run_checks` TODO VERDE
+> (216 unit · 139 e2e). Detalle en `REGISTRO_DE_CAMBIOS.md`. El diseño de abajo se conserva como
+> referencia de las decisiones tomadas.
+
+Dos mejoras pedidas directamente por Oscar, implementadas como **T-161, T-162**
+en `harness/ROADMAP.md`, independientes entre sí y de bajo riesgo arquitectónico:
+
+### 8.1 T-161 · Afinador como sección propia del menú principal
+
+Hoy el afinador (`tuner.js`, T-091) solo vive **dentro del player** (botón dentro de `index.html`).
+Oscar quiere un acceso directo en la **navegación principal del shell**, justo debajo de "Inicio".
+
+- Añadir un ítem `{ label: 'Afinador', icon: 'tuner'/'mic', href: 'afinador.html' }` en el array de
+  navegación de `static/shell.js` (justo tras `Inicio`, antes de `Explorar`).
+- Nueva página **standalone** `static/afinador.html` + `afinador_page.js` que reutiliza el panel y
+  la detección de tono ya existentes en `tuner.js` (autocorrelación `bfDetectPitch`, Web Audio) sin
+  duplicar lógica — se extrae el panel de `tuner.js` a un módulo compartido si hiciera falta, y el
+  player lo sigue usando igual (no se toca `sync_engine.js`).
+- El acceso desde el player (botón 🎵/afinador dentro de `index.html`) **se mantiene** para afinar
+  sin salir de la canción; el nuevo ítem del menú es un atajo adicional para afinar sin tener una
+  canción abierta.
+- Icono nuevo en `static/icons.js` si no existe uno adecuado ("tuner"/diapasón).
+- Test e2e: `test_afinador_accesible_desde_menu` (clic en el ítem del menú → panel visible y detecta
+  440 Hz → La4, igual que el test ya existente del player).
+
+### 8.2 T-162 · Búsqueda de canciones por nombre (sin pegar enlace)
+
+**Problema actual:** para importar con IA (`import_router.py` + `importer.py`, T-0xx) hay que pegar
+la URL exacta de CifraClub/LaCuerda/Ultimate Guitar. Oscar quiere escribir solo el **nombre de la
+canción** (y opcionalmente el artista) en el buscador y que la app le ofrezca una lista de
+resultados previos entre los que elegir, antes de hacer la importación completa.
+
+**Cómo lo haría (reaprovechando `importer.py`, sin SDKs nuevos, mismo patrón urllib/Jina Reader):**
+
+1. **Nuevo paso de búsqueda, separado de la extracción.** Se añade `search_song(query: str) -> list[dict]`
+   en `src/services/importer.py`:
+   - Construye la URL de búsqueda de cada sitio soportado (p. ej.
+     `https://www.cifraclub.com/busca/?q=<query>` y el buscador equivalente de LaCuerda).
+   - Reutiliza `fetch_page_text`/`_fetch_via_jina` para traer el HTML de la página de resultados
+     (mismo mecanismo anti-bloqueo que ya existe para la extracción).
+   - Pide al modelo de OpenRouter (mismo `extract_chords`, prompt distinto y más barato) que
+     devuelva **una lista JSON** `[{title, artist, url, source}]` a partir del texto de la página de
+     resultados — igual que hoy se le pide la partitura completa, pero aquí solo estructura la lista
+     de candidatos en vez de las líneas de acordes.
+   - Se puede consultar CifraClub y LaCuerda **en paralelo** (2 fetches) y fusionar/ordenar los
+     resultados (p. ej. por coincidencia de título) antes de devolverlos.
+2. **Nuevo endpoint** `GET /import/search?q=...` en `import_router.py` → devuelve la lista de
+   candidatos (máx. ~8), cada uno con `title`, `artist`, `url`, `source` (para mostrar el origen).
+   Mismo `Depends(get_current_user)` que el resto de `/songs`.
+3. **Frontend:** en la pantalla de importación (`editor.html`/`import.js` o donde viva hoy el campo
+   de "pegar enlace"), se añade un campo de texto "Buscar canción" **por encima** del campo de URL
+   (el campo de URL se mantiene como alternativa manual/avanzada, no se elimina). Al escribir y
+   pulsar buscar (o tras un debounce), se llama a `/import/search` y se pintan tarjetas con
+   título + artista + insignia del origen (CifraClub/LaCuerda). Al hacer clic en una tarjeta, se
+   rellena el campo de URL con la del resultado elegido y se dispara el flujo de importación normal
+   (`import_from_url`) — es decir, el buscador es una **capa de preselección** delante del import ya
+   existente, no un import distinto. El usuario puede cambiar de resultado antes de confirmar.
+4. **Fuera de alcance ahora (diferido):** paginación de resultados, más sitios que CifraClub/
+   LaCuerda, caché de búsquedas repetidas, y rate-limit del endpoint de búsqueda (igual que el
+   import de hoy, cada llamada cuesta una petición a OpenRouter — vigilar cuota gratuita del
+   modelo, `Band.plan`/D8 ya tiene el andamiaje de contador si hiciera falta limitarlo).
+5. **Tests:** unit para `search_song` con HTML de resultados simulado (fixture, sin red real) +
+   `test_api_import_search` (mockeando `search_song`) + e2e que escribe un nombre, ve tarjetas y
+   confirma que elegir una rellena el campo de URL.
 
 ---
 

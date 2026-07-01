@@ -778,6 +778,38 @@ button {
     margin-bottom: 0.8rem;
 }
 
+/* Resultados de la búsqueda de canción por nombre (T-162): preselección antes de importar. */
+.import-search-results {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+    border-radius: 8px;
+    overflow: hidden;
+}
+.import-search-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    border-top: 1px solid var(--border-color, rgba(255,255,255,0.08));
+}
+.import-search-item:first-child { border-top: none; }
+.import-search-item:hover, .import-search-item:focus-visible { background: rgba(255,255,255,0.06); }
+.import-search-title { font-weight: 600; }
+.import-search-artist { color: var(--text-secondary); font-size: 0.85rem; }
+.import-search-source {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color, rgba(255,255,255,0.15));
+    border-radius: 999px;
+    padding: 1px 8px;
+    white-space: nowrap;
+}
+.import-search-empty { padding: 0.5rem 0.75rem; color: var(--text-secondary); font-size: 0.85rem; }
+
 .help-text code {
     background: rgba(255,255,255,0.1);
     padding: 2px 6px;

@@ -2,13 +2,21 @@
 
 > Este archivo lo lee el agente (Claude Code) al empezar cada sesión.
 > Es la **fuente de verdad operativa**: cómo trabajar, cómo verificar y qué nunca romper.
-> Producto: **GIRO V2 a SaaS de gestión de bandas** (multi-tenant). La dirección y el detalle
-> funcional son la fuente de verdad de producto:
-> [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md) (decisiones del giro) +
-> [GUIA_MAESTRA_V2_FUNCIONAL.md](GUIA_MAESTRA_V2_FUNCIONAL.md) (las 14 áreas resueltas, roadmap
-> 7–21, convenciones §C.4, detalle Fase 7 §C.5, diagrama §C.6).
-> La [GUIA_MAESTRA.md](GUIA_MAESTRA.md) original describe el producto previo (teleprompter), que
-> sigue siendo la "joya" intacta dentro del nuevo flujo.
+>
+> **Guía de producto VIGENTE (léela primero, es la única que hace falta para saber "qué toca
+> ahora"): [GUIA_MAESTRA_V3.md](GUIA_MAESTRA_V3.md).** Las demás son historial cerrado (ya
+> implementado y en producción), solo para consultar el detalle de una decisión pasada:
+> [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md) + [GUIA_MAESTRA_V2_FUNCIONAL.md](GUIA_MAESTRA_V2_FUNCIONAL.md)
+> (giro V2, las 14 áreas, Fases 7–13) y [GUIA_MAESTRA.md](GUIA_MAESTRA.md) (producto original,
+> teleprompter — la "joya" que sigue intacta dentro del flujo actual).
+>
+> ⚠️ **Regla al añadir nueva dirección/decisiones de producto:** se añade como **sección nueva al
+> final de la guía vigente** (`GUIA_MAESTRA_V3.md`, numerada correlativamente §8, §9…), NUNCA
+> creando un archivo `GUIA_MAESTRA_V4.md`/`V2.3.md`/etc. para una mejora puntual. Solo se abre una
+> guía numerada nueva si hay un giro de producto de la magnitud de V2→V3 (cambio de dirección de
+> fondo), y en ese caso el archivo anterior se marca al inicio como "HISTORIAL CERRADO — no es la
+> guía vigente" con enlace a la nueva. Así una sola guía activa concentra dónde estamos, sin tener
+> que abrir todas para orientarse.
 
 ---
 

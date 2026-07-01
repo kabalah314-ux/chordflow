@@ -611,6 +611,20 @@
   - [ ] **Pendiente F7:** `visibility` en `MusicianProfile`/EPK (perfil público), onboarding viral
         (invitación al abrir el enlace), título/autor vía proxy oEmbed real (hoy solo carátula). Y
         **aplicar la migración `6323c5929bfc` a prod** (desbloquea el deploy de T-157…T-160).
+- [x] **Próximos pasos sueltos** (pedidos por Oscar 2026-07-01, detalle en `GUIA_MAESTRA_V3.md` §8):
+  - [x] **T-161** 🟢 **Afinador como sección propia del menú**: ítem "Afinador" en `static/shell.js`
+        justo debajo de "Inicio" → nueva página standalone `afinador.html` que reutiliza el panel/
+        detección de tono de `tuner.js` (T-091) sin duplicar lógica; el botón dentro del player se
+        mantiene. e2e `test_shell_afinador_en_menu_justo_bajo_inicio` +
+        `test_afinador_pagina_standalone_detecta_sin_boton`. Solo código (sin migración).
+  - [x] **T-162** 🟠 **Buscar canción por nombre (sin pegar enlace)**: `search_song()` nuevo en
+        `src/services/importer.py` (consulta el buscador de CifraClub/LaCuerda vía el mismo fetch
+        anti-bloqueo ya usado, pide a OpenRouter una lista JSON `[{title,artist,url}]`) + endpoint
+        `GET /import/search` en `import_router.py` + campo "Buscar canción" en la UI de importar que
+        pinta tarjetas de resultados; elegir una rellena el campo de URL existente y dispara el
+        `import_from_url` de siempre (capa de preselección, no un import nuevo). Vigilar cuota de
+        OpenRouter (cada búsqueda es una llamada al modelo). Sin migración.
+        `run_checks` TODO VERDE (216 unit · 139 e2e). Detalle en `REGISTRO_DE_CAMBIOS.md`.
 - [ ] **V3-F8** 🟢 EPK + página pública + perfil indexable + RSVP + seguir/fans (entra el rol usuario-fan + RLS).
 - [x] **V3-F9** 🟢 Biblioteca global — **EL RECLAMO** (D9: contribución por defecto). **COMPLETA (backend + revisión + frontend):**
   - [x] **T-100** 🔴 Modelos `MusicalWork`/`PublicScore`/`ScoreRating`/`ScoreComment` + migración

@@ -1,5 +1,9 @@
 # 🎸→🏠 BandFlow — Guía Maestra del giro a **SaaS de gestión de bandas**
 
+> ⚠️ **HISTORIAL CERRADO — no es la guía vigente.** La dirección de producto actual está en
+> [GUIA_MAESTRA_V3.md](GUIA_MAESTRA_V3.md) (léela primero). Este documento describe el giro V2
+> (Fases 7–13), ya implementado y en producción; se conserva como referencia de esas decisiones.
+>
 > Continuación de [GUIA_MAESTRA.md](GUIA_MAESTRA.md). Este documento define el **nuevo
 > enfoque del producto**: de "lector/teleprompter de partituras de un usuario" a
 > **SaaS de gestión para músicos que se mueven en bandas**.

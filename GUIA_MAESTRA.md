@@ -1,5 +1,10 @@
 # 🎸 ChordFlow — Guía Maestra (Documento de Contexto)
 
+> ⚠️ **HISTORIAL CERRADO — no es la guía vigente.** La dirección de producto actual está en
+> [GUIA_MAESTRA_V3.md](GUIA_MAESTRA_V3.md) (léela primero). Este documento describe el producto
+> original (teleprompter mono-usuario), previo al giro V2/V3; la "joya" que describe sigue intacta
+> dentro del flujo actual, pero para saber "qué toca ahora" no hace falta abrir este archivo.
+>
 > Fuente de verdad para entender el proyecto de un vistazo. Actualizar cuando cambie la arquitectura.
 > Última actualización: 2026-06-13 (auditoría completa de código — ver §12 Deuda técnica).
 > Reglas operativas y bucle de trabajo: ver [CLAUDE.md](CLAUDE.md). Plan priorizado: [harness/ROADMAP.md](harness/ROADMAP.md).

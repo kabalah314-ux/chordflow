@@ -5,7 +5,8 @@
  * Todo client-side y gratis. La detección es una FUNCIÓN PURA (`bfDetectPitch`) — testeable con una
  * onda sintética sin micro — y el plumbing de micro/UI va aparte.
  *
- * Se auto-conecta a `#btn-tuner` (abrir/cerrar) y `#tuner-panel` en el reproductor.
+ * Se auto-conecta a `#btn-tuner` (abrir/cerrar) y `#tuner-panel` en el reproductor. En la página
+ * standalone `afinador.html` (T-161) no hay botón: el panel está siempre visible (sin toggle).
  */
 (function () {
     const NOTE_NAMES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
@@ -60,7 +61,8 @@
     // --- UI + micrófono ---------------------------------------------------------
     const btn = document.getElementById('btn-tuner');
     const panel = document.getElementById('tuner-panel');
-    if (!btn || !panel) return;                       // sólo en el reproductor
+    if (!panel) return;                                // ni player ni afinador.html: no hacer nada
+    const standalone = !btn;
 
     const elNote = document.getElementById('tuner-note');
     const elCents = document.getElementById('tuner-cents');
@@ -122,8 +124,11 @@
         else { panel.style.display = ''; if (elMsg) elMsg.textContent = 'Pulsa para activar el micrófono.'; }
     }
 
-    btn.addEventListener('click', togglePanel);
+    if (btn) btn.addEventListener('click', togglePanel);
     if (elStart) elStart.addEventListener('click', () => (running ? stopMic() : startMic()));
     const close = document.getElementById('tuner-close');
     if (close) close.addEventListener('click', togglePanel);
+
+    // Standalone: el panel ya está visible en el HTML (sin display:none) — solo fijamos el mensaje.
+    if (standalone && elMsg) elMsg.textContent = 'Pulsa para activar el micrófono.';
 })();

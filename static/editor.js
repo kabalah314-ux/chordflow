@@ -422,6 +422,63 @@ function updateReferencePreview() {
 
 if (elRefUrl) elRefUrl.addEventListener('input', updateReferencePreview);
 
+// ─── Buscar canción por nombre con IA (T-162) ─────────────────────────────────
+// Capa de preselección delante del import por URL: busca en CifraClub/LaCuerda, pinta
+// candidatos y, al elegir uno, rellena el campo de URL y dispara el import de siempre.
+const elImportSearch = document.getElementById('import-search');
+const elBtnImportSearch = document.getElementById('btn-import-search');
+const elImportSearchResults = document.getElementById('import-search-results');
+
+function renderSearchResults(results) {
+    if (!elImportSearchResults) return;
+    if (!results.length) {
+        elImportSearchResults.innerHTML = '<li class="import-search-empty">Sin resultados. Prueba con otro nombre o pega el enlace abajo.</li>';
+        elImportSearchResults.hidden = false;
+        return;
+    }
+    elImportSearchResults.innerHTML = results.map((r, i) => `
+        <li class="import-search-item" data-idx="${i}">
+            <span class="import-search-title">${escapeHtml(r.title)}</span>
+            ${r.artist ? `<span class="import-search-artist">${escapeHtml(r.artist)}</span>` : ''}
+            ${r.source ? `<span class="import-search-source">${escapeHtml(r.source)}</span>` : ''}
+        </li>`).join('');
+    elImportSearchResults.hidden = false;
+    elImportSearchResults.querySelectorAll('[data-idx]').forEach(li => {
+        li.addEventListener('click', () => {
+            const r = results[parseInt(li.dataset.idx, 10)];
+            if (!r) return;
+            elImportUrl.value = r.url;
+            elImportSearchResults.hidden = true;
+            elBtnImport.click();   // dispara el import normal con la URL elegida
+        });
+    });
+}
+
+if (elBtnImportSearch) elBtnImportSearch.addEventListener('click', async () => {
+    const q = elImportSearch.value.trim();
+    if (!q) { toast('Escribe primero el nombre de la canción.', 'error'); return; }
+    const labelOriginal = elBtnImportSearch.textContent;
+    elBtnImportSearch.disabled = true;
+    elBtnImportSearch.textContent = 'Buscando…';
+    try {
+        const res = await apiFetch('/import/search?q=' + encodeURIComponent(q));
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            toast(data.detail || 'No se pudo buscar.', 'error');
+            return;
+        }
+        renderSearchResults(data.results || []);
+    } catch (err) {
+        toast('Error de red al buscar.', 'error');
+    } finally {
+        elBtnImportSearch.disabled = false;
+        elBtnImportSearch.textContent = labelOriginal;
+    }
+});
+if (elImportSearch) elImportSearch.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); elBtnImportSearch.click(); }
+});
+
 // ─── Importar desde URL con IA (T-045) ────────────────────────────────────────
 const elImportUrl = document.getElementById('import-url');
 const elBtnImport = document.getElementById('btn-import');

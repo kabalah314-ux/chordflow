@@ -19,6 +19,7 @@ import json
 import logging
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from .config import settings
@@ -166,3 +167,126 @@ def import_from_url(url: str) -> str:
     """Orquesta: descargar la página y extraer la partitura. Devuelve el texto para el editor."""
     page = fetch_page_text(url)
     return extract_chords(page)
+
+
+# ─── Buscar canción por nombre (T-162) ─────────────────────────────────────────
+# En vez de pegar el enlace, el usuario escribe el nombre de la canción: consultamos el buscador
+# de cada sitio soportado y pedimos al modelo que estructure los resultados en una lista de
+# candidatos (título/artista/url) para que el usuario elija (o cambie) antes de importar.
+
+_SEARCH_SITES = (
+    ("CifraClub", "https://www.cifraclub.com/busca/?q={q}"),
+    ("LaCuerda", "https://www.lacuerda.net/buscar.php?q={q}"),
+)
+
+_SEARCH_SYSTEM_PROMPT = (
+    "Eres un asistente que extrae resultados de canciones a partir del texto de una página de "
+    "búsqueda de un sitio de acordes (CifraClub o LaCuerda). Te doy el nombre buscado y el texto "
+    "de la página, con sus enlaces en formato markdown [texto](url). Devuelve SOLO un array JSON "
+    "(sin markdown ni explicaciones), con como máximo 8 objetos "
+    '{"title": str, "artist": str, "url": str} correspondientes a canciones reales de esa página '
+    "que coincidan razonablemente con la búsqueda, ordenados por relevancia. La url debe ser "
+    "EXACTAMENTE una de las que aparecen en el texto (absoluta, empieza por http). Si un dato no "
+    "está claro, usa cadena vacía. Si no hay ningún resultado de canción, devuelve []."
+)
+
+
+def _guess_source(url: str) -> str:
+    host = urllib.parse.urlparse(url).netloc.lower()
+    if "cifraclub" in host:
+        return "CifraClub"
+    if "lacuerda" in host:
+        return "LaCuerda"
+    return host or "web"
+
+
+def _extract_json_array(text: str) -> list:
+    """El modelo a veces envuelve el JSON en ```json ... ``` pese a que se le pide que no lo haga."""
+    text = text.strip()
+    match = re.search(r"\[.*\]", text, re.DOTALL)
+    if not match:
+        return []
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return []
+    return data if isinstance(data, list) else []
+
+
+def _rank_search_results(query: str, page_text: str) -> list[dict]:
+    """Pide al modelo (OpenRouter) que estructure los resultados de una página de búsqueda."""
+    if not settings.openrouter_api_key:
+        raise ImportError_("Falta configurar OPENROUTER_API_KEY en el servidor.")
+
+    headers = {
+        "Authorization": f"Bearer {settings.openrouter_api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://chordflow-ecru.vercel.app",
+        "X-Title": "ChordFlow",
+    }
+    payload = {
+        "model": settings.openrouter_model,
+        "messages": [
+            {"role": "system", "content": _SEARCH_SYSTEM_PROMPT},
+            {"role": "user", "content": f'Búsqueda: "{query}"\n\n{page_text}'},
+        ],
+        "temperature": 0.1,
+    }
+    try:
+        body = _http_post_json(settings.openrouter_base_url + "/chat/completions", payload, headers)
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:200]
+        logger.error(f"OpenRouter HTTP {e.code} (búsqueda): {detail}")
+        raise ImportError_("El servicio de IA no está disponible ahora mismo. Inténtalo más tarde.")
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error llamando a OpenRouter (búsqueda): {e}")
+        raise ImportError_("No se pudo contactar con el servicio de IA.")
+
+    try:
+        content = body["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError, AttributeError, TypeError):
+        logger.error(f"Respuesta inesperada de OpenRouter (búsqueda): {str(body)[:300]}")
+        raise ImportError_("La IA devolvió una respuesta inesperada.")
+
+    results = []
+    for item in _extract_json_array(content):
+        if not isinstance(item, dict):
+            continue
+        url = str(item.get("url") or "").strip()
+        title = str(item.get("title") or "").strip()
+        if not url or not title:
+            continue
+        results.append({
+            "title": title,
+            "artist": str(item.get("artist") or "").strip(),
+            "url": url,
+            "source": _guess_source(url),
+        })
+    return results
+
+
+def search_song(query: str) -> list[dict]:
+    """Busca una canción por nombre en los sitios soportados (CifraClub/LaCuerda) y devuelve una
+    lista de candidatos (título/artista/url/origen) para que el usuario elija antes de importar.
+    No lanza si un sitio falla individualmente; solo si ninguno responde."""
+    query = (query or "").strip()
+    if not query:
+        return []
+
+    fetched = []
+    for source, url_tpl in _SEARCH_SITES:
+        url = url_tpl.format(q=urllib.parse.quote(query))
+        try:
+            text = _fetch_via_jina(url)
+            if text and not _looks_blocked(text):
+                fetched.append((source, text[: settings.chordflow_import_max_chars]))
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Búsqueda en {source} falló para «{query}»: {e}")
+
+    if not fetched:
+        raise ImportError_("No se pudo buscar en CifraClub/LaCuerda ahora mismo. "
+                           "Prueba a pegar el enlace directamente.")
+
+    combined = "\n\n".join(f"=== Resultados de {source} ===\n{text}" for source, text in fetched)
+    candidates = _rank_search_results(query, combined)
+    return candidates[:8]

@@ -31,6 +31,7 @@
     // ── Navegación (contexto TÚ). `soon`: página aún no construida (T-076..T-080). ──
     const NAV = [
         { label: 'Inicio',     icon: 'home',     href: 'app.html' },
+        { label: 'Afinador',   icon: 'mic',      href: 'afinador.html' },
         { label: 'Explorar',   icon: 'globe',    href: 'biblioteca-global.html' },
         { label: 'Biblioteca', icon: 'library',  href: 'library.html' },
         { label: 'Agenda',     icon: 'calendar', href: 'agenda.html' },

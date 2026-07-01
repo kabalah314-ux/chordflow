@@ -30,6 +30,43 @@ def test_importar_desde_url_rellena_el_editor(page, live_server):
                            timeout=8000)
 
 
+def test_buscar_cancion_por_nombre_rellena_url_e_importa(page, live_server):
+    """T-162: escribir un nombre en el buscador pinta tarjetas de resultados; elegir una rellena
+    el campo de URL y dispara el import normal (mockeamos ambas llamadas con Playwright)."""
+    page.goto(live_server + "/static/editor.html", wait_until="networkidle")
+
+    page.route("**/import/search**", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body=json.dumps({"results": [
+            {"title": "Wonderwall", "artist": "Oasis",
+             "url": "https://www.cifraclub.com/oasis/wonderwall/", "source": "CifraClub"},
+        ]})))
+    raw = "Verso:\nAm        C\nHola desde la búsqueda"
+    page.route("**/import/", lambda route: route.fulfill(
+        status=200, content_type="application/json",
+        body=json.dumps({"raw_text": raw})))
+
+    page.fill("#import-search", "wonderwall")
+    page.click("#btn-import-search")
+    page.wait_for_selector(".import-search-item", timeout=8000)
+    assert "Wonderwall" in page.inner_text(".import-search-item")
+
+    page.click(".import-search-item")
+    page.wait_for_function(
+        "document.getElementById('import-url').value.includes('cifraclub')", timeout=8000)
+    page.wait_for_function("document.getElementById('raw-text').value.includes('Hola desde la búsqueda')",
+                           timeout=8000)
+
+
+def test_buscar_cancion_sin_resultados_muestra_mensaje(page, live_server):
+    page.goto(live_server + "/static/editor.html", wait_until="networkidle")
+    page.route("**/import/search**", lambda route: route.fulfill(
+        status=200, content_type="application/json", body=json.dumps({"results": []})))
+    page.fill("#import-search", "cancion que no existe")
+    page.click("#btn-import-search")
+    page.wait_for_selector(".import-search-empty", timeout=8000)
+
+
 def test_preview_renderiza_secciones_y_acordes(page, live_server):
     page.goto(live_server + "/static/editor.html", wait_until="networkidle")
     page.fill("#raw-text", SAMPLE_RAW)

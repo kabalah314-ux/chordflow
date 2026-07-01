@@ -106,3 +106,33 @@ def test_shell_toggle_tema(page, live_server, api):
     assert page.get_attribute("html", "data-theme") == "light"
     page.click("#bf-theme-btn")
     assert page.get_attribute("html", "data-theme") is None
+
+
+def test_shell_afinador_en_menu_justo_bajo_inicio(page, live_server, api):
+    """T-161: el item "Afinador" vive en la nav principal, justo debajo de "Inicio", y navega
+    a la página standalone."""
+    page.goto(live_server + "/static/app.html", wait_until="networkidle")
+    page.wait_for_selector(".bf-sidebar", timeout=8000)
+    labels = page.eval_on_selector_all(
+        ".bf-sidebar-nav > *", "els => els.map(e => e.textContent.trim())")
+    idx_inicio = next(i for i, t in enumerate(labels) if "Inicio" in t)
+    assert "Afinador" in labels[idx_inicio + 1], f"Afinador no está justo debajo de Inicio: {labels}"
+    page.click('.bf-sidebar a.bf-nav-item:has-text("Afinador")')
+    page.wait_for_url("**/afinador.html", timeout=8000)
+    assert page.url.endswith("afinador.html")
+
+
+def test_afinador_pagina_standalone_detecta_sin_boton(page, live_server, api):
+    """T-161: en afinador.html no hay #btn-tuner (panel ya visible) y la detección de tono
+    (función pura, sin micro real) sigue funcionando igual que en el player."""
+    page.goto(live_server + "/static/afinador.html", wait_until="networkidle")
+    page.wait_for_selector("#tuner-panel", timeout=8000)
+    assert page.query_selector("#btn-tuner") is None
+    assert page.is_visible("#tuner-panel")
+    freq = page.evaluate("""() => {
+        const sr = 44100, N = 2048, f = 440;
+        const buf = new Float32Array(N);
+        for (let i = 0; i < N; i++) buf[i] = Math.sin(2 * Math.PI * f * i / sr);
+        return window.bfDetectPitch(buf, sr);
+    }""")
+    assert abs(freq - 440) < 8, f"detección de 440 Hz incorrecta: {freq}"

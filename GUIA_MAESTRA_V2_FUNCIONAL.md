@@ -1,5 +1,9 @@
 # 🎸 BandFlow — Especificación funcional completa (por áreas)
 
+> ⚠️ **HISTORIAL CERRADO — no es la guía vigente.** La dirección de producto actual está en
+> [GUIA_MAESTRA_V3.md](GUIA_MAESTRA_V3.md) (léela primero). Este documento detalla las 14 áreas
+> del giro V2 (Fases 7–13), ya implementado y en producción; se conserva como referencia.
+>
 > Companion de [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md). Aquí resolvemos **necesidad por
 > necesidad** todo lo que hace una banda, decidiendo para cada una: si entra en la app o se
 > descarta/aplaza, cómo se modela (datos) y se ve (UX), y en qué fase encaja.
