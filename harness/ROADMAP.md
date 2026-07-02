@@ -625,6 +625,13 @@
         `import_from_url` de siempre (capa de preselección, no un import nuevo). Vigilar cuota de
         OpenRouter (cada búsqueda es una llamada al modelo). Sin migración.
         `run_checks` TODO VERDE (216 unit · 139 e2e). Detalle en `REGISTRO_DE_CAMBIOS.md`.
+  - [x] **T-163** 🟠 **Buscar e importar SIN IA para CifraClub/LaCuerda** (pedido por Oscar
+        2026-07-02): parsers propios por sitio en `importer.py` (regex puro sobre HTML crudo,
+        verificado a mano contra las páginas reales — sin Jina, sin OpenRouter) para búsqueda y
+        extracción de acordes/letra en ambos sitios. `search_song`/`import_from_url` los
+        prueban primero; el flujo con IA (T-162/T-045) queda como red de seguridad si el sitio
+        no tiene parser o no encuentra nada fiable. run_checks TODO VERDE (229 unit · 139 e2e).
+        Detalle en `REGISTRO_DE_CAMBIOS.md`.
 - [ ] **V3-F8** 🟢 EPK + página pública + perfil indexable + RSVP + seguir/fans (entra el rol usuario-fan + RLS).
 - [x] **V3-F9** 🟢 Biblioteca global — **EL RECLAMO** (D9: contribución por defecto). **COMPLETA (backend + revisión + frontend):**
   - [x] **T-100** 🔴 Modelos `MusicalWork`/`PublicScore`/`ScoreRating`/`ScoreComment` + migración

@@ -2,9 +2,60 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-07-01
+> Última actualización: 2026-07-02
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🕷️ T-163 — Buscar e importar SIN IA para CifraClub/LaCuerda (2026-07-02) ✅
+
+**Qué:** T-162 (buscar por nombre) y el import por URL (T-045) llamaban a OpenRouter en **cada**
+búsqueda/import. Ahora, para CifraClub y LaCuerda, se extraen título/artista/acordes/letra con
+**regex puro sobre el HTML crudo** — sin tocar el lector Jina ni el modelo. El flujo con IA queda
+como **red de seguridad**: entra solo si el dominio no tiene parser propio, o si el parser no
+encuentra nada fiable (sitio caído, cambio de estructura...).
+
+**Por qué:** pedido directo de Oscar (2026-07-02) para "encontrar la manera que requiera menos IA
+externa por API" — menos coste, menos latencia, menos dependencia de un servicio externo para dos
+sitios que ya se usan constantemente. Antes de tocar código se **verificó a mano** (con `curl`)
+la estructura real de ambos sitios en vez de asumir que un scraper "obvio" funcionaría:
+- **CifraClub** es una Next.js app, pero tanto la búsqueda como la ficha de canción son HTML
+  estático servido en la primera respuesta (nada de JS necesario). Los acordes van en
+  `<b data-chord-name="Em7">` (atributo semántico, no una clase CSS hasheada — esas SÍ cambian en
+  cada build suyo, se descartó anclar ahí) dentro de un `<pre>`, un `<div>` por línea separado por
+  saltos de línea reales. Los resultados de búsqueda tienen un ancla muy estable: el `alt` de la
+  carátula ("Portada de la canción "X", de Y").
+- **LaCuerda: hallazgo real, no solo arquitectura.** Su buscador por defecto (`exp=` sin más)
+  devuelve el conteo ("N resultados") pero la lista viene **vacía** — se carga por JS que ni el
+  HTML crudo ni el lector Jina llegan a ejecutar/esperar. Con `canc=1&ord=0&ini=0` ("buscar en
+  Canciones") SÍ llega la lista completa en HTML estático. El nombre de archivo real de cada
+  canción va en el array `fns` embebido en la página, pero en **orden inverso** al de las filas/
+  al array `hds` — verificado con una canción real (`acordes.lacuerda.net/suenio_inmoral/oasis`
+  responde 200; emparejar por índice directo habría dado una URL rota). La ficha de canción de
+  LaCuerda es HTML4 clásico, acordes en `<A>Am</A>` dentro de un `<pre>`, sin sorpresas.
+
+**Cómo:** en [importer.py](src/services/importer.py): `_fetch_raw_html` (descarga simple, sin
+Jina) + un parser por sitio (`_parse_cifraclub_search`/`_song`, `_parse_lacuerda_search`/`_song`)
++ registro `_SITE_ADAPTERS` por dominio (`_adapter_for_host`). `search_song()` prueba primero los
+parsers propios de los dos dominios; si ninguno da resultados, cae a `_search_song_via_llm`
+(la implementación de T-162, renombrada, intacta). `import_from_url()` prueba el parser propio del
+dominio de la URL; si no hay adaptador o no extrae nada, cae al flujo `fetch_page_text`+
+`extract_chords` de siempre (T-045, intacto). `_parse_cifraclub_search` además filtra por
+relevancia (alguna palabra de la búsqueda en título/artista) porque esa página mezcla los
+resultados reales con una barra de "tendencias" con el mismo marcado.
+
+**Verificación:** unit en [test_import.py](tests/unit/test_import.py) — cada parser probado con
+**fixtures HTML recortadas pero fieles** (fragmentos reales de las páginas, no inventados),
+incluido el caso del orden invertido de `fns` con una URL real conocida, sitios con estructura
+rota (longitudes que no cuadran → no arriesga un enlace equivocado), y que ni `search_song` ni
+`import_from_url` llaman a la IA cuando el parser propio ya respondió (aserción que revienta si
+alguien reintroduce esa llamada). `run_checks` TODO VERDE (229 unit · 139 e2e). `cachebust` no
+aplica (solo backend).
+**Sin migración.**
+
+**Diferido:** más sitios con parser propio (Ultimate Guitar, e-chords...) si el flujo con IA
+resulta demasiado usado en la práctica.
 
 ---
 

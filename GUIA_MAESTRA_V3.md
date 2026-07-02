@@ -355,6 +355,11 @@ riesgo legal/operativo (7→10), con la monetización montándose encima.
 > ✅ **Implementadas (2026-07-01)** — T-161 y T-162 en `harness/ROADMAP.md`, `run_checks` TODO VERDE
 > (216 unit · 139 e2e). Detalle en `REGISTRO_DE_CAMBIOS.md`. El diseño de abajo se conserva como
 > referencia de las decisiones tomadas.
+>
+> ✅ **T-163 (2026-07-02)** — siguiendo la idea de Oscar de depender lo menos posible de la IA
+> externa: CifraClub y LaCuerda ahora tienen **parser propio sin IA** (regex sobre HTML crudo,
+> verificado a mano) para buscar e importar; el flujo con IA de §8.2 queda como red de seguridad.
+> Detalle completo en `REGISTRO_DE_CAMBIOS.md`.
 
 Dos mejoras pedidas directamente por Oscar, implementadas como **T-161, T-162**
 en `harness/ROADMAP.md`, independientes entre sí y de bajo riesgo arquitectónico:

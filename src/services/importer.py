@@ -1,8 +1,16 @@
-"""Importar una partitura desde una URL con ayuda de IA (T-045).
+"""Importar una partitura desde una URL, y buscarla por nombre (T-045, T-162, T-163).
 
-Flujo: descargar el contenido de la página con un lector que renderiza JS y sortea anti-bot
-(Jina Reader), y pedir a un modelo (OpenRouter, compatible OpenAI, modelo gratuito) que
-devuelva SOLO la partitura en el formato de texto que entiende el editor (`parseRawText`):
+Dos flujos, con IA como red de seguridad en ambos:
+
+1. **Parser propio por sitio (T-163, sin IA)**: para CifraClub y LaCuerda, cuyo HTML es lo
+   bastante estable (verificado a mano) para sacar título/artista/acordes/letra con regex puro
+   — sin gastar una llamada a OpenRouter ni pasar por el lector Jina. Es la ruta primaria tanto
+   para buscar por nombre como para importar desde una URL de esos dos sitios.
+2. **Lector + IA (flujo original)**: si el dominio no tiene parser propio, o el parser no
+   encuentra nada fiable (sitio caído, estructura cambiada...), se cae a descargar el contenido
+   con un lector que renderiza JS y sortea anti-bot (Jina Reader) y pedir a un modelo
+   (OpenRouter, compatible OpenAI, modelo gratuito) que devuelva SOLO la partitura en el formato
+   de texto que entiende el editor (`parseRawText`):
 
     Sección:
     Am        C        G
@@ -10,8 +18,8 @@ devuelva SOLO la partitura en el formato de texto que entiende el editor (`parse
 
     (línea en blanco entre secciones)
 
-No usa SDKs externos: ambas llamadas (lector + OpenRouter) van por urllib (stdlib), igual que
-`auth_provider.py`. La clave de OpenRouter es gratuita y va en `.env.local` (nunca al frontend).
+No usa SDKs externos: todas las llamadas van por urllib (stdlib), igual que `auth_provider.py`.
+La clave de OpenRouter es gratuita y va en `.env.local` (nunca al frontend).
 """
 
 import html
@@ -96,6 +104,15 @@ def _fetch_direct(url: str) -> str:
     return _html_to_text(raw)
 
 
+def _fetch_raw_html(url: str, timeout: float = 20.0) -> str:
+    """Descarga directa SIN limpiar (para los parsers propios, que necesitan las etiquetas).
+    CifraClub y LaCuerda no bloquean esta petición simple (verificado a mano); si algún día
+    empiezan a bloquearla, los parsers de abajo devuelven None/[] y se cae al flujo con IA."""
+    req = urllib.request.Request(url, headers={"User-Agent": _UA, "Referer": url})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", "replace")
+
+
 def fetch_page_text(url: str) -> str:
     """Obtiene el contenido legible de la página. Primero el lector Jina (texto limpio); si viene
     bloqueado/rate-limited (típico desde IPs de datacenter sin key), cae a descarga directa +
@@ -163,20 +180,203 @@ def extract_chords(page_text: str) -> str:
     return content
 
 
+# ─── Parsers propios por sitio, SIN IA (T-163) ─────────────────────────────────
+# CifraClub y LaCuerda tienen HTML suficientemente estable (verificado a mano, no es una
+# suposición) para sacar resultados de búsqueda y acordes/letra con regex puro — sin gastar una
+# llamada a OpenRouter (ni al lector Jina) por cada búsqueda o import. El LLM se queda como red
+# de seguridad: entra si el dominio no tiene parser propio, o si el parser no encuentra nada.
+
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _cc_search_url(query: str) -> str:
+    return f"https://www.cifraclub.com/busca/?q={urllib.parse.quote(query)}"
+
+
+# Ancla en el `alt` de la carátula ("Portada de la canción &quot;X&quot;, de Y") — es un dato
+# semántico de accesibilidad, mucho más estable que las clases CSS hasheadas (p. ej. "_crVx",
+# que cambian en cada build de su Next.js) que rodean el resultado.
+_CC_ALT_RE = re.compile(r'alt="Portada de la canci[oó]n &quot;([^&]*)&quot;, de ([^"]*)"')
+_CC_HREF_RE = re.compile(r'href="(/[a-z0-9_-]+/[a-z0-9_-]+/)"')
+
+
+def _parse_cifraclub_search(page_html: str, query: str) -> list[dict]:
+    """La página de resultados de CifraClub mezcla los resultados reales con una barra de
+    "tendencias" (mismo marcado `alt`) — se filtra por relevancia: alguna palabra de la
+    búsqueda debe aparecer en el título o el artista."""
+    words = [w for w in re.split(r"\s+", query.lower()) if len(w) > 1]
+    results, seen = [], set()
+    for m in _CC_ALT_RE.finditer(page_html):
+        title = html.unescape(m.group(1)).strip()
+        artist = html.unescape(m.group(2)).strip()
+        if not title:
+            continue
+        haystack = f"{title} {artist}".lower()
+        if words and not any(w in haystack for w in words):
+            continue
+        # El href del resultado envuelve la carátula por fuera: es el más cercano hacia atrás.
+        window = page_html[max(0, m.start() - 1200):m.start()]
+        hrefs = _CC_HREF_RE.findall(window)
+        if not hrefs:
+            continue
+        url = "https://www.cifraclub.com" + hrefs[-1]
+        if url in seen:
+            continue
+        seen.add(url)
+        results.append({"title": title, "artist": artist, "url": url, "source": "CifraClub"})
+    return results
+
+
+_CC_CHORD_RE = re.compile(r'<b data-chord-name="([^"]*)"[^>]*>[^<]*</b>')
+_CC_SECTION_RE = re.compile(r"^\s*\[([^\]]+)\]\s*$")
+
+
+def _parse_cifraclub_song(page_html: str) -> str | None:
+    """Cada línea visual del bloque de acordes viene separada por un salto de línea REAL en el
+    HTML de CifraClub (verificado a mano) — se reconstruye línea a línea, sustituyendo cada
+    `<b data-chord-name="X">` (atributo semántico, no depende de la clase CSS) por `X`."""
+    start = page_html.find('data-chord-name="')
+    if start == -1:
+        return None
+    pre_start = page_html.rfind("<pre", 0, start)
+    end = page_html.find("</pre>", start)
+    if pre_start == -1 or end == -1:
+        return None
+    block = page_html[pre_start:end]
+    if len(_CC_CHORD_RE.findall(block)) < 2:
+        return None  # muy pocos acordes reconocidos: mejor que lo intente la IA
+
+    lines = []
+    for raw_line in block.split("\n"):
+        line = _CC_CHORD_RE.sub(lambda m: m.group(1), raw_line)
+        line = html.unescape(_TAG_RE.sub("", line))
+        section = _CC_SECTION_RE.match(line)
+        if section:
+            line = section.group(1).strip() + ":"
+        lines.append(line.rstrip())
+
+    text = "\n".join(lines).strip("\n")
+    return re.sub(r"\n{3,}", "\n\n", text)
+
+
+def _lc_search_url(query: str) -> str:
+    # La lista de resultados solo viene servida en el HTML con canc=1 (buscar "en Canciones");
+    # la búsqueda "general" (sin canc, o canc=0) devuelve el conteo pero la lista llega vacía
+    # (se carga por JS que ni siquiera el lector Jina llega a ejecutar/esperar) — verificado a mano.
+    return f"https://acordes.lacuerda.net/busca.php?lang=ES&exp={urllib.parse.quote(query)}&canc=1&ord=0&ini=0"
+
+
+_LC_HDS_RE = re.compile(r"var hds=\[([^\]]*)\];")
+_LC_FNS_RE = re.compile(r"var fns=\[([^\]]*)\];")
+_LC_ROW_RE = re.compile(
+    r'<a href="(/[a-z0-9_]+/)">([^<]+)</A></TD><td>.*?<li[^>]*><a href="javascript:">([^<]+)</a></li>',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _lc_js_array(match: "re.Match | None") -> list[str]:
+    if not match:
+        return []
+    return [s.strip().strip("'") for s in match.group(1).split(",") if s.strip()]
+
+
+def _parse_lacuerda_search(page_html: str, query: str) -> list[dict]:
+    """El nombre real (slug de la URL) de cada canción va en el array `fns` del HTML, pero en
+    orden INVERSO al de las filas de la tabla / al array `hds` (verificado con una canción real:
+    la fila N empareja con `fns[len(fns)-1-N]`, no con `fns[N]`) — probablemente por cómo su JS
+    construye el array. Si las longitudes no cuadran, mejor no arriesgar un enlace equivocado."""
+    rows = _LC_ROW_RE.findall(page_html)
+    hds = _lc_js_array(_LC_HDS_RE.search(page_html))
+    fns = _lc_js_array(_LC_FNS_RE.search(page_html))
+    if not rows or len(hds) != len(rows) or len(fns) != len(rows):
+        return []
+
+    fns_rev = list(reversed(fns))
+    results = []
+    for i, (_href, artist, title) in enumerate(rows):
+        url = f"https://acordes.lacuerda.net/{hds[i]}/{fns_rev[i]}"
+        results.append({
+            "title": html.unescape(title).strip(),
+            "artist": html.unescape(artist).strip(),
+            "url": url,
+            "source": "LaCuerda",
+        })
+    return results
+
+
+_LC_CHORD_RE = re.compile(r"<A>([^<]*)</A>", re.IGNORECASE)
+
+
+def _parse_lacuerda_song(page_html: str) -> str | None:
+    start = page_html.find("<pre>")
+    if start == -1:
+        return None
+    end = page_html.find("</pre>", start)
+    if end == -1:
+        return None
+    block = page_html[start + len("<pre>"):end]
+    if len(_LC_CHORD_RE.findall(block)) < 2:
+        return None
+
+    lines = []
+    for raw_line in block.split("\n"):
+        line = _LC_CHORD_RE.sub(lambda m: m.group(1), raw_line)
+        line = html.unescape(_TAG_RE.sub("", line))
+        lines.append(line.rstrip())
+
+    text = "\n".join(lines).strip("\n")
+    return re.sub(r"\n{3,}", "\n\n", text)
+
+
+# Registro de adaptadores por dominio. Añadir un sitio nuevo = añadir una entrada aquí.
+_SITE_ADAPTERS = {
+    "cifraclub.com": {
+        "search_url": _cc_search_url,
+        "parse_search": _parse_cifraclub_search,
+        "parse_song": _parse_cifraclub_song,
+    },
+    "lacuerda.net": {
+        "search_url": _lc_search_url,
+        "parse_search": _parse_lacuerda_search,
+        "parse_song": _parse_lacuerda_song,
+    },
+}
+
+
+def _adapter_for_host(host: str) -> dict | None:
+    host = (host or "").lower()
+    for domain, adapter in _SITE_ADAPTERS.items():
+        if host == domain or host.endswith("." + domain):
+            return adapter
+    return None
+
+
 def import_from_url(url: str) -> str:
-    """Orquesta: descargar la página y extraer la partitura. Devuelve el texto para el editor."""
+    """Orquesta la importación. Si el dominio tiene parser propio (sin IA) y consigue extraer la
+    partitura, se usa directo (gratis, rápido, no depende de OpenRouter). Si no hay parser para
+    ese dominio o no encuentra nada fiable, cae al flujo de siempre (lector + IA)."""
+    adapter = _adapter_for_host(urllib.parse.urlparse(url).netloc)
+    if adapter:
+        try:
+            page = _fetch_raw_html(url)
+            parsed = adapter["parse_song"](page)
+            if parsed:
+                return parsed
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Parser propio falló para {url}, cae a IA: {e}")
+
     page = fetch_page_text(url)
     return extract_chords(page)
 
 
 # ─── Buscar canción por nombre (T-162) ─────────────────────────────────────────
-# En vez de pegar el enlace, el usuario escribe el nombre de la canción: consultamos el buscador
-# de cada sitio soportado y pedimos al modelo que estructure los resultados en una lista de
-# candidatos (título/artista/url) para que el usuario elija (o cambie) antes de importar.
+# En vez de pegar el enlace, el usuario escribe el nombre de la canción: primero se prueban los
+# parsers propios de arriba (sin red Jina, sin LLM); si ninguno da resultados (sitio caído,
+# estructura cambiada...) se cae al flujo con IA como red de seguridad.
 
 _SEARCH_SITES = (
     ("CifraClub", "https://www.cifraclub.com/busca/?q={q}"),
-    ("LaCuerda", "https://www.lacuerda.net/buscar.php?q={q}"),
+    ("LaCuerda", "https://acordes.lacuerda.net/busca.php?lang=ES&exp={q}&canc=1&ord=0&ini=0"),
 )
 
 _SEARCH_SYSTEM_PROMPT = (
@@ -265,14 +465,10 @@ def _rank_search_results(query: str, page_text: str) -> list[dict]:
     return results
 
 
-def search_song(query: str) -> list[dict]:
-    """Busca una canción por nombre en los sitios soportados (CifraClub/LaCuerda) y devuelve una
-    lista de candidatos (título/artista/url/origen) para que el usuario elija antes de importar.
-    No lanza si un sitio falla individualmente; solo si ninguno responde."""
-    query = (query or "").strip()
-    if not query:
-        return []
-
+def _search_song_via_llm(query: str) -> list[dict]:
+    """Red de seguridad: lee las páginas de búsqueda con el lector Jina (renderiza JS) y pide al
+    modelo que estructure los resultados. Más lento y con coste de IA — solo se usa si los
+    parsers propios (sin IA, arriba) no dieron ningún resultado."""
     fetched = []
     for source, url_tpl in _SEARCH_SITES:
         url = url_tpl.format(q=urllib.parse.quote(query))
@@ -281,12 +477,34 @@ def search_song(query: str) -> list[dict]:
             if text and not _looks_blocked(text):
                 fetched.append((source, text[: settings.chordflow_import_max_chars]))
         except Exception as e:  # noqa: BLE001
-            logger.warning(f"Búsqueda en {source} falló para «{query}»: {e}")
+            logger.warning(f"Búsqueda con IA en {source} falló para «{query}»: {e}")
 
     if not fetched:
         raise ImportError_("No se pudo buscar en CifraClub/LaCuerda ahora mismo. "
                            "Prueba a pegar el enlace directamente.")
 
     combined = "\n\n".join(f"=== Resultados de {source} ===\n{text}" for source, text in fetched)
-    candidates = _rank_search_results(query, combined)
-    return candidates[:8]
+    return _rank_search_results(query, combined)
+
+
+def search_song(query: str) -> list[dict]:
+    """Busca una canción por nombre en los sitios soportados (CifraClub/LaCuerda) y devuelve una
+    lista de candidatos (título/artista/url/origen) para que el usuario elija antes de importar.
+    Primero prueba los parsers propios (T-163, sin red Jina ni LLM); si ninguno da resultados
+    (sitio caído, estructura cambiada...) cae al flujo con IA como red de seguridad."""
+    query = (query or "").strip()
+    if not query:
+        return []
+
+    results = []
+    for domain, adapter in _SITE_ADAPTERS.items():
+        try:
+            page = _fetch_raw_html(adapter["search_url"](query))
+            results.extend(adapter["parse_search"](page, query))
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Búsqueda sin IA en {domain} falló para «{query}»: {e}")
+
+    if results:
+        return results[:8]
+
+    return _search_song_via_llm(query)[:8]
