@@ -100,6 +100,7 @@
             analyser.fftSize = 2048;
             src.connect(analyser);
             running = true;
+            panel.classList.add('tuner-live');   // T-V5-05: la aguja pasa a estado "vivo".
             if (elMsg) elMsg.textContent = 'Toca una cuerda…';
             elStart.textContent = 'Detener';
             loop();
@@ -110,6 +111,7 @@
 
     function stopMic() {
         running = false;
+        panel.classList.remove('tuner-live');   // T-V5-05: aguja de vuelta al reposo (atenuada).
         if (rafId) cancelAnimationFrame(rafId);
         if (stream) stream.getTracks().forEach(t => t.stop());
         if (audioCtx) { try { audioCtx.close(); } catch (e) { /* ya cerrado */ } }
@@ -121,7 +123,7 @@
     function togglePanel() {
         const open = panel.style.display !== 'none';
         if (open) { panel.style.display = 'none'; stopMic(); }
-        else { panel.style.display = ''; if (elMsg) elMsg.textContent = 'Pulsa para activar el micrófono.'; }
+        else { panel.style.display = ''; if (elMsg) elMsg.textContent = ''; }   // T-V5-05: sin copy redundante con el botón.
     }
 
     if (btn) btn.addEventListener('click', togglePanel);
@@ -129,6 +131,6 @@
     const close = document.getElementById('tuner-close');
     if (close) close.addEventListener('click', togglePanel);
 
-    // Standalone: el panel ya está visible en el HTML (sin display:none) — solo fijamos el mensaje.
-    if (standalone && elMsg) elMsg.textContent = 'Pulsa para activar el micrófono.';
+    // Standalone: el panel ya está visible en el HTML — arranca en reposo, sin copy redundante.
+    if (standalone && elMsg) elMsg.textContent = '';
 })();

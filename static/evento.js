@@ -11,6 +11,12 @@
 
     const TYPE = { concert: '🎤 Concierto', rehearsal: '🥁 Ensayo', other: '📌 Evento' };
 
+    // T-V5-05: CTA claro (gancho viral) — invita al visitante a usar la app.
+    const CTA = `<div class="pub-cta">
+            <p class="pub-cta__note">¿Tu banda también toca en directo?</p>
+            <a class="pub-cta__btn" href="app.html">Organízalo con BandFlow — gratis</a>
+        </div>`;
+
     function fmtDate(iso) {
         if (!iso) return '';
         const d = new Date(iso);
@@ -30,14 +36,16 @@
              <h1 class="pub-title">${esc(ev.title)}</h1>
              <p class="pub-band">${esc(ev.band_name)}</p>
              ${ev.starts_at ? `<p class="pub-date">📅 ${esc(fmtDate(ev.starts_at))}</p>` : ''}
-             ${place ? `<p class="pub-place">📍 ${esc(place)}</p>` : ''}`;
+             ${place ? `<p class="pub-place">📍 ${esc(place)}</p>` : ''}
+             ${CTA}`;
         document.title = `${ev.title} — BandFlow`;
     }
 
     function notFound() {
         card.innerHTML =
             `<h1 class="pub-title">Evento no disponible</h1>
-             <p class="bf-muted">Este enlace no existe o el evento ya no se comparte.</p>`;
+             <p class="bf-muted">Este enlace no existe o el evento ya no se comparte.</p>
+             ${CTA}`;
     }
 
     const id = new URLSearchParams(location.search).get('id');

@@ -87,8 +87,9 @@
         if (!tabs) return;
         const tip = document.createElement('div');
         tip.className = 'bf-tour-tip';
-        tip.innerHTML = `<span>👋 Todo lo de tu banda está en estas pestañas: <b>Resumen</b>, <b>Repertorio</b>,
-            <b>Setlists</b>, <b>Agenda</b>, <b>Finanzas</b> y <b>Chat</b>. Empieza por el Resumen.</span>
+        tip.innerHTML = `<span>👋 Todo lo de tu banda está en estas pestañas: <b>Resumen</b>, <b>Miembros</b>,
+            <b>Repertorio</b>, <b>Setlists</b>, <b>Agenda</b>, <b>Finanzas</b>, <b>Chat</b> y <b>Giras</b>.
+            Empieza por el Resumen.</span>
             <button class="bf-btn bf-btn--sm bf-btn--primary" id="bf-tour-ok">Entendido</button>`;
         tabs.insertAdjacentElement('afterend', tip);
         const ok = document.getElementById('bf-tour-ok');

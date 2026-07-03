@@ -437,19 +437,24 @@ function renderSearchResults(results) {
         return;
     }
     elImportSearchResults.innerHTML = results.map((r, i) => `
-        <li class="import-search-item" data-idx="${i}">
+        <li class="import-search-item" data-idx="${i}" tabindex="0" role="button">
             <span class="import-search-title">${escapeHtml(r.title)}</span>
             ${r.artist ? `<span class="import-search-artist">${escapeHtml(r.artist)}</span>` : ''}
             ${r.source ? `<span class="import-search-source">${escapeHtml(r.source)}</span>` : ''}
         </li>`).join('');
     elImportSearchResults.hidden = false;
     elImportSearchResults.querySelectorAll('[data-idx]').forEach(li => {
-        li.addEventListener('click', () => {
+        // T-V5-05: focable (tabindex/role) → se activa con click o con Enter/Espacio.
+        const choose = () => {
             const r = results[parseInt(li.dataset.idx, 10)];
             if (!r) return;
             elImportUrl.value = r.url;
             elImportSearchResults.hidden = true;
             elBtnImport.click();   // dispara el import normal con la URL elegida
+        };
+        li.addEventListener('click', choose);
+        li.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); }
         });
     });
 }

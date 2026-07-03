@@ -9,10 +9,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Nueva Partitura - BandFlow Editor</title>
     <link rel="stylesheet" href="design-system.css?v=47faa1ea">
-    <link rel="stylesheet" href="style.css?v=3a13f8bf">
+    <link rel="stylesheet" href="style.css?v=03758301">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <!-- T-V5-04: el editor respeta el tema claro/oscuro elegido en el shell (design-system + style.css
+         ya heredan los tokens bf-*). El reproductor NO carga esto (siempre oscuro, D-EST-2). -->
+    <script src="theme.js?v=5283f341"></script>
 </head>
-<body>
+<body class="bf-legacy-themed">
     <div id="app">
         <!-- Top Bar -->
         <header class="glass-panel top-bar">
@@ -21,7 +24,7 @@
                 <h2>Importación rápida desde texto</h2>
             </div>
             <div class="global-controls">
-                <a href="library.html" class="icon-btn" title="Cancelar y volver">❌</a>
+                <a href="library.html" class="icon-btn" title="Cancelar y volver" aria-label="Cancelar y volver" data-icon="x" data-icon-size="18"></a>
             </div>
         </header>
 
@@ -97,6 +100,6 @@
     <script src="icons.js?v=ce9a2bcd"></script>
     <script src="util.js?v=3e6f794b"></script>
     <script src="score_render.js?v=a8810431"></script>
-    <script src="editor.js?v=da9a4d2d"></script>
+    <script src="editor.js?v=74fb02ac"></script>
 </body>
 </html>

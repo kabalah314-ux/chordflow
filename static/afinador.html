@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>BandFlow — Afinador</title>
     <!-- style.css: trae las clases .tuner-* que reutiliza el panel (T-091). -->
-    <link rel="stylesheet" href="style.css?v=3a13f8bf">
+    <link rel="stylesheet" href="style.css?v=03758301">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="design-system.css?v=47faa1ea">
     <link rel="stylesheet" href="shell.css?v=ea7c3336">
@@ -23,11 +23,11 @@
                     abrir antes una canción.</p>
 
                 <!-- Mismos ids que usa tuner.js; sin #btn-tuner el panel queda siempre visible (modo standalone). -->
-                <div id="tuner-panel" class="bf-card" style="max-width:280px;text-align:center;">
+                <div id="tuner-panel" class="bf-card" style="max-width:280px;margin-inline:auto;text-align:center;">
                     <div class="tuner-note" id="tuner-note">—</div>
                     <div class="tuner-cents" id="tuner-cents"></div>
                     <div class="tuner-meter"><div class="tuner-needle" id="tuner-needle"></div></div>
-                    <p class="tuner-msg" id="tuner-msg">Pulsa para activar el micrófono.</p>
+                    <p class="tuner-msg" id="tuner-msg"></p>
                     <button id="tuner-start" class="secondary-btn">Activar micrófono</button>
                 </div>
             </div>
@@ -41,6 +41,6 @@
     <script src="util.js?v=3e6f794b"></script>
     <script src="icons.js?v=ce9a2bcd"></script>
     <script src="shell.js?v=81592dbb"></script>
-    <script src="tuner.js?v=9b7c3dc8"></script>
+    <script src="tuner.js?v=11c730fa"></script>
 </body>
 </html>

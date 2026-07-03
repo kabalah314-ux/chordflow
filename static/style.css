@@ -21,6 +21,13 @@
     --font-score: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
+/* T-V5-04: el único token legacy que NO heredaba de bf-* (era un cristal oscuro fijo). En modo
+   claro (editor/join, que sí aplican data-theme) pasa a cristal claro para no dejar una barra
+   oscura sobre fondo claro. El reproductor no aplica data-theme → conserva el cristal oscuro. */
+:root[data-theme="light"] {
+    --bg-panel: rgba(255, 255, 255, 0.78);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -117,6 +124,8 @@ button {
     height: 32px;
     border-radius: 50%;
     background: rgba(255,255,255,0.05);
+    color: var(--text-primary);   /* T-V5-05: cuando es un <a> (❌ cancelar) hereda el color de texto… */
+    text-decoration: none;        /* …y NO el subrayado de enlace. */
     font-size: 1.2rem;
     display: flex;
     align-items: center;
@@ -256,8 +265,9 @@ button {
     font-size: 0.72rem; border-radius: 999px; white-space: nowrap;
     border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-secondary);
 }
-.ev-status--confirmed { color: #5db075; border-color: rgba(93, 176, 117, 0.4); }
-.ev-status--cancelled { color: #e0606a; border-color: rgba(224, 96, 106, 0.4); }
+/* T-V5-04: colores semánticos por token (adaptan al tema) en vez de verde/rojo propios. */
+.ev-status--confirmed { color: var(--bf-success, #2dd4a7); border-color: var(--bf-success-weak, rgba(45, 212, 167, 0.4)); }
+.ev-status--cancelled { color: var(--bf-danger, #ff5d6c); border-color: var(--bf-danger-weak, rgba(255, 93, 108, 0.4)); }
 .ev-status--done { opacity: 0.7; }
 .ev-status--lead, .ev-status--contacted, .ev-status--negotiating {
     color: var(--accent-color); border-color: rgba(255, 107, 74, 0.4);
@@ -412,9 +422,11 @@ button {
     border-radius: 50%;
     background: var(--accent-color);
     transform: translate(-50%, -50%);
-    transition: left 0.08s linear;
+    transition: left 0.08s linear, opacity 0.2s;
+    opacity: 0.25;   /* T-V5-05: en reposo la aguja está atenuada y centrada (no finge "afinado"). */
 }
-.tuner-msg { font-size: 0.8rem; color: var(--text-secondary); margin: 0.6rem 0; }
+#tuner-panel.tuner-live .tuner-needle { opacity: 1; }   /* activa solo mientras escucha el micro. */
+.tuner-msg { font-size: 0.8rem; color: var(--text-secondary); margin: 0.6rem 0; min-height: 1.1em; }
 
 /* Vídeo de referencia (V3-F4, T-090): panel flotante con el YouTube de la canción. */
 .reference-panel {
@@ -656,6 +668,7 @@ button {
     .preview-content { max-height: 45vh; }
     .form-row { flex-direction: column; gap: 0; }
     .import-row { flex-direction: column; align-items: stretch; }
+    .import-row input { width: 100%; }         /* T-V5-05: el input ya no queda más estrecho que su botón. */
     .import-row .secondary-btn { width: 100%; }
 
     /* Login centrado y cómodo */
@@ -796,7 +809,9 @@ button {
     border-top: 1px solid var(--border-color, rgba(255,255,255,0.08));
 }
 .import-search-item:first-child { border-top: none; }
-.import-search-item:hover, .import-search-item:focus-visible { background: rgba(255,255,255,0.06); }
+.import-search-item:hover, .import-search-item:focus-visible { background: var(--bf-hover, rgba(255,255,255,0.06)); }
+/* T-V5-05: los resultados ahora son focables por teclado (tabindex/role en editor.js) → foco VISIBLE. */
+.import-search-item:focus-visible { outline: 2px solid var(--accent-color); outline-offset: -2px; }
 .import-search-title { font-weight: 600; }
 .import-search-artist { color: var(--text-secondary); font-size: 0.85rem; }
 .import-search-source {
@@ -893,6 +908,46 @@ button {
 }
 
 .secondary-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* ─── T-V5-04: convergencia de botones legacy al look del sistema (`.bf-btn`) ───
+   SOLO en páginas marcadas con `body.bf-legacy-themed` (editor, join). El reproductor
+   comparte `.primary-btn`/`.secondary-btn` para la joya y NO lleva esa clase → intacto. */
+body.bf-legacy-themed .primary-btn,
+body.bf-legacy-themed .secondary-btn {
+    padding: 0.55rem 1rem;
+    border-radius: var(--bf-radius, 10px);
+    font-family: var(--bf-font-ui);
+    font-size: var(--bf-fs-sm, 0.875rem);
+    font-weight: var(--bf-fw-semibold, 600);
+    border: 1px solid var(--bf-border);
+    transition: background var(--bf-transition, 160ms ease),
+                border-color var(--bf-transition, 160ms ease),
+                transform var(--bf-transition, 160ms ease);
+}
+body.bf-legacy-themed .primary-btn {
+    background: var(--bf-primary);
+    color: var(--bf-on-primary, #fff);
+    border-color: transparent;
+}
+body.bf-legacy-themed .primary-btn:hover {
+    background: var(--bf-primary-hover);
+    transform: none;        /* el sistema no "salta" -2px en hover… */
+    box-shadow: none;       /* …ni arrastra el glow coral hardcodeado. */
+}
+body.bf-legacy-themed .primary-btn:active,
+body.bf-legacy-themed .secondary-btn:active { transform: translateY(1px); }
+body.bf-legacy-themed .secondary-btn {
+    background: var(--bf-surface-2);
+    color: var(--bf-text);
+}
+body.bf-legacy-themed .secondary-btn:hover {
+    background: var(--bf-surface-3);
+    border-color: var(--bf-border-strong);
+}
+body.bf-legacy-themed .primary-btn.square {
+    padding: 0.5rem;
+    border-radius: var(--bf-radius, 10px);
+}
 
 /* T-138: top-bar del reproductor ordenada — 3 zonas + separadores + botón de herramienta. */
 .global-controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -1294,6 +1349,19 @@ button {
 .pub-brand { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
 .pub-brand:hover { color: var(--text-primary); }
 .pub-brand strong { color: var(--accent-color); }
+/* T-V5-05: CTA claro de la página pública (gancho de registro/vuelta a la app). */
+.pub-cta {
+    margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--bf-border);
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+}
+.pub-cta__note { color: var(--text-secondary); font-size: 0.85rem; margin: 0; }
+.pub-cta__btn {
+    display: inline-block; text-decoration: none;
+    background: var(--accent-color); color: var(--bf-on-primary, #fff);
+    font-weight: 600; padding: 0.6rem 1.4rem; border-radius: var(--bf-radius, 10px);
+    transition: background var(--bf-transition, 160ms ease);
+}
+.pub-cta__btn:hover { background: var(--accent-hover); }
 
 /* ─── T-154: cuerpo del perfil (identidad + chips de bandas/instrumentos) ──── */
 .pf-identity { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.25rem; }
