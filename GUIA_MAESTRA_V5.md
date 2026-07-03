@@ -172,13 +172,13 @@ mensajes de chat, `evento.html` público) son aceptables y se quedan.
 6. **T-V5-06 (M, 🔌 tras Storage) Identidad:** subida de avatar de perfil y logo+fondo de banda
    (bucket + políticas por banda + UI). Se especifica al desbloquear Storage.
 
-### 2.4 DECISIONES ABIERTAS §2 (para Oscar)
+### 2.4 DECISIONES §2 — ✅ CERRADAS (Oscar, 2026-07-03)
 
-- **D-EST-1:** ¿Pulir a fondo la identidad actual (oscuro+coral, recomendado: barato y ya hay
-  sistema) o rediseño más ambicioso (paleta/marca nuevas)?
-- **D-EST-2:** ¿El player se queda SIEMPRE oscuro como "modo escenario" (recomendado) o respeta el
-  tema claro?
-- **D-EST-3:** ¿Configuramos Supabase Storage ya (te guío, ~15 min) para desbloquear fotos/fondos?
+- **D-EST-1 ✅ Pulir a fondo la identidad actual** (oscuro+coral+IBM Plex): unificar sistemas,
+  disciplina de tokens. NO se abre rediseño de marca.
+- **D-EST-2 ✅ El player SIEMPRE oscuro** ("modo escenario"): se documenta y se fuerza con estilo
+  propio; el editor y join SÍ respetan el tema claro (T-V5-04).
+- **D-EST-3 ✅ Storage se configura YA** (Oscar guiado): desbloquea T-V5-06, §5.4 y §9.2.
 
 ---
 
@@ -340,11 +340,10 @@ Oscar: "la biblioteca es un seguido de exploración, pero con las cosas tuyas pe
   Cada conversación con **etiqueta de color**: color de banda (`bandColor`) para las de banda,
   color neutro/etiqueta "músico" para contactos personales. Que se distinga de un vistazo qué chat
   de qué banda estás usando.
-- **Chat dentro de banda — propuesta (Oscar preguntó):** el chat de banda VIVE en la sección Chat
-  global (grupo "Mis bandas"); la pestaña Chat del espacio de banda se sustituye por un
-  **atajo/preview** (último mensaje + "Ir al chat", como ya hace el Resumen). Ventaja: un solo
-  sitio donde hablar, cero duplicación de UI, y las notificaciones apuntan a un único lugar. Los
-  hilos por evento siguen accesibles desde la agenda. → **D-CHT-1 a confirmar por Oscar.**
+- **Chat dentro de banda — ✅ D-CHT-1 CERRADA (Oscar, 2026-07-03):** el chat de banda VIVE en la
+  sección Chat global (grupo "Mis bandas"); la pestaña Chat del espacio de banda se sustituye por
+  un **atajo/preview** (último mensaje + "Ir al chat", como ya hace el Resumen). Un solo sitio
+  donde hablar, cero duplicación de UI. Los hilos por evento siguen accesibles desde la agenda.
 - El backend actual (`messages` por banda) sirve para bandas; los DM de contactos necesitan modelo
   nuevo (conversación 1-a-1 entre perfiles) SI D-EXP-1 elige mensajería interna.
 
@@ -464,10 +463,13 @@ a la banda (+/−). Con calendario de pagos recurrentes si encaja. Estudio compl
 | Fecha | Sección | Decisión | Detalle |
 |---|---|---|---|
 | 2026-07-03 | Global | V5 abierta; método sección-a-sección | Este documento |
-| _(pendiente)_ | §2 | D-EST-1/2/3 | |
-| _(pendiente)_ | §3 | D-PLY-1/2/3 | |
-| _(pendiente)_ | §5 | D-EXP-1/2/3/4 | |
-| _(pendiente)_ | §8 | D-CHT-1 (chat de banda = atajo al global) | |
+| 2026-07-03 | §2 | **D-EST-1 ✅** pulir la identidad actual (no rediseño de marca) | oscuro+coral+IBM Plex a fondo |
+| 2026-07-03 | §2 | **D-EST-2 ✅** player siempre oscuro (modo escenario) | editor/join sí siguen el tema |
+| 2026-07-03 | §2 | **D-EST-3 ✅** Storage se configura ya (Oscar guiado) | bucket + políticas → desbloquea fotos |
+| 2026-07-03 | §8 | **D-CHT-1 ✅** chat de banda = atajo al Chat global | pestaña de banda pasa a preview |
+| _(pendiente)_ | §3 | D-PLY-1/2/3 | se preguntan al arrancar V5-F2 |
+| _(pendiente)_ | §5 | D-EXP-1/2/3/4 | se preguntan al arrancar V5-F4 |
 
-> **Estado:** V5 recién abierta (2026-07-03). Siguiente paso: Oscar responde la primera ronda de
-> decisiones (D-EST-1/2/3 y D-CHT-1/D-EXP-1) y arrancamos **V5-F1 (estética)** por el bucle de oro.
+> **Estado:** V5 abierta y primera ronda de decisiones CERRADA (2026-07-03). **V5-F1 (estética)
+> desbloqueada y lista para arrancar** por el bucle de oro; en paralelo, Oscar configura Supabase
+> Storage (guiado) para desbloquear T-V5-06/identidad.

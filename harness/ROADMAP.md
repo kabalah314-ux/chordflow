@@ -672,7 +672,8 @@
 
 - [ ] **V5-F1** 🔴 Estética global "de cutre a profesional" (guía §2.3, T-V5-01…06: bugs visibles →
       barrido emoji→bfIcon → unificar botones/tarjetas/grids → tema coherente → detalles → identidad 🔌).
-      ⏳ Espera decisiones D-EST-1/2/3.
+      ✅ Decisiones cerradas 2026-07-03 (pulir identidad actual; player siempre oscuro; Storage YA) —
+      **LISTA PARA ARRANCAR**.
 - [ ] **V5-F2** 🔴 Reproductor de directo (guía §3: acorde=4 negras + ajuste ×½/×2, cuenta atrás 4/8,
       metrónomo 2/4·3/4·4/4·6/8, tempo press-and-hold, compás en la barra, foto→partitura beta ⚠️).
       El motor (`sync_engine.js`) NO se toca. ⏳ Espera D-PLY-1/2/3.
