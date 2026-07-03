@@ -693,9 +693,11 @@
 - [~] **V5-F2** 🔴 Reproductor de directo (guía §3). Decisiones D-PLY-1/2/3 **cerradas** (2026-07-03:
       ×½/×2 **+ tap tempo** por acorde · cuenta atrás **solo si metrónomo activo** · foto→partitura
       **beta gratuita**). El motor (`sync_engine.js`) NO se toca; todo es datos/UI en `app.js`/editor.
-  - [ ] **T-V5-07** 🔴 **Compases**: `Song.time_signature` (migración aditiva, default `4/4`) +
-        metrónomo con **acento en el 1** y subdivisión 6/8 (selector 2/4·3/4·4/4·6/8, por canción) +
-        **compás en la barra** (reemplaza "Beat: N" por "Compás N", conservando `#current-beat-display`).
+  - [x] **T-V5-07** 🔴 **Compases** (2026-07-03): **compás en la barra** ("Beat: N"→"Compás N", beat
+        crudo en `data-beat`) + metrónomo con acento por compás (3 niveles; 6/8 **subdividido**, acento
+        en 1 y 4 — decisión de Oscar) + **selector 2/4·3/4·4/4·6/8** en el editor (persiste/recarga).
+        El backend ya existía (columnas + baseline + schemas); solo faltaba la UI. Motor intacto.
+        Tests `test_compas` + `test_player`/`test_iconos` (leen `data-beat`). run_checks VERDE. Sin migración.
   - [ ] **T-V5-08** 🟠 **Cuenta atrás** pre-roll 4-3-2-1 al Play, **solo si el metrónomo está activado**
         (D-PLY-2); con metrónomo off = solo overlay visual. N=4/8 configurable + persistido (localStorage).
   - [ ] **T-V5-09** 🟠 **Tempo ágil**: mantener pulsado +/− acelera el cambio de BPM (press-and-hold,

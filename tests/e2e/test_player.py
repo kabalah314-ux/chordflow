@@ -54,14 +54,15 @@ def test_songid_inexistente_avisa_al_usuario(page, live_server, api):
 
 def test_play_avanza_el_beat(page, live_server, api):
     _crear_y_abrir(page, live_server, api)
-    assert "0.0" in page.inner_text("#current-beat-display")
+    # T-V5-07: la barra muestra el COMPÁS ("Compás N"); el beat crudo va en data-beat.
+    assert page.inner_text("#current-beat-display").startswith("Compás")
+    assert float(page.get_attribute("#current-beat-display", "data-beat")) == 0.0
     page.click("#btn-play-pause")
     page.wait_for_timeout(900)  # dejar correr ~1s de reproducción
     page.click("#btn-play-pause")  # pausar
-    beat_txt = page.inner_text("#current-beat-display")
-    # El beat debe haber avanzado por encima de 0.0
-    valor = float(beat_txt.split(":")[1].strip())
-    assert valor > 0.0, f"el beat no avanzó: {beat_txt}"
+    # El beat debe haber avanzado por encima de 0.0 (leído del data-beat).
+    valor = float(page.get_attribute("#current-beat-display", "data-beat"))
+    assert valor > 0.0, f"el beat no avanzó: data-beat={valor}"
 
 
 def test_accesibilidad_aria_y_atajo_espacio(page, live_server, api):
@@ -77,7 +78,7 @@ def test_accesibilidad_aria_y_atajo_espacio(page, live_server, api):
     page.keyboard.press("Space")
     page.wait_for_timeout(600)
     page.keyboard.press("Space")  # pausar
-    valor = float(page.inner_text("#current-beat-display").split(":")[1].strip())
+    valor = float(page.get_attribute("#current-beat-display", "data-beat"))
     assert valor > 0.0, "la barra espaciadora no arrancó la reproducción"
 
 

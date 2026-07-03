@@ -475,6 +475,7 @@ a la banda (+/−). Con calendario de pagos recurrentes si encaja. Estudio compl
 | 2026-07-03 | §3 | **D-PLY-1 ✅** ×½/×2 por acorde **+ tap tempo** por acorde | ambos escriben beats del ChordMarker (motor intacto) |
 | 2026-07-03 | §3 | **D-PLY-2 ✅** la cuenta atrás suena **solo si el metrónomo está activado** | con metrónomo off = pre-roll solo visual; N (4/8) en localStorage |
 | 2026-07-03 | §3 | **D-PLY-3 ✅** foto→partitura **beta con modelo gratuito** de visión | coste 0, patrón de import por URL; empezar con foto clara |
+| 2026-07-03 | §3 | **Metrónomo 6/8 ✅ subdividido** (T-V5-07) | 6 clics/compás: acento fuerte en el 1, medio en el 4 (no "en 2") |
 | _(pendiente)_ | §5 | D-EXP-1/2/3/4 | se preguntan al arrancar V5-F4 |
 
 > **Estado:** V5 abierta y primera ronda de decisiones CERRADA (2026-07-03). **V5-F1 (estética)

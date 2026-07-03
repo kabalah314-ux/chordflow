@@ -8,6 +8,32 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V5-F2 · T-V5-07 — Compases: metrónomo por compás + compás en la barra + selector (2026-07-03) ✅
+
+**Qué:** el reproductor y el editor ganan **compás** de verdad:
+1. **Compás en la barra** ([app.js](static/app.js)): donde antes ponía "Beat: 47.0" ahora pone
+   **"Compás N"** (`⌊beat / beats_por_compás⌋ + 1`). El beat crudo se conserva en `data-beat` del mismo
+   elemento (precisión interna + tests). Fallback estático de `index.html` a "Compás 1".
+2. **Metrónomo con acento por compás** ([app.js](static/app.js)): `playClick` pasa a **3 niveles**
+   (fuerte/medio/débil, distinto tono y volumen). Acento fuerte en el tiempo 1; en **compás compuesto**
+   (6/8, 9/8…: denominador 8 y numerador múltiplo de 3) acento **medio** en cada grupo de 3. Decisión
+   de Oscar: 6/8 **subdividido** (6 clics, acento en 1 y 4), no "en 2" (guía §13).
+3. **Selector de compás en el editor** ([editor.html](static/editor.html)/[editor.js](static/editor.js)):
+   `<select>` 2/4·3/4·4/4·6/8 (default 4/4) que se guarda (`time_signature_num`/`den`) y se recupera al
+   editar. `<select>` estilado como los inputs ([style.css](static/style.css)).
+
+**Por qué:** V5-F2 §3 (features 3 y 5). El **backend ya estaba** (columnas `time_signature_num`/`den`
+en el modelo + migración baseline + schemas + routers `model_dump`); solo faltaba exponerlo en la UI y
+mostrar el compás. **El motor (`sync_engine.js`) NO se toca** — todo es datos/UI en `app.js`/editor.
+
+**Verificación:** `run_checks` **TODO VERDE**. Tests: `test_compas.py` (barra muestra "Compás N"+data-beat;
+editor guarda y recarga 3/4); actualizados `test_player`/`test_iconos` (leen `data-beat` en vez de parsear
+"Beat: N"). Verificado en navegador: selector estilado con opciones correctas, guardar 3/4 → redirige al
+player → barra "Compás 1"; el play arranca (el avance de beat lo cubre el e2e — el preview headless
+estrangula `requestAnimationFrame`). Sin migración (columnas ya existían). `cachebust` al día.
+
+---
+
 ## 🎨 V5-F1 · T-V5-04/05 — Tema coherente + convergencia de botones + detalles (2026-07-03) ✅ · CIERRA V5-F1
 
 **Qué (T-V5-04, tema coherente):**

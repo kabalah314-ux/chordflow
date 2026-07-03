@@ -35,7 +35,7 @@ def test_player_iconos_svg(page, live_server, api):
     page.click("#btn-play-pause")
     page.wait_for_timeout(700)
     page.click("#btn-play-pause")
-    valor = float(page.inner_text("#current-beat-display").split(":")[1].strip())
+    valor = float(page.get_attribute("#current-beat-display", "data-beat"))
     assert valor > 0.0, "el play con icono SVG no arrancó la reproducción"
 
 

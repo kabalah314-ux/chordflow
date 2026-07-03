@@ -763,7 +763,8 @@ button {
 }
 
 .input-group input,
-.input-group textarea {
+.input-group textarea,
+.input-group select {
     /* T-V5-04: tokenizado → inputs legibles en claro (adaptan fondo/borde al tema). */
     background: var(--bf-surface-2, rgba(0, 0, 0, 0.5));
     border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
@@ -774,6 +775,7 @@ button {
     font-size: 1rem;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
+.input-group select { cursor: pointer; }   /* T-V5-07: selector de compás con el mismo look que los inputs. */
 
 .input-group textarea {
     font-family: var(--font-score);
@@ -782,7 +784,8 @@ button {
 }
 
 .input-group input:focus,
-.input-group textarea:focus {
+.input-group textarea:focus,
+.input-group select:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 8px var(--bf-accent-glow, rgba(255, 107, 74, 0.2));

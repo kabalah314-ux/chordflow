@@ -83,7 +83,12 @@ function applyTranspose() {
 engine.subscribe((state) => {
     // Actualizar controles
     elBpmValue.textContent = state.bpm;
-    elCurrentBeat.textContent = `Beat: ${state.currentBeat.toFixed(1)}`;
+    // T-V5-07: en la barra se muestra el COMPÁS (no el beat crudo). El beat exacto queda en
+    // `data-beat` (precisión interna + tests). Compás = ⌊beat / beats_por_compás⌋ + 1.
+    const beatsPerBar = (currentSong && currentSong.time_signature_num) || 4;
+    const measure = Math.floor(Math.max(0, state.currentBeat) / beatsPerBar) + 1;
+    elCurrentBeat.dataset.beat = state.currentBeat.toFixed(2);
+    elCurrentBeat.textContent = `Compás ${measure}`;
 
     // Bolita de posición (T-088): progreso global + sección actual, derivados del beat.
     const totalBeats = state.totalBeats || 1;
@@ -329,17 +334,18 @@ let audioCtx = null;
 let lastClickedBeat = -1; // último beat entero al que ya sonó el clic
 const elBtnMetronome = document.getElementById('btn-metronome');
 
-function playClick(isAccent) {
+// level: 2 = acento fuerte (primer tiempo), 1 = acento medio (grupo de compás compuesto, p. ej. 6/8),
+// 0 = tiempo débil. Distinto tono/volumen por nivel para que "suene distinto el 1".
+function playClick(level) {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
 
-    // Acento (primer tiempo del compás) más agudo y fuerte
-    osc.frequency.value = isAccent ? 1500 : 900;
+    osc.frequency.value = level >= 2 ? 1500 : level === 1 ? 1200 : 900;
     const now = audioCtx.currentTime;
-    const vol = isAccent ? 0.5 : 0.3;
+    const vol = level >= 2 ? 0.5 : level === 1 ? 0.4 : 0.3;
     gain.gain.setValueAtTime(vol, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05); // clic corto
     osc.start(now);
@@ -365,8 +371,13 @@ engine.subscribe((state) => {
     const beat = Math.floor(state.currentBeat);
     if (beat >= 0 && beat !== lastClickedBeat) {
         lastClickedBeat = beat;
-        const beatsPerBar = (currentSong && currentSong.time_signature_num) || 4;
-        playClick(beat % beatsPerBar === 0);
+        const num = (currentSong && currentSong.time_signature_num) || 4;
+        const den = (currentSong && currentSong.time_signature_den) || 4;
+        const inBar = ((beat % num) + num) % num;
+        let level = 0;
+        if (inBar === 0) level = 2;                                        // primer tiempo: acento fuerte
+        else if (den === 8 && num % 3 === 0 && inBar % 3 === 0) level = 1; // compuesto (6/8, 9/8…): acento medio por grupo
+        playClick(level);
     }
 });
 

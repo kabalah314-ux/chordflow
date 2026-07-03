@@ -364,6 +364,8 @@ async function initEditor() {
         document.getElementById('title').value = song.title || '';
         document.getElementById('artist').value = song.artist || '';
         document.getElementById('bpm').value = song.bpm || 120;
+        const sigEl = document.getElementById('time-signature');   // T-V5-07: compás de la canción
+        if (sigEl) sigEl.value = `${song.time_signature_num || 4}/${song.time_signature_den || 4}`;
         document.getElementById('reference-url').value = song.reference_url || '';
         document.getElementById('raw-text').value = songToRawText(song);
         updatePreview();
@@ -530,10 +532,13 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
     const bpm = parseInt(document.getElementById('bpm').value, 10);
     const referenceUrl = document.getElementById('reference-url').value.trim();
     const rawText = document.getElementById('raw-text').value;
+    // T-V5-07: compás elegido (num/den). El select ofrece 2/4·3/4·4/4·6/8; default 4/4.
+    const sigVal = (document.getElementById('time-signature') || {}).value || '4/4';
+    const [tsNum, tsDen] = sigVal.split('/').map((n) => parseInt(n, 10) || 4);
 
     const sections = parseRawText(rawText);
 
-    const payload = { title, artist, bpm, sections };
+    const payload = { title, artist, bpm, time_signature_num: tsNum, time_signature_den: tsDen, sections };
     if (referenceUrl) payload.reference_url = referenceUrl;
 
     // PUT si estamos editando, POST si es nueva
