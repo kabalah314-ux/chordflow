@@ -8,6 +8,28 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V5-F1 · T-V5-03 — Unificar tarjetas y grids con el sistema nuevo (2026-07-03) ✅
+
+**Qué:** las tarjetas de las listas legacy (`.song-card` — Biblioteca, Bandas, Explorar) tenían un
+look distinto al del resto de la app (`.bf-card`): radio 12 vs 16px, padding 1.2 vs 1.5rem, sin
+sombra base, y un "lift" de -3 vs -2px al pasar el ratón. Se notaba al saltar de una sección a otra.
+Ahora `.song-card` usa **los mismos tokens** que `.bf-card` (`--bf-radius-lg`, `--bf-space-5`,
+`--bf-shadow-sm`, hover `translateY(-2px)` + `--bf-shadow`) conservando su layout (columna,
+min-height, franja de color por fuente) y el borde de acento al hover (refuerza que abre el player).
+`.song-grid` alinea su `gap` a `--bf-space-4` (como `.bf-grid`).
+
+**Por qué:** V5-F1 §2.3 — "la consistencia ES la profesionalidad". Un solo lenguaje de tarjeta.
+
+**Verificación:** en el navegador, `.song-card` computa radio 16px, padding 24px, sombra del token
+y el grid gap 16px (idénticos a `.bf-card`/`.bf-grid`), en claro y oscuro, sin errores de consola.
+`run_checks` TODO VERDE. `cachebust` al día. Sin migración.
+
+> **Botones legacy** (`.primary-btn`/`.secondary-btn`): NO se tocan aquí porque el **reproductor**
+> los comparte (riesgo para la joya). Su convergencia se hará en T-V5-04 al pulir editor/login,
+> con overrides por página que no afecten a las clases compartidas del player.
+
+---
+
 ## 🎨 V5-F1 · T-V5-01 — Bugs visibles de estética (2026-07-03) ✅
 
 **Qué:** arreglados los dos bugs visibles que quedaban del repaso de diseño (el tercero,

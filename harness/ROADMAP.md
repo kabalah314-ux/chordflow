@@ -678,9 +678,11 @@
   - [x] **T-V5-02** barrido emoji→SVG: helper declarativo `bfApplyIcons()` (`data-icon`) + `bfIcon`
         en botones estáticos y generados por JS (bands/band/home/library/editor/setlists/join).
         Emojis de contenido y del player (runtime) se conservan.
-  - [ ] **T-V5-03** unificar los dos sistemas (botones/tarjetas/grids `.song-card`↔`.bf-card`,
-        `.primary-btn`↔`.bf-btn`, `.song-grid`↔`.bf-grid`).
-  - [ ] **T-V5-04/05** tema coherente (editor/join) + detalles sueltos.
+  - [x] **T-V5-03** tarjetas + grids unificados: `.song-card` usa los tokens de `.bf-card` (radio/
+        padding/sombra/lift), `.song-grid` el gap de `.bf-grid`. Botones legacy NO (los comparte el
+        player) → van en T-V5-04.
+  - [ ] **T-V5-04/05** tema coherente (editor/join) + convergencia de botones legacy por página +
+        detalles sueltos (avatar chat con bandColor, focus de resultados de búsqueda, etc.).
 - [ ] **V5-F2** 🔴 Reproductor de directo (guía §3: acorde=4 negras + ajuste ×½/×2, cuenta atrás 4/8,
       metrónomo 2/4·3/4·4/4·6/8, tempo press-and-hold, compás en la barra, foto→partitura beta ⚠️).
       El motor (`sync_engine.js`) NO se toca. ⏳ Espera D-PLY-1/2/3.

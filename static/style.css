@@ -1024,7 +1024,8 @@ button {
 .song-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.2rem;
+    gap: var(--bf-space-4, 1rem);   /* mismo gap que .bf-grid (T-V5-03) */
+    align-items: start;
 }
 
 .song-card {
@@ -1033,10 +1034,13 @@ button {
     flex-direction: column;
     justify-content: space-between;
     min-height: 130px;
+    /* Unificado con .bf-card (T-V5-03): mismos tokens de radio/padding/sombra que el sistema nuevo,
+       para que las tarjetas de Biblioteca/Bandas/Explorar se vean iguales que el resto de la app. */
     background: var(--bf-surface-2, rgba(20, 20, 25, 0.8));   /* adapta al modo claro (T-150) */
     border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
-    border-radius: 12px;
-    padding: 1.2rem;
+    border-radius: var(--bf-radius-lg, 16px);
+    padding: var(--bf-space-5, 1.5rem);
+    box-shadow: var(--bf-shadow-sm);
     text-decoration: none;
     color: var(--text-primary);
     cursor: pointer;
@@ -1080,9 +1084,11 @@ button {
 }
 
 .song-card:hover {
-    transform: translateY(-3px);
+    /* Mismo "lift" que .bf-card--interactive (T-V5-03): -2px + sombra del token. El borde de acento
+       al pasar el ratón se conserva (la tarjeta abre el reproductor → refuerza que es clicable). */
+    transform: translateY(-2px);
     border-color: var(--accent-color);
-    box-shadow: 0 6px 18px rgba(255, 107, 74, 0.15);
+    box-shadow: var(--bf-shadow);
 }
 
 /* T-133: franja de color por fuente (--card-accent) + ▶ flotante (hover-reveal, abajo-dcha). */
