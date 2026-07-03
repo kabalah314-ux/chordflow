@@ -690,9 +690,21 @@
         hint de pestañas (Miembros/Giras), `<h1>` estático en Inicio/Agenda/Finanzas/Chat, ❌ como SVG.
         Tests `test_tema_coherente`/`test_detalles_pulido`/`test_accesibilidad_h1`. Revisión adversarial
         (9 agentes) + verificación visual en navegador. run_checks VERDE.
-- [ ] **V5-F2** 🔴 Reproductor de directo (guía §3: acorde=4 negras + ajuste ×½/×2, cuenta atrás 4/8,
-      metrónomo 2/4·3/4·4/4·6/8, tempo press-and-hold, compás en la barra, foto→partitura beta ⚠️).
-      El motor (`sync_engine.js`) NO se toca. ⏳ Espera D-PLY-1/2/3.
+- [~] **V5-F2** 🔴 Reproductor de directo (guía §3). Decisiones D-PLY-1/2/3 **cerradas** (2026-07-03:
+      ×½/×2 **+ tap tempo** por acorde · cuenta atrás **solo si metrónomo activo** · foto→partitura
+      **beta gratuita**). El motor (`sync_engine.js`) NO se toca; todo es datos/UI en `app.js`/editor.
+  - [ ] **T-V5-07** 🔴 **Compases**: `Song.time_signature` (migración aditiva, default `4/4`) +
+        metrónomo con **acento en el 1** y subdivisión 6/8 (selector 2/4·3/4·4/4·6/8, por canción) +
+        **compás en la barra** (reemplaza "Beat: N" por "Compás N", conservando `#current-beat-display`).
+  - [ ] **T-V5-08** 🟠 **Cuenta atrás** pre-roll 4-3-2-1 al Play, **solo si el metrónomo está activado**
+        (D-PLY-2); con metrónomo off = solo overlay visual. N=4/8 configurable + persistido (localStorage).
+  - [ ] **T-V5-09** 🟠 **Tempo ágil**: mantener pulsado +/− acelera el cambio de BPM (press-and-hold,
+        touch-friendly). La "ruleta" queda como alternativa si no convence en uso real.
+  - [ ] **T-V5-10** 🔴 **Duración por acorde**: mini-control **×½/×2** en la vista previa del editor
+        (parte/dobla los beats del acorde) + **tap tempo por acorde** (D-PLY-1) → escribe beats del
+        `ChordMarker`. Cambio de DATOS; `alembic check`; el motor no cambia.
+  - [ ] **T-V5-11** 🟢 **Foto→partitura (beta)**: input `capture=environment` → modelo de **visión
+        gratuito** vía OpenRouter (patrón `importer.py`) → precarga el editor para REVISAR (D-PLY-3).
 - [ ] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4, `metronome.js` compartido con el player).
 - [ ] **V5-F4** 🔴 Perfil de músico 2.0 (guía §5.2: estado buscando/abierto/no-busco, instrumentos por
       banda, `visibility`, contacto). ⏳ Espera D-EXP-1/2/3.

@@ -225,13 +225,16 @@ mensajes de chat, `evento.html` público) son aceptables y se quedan.
   gratuitos son flojos con manuscritos: empezar como **beta** con foto impresa/clara, medir calidad,
   y decidir si merece un modelo de pago. Punto de entrada doble: editor y repertorio de banda (§9.4).
 
-### 3.3 DECISIONES ABIERTAS §3
+### 3.3 DECISIONES §3 — ✅ CERRADAS (Oscar, 2026-07-03)
 
-- **D-PLY-1:** ¿el ajuste ×½/×2 por acorde te vale como "manera original", o quieres además un modo
-  "tap tempo por acorde" (tocar la pantalla al ritmo para re-timear una sección)?
-- **D-PLY-2:** ¿la cuenta atrás suena siempre o solo si el metrónomo está activado?
-- **D-PLY-3 (para (6)):** ¿beta con modelo gratuito asumiendo fallos, o probamos directamente uno
-  de pago barato con visión buena?
+- **D-PLY-1 ✅ ×½/×2 por acorde + tap tempo por acorde.** El mini-control ×½/×2 es la base
+  (parte/dobla el compás del acorde con un toque), Y ADEMÁS un modo "tap tempo por acorde": tocar
+  la pantalla al ritmo para re-timear una sección. Ambos escriben los beats del `ChordMarker` (cambio
+  de DATOS, el motor no se toca).
+- **D-PLY-2 ✅ La cuenta atrás suena SOLO si el metrónomo está activado.** Con el metrónomo apagado,
+  el pre-roll 4-3-2-1 es solo visual (silencioso). Persistir N (4/8) en localStorage.
+- **D-PLY-3 ✅ Foto→partitura: beta con modelo gratuito de visión.** Coste 0, mismo patrón que el
+  import por URL; se empieza con foto impresa/clara, se mide calidad y se decide luego si merece pago.
 
 ---
 
@@ -469,7 +472,9 @@ a la banda (+/−). Con calendario de pagos recurrentes si encaja. Estudio compl
 | 2026-07-03 | §2 | **D-EST-3 ✅** Storage se configura ya (Oscar guiado) | bucket + políticas → desbloquea fotos |
 | 2026-07-03 | §8 | **D-CHT-1 ✅** chat de banda = atajo al Chat global | pestaña de banda pasa a preview |
 | 2026-07-03 | §2 | **Storage configurado + T-V5-06 HECHO** | bucket `media` + RLS por Oscar; fotos de perfil/logo/fondo implementadas (detalle en REGISTRO) |
-| _(pendiente)_ | §3 | D-PLY-1/2/3 | se preguntan al arrancar V5-F2 |
+| 2026-07-03 | §3 | **D-PLY-1 ✅** ×½/×2 por acorde **+ tap tempo** por acorde | ambos escriben beats del ChordMarker (motor intacto) |
+| 2026-07-03 | §3 | **D-PLY-2 ✅** la cuenta atrás suena **solo si el metrónomo está activado** | con metrónomo off = pre-roll solo visual; N (4/8) en localStorage |
+| 2026-07-03 | §3 | **D-PLY-3 ✅** foto→partitura **beta con modelo gratuito** de visión | coste 0, patrón de import por URL; empezar con foto clara |
 | _(pendiente)_ | §5 | D-EXP-1/2/3/4 | se preguntan al arrancar V5-F4 |
 
 > **Estado:** V5 abierta y primera ronda de decisiones CERRADA (2026-07-03). **V5-F1 (estética)
