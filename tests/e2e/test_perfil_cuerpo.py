@@ -15,7 +15,10 @@ pytestmark = pytest.mark.e2e
 
 def test_perfil_muestra_avatar_bandas_e_instrumentos(page, live_server, api):
     wipe_bands(api)
-    api.put("/profile/me", json={"display_name": "Ana Músico", "instruments": ["guitarra", "voz"]})
+    # avatar_url: "" → sin foto (el perfil PERSISTE entre tests; otro test pudo dejar una foto
+    # puesta — T-V5-06 — y aquí se asierta el avatar de INICIALES).
+    api.put("/profile/me", json={"display_name": "Ana Músico", "instruments": ["guitarra", "voz"],
+                                 "avatar_url": ""})
     api.post("/bands/", json={"name": "Banda Perfil"})   # el usuario de prueba entra como admin
 
     page.goto(live_server + "/static/profile.html", wait_until="networkidle")

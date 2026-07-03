@@ -1,8 +1,9 @@
 /**
  * profile.js — Mi perfil de músico.
- * T-154 (V4-F6, parte cliente sin Storage): el perfil muestra identidad — avatar de iniciales/color
- * (T-121), mis bandas como chips con rol (GET /bands/) e instrumentos como chips — además del
- * formulario de edición (nombre + instrumentos). La subida de avatar real depende de T-153 (Storage).
+ * T-154 (V4-F6, parte cliente): identidad — avatar, mis bandas como chips con rol (GET /bands/) e
+ * instrumentos como chips — además del formulario de edición (nombre + instrumentos).
+ * T-V5-06 (Storage): foto de perfil real — "Cambiar foto" sube a Supabase Storage (upload.js) y
+ * guarda `avatar_url` vía PUT /profile/me (parche parcial).
  */
 const elForm = document.getElementById('profile-form');
 const ROLE_LABEL = { admin: 'Admin', member: 'Miembro', guest: 'Invitado' };
@@ -28,7 +29,6 @@ async function init() {
 function render(p, bands) {
     const name = (p.display_name || '').trim();
     const instruments = Array.isArray(p.instruments) ? p.instruments : [];
-    const initials = initialsFrom(name) || '🎸';
     const color = bandColor(p.id || name || 'músico');
 
     const bandChips = bands.length ? bands.map(b => `
@@ -45,10 +45,11 @@ function render(p, bands) {
 
     elForm.innerHTML = `
         <div class="pf-identity">
-            <span class="bf-avatar bf-avatar--lg" style="background:${color};color:#fff;">${escapeHtml(initials)}</span>
+            ${bfAvatar({ url: p.avatar_url, name: name || 'músico', color, extraCls: 'bf-avatar--lg' })}
             <div class="pf-identity__meta">
                 <h2 class="pf-name">${name ? escapeHtml(name) : 'Sin nombre todavía'}</h2>
                 <p class="bf-muted">${bands.length} ${bands.length === 1 ? 'banda' : 'bandas'} · ${instruments.length} ${instruments.length === 1 ? 'instrumento' : 'instrumentos'}</p>
+                <button type="button" class="bf-btn bf-btn--sm bf-btn--ghost" id="pf-photo">${bfIcon('user', { size: 14 })} ${p.avatar_url ? 'Cambiar foto' : 'Añadir foto'}</button>
             </div>
         </div>
 
@@ -66,6 +67,18 @@ function render(p, bands) {
         <div class="form-actions"><button id="pf-save" class="primary-btn">${bfIcon('save')} Guardar perfil</button></div>`;
 
     document.getElementById('pf-save').addEventListener('click', () => save(p, bands));
+
+    // Foto de perfil (T-V5-06): subir a Storage y guardar solo avatar_url (parche parcial).
+    document.getElementById('pf-photo').addEventListener('click', () =>
+        bfPickAndUploadImage('avatar', 512, async (url) => {
+            const res = await apiFetch('/profile/me', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ avatar_url: url })
+            });
+            if (!res.ok) { toast('No se pudo guardar la foto.', 'error'); return; }
+            toast('Foto de perfil actualizada.', 'success');
+            render({ ...p, avatar_url: url }, bands);
+        }));
 }
 
 async function save(p, bands) {

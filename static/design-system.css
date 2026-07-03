@@ -372,6 +372,34 @@
 .bf-band-banner__name { font-size: var(--bf-fs-xl); font-weight: var(--bf-fw-bold); }
 .bf-band-banner__meta { color: var(--bf-text-muted); font-size: var(--bf-fs-sm); }
 
+/* ── Identidad con fotos (T-V5-06, Supabase Storage) ────────────────────── */
+/* Foto dentro de cualquier avatar (perfil, banda, miembro): llena el círculo. */
+.bf-avatar > img.bf-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+/* Banner de banda con imagen de fondo (cover): foto detrás + velo oscuro para que
+   nombre/badges sigan legibles sobre cualquier foto; el texto se fuerza claro. */
+.bf-band-banner--cover {
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  min-height: 120px;
+}
+.bf-band-banner--cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(10, 10, 14, 0.72), rgba(10, 10, 14, 0.35));
+}
+.bf-band-banner--cover > * { position: relative; }
+.bf-band-banner--cover .bf-band-banner__name { color: #fff; }
+.bf-band-banner--cover .bf-band-banner__meta { color: rgba(255, 255, 255, 0.85); }
+
 /* ── Saldo (finanzas) ───────────────────────────────────────────────────── */
 .bf-amount--positive { color: var(--bf-success); font-weight: var(--bf-fw-semibold); }
 .bf-amount--negative { color: var(--bf-danger);  font-weight: var(--bf-fw-semibold); }

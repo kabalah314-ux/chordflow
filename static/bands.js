@@ -39,13 +39,12 @@ async function loadBands() {
         }
         elGrid.innerHTML = bands.map(b => {
             const ev = nextByBand[b.id];
-            const ini = initialsFrom(b.name) || '🎸';
             const songs = b.song_count || 0;
             return `
             <div class="song-card band-card" data-id="${escapeHtml(b.id)}">
                 <div class="card-main" data-act="open" style="cursor:pointer;">
                     <div class="band-card__head">
-                        <span class="bf-avatar" style="background:${bandColor(b.id)};color:#fff;">${escapeHtml(ini)}</span>
+                        ${bfAvatar({ url: b.avatar_url, name: b.name, color: bandColor(b.id) })}
                         <div style="min-width:0;">
                             <h3 class="card-title">${escapeHtml(b.name)}</h3>
                             <p class="card-artist">${ROLE_LABEL[b.role] || escapeHtml(b.role)} · ${b.member_count} ${b.member_count === 1 ? 'miembro' : 'miembros'} · ${songs} ${songs === 1 ? 'canción' : 'canciones'}</p>

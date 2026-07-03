@@ -96,13 +96,15 @@
     }
 
     function renderShell(band, active, ctx) {
-        const ini = initialsFrom(band.name) || '🎸';
         const roleLabel = ROLE_LABEL[ctx.myRole] || ctx.myRole;
         const desc = (band.description || '').trim();
+        // Cover (T-V5-06): la URL viene validada por el backend (https, sin comillas/paréntesis),
+        // segura dentro de url("..."). Con cover, el banner lleva velo oscuro (clase --cover).
+        const coverStyle = band.cover_url ? ` style='background-image:url("${band.cover_url}")'` : '';
         elSpace.innerHTML = `
             <a class="bf-btn bf-btn--sm bf-btn--ghost" href="bands.html" style="margin-bottom:.75rem;">← Mis bandas</a>
-            <div class="bf-band-banner">
-                <span class="bf-avatar bf-avatar--lg" style="background:${ctx.accent};color:#fff;">${escapeHtml(ini)}</span>
+            <div class="bf-band-banner${band.cover_url ? ' bf-band-banner--cover' : ''}"${coverStyle}>
+                ${bfAvatar({ url: band.avatar_url, name: band.name, color: ctx.accent, extraCls: 'bf-avatar--lg' })}
                 <div class="bf-grow" style="min-width:0;">
                     <div class="bf-band-banner__name">${escapeHtml(band.name)}</div>
                     <div class="bf-band-banner__meta">
@@ -215,6 +217,15 @@
                             </div>
                             <div class="bf-row"><button class="bf-btn bf-btn--primary" id="set-save">Guardar cambios</button></div>
                             <hr style="border:none;border-top:1px solid var(--bf-border);margin:.3rem 0;">
+                            <div>
+                                <label class="bf-label">Imagen de la banda</label>
+                                <div class="bf-row bf-wrap" style="gap:.5rem;">
+                                    <button class="bf-btn bf-btn--sm" id="set-logo">${band.avatar_url ? 'Cambiar logo' : 'Subir logo'}</button>
+                                    <button class="bf-btn bf-btn--sm" id="set-cover">${band.cover_url ? 'Cambiar fondo' : 'Subir fondo de cabecera'}</button>
+                                </div>
+                                <p class="bf-muted" style="font-size:var(--bf-fs-xs);margin-top:.3rem;">El logo aparece en el círculo del banner y en "Mis bandas"; el fondo, detrás de la cabecera.</p>
+                            </div>
+                            <hr style="border:none;border-top:1px solid var(--bf-border);margin:.3rem 0;">
                             <div><button class="bf-btn bf-btn--danger" id="set-delete">🗑️ Borrar banda</button></div>
                         </div>`
                         : `<div class="bf-card"><p class="bf-muted">Solo un admin puede editar la banda.</p></div>`}
@@ -225,8 +236,11 @@
     function renderMembers(active) {
         const el = document.getElementById('b-members');
         if (!el) return;
+        // Miembros con cara (T-V5-06): foto de perfil si la tienen; si no, iniciales con color
+        // determinista por usuario (no letras sueltas sin identidad).
         el.innerHTML = active.map(m => `
             <li class="setlist-song">
+                ${bfAvatar({ url: m.avatar_url, name: m.display_name || 'Músico', color: bandColor(m.user_id), extraCls: 'bf-avatar--sm' })}
                 <span class="sl-title">${escapeHtml(m.display_name || m.user_id)}
                     <small>${ROLE_LABEL[m.role] || escapeHtml(m.role)}${m.instrument ? ' · ' + escapeHtml(m.instrument) : ''}</small></span>
             </li>`).join('') || '<li><small>Sin miembros activos.</small></li>';
@@ -556,6 +570,23 @@
                 toast('Cambios guardados.', 'success');
             } catch (e) { toast('No se pudieron guardar los cambios.', 'error'); }
         });
+        // Logo y fondo (T-V5-06): subir a Storage y guardar la URL; recargar para repintar banner.
+        const patchImage = (field) => async (url) => {
+            const res = await apiFetch(`/bands/${bandId}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [field]: url }),
+            });
+            if (!res.ok) { toast('No se pudo guardar la imagen.', 'error'); return; }
+            toast('Imagen guardada.', 'success');
+            window.location.reload();
+        };
+        const setLogo = document.getElementById('set-logo');
+        if (setLogo) setLogo.addEventListener('click', () =>
+            bfPickAndUploadImage('band-logo', 512, patchImage('avatar_url')));
+        const setCover = document.getElementById('set-cover');
+        if (setCover) setCover.addEventListener('click', () =>
+            bfPickAndUploadImage('band-cover', 1600, patchImage('cover_url')));
+
         const setDel = document.getElementById('set-delete');
         if (setDel) setDel.addEventListener('click', async () => {
             const ok = await confirmModal(`¿Borrar la banda "${band.name}"? Esta acción no se puede deshacer.`,

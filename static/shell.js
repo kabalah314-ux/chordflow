@@ -96,12 +96,17 @@
             if (!res.ok) return;
             const me = await res.json();
             const name = (me.display_name || '').trim();
-            if (name) {
-                const elName = document.getElementById('bf-prof-name');
-                const elIni = document.getElementById('bf-prof-initials');
-                if (elName) elName.textContent = name;
-                const ini = initialsFrom(name);
-                if (elIni && ini) elIni.textContent = ini;
+            const elName = document.getElementById('bf-prof-name');
+            const elIni = document.getElementById('bf-prof-initials');
+            if (name && elName) elName.textContent = name;
+            if (elIni) {
+                if (me.avatar_url) {
+                    // Foto de perfil (T-V5-06): llena el círculo del lateral.
+                    elIni.innerHTML = `<img class="bf-avatar__img" src="${escapeHtml(me.avatar_url)}" alt="" loading="lazy">`;
+                } else {
+                    const ini = initialsFrom(name);
+                    if (ini) elIni.textContent = ini;
+                }
             }
         } catch (e) { /* perfil opcional: el shell funciona sin nombre */ }
     }

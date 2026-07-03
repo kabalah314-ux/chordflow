@@ -282,6 +282,8 @@ class Band(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text)
     avatar_url = Column(String(512))
+    # Imagen de fondo/cabecera del espacio de banda (T-V5-06, Supabase Storage).
+    cover_url = Column(String(512))
     created_by = Column(String(36), nullable=False, index=True)  # user_id del creador (→ admin)
     # Una sola divisa por banda (§C.4.3). Sin multi-divisa en v1. Default EUR.
     currency = Column(String(3), nullable=False, default="EUR", server_default=text("'EUR'"))

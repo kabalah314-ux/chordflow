@@ -37,9 +37,23 @@ function bandColor(id, { s = 55, l = 48 } = {}) {
 // 1-2 iniciales en mayúscula a partir de un nombre. Devuelve null si no hay nombre:
 // el llamante decide el fallback (p. ej. '🎸' en el avatar de banda).
 function initialsFrom(name) {
-    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    // Solo palabras que EMPIEZAN por letra/número: "Oscar (tú)" → "O", no "O(" (repaso 2026-07-02).
+    const parts = String(name || '').trim().split(/\s+/)
+        .filter(w => /^[\p{L}\p{N}]/u.test(w));
     if (!parts.length) return null;
     return parts.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+// ─── Avatar con foto o iniciales (T-V5-06, identidad) ────────────────────────
+// Fuente ÚNICA del render de avatar: si hay `url` (Storage) pinta la foto llenando el círculo;
+// si no, las iniciales sobre el color. `extraCls` p. ej. 'bf-avatar--lg'/'bf-avatar--sm'.
+function bfAvatar({ url, name, color, extraCls = '' } = {}) {
+    const ini = initialsFrom(name) || '🎸';
+    const inner = url
+        ? `<img class="bf-avatar__img" src="${escapeHtml(url)}" alt="${escapeHtml(name || '')}" loading="lazy">`
+        : escapeHtml(ini);
+    const bg = url ? '' : `background:${color || bandColor(name || '?')};color:#fff;`;
+    return `<span class="bf-avatar ${extraCls}" style="${bg}">${inner}</span>`;
 }
 
 // ─── Skeletons de carga (T-135) ──────────────────────────────────────────────

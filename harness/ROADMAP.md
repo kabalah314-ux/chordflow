@@ -692,5 +692,10 @@
 - [ ] **V5-F10** 🟠 Conciertos: asistente "organiza tu concierto" + checklist (guía §10; giras después).
 - [ ] **V5-F11** 🟠 Finanzas integral (guía §11) — **AL FINAL por orden explícita de Oscar** (necesita
       el contexto de material/conciertos/pizarra).
-- [ ] **Transversal 🔌** Supabase Storage (bloqueado en config de Oscar) — desbloquea fotos de perfil,
-      logo/fondo de banda y fotos de material (T-V5-06, V5-F5c, V5-F9).
+- [x] **Transversal ✅** Supabase Storage CONFIGURADO por Oscar (2026-07-03: bucket `media` público
+      en lectura + RLS "solo tu carpeta /{uid}/" para escribir) y **T-V5-06 (identidad) HECHO**:
+      foto de perfil (perfil + lateral + miembros), logo y fondo de banda (banner con velo +
+      tarjetas), `upload.js` (resize client-side + subida con JWT), `Band.cover_url` (migración
+      `37fb00af7e5c`), validación anti-XSS de URLs de imagen, `bfAvatar()` único y fix de
+      `initialsFrom` ("O(" → "O"). unit+e2e `test_identidad_imagenes`. Quedan las fotos de
+      MATERIAL para V5-F5c. ⏳ migración a prod al desplegar.

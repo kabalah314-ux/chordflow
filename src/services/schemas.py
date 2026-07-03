@@ -14,6 +14,19 @@ def _to_naive_utc(v: Optional[datetime]) -> Optional[datetime]:
     return v
 
 
+def _validate_image_url(v: Optional[str]) -> Optional[str]:
+    """Valida una URL de imagen subida por el usuario (avatar/logo/fondo, T-V5-06): https y sin
+    caracteres que permitan escapar de un atributo src o de un url("...") en CSS. `""` → None."""
+    if v is None:
+        return v
+    v = v.strip()
+    if not v:
+        return None
+    if not v.startswith("https://") or any(c in v for c in ' "\'\\()<>'):
+        raise ValueError("URL de imagen no válida (debe ser https y sin comillas/espacios)")
+    return v
+
+
 class ChordMarkerBase(BaseModel):
     chord_name: str
     char_position: Optional[int] = None
@@ -263,6 +276,9 @@ class MusicianProfileBase(BaseModel):
 class MusicianProfileUpsert(MusicianProfileBase):
     """Crear/editar el propio perfil (el id sale del usuario autenticado, no del body)."""
 
+    # Solo en la ENTRADA (la respuesta se construye desde la BD y no debe validar hacia fuera).
+    _valida_avatar = field_validator("avatar_url")(_validate_image_url)
+
 
 class MusicianProfileResponse(MusicianProfileBase):
     id: str  # = user_id de Supabase
@@ -278,6 +294,8 @@ class BandCreate(BaseModel):
     description: Optional[str] = None
     avatar_url: Optional[str] = Field(None, max_length=512)
 
+    _valida_avatar = field_validator("avatar_url")(_validate_image_url)
+
 
 BandPlan = Literal["free", "pro"]
 
@@ -286,7 +304,10 @@ class BandUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     avatar_url: Optional[str] = Field(None, max_length=512)
+    cover_url: Optional[str] = Field(None, max_length=512)  # fondo de cabecera (T-V5-06)
     plan: Optional[BandPlan] = None  # andamiaje SaaS (V3-F3); lo cambia un admin
+
+    _valida_imgs = field_validator("avatar_url", "cover_url")(_validate_image_url)
 
 
 class BandResponse(BaseModel):
@@ -294,6 +315,7 @@ class BandResponse(BaseModel):
     name: str
     description: Optional[str] = None
     avatar_url: Optional[str] = None
+    cover_url: Optional[str] = None
     created_by: str
     plan: BandPlan = "free"
     created_at: datetime
@@ -328,6 +350,8 @@ class BandMembershipResponse(BaseModel):
     joined_at: Optional[datetime] = None
     # Nombre real del músico (de MusicianProfile), si existe → evita mostrar UUIDs.
     display_name: Optional[str] = None
+    # Foto de perfil del músico (T-V5-06), si la tiene → miembros con cara, no letras.
+    avatar_url: Optional[str] = None
     # ¿Esta fila soy yo? (lo rellena el endpoint) → el front sabe si es admin sin exponer ids.
     is_me: bool = False
 

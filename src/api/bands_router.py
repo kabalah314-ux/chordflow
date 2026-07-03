@@ -293,15 +293,16 @@ def list_members(
     """Lista TODOS los miembros de la banda (incluidos los de baja, para el histórico), con su
     nombre real del perfil si lo tienen (evita mostrar UUIDs)."""
     rows = (
-        db.query(BandMembership, MusicianProfile.display_name)
+        db.query(BandMembership, MusicianProfile.display_name, MusicianProfile.avatar_url)
         .outerjoin(MusicianProfile, MusicianProfile.id == BandMembership.user_id)
         .filter(BandMembership.band_id == band_id)
         .all()
     )
     out = []
-    for m, display_name in rows:
+    for m, display_name, avatar_url in rows:
         resp = BandMembershipResponse.model_validate(m)
         resp.display_name = display_name
+        resp.avatar_url = avatar_url
         resp.is_me = m.user_id == membership.user_id
         out.append(resp)
     return out

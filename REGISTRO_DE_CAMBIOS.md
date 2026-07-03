@@ -8,6 +8,45 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📸 V5 · T-V5-06 — Identidad con imágenes: foto de perfil + logo y fondo de banda (2026-07-03) ✅ (código) · ⏳ migración a prod
+
+**Qué:** primeras IMÁGENES reales de la app (V5 §2.3-T-V5-06, tras configurar Oscar el bucket
+`media` de Supabase Storage): **foto de perfil** (se ve en Mi perfil, en el lateral del shell y en
+los miembros de banda), **logo de banda** (círculo del banner + tarjeta de "Mis bandas") e
+**imagen de fondo** de la cabecera del espacio de banda (con velo oscuro para legibilidad).
+
+**Por qué:** "sin fotos la app siempre parecerá una demo" (repaso 2026-07-02); Oscar pidió
+explícitamente miembros con nombre+foto y fondo de banda (V5 §9.2). Storage quedó configurado por
+Oscar (bucket `media` público en lectura; RLS: escribir solo en `/{uid}/...`).
+
+**Cómo:**
+- **Subida client-side** ([upload.js](static/upload.js) nuevo): redimensiona en canvas (512px
+  avatares / 1600px fondos, JPEG 0.85), sube a `media/{uid}/{kind}-{ts}.jpg` con el JWT del usuario
+  (cumple la RLS) y devuelve la URL pública. En modo test rechaza con mensaje claro (los tests
+  cubren el contrato de la URL, no la subida).
+- **Backend:** columna nueva `Band.cover_url` (migración aditiva `37fb00af7e5c`, batch;
+  `alembic check` limpio) + `cover_url` en `BandUpdate/BandResponse` + `avatar_url` del músico en
+  `GET /bands/{id}/members` (mismo outerjoin, sin N+1). **Validador `_validate_image_url`** en las
+  ENTRADAS (perfil y banda): https obligatorio y sin `"' \\()<>` → una URL guardada jamás puede
+  escapar de un `src="…"` ni de un `url("…")` en CSS (defensa XSS/CSS-injection); `""` → NULL.
+- **Frontend:** helper único `bfAvatar()` en [util.js](static/util.js) (foto si hay URL; si no,
+  iniciales+color — usado por perfil, banner, miembros y tarjetas de banda). De regalo, **fix del
+  repaso**: `initialsFrom('Oscar (tú)')` ahora da "O", no "O(" (filtra palabras que no empiezan por
+  letra/número). Botones "Añadir/Cambiar foto" en el perfil y "Subir logo / Subir fondo" en
+  Ajustes de banda (solo admin). CSS `.bf-avatar__img` + `.bf-band-banner--cover` (velo).
+
+**Verificación:** unit [test_identidad_imagenes.py](tests/unit/test_identidad_imagenes.py) (cover
+por admin, aislamiento ajeno→403/404, 4 URLs maliciosas→422, avatar en miembros, ""→NULL) + e2e
+[test_identidad_imagenes.py](tests/e2e/test_identidad_imagenes.py) (foto en perfil+lateral, banner
+con logo y fondo `--cover`, miembros con cara, iniciales sin paréntesis) + verificación visual en
+el preview (banner con velo y nombre en blanco legible, miembros mixtos foto/iniciales).
+`run_checks` TODO VERDE. `cachebust` al día.
+
+> ⏳ **Deploy:** lleva la migración `37fb00af7e5c` → aplicarla a Postgres prod (pooler 5432) ANTES
+> del push a main, como siempre.
+
+---
+
 ## 🕷️ T-163 — Buscar e importar SIN IA para CifraClub/LaCuerda (2026-07-02) ✅
 
 **Qué:** T-162 (buscar por nombre) y el import por URL (T-045) llamaban a OpenRouter en **cada**

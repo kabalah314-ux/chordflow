@@ -169,8 +169,9 @@ mensajes de chat, `evento.html` público) son aceptables y se quedan.
 5. **T-V5-05 (S) Detalles:** avatar chat con `bandColor` · afinador centrado+copy limpio · focus
    `.import-search-item` · hint de pestañas actualizado · editor móvil (input/❌) · CTA en
    `evento.html` · h1 estáticos.
-6. **T-V5-06 (M, 🔌 tras Storage) Identidad:** subida de avatar de perfil y logo+fondo de banda
-   (bucket + políticas por banda + UI). Se especifica al desbloquear Storage.
+6. **T-V5-06 ✅ HECHO (2026-07-03) Identidad:** Storage configurado por Oscar (bucket `media`) →
+   foto de perfil + logo y fondo de banda implementados (`upload.js`, `Band.cover_url`, `bfAvatar()`,
+   validación anti-XSS de URLs). Detalle en `REGISTRO_DE_CAMBIOS.md`. Fotos de MATERIAL → §5.4.
 
 ### 2.4 DECISIONES §2 — ✅ CERRADAS (Oscar, 2026-07-03)
 
@@ -467,6 +468,7 @@ a la banda (+/−). Con calendario de pagos recurrentes si encaja. Estudio compl
 | 2026-07-03 | §2 | **D-EST-2 ✅** player siempre oscuro (modo escenario) | editor/join sí siguen el tema |
 | 2026-07-03 | §2 | **D-EST-3 ✅** Storage se configura ya (Oscar guiado) | bucket + políticas → desbloquea fotos |
 | 2026-07-03 | §8 | **D-CHT-1 ✅** chat de banda = atajo al Chat global | pestaña de banda pasa a preview |
+| 2026-07-03 | §2 | **Storage configurado + T-V5-06 HECHO** | bucket `media` + RLS por Oscar; fotos de perfil/logo/fondo implementadas (detalle en REGISTRO) |
 | _(pendiente)_ | §3 | D-PLY-1/2/3 | se preguntan al arrancar V5-F2 |
 | _(pendiente)_ | §5 | D-EXP-1/2/3/4 | se preguntan al arrancar V5-F4 |
 
