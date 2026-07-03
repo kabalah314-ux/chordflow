@@ -42,8 +42,14 @@ con logo y fondo `--cover`, miembros con cara, iniciales sin paréntesis) + veri
 el preview (banner con velo y nombre en blanco legible, miembros mixtos foto/iniciales).
 `run_checks` TODO VERDE. `cachebust` al día.
 
-> ⏳ **Deploy:** lleva la migración `37fb00af7e5c` → aplicarla a Postgres prod (pooler 5432) ANTES
-> del push a main, como siempre.
+> ✅ **Migración `37fb00af7e5c` APLICADA a Postgres prod** (2026-07-03, pooler 5432; `alembic
+> current` = head). Nota de la sesión: un agente de revisión hizo `git stash` del working tree a
+> mitad de suite (fallos "imposibles" en tests ajenos); recuperado con `git stash pop` y suite
+> TODO VERDE después. Lección registrada en memoria: commitear antes de lanzar workflows.
+>
+> **Fix post-revisión adversarial (1 hallazgo confirmado):** recomprimir a JPEG aplastaba la
+> transparencia a NEGRO (logos PNG típicos) → `upload.js` ahora exporta PNG cuando el original
+> tiene alfa (PNG/WebP/GIF/SVG) y JPEG solo para fotos; extensión y contentType acordes.
 
 ---
 

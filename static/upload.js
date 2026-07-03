@@ -12,8 +12,12 @@
  * Requiere auth.js cargado antes (getConfig/getSupabase/getSession globales).
  */
 
-// Redimensiona un File de imagen a JPEG con lado máximo `maxSide` (mantiene proporción).
+// Redimensiona un File de imagen con lado máximo `maxSide` (mantiene proporción).
+// Los formatos CON transparencia (PNG/WebP/GIF/SVG — logos típicos) se exportan como PNG para
+// conservar el alfa: recomprimirlos a JPEG aplastaría lo transparente a NEGRO (revisión T-V5-06).
+// Las fotos (JPEG y demás) salen como JPEG comprimido. Devuelve { blob, ext, mime }.
 async function _bfResizeImage(file, maxSide, quality) {
+    const keepAlpha = /png|webp|gif|svg/i.test(file.type);
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
@@ -22,9 +26,10 @@ async function _bfResizeImage(file, maxSide, quality) {
     canvas.width = w; canvas.height = h;
     canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
     bitmap.close();
-    const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
+    const mime = keepAlpha ? 'image/png' : 'image/jpeg';
+    const blob = await new Promise((res) => canvas.toBlob(res, mime, quality));
     if (!blob) throw new Error('No se pudo procesar la imagen');
-    return blob;
+    return { blob, ext: keepAlpha ? 'png' : 'jpg', mime };
 }
 
 /**
@@ -43,11 +48,11 @@ async function bfUploadImage(file, kind, maxSide = 512) {
     const session = await getSession();
     if (!session) throw new Error('Sesión caducada. Vuelve a entrar.');
 
-    const blob = await _bfResizeImage(file, maxSide, 0.85);
-    const path = `${session.user.id}/${kind}-${Date.now()}.jpg`;
+    const { blob, ext, mime } = await _bfResizeImage(file, maxSide, 0.85);
+    const path = `${session.user.id}/${kind}-${Date.now()}.${ext}`;
     const sb = await getSupabase();
     const { error } = await sb.storage.from('media').upload(path, blob, {
-        contentType: 'image/jpeg', upsert: false,
+        contentType: mime, upsert: false,
     });
     if (error) throw new Error('No se pudo subir la imagen: ' + (error.message || 'error de Storage'));
     const { data } = sb.storage.from('media').getPublicUrl(path);

@@ -698,4 +698,6 @@
       tarjetas), `upload.js` (resize client-side + subida con JWT), `Band.cover_url` (migración
       `37fb00af7e5c`), validación anti-XSS de URLs de imagen, `bfAvatar()` único y fix de
       `initialsFrom` ("O(" → "O"). unit+e2e `test_identidad_imagenes`. Quedan las fotos de
-      MATERIAL para V5-F5c. ⏳ migración a prod al desplegar.
+      MATERIAL para V5-F5c. ✅ Migración `37fb00af7e5c` aplicada a Postgres prod (2026-07-03).
+      Fix post-revisión adversarial: PNG/WebP/GIF con transparencia se exportan como PNG (no JPEG)
+      para no aplastar el alfa a NEGRO en logos de banda.
