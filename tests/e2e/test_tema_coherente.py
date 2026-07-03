@@ -36,6 +36,15 @@ def test_editor_respeta_el_tema_claro(page, live_server):
     }""")
     assert rgb > 500, f"la barra del editor sigue oscura en modo claro (suma RGB {rgb})"
 
+    # Y los CAMPOS son legibles en claro: fondo claro (no negro con texto oscuro encima). Esto cubre
+    # la regresión de habilitar el modo claro sin tokenizar los fondos de input/panel del editor.
+    in_rgb = page.evaluate("""() => {
+        const c = getComputedStyle(document.getElementById('title')).backgroundColor;
+        const m = c.match(/\\d+/g).map(Number);
+        return m[0] + m[1] + m[2];
+    }""")
+    assert in_rgb > 600, f"los inputs del editor siguen oscuros en modo claro (suma RGB {in_rgb})"
+
 
 def test_join_respeta_el_tema_claro(page, live_server):
     page.goto(live_server + "/static/join.html", wait_until="networkidle")

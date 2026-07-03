@@ -670,8 +670,8 @@
 > aquí cuando Oscar cierra las decisiones abiertas de su sección (§13 de la guía). Método:
 > sección a sección, bucle de oro por tarea.
 
-- [~] **V5-F1** 🔴 Estética global "de cutre a profesional" (guía §2.3). Decisiones cerradas
-      2026-07-03. EN CURSO:
+- [x] **V5-F1** 🔴 Estética global "de cutre a profesional" (guía §2.3). Decisiones cerradas
+      2026-07-03. **COMPLETA (2026-07-03):**
   - [x] **T-V5-06** identidad con fotos (perfil/logo/fondo) — hecho y desplegado.
   - [x] **T-V5-01** bugs visibles: `.search-box` legible en modo claro (tokenizada) + quitado el
         "(T-091)" del afinador (initialsFrom "O(" ya cayó con T-V5-06). e2e nuevo.
@@ -681,8 +681,15 @@
   - [x] **T-V5-03** tarjetas + grids unificados: `.song-card` usa los tokens de `.bf-card` (radio/
         padding/sombra/lift), `.song-grid` el gap de `.bf-grid`. Botones legacy NO (los comparte el
         player) → van en T-V5-04.
-  - [ ] **T-V5-04/05** tema coherente (editor/join) + convergencia de botones legacy por página +
-        detalles sueltos (avatar chat con bandColor, focus de resultados de búsqueda, etc.).
+  - [x] **T-V5-04/05** tema coherente (editor/join respetan claro/oscuro vía `theme.js`; **player
+        SIEMPRE oscuro**, D-EST-2) + fondos legacy tokenizados (editor legible en claro: `--bg-panel`,
+        `.editor-content`, inputs/textarea, `.ev-status-*`, `.icon-btn`) + convergencia de botones
+        legacy `.primary-btn`/`.secondary-btn`→`.bf-btn` bajo `body.bf-legacy-themed` (no toca la joya)
+        + detalles: avatar de chat con `bandColor`, resultados de importación focables (listbox/option
+        + Enter, foco visible), aguja del afinador atenuada en reposo + centrada, CTA en `evento.html`,
+        hint de pestañas (Miembros/Giras), `<h1>` estático en Inicio/Agenda/Finanzas/Chat, ❌ como SVG.
+        Tests `test_tema_coherente`/`test_detalles_pulido`/`test_accesibilidad_h1`. Revisión adversarial
+        (9 agentes) + verificación visual en navegador. run_checks VERDE.
 - [ ] **V5-F2** 🔴 Reproductor de directo (guía §3: acorde=4 negras + ajuste ×½/×2, cuenta atrás 4/8,
       metrónomo 2/4·3/4·4/4·6/8, tempo press-and-hold, compás en la barra, foto→partitura beta ⚠️).
       El motor (`sync_engine.js`) NO se toca. ⏳ Espera D-PLY-1/2/3.

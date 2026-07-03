@@ -569,10 +569,11 @@ button {
 .editor-content {
     width: 100%;
     max-width: 1100px;
-    background: rgba(20, 20, 25, 0.8);
+    /* T-V5-04: tokenizado → el panel del editor se adapta al tema (legible en claro). */
+    background: var(--bf-surface, rgba(20, 20, 25, 0.8));
     padding: 2rem;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
 }
 
 /* ── Editor: textarea + vista previa lado a lado ── */
@@ -586,8 +587,9 @@ button {
     flex: 1;
     min-width: 0;
     min-height: 420px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* T-V5-04: tokenizado → input legible en claro (antes texto oscuro sobre fondo negro fijo). */
+    background: var(--bf-surface-2, rgba(0, 0, 0, 0.5));
+    border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
     color: var(--text-primary);
     padding: 0.8rem 1rem;
     border-radius: 8px;
@@ -597,7 +599,7 @@ button {
 .editor-split textarea:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(255, 107, 74, 0.2);
+    box-shadow: 0 0 8px var(--bf-accent-glow, rgba(255, 107, 74, 0.2));
 }
 
 .preview-pane {
@@ -606,7 +608,7 @@ button {
     display: flex;
     flex-direction: column;
     background: var(--bg-dark);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
     border-radius: 8px;
     overflow: hidden;
 }
@@ -617,8 +619,8 @@ button {
     letter-spacing: 1px;
     color: var(--accent-color);
     padding: 0.6rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 107, 74, 0.04);
+    border-bottom: 1px solid var(--bf-border, rgba(255, 255, 255, 0.08));
+    background: var(--bf-accent-weak, rgba(255, 107, 74, 0.04));
 }
 
 .preview-content {
@@ -760,10 +762,11 @@ button {
     letter-spacing: 1px;
 }
 
-.input-group input, 
+.input-group input,
 .input-group textarea {
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* T-V5-04: tokenizado → inputs legibles en claro (adaptan fondo/borde al tema). */
+    background: var(--bf-surface-2, rgba(0, 0, 0, 0.5));
+    border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
     color: var(--text-primary);
     padding: 0.8rem 1rem;
     border-radius: 8px;
@@ -778,11 +781,11 @@ button {
     resize: vertical;
 }
 
-.input-group input:focus, 
+.input-group input:focus,
 .input-group textarea:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(255, 107, 74, 0.2);
+    box-shadow: 0 0 8px var(--bf-accent-glow, rgba(255, 107, 74, 0.2));
 }
 
 .help-text {

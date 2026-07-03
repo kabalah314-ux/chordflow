@@ -60,7 +60,9 @@ def test_resultados_de_importacion_focables_por_teclado(page, live_server):
     page.wait_for_selector(".import-search-item", timeout=8000)
     item = page.locator(".import-search-item").first
     assert item.get_attribute("tabindex") == "0"
-    assert item.get_attribute("role") == "button"
+    # Patrón listbox/option → conserva la semántica de lista para lectores de pantalla.
+    assert item.get_attribute("role") == "option"
+    assert page.get_attribute("#import-search-results", "role") == "listbox"
 
     # Activación por teclado: foco + Enter dispara el import (rellena la URL elegida).
     item.focus()

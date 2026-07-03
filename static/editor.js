@@ -432,12 +432,17 @@ const elImportSearchResults = document.getElementById('import-search-results');
 function renderSearchResults(results) {
     if (!elImportSearchResults) return;
     if (!results.length) {
+        elImportSearchResults.removeAttribute('role');   // mensaje suelto: no es un listbox.
         elImportSearchResults.innerHTML = '<li class="import-search-empty">Sin resultados. Prueba con otro nombre o pega el enlace abajo.</li>';
         elImportSearchResults.hidden = false;
         return;
     }
+    // T-V5-05: listbox de opciones focables → conserva la semántica de lista/posición para lectores
+    // de pantalla (role=button en cada <li> la rompía). Enter/Espacio activan la opción.
+    elImportSearchResults.setAttribute('role', 'listbox');
+    elImportSearchResults.setAttribute('aria-label', 'Resultados de la búsqueda');
     elImportSearchResults.innerHTML = results.map((r, i) => `
-        <li class="import-search-item" data-idx="${i}" tabindex="0" role="button">
+        <li class="import-search-item" data-idx="${i}" tabindex="0" role="option" aria-selected="false">
             <span class="import-search-title">${escapeHtml(r.title)}</span>
             ${r.artist ? `<span class="import-search-artist">${escapeHtml(r.artist)}</span>` : ''}
             ${r.source ? `<span class="import-search-source">${escapeHtml(r.source)}</span>` : ''}

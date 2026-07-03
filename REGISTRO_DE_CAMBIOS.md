@@ -2,9 +2,54 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-07-02
+> Última actualización: 2026-07-03
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
+
+---
+
+## 🎨 V5-F1 · T-V5-04/05 — Tema coherente + convergencia de botones + detalles (2026-07-03) ✅ · CIERRA V5-F1
+
+**Qué (T-V5-04, tema coherente):**
+1. **`theme.js` nuevo** ([static/theme.js](static/theme.js)): aplica `data-theme` desde la misma clave
+   `localStorage['bf-theme']` que usa el shell, en `editor.html` y `join.html` (que no llevan lateral
+   pero SÍ deben respetar el tema). Va en `<head>` para evitar el parpadeo. El **reproductor**
+   (`index.html`) NO lo carga a propósito → SIEMPRE oscuro (decisión **D-EST-2**, "modo escenario");
+   se documenta con un comentario en su `<head>`.
+2. **Fondos legacy tokenizados** ([style.css](static/style.css)): `--bg-panel` con override claro
+   (`:root[data-theme="light"]`) para que el cristal de la top-bar se aclare; `.editor-content`,
+   `.input-group input/textarea` y `.editor-split textarea` pasan de `rgba(0,0,0,.5)`/`rgba(20,20,25,.8)`
+   **fijos** a `var(--bf-surface)`/`var(--bf-surface-2)` → el editor es **legible en claro** (antes:
+   texto casi-negro sobre caja negra = invisible). `.ev-status--confirmed/--cancelled` a
+   `--bf-success`/`--bf-danger`; `.icon-btn` sin subrayado de enlace.
+3. **Convergencia de botones legacy**: `.primary-btn`/`.secondary-btn` adoptan el look de `.bf-btn`
+   (radio, padding, tokens) SOLO bajo `body.bf-legacy-themed` (editor/join). El reproductor comparte
+   esas clases para la joya y NO lleva la clase → **intacto**.
+
+**Qué (T-V5-05, detalles):**
+- **Chat**: avatar de conversación coloreado por banda (`bandColor` + iniciales), como el lateral
+  ([chat.js](static/chat.js)).
+- **Editor**: resultados de importación **focables por teclado** con patrón `listbox`/`option`
+  (`tabindex`/`role`/`aria-selected`) + activación con Enter/Espacio + foco visible; input de búsqueda
+  a lo ancho en móvil; ❌ cancelar como icono SVG ([editor.js](static/editor.js), [editor.html](static/editor.html)).
+- **Afinador**: aguja **atenuada en reposo** (`#tuner-panel.tuner-live` la enciende al escuchar), tarjeta
+  centrada, copy sin redundancia con el botón ([tuner.js](static/tuner.js), [afinador.html](static/afinador.html)).
+- **evento.html público**: **CTA** claro de registro ("Organízalo con BandFlow — gratis") en ambos
+  estados ([evento.js](static/evento.js)). Hint de pestañas de banda actualizado (Miembros/Giras)
+  ([band.js](static/band.js)). `<h1>` estático en Inicio/Agenda/Finanzas/Chat (accesibilidad).
+
+**Por qué:** cierre de V5-F1 (`GUIA_MAESTRA_V5.md` §2.3–2.4): "un solo sistema" + "un tema por contexto"
+(app claro/oscuro; player siempre oscuro).
+
+**Verificación:** `run_checks` **TODO VERDE** (doctor 10/10 · ruff · unit + e2e). Tests nuevos:
+`test_tema_coherente.py` (editor/join aplican tema, **player siempre oscuro**, inputs legibles en claro,
+botones convergen solo en editor, ev-status tokenizado), `test_detalles_pulido.py` (avatar chat,
+listbox focable + Enter, aguja idle, CTA de evento) y `test_accesibilidad_h1.py`. **Revisión adversarial
+multi-agente** (9 agentes) del diff → 3 hallazgos: los 2 de tema (inputs/panel del editor ilegibles en
+claro) se detectaron ya en la **verificación visual con el navegador** y se arreglaron antes del cierre;
+el 3º (a11y: `role=button` rompía la semántica de lista) resuelto con `listbox`/`option`. Verificado a
+ojo en el navegador: editor claro/oscuro coherente, afinador centrado, CTA de evento, avatar de chat.
+`cachebust` al día. Sin migración.
 
 ---
 
