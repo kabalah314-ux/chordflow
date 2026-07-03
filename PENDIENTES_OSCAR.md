@@ -10,9 +10,12 @@
 
 ### 1. 🔴 Rotar secretos (seguridad — lo más urgente)
 Se compartieron por chat la `sb_secret_` y la contraseña de Postgres **(la contraseña de la BD se
-volvió a ver en el chat al hacer el despliegue del 2026-06-16 → cámbiala cuanto antes)**.
+volvió a ver en el chat el 2026-06-16 y OTRA VEZ el 2026-07-03 al aplicar la migración de T-V5-06
+→ cámbiala cuanto antes, es lo más urgente de esta lista)**.
 - [ ] Supabase → proyecto `fwynfifvtthtpzpejfhb` → **Settings → API** → regenerar la **secret key**.
-- [ ] Supabase → **Settings → Database** → cambiar la **contraseña de Postgres**.
+- [ ] Supabase → **Settings → Database** → **Reset database password** (2 min; no rompe la app: el
+      runtime usa la env de Vercel). Tras cambiarla, actualizar `DATABASE_URL` en **Vercel** con la
+      nueva contraseña (Settings → Environment Variables) y redeploy.
 - [ ] Avísame con las nuevas (o actualízalas tú) en **Vercel** (`DATABASE_URL`, claves) y en
       `.env.local`. *(El `.env.local` lo actualizo yo si me pasas los valores.)*
 
