@@ -143,15 +143,12 @@ engine.subscribe((state) => {
 });
 
 // --- Interacciones del usuario ---
-elBtnPlayPause.addEventListener('click', () => {
-    if (engine.state.status === "playing") {
-        engine.pause();
-    } else {
-        engine.play();
-    }
-});
+// T-V5-08: el Play pasa por handlePlayPause() para intercalar la cuenta atrás cuando arranca
+// desde el principio. La lógica de la cuenta atrás vive junto al metrónomo (más abajo).
+elBtnPlayPause.addEventListener('click', () => handlePlayPause());
 
 elBtnStop.addEventListener('click', () => {
+    cancelCountIn();               // T-V5-08: Stop también aborta una cuenta atrás en curso
     engine.stop();
     lastAutoScrollChordId = null;  // reanclar desde el principio al volver a reproducir
     // Reset scroll
@@ -279,8 +276,7 @@ document.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
     e.preventDefault();  // evita el scroll por defecto de la barra espaciadora
-    if (engine.state.status === 'playing') engine.pause();
-    else engine.play();
+    handlePlayPause();
 });
 
 // Pasapáginas / pedalera (V3-F4, T-092): las teclas de avance/retroceso que envían los pedales
@@ -380,6 +376,76 @@ engine.subscribe((state) => {
         playClick(level);
     }
 });
+
+// --- Cuenta atrás (pre-roll) antes de reproducir (T-V5-08) ---------------------
+// Al darle a Play DESDE EL PRINCIPIO (motor en 'idle') se cuentan N golpes al BPM actual y luego
+// arranca. N es configurable (apagada · 4 · 8) con el botón de al lado del metrónomo, persistido en el
+// dispositivo. La cuenta SUENA sólo si el metrónomo está activado (D-PLY-2); si no, es sólo visual.
+const COUNTIN_KEY = 'bf-countin';
+const COUNTIN_STEPS = [0, 4, 8];   // ciclo del botón
+const _savedCountIn = parseInt(localStorage.getItem(COUNTIN_KEY), 10);
+// Default APAGADA: no forzamos un pre-roll en cada Play (práctica ágil); se activa a 4/8 con el botón.
+let countInBeats = COUNTIN_STEPS.includes(_savedCountIn) ? _savedCountIn : 0;
+let countInTimer = null;
+
+const elBtnCountIn = document.getElementById('btn-countin');
+const elCountInOverlay = document.getElementById('countin-overlay');
+const elCountInNum = document.getElementById('countin-num');
+
+function paintCountInBtn() {
+    if (!elBtnCountIn) return;
+    elBtnCountIn.textContent = countInBeats > 0 ? String(countInBeats) : '–';
+    const desc = countInBeats > 0 ? `${countInBeats} golpes` : 'apagada';
+    elBtnCountIn.title = `Cuenta atrás antes del Play: ${desc} (clic para cambiar)`;
+    elBtnCountIn.setAttribute('aria-label', `Cuenta atrás antes de reproducir: ${desc}`);
+    // Estado activo como el metrónomo: fondo coral + texto oscuro (indicador claro de "encendido").
+    elBtnCountIn.style.background = countInBeats > 0 ? 'var(--accent-color)' : 'rgba(255,255,255,0.08)';
+    elBtnCountIn.style.color = countInBeats > 0 ? '#000' : 'var(--text-primary)';
+}
+paintCountInBtn();
+
+if (elBtnCountIn) elBtnCountIn.addEventListener('click', () => {
+    const i = COUNTIN_STEPS.indexOf(countInBeats);
+    countInBeats = COUNTIN_STEPS[(i + 1) % COUNTIN_STEPS.length];
+    localStorage.setItem(COUNTIN_KEY, String(countInBeats));
+    paintCountInBtn();
+});
+
+function showCountInNum(n) {
+    if (!elCountInOverlay || !elCountInNum) return;
+    elCountInNum.textContent = String(n);
+    elCountInOverlay.hidden = false;
+    elCountInNum.style.animation = 'none';   // re-lanza el "pop" en cada número
+    void elCountInNum.offsetWidth;
+    elCountInNum.style.animation = '';
+}
+
+function cancelCountIn() {
+    if (countInTimer) { clearTimeout(countInTimer); countInTimer = null; }
+    if (elCountInOverlay) elCountInOverlay.hidden = true;
+}
+
+function runCountIn(done) {
+    const interval = 60000 / (engine.state.bpm || 120);   // ms por golpe, al BPM actual
+    let n = countInBeats;
+    const tick = () => {
+        if (n <= 0) { cancelCountIn(); done(); return; }
+        showCountInNum(n);
+        if (metronomeOn) playClick(n === countInBeats ? 2 : 0);   // suena sólo con metrónomo (D-PLY-2)
+        n--;
+        countInTimer = setTimeout(tick, interval);
+    };
+    tick();
+}
+
+// Enrutado del Play: pausa si suena; aborta la cuenta si está en curso; cuenta atrás si arranca desde
+// el principio (motor 'idle' y N>0); si no, arranca directo (reanudar desde pausa, o cuenta apagada).
+function handlePlayPause() {
+    if (countInTimer) { cancelCountIn(); return; }
+    if (engine.state.status === 'playing') { engine.pause(); return; }
+    if (engine.state.status === 'idle' && countInBeats > 0) runCountIn(() => engine.play());
+    else engine.play();
+}
 
 // --- Carga de datos inicial desde la API ---
 async function fetchAndRenderSong() {

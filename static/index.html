@@ -12,7 +12,7 @@
          Por eso NO carga theme.js — sin `data-theme`, design-system/style.css usan el tema oscuro
          por defecto pase lo que pase que el usuario elija en el resto de la app. NO añadir theme.js aquí. -->
     <link rel="stylesheet" href="design-system.css?v=47faa1ea">
-    <link rel="stylesheet" href="style.css?v=ecbd8f46">
+    <link rel="stylesheet" href="style.css?v=ef129d76">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -78,6 +78,7 @@
                 <div class="song-progress__dot" id="song-progress-dot"></div>
             </div>
             <div class="playback-controls">
+                <button id="btn-countin" class="primary-btn square countin-btn" aria-label="Cuenta atrás antes de reproducir: apagada" title="Cuenta atrás antes del Play (clic: apagada · 4 · 8)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">–</button>
                 <button id="btn-metronome" class="primary-btn square" aria-label="Metrónomo (clic por beat)" title="Metrónomo (clic por beat)" style="background: rgba(255,255,255,0.08); color: var(--text-primary);">🥁</button>
                 <button id="btn-stop" class="primary-btn square" aria-label="Detener">⏹</button>
                 <button id="btn-play-pause" class="primary-btn" aria-label="Reproducir o pausar (barra espaciadora)">▶ Play</button>
@@ -94,6 +95,9 @@
             <button id="btn-reference-close" class="reference-panel__close" aria-label="Cerrar referencia">✕</button>
             <div id="reference-embed"></div>
         </div>
+
+        <!-- Cuenta atrás pre-roll (T-V5-08): overlay grande 4-3-2-1 antes de arrancar. -->
+        <div id="countin-overlay" class="countin-overlay" hidden aria-hidden="true"><span id="countin-num"></span></div>
 
         <!-- Panel del afinador (V3-F4, T-091) -->
         <div id="tuner-panel" class="tuner-panel" style="display:none;">
@@ -115,7 +119,7 @@
     <script src="sync_engine.js?v=64c07151"></script>
     <script src="score_render.js?v=a8810431"></script>
     <script src="chord_shapes.js?v=c04dafa3"></script>
-    <script src="app.js?v=2d92ca03"></script>
+    <script src="app.js?v=8105e263"></script>
     <script src="tuner.js?v=11c730fa"></script>
 </body>
 </html>

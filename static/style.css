@@ -383,6 +383,26 @@ button {
     .line-chord-only .chord-pill.active { animation: none; }
 }
 
+/* Cuenta atrás pre-roll (T-V5-08): overlay grande 4-3-2-1 al darle a Play (desde el principio). */
+.countin-overlay {
+    position: fixed; inset: 0; z-index: 80;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(13, 13, 16, 0.55);
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    pointer-events: none;   /* no bloquea nada; es solo aviso visual */
+}
+.countin-overlay[hidden] { display: none; }
+#countin-num {
+    font-family: var(--font-score);
+    font-size: clamp(6rem, 22vw, 14rem);
+    font-weight: 700; line-height: 1;
+    color: var(--accent-color);
+    text-shadow: 0 0 40px var(--bf-accent-glow, rgba(255, 107, 74, 0.5));
+    animation: countin-pop 0.18s ease-out;
+}
+@keyframes countin-pop { from { transform: scale(1.3); opacity: 0.3; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #countin-num { animation: none; } }
+
 /* Afinador (V3-F4, T-091): panel flotante con la nota detectada y un medidor de cents. */
 .tuner-panel {
     position: fixed;

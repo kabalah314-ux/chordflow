@@ -8,6 +8,33 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V5-F2 · T-V5-08 — Cuenta atrás (pre-roll) antes de reproducir (2026-07-03) ✅
+
+**Qué:** al darle a **Play desde el principio** (motor en `idle`), el reproductor cuenta N golpes al BPM
+actual con un **overlay grande 4-3-2-1** y luego arranca. Detalles:
+- **Botón** de cuenta atrás junto al metrónomo ([index.html](static/index.html)) que **cicla apagada · 4 · 8**
+  y **persiste** en el dispositivo (`localStorage bf-countin`). Estado activo con fondo coral (como el metrónomo).
+- **Suena solo si el metrónomo está activado** (decisión **D-PLY-2**): con el metrónomo apagado, la cuenta
+  es **solo visual** (overlay, sin clics). Con metrónomo, cada golpe suena (acento en el primero).
+- **Default APAGADA** (`–`): no fuerza un pre-roll en cada Play (práctica ágil); se activa a 4/8 con el
+  botón. ⚠️ **Cambio respecto a lo hablado** ("default 4"): forzar 2 s de cuenta en cada Play resultaba
+  intrusivo y rompía la expectativa de arranque inmediato; se deja opt-in. Fácil de volver a 4 si Oscar
+  lo prefiere (una constante).
+- **Reanudar desde pausa NO cuenta** (solo al arrancar desde el principio); un 2º toque o Stop **abortan**
+  la cuenta. Overlay `pointer-events:none`, respeta `prefers-reduced-motion`.
+
+**Cómo:** todo en `app.js` (enrutado del Play por `handlePlayPause()`, `runCountIn`/`cancelCountIn`,
+overlay + botón) + CSS del overlay ([style.css](static/style.css)). **El motor (`sync_engine.js`) NO se
+toca** (el pre-roll ocurre ANTES de `engine.play()`).
+
+**Verificación:** `run_checks` **TODO VERDE**. Test `test_cuenta_atras.py` (ciclo/persistencia; overlay
+al arrancar + el motor no avanza durante la cuenta + arranca al terminar; apagada arranca directo sin
+overlay). Los tests del player siguen verdes (con la cuenta apagada por defecto, el Play no cambia). El
+preview del navegador dio glitches de renderer esta sesión (getComputedStyle congelado incluso para el
+metrónomo), así que la verificación fina se apoya en los e2e. `cachebust` al día. Sin migración.
+
+---
+
 ## 🎸 V5-F2 · T-V5-07 — Compases: metrónomo por compás + compás en la barra + selector (2026-07-03) ✅
 
 **Qué:** el reproductor y el editor ganan **compás** de verdad:
