@@ -1,5 +1,11 @@
 # GUÍA MAESTRA V4 — Experiencia de uso y diseño (V3: validada y optimizada)
 
+> ## ⚠️ HISTORIAL CERRADO — no es la guía vigente (desde 2026-07-03)
+> La guía vigente es **[GUIA_MAESTRA_V5.md](GUIA_MAESTRA_V5.md)**: su §2 (estética global) hereda y
+> supera lo de aquí, e incorpora el repaso integral de diseño del 2026-07-02. Lo pendiente de esta
+> V4 (F6: Storage/notificaciones 🔌) está absorbido en la V5 §0.2. Las fases F1–F5 de esta guía
+> están implementadas y en producción (detalle en `GUIA_MAESTRA_V4_IMPLEMENTACION.md`).
+>
 > **Propósito.** Hacer BandFlow **fácil, directo, intuitivo y muy agradable** para cualquiera, cuidando
 > coherencia, experiencia, diseño visual y diseño de interacción.
 >

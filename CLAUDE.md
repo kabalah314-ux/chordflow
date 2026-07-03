@@ -3,20 +3,24 @@
 > Este archivo lo lee el agente (Claude Code) al empezar cada sesión.
 > Es la **fuente de verdad operativa**: cómo trabajar, cómo verificar y qué nunca romper.
 >
-> **Guía de producto VIGENTE (léela primero, es la única que hace falta para saber "qué toca
-> ahora"): [GUIA_MAESTRA_V3.md](GUIA_MAESTRA_V3.md).** Las demás son historial cerrado (ya
-> implementado y en producción), solo para consultar el detalle de una decisión pasada:
-> [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md) + [GUIA_MAESTRA_V2_FUNCIONAL.md](GUIA_MAESTRA_V2_FUNCIONAL.md)
-> (giro V2, las 14 áreas, Fases 7–13) y [GUIA_MAESTRA.md](GUIA_MAESTRA.md) (producto original,
-> teleprompter — la "joya" que sigue intacta dentro del flujo actual).
+> **Guía VIGENTE (única, léela primero — producto Y diseño): [GUIA_MAESTRA_V5.md](GUIA_MAESTRA_V5.md)**
+> (pulido integral 2026-07-03: estética profesional, reproductor por compases, Explorar como hub de
+> la red, pizarra de banda, propuestas de evento, wizard de conciertos… con el método sección-a-sección
+> acordado con Oscar y las decisiones abiertas de cada sección). Su §0.2 dice qué heredó de V3/V4.
 >
-> ⚠️ **Regla al añadir nueva dirección/decisiones de producto:** se añade como **sección nueva al
-> final de la guía vigente** (`GUIA_MAESTRA_V3.md`, numerada correlativamente §8, §9…), NUNCA
-> creando un archivo `GUIA_MAESTRA_V4.md`/`V2.3.md`/etc. para una mejora puntual. Solo se abre una
-> guía numerada nueva si hay un giro de producto de la magnitud de V2→V3 (cambio de dirección de
-> fondo), y en ese caso el archivo anterior se marca al inicio como "HISTORIAL CERRADO — no es la
-> guía vigente" con enlace a la nueva. Así una sola guía activa concentra dónde estamos, sin tener
-> que abrir todas para orientarse.
+> Las demás son **historial cerrado** (implementado y en producción, o absorbido por la V5), solo
+> para consultar el detalle de una decisión pasada: [GUIA_MAESTRA_V3.md](GUIA_MAESTRA_V3.md) (red
+> musical, D1–D9), [GUIA_MAESTRA_V4_UX.md](GUIA_MAESTRA_V4_UX.md) + [GUIA_MAESTRA_V4_IMPLEMENTACION.md](GUIA_MAESTRA_V4_IMPLEMENTACION.md)
+> (UX, T-120…T-155), [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md) + [GUIA_MAESTRA_V2_FUNCIONAL.md](GUIA_MAESTRA_V2_FUNCIONAL.md)
+> (giro V2, Fases 7–13) y [GUIA_MAESTRA.md](GUIA_MAESTRA.md) (producto original, teleprompter — la
+> "joya" que sigue intacta dentro del flujo actual).
+>
+> ⚠️ **Regla al añadir nueva dirección/decisiones:** se añaden como **sección nueva al final de
+> `GUIA_MAESTRA_V5.md`** (o rellenando su §13, registro de decisiones), NUNCA creando un archivo
+> `_V6.md`/`V5.1.md`/etc. para una mejora puntual. Solo se abre una guía numerada nueva si hay un
+> giro de la magnitud de V2→V3 o V4→V5 (redefinición de fondo), y en ese caso el archivo anterior
+> se marca al inicio como "HISTORIAL CERRADO — no es la guía vigente" con enlace a la nueva y una
+> tabla de qué pendientes absorbe. Así una sola guía activa concentra dónde estamos.
 
 ---
 
@@ -169,7 +173,9 @@ https://chordflow-ecru.vercel.app — **Vercel** (`api/index.py` ASGI + `vercel.
 
 | Necesito… | Archivo |
 |-----------|---------|
-| Dirección de producto **vigente (V3)** | `GUIA_MAESTRA_V3.md` (red musical + plano público; D1–D8; fases V3-F1→F11) |
+| **Guía vigente (producto + diseño, V5)** | `GUIA_MAESTRA_V5.md` (pulido integral sección a sección; fases V5-F1→F11; decisiones abiertas por sección) |
+| Dirección de producto (V3, historial) | `GUIA_MAESTRA_V3.md` (red musical + plano público; D1–D9) |
+| Diseño/UX (V4, historial) | `GUIA_MAESTRA_V4_UX.md` + `GUIA_MAESTRA_V4_IMPLEMENTACION.md` (T-120…T-155) |
 | Dirección de producto (giro V2, base) | `GUIA_MAESTRA_V2.md` + `GUIA_MAESTRA_V2_FUNCIONAL.md` |
 | Iconos SVG / helpers de UI | `static/icons.js` (`bfIcon`, `bfEmpty`) |
 | Hoja de ruta priorizada | `harness/ROADMAP.md` |

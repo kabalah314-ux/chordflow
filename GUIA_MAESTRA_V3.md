@@ -1,13 +1,11 @@
 # 🎸 BandFlow — Guía Maestra V3
 
-> ## 📌 ESTA ES LA GUÍA VIGENTE — lee solo esta para saber dónde estamos
-> Las demás (`GUIA_MAESTRA.md`, `GUIA_MAESTRA_V2.md`, `GUIA_MAESTRA_V2_FUNCIONAL.md`) son
-> **historial cerrado** (ya implementado y en producción) — solo hace falta abrirlas para
-> consultar el detalle de una decisión pasada, nunca para saber "qué toca ahora".
-> **Regla:** los siguientes pasos y decisiones nuevas se añaden como **sección nueva al final de
-> esta misma guía** (numerada correlativamente, p. ej. §8, §9…), NO creando un `GUIA_MAESTRA_V4.md`.
-> Solo se abre una guía nueva (`_V4`) si hay un giro de producto tan grande como V2→V3 (nueva
-> dirección de fondo, no una mejora puntual). Ver regla completa en `CLAUDE.md` §1.
+> ## ⚠️ HISTORIAL CERRADO — no es la guía vigente (desde 2026-07-03)
+> La guía vigente es **[GUIA_MAESTRA_V5.md](GUIA_MAESTRA_V5.md)** (pulido integral, giro de la
+> magnitud V2→V3: redefine la app sección a sección). **Todo lo pendiente de esta V3 está
+> absorbido y re-ubicado en la V5 §0.2** (tabla de herencia): F6→post-V5, F7-resto→V5 §5/§2,
+> F8→V5 §5.6/§10, F10→V5 §5, F11→post-V5. Este archivo se conserva para consultar el detalle de
+> las decisiones D1–D9 y de las fases ya implementadas.
 >
 > **Borrador vivo · creado 2026-06-17.** Dirección de producto de la **V3**: el salto de
 > "SaaS aislado de gestión de banda" a **"red musical con un plano público opt-in"**.

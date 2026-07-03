@@ -1,5 +1,10 @@
 # GUÍA MAESTRA V4 — Implementación paso a paso
 
+> ## ⚠️ HISTORIAL CERRADO — no es la guía vigente (desde 2026-07-03)
+> La guía vigente es **[GUIA_MAESTRA_V5.md](GUIA_MAESTRA_V5.md)**. Este archivo documenta las
+> tareas T-120…T-152 (+T-154) ya implementadas y en producción; T-153/T-155 (🔌 Storage y
+> notificaciones) pasan a la V5 como prerequisito transversal (§0.2 y §2.3-T-V5-06).
+>
 > **Qué es esto.** El plan ejecutable de la V4 (mejoras de experiencia y diseño). Convierte cada punto
 > de `GUIA_MAESTRA_V4_UX.md` (V3) en **tareas T-NNN** con pasos concretos, test y verificación, en el
 > **orden correcto de dependencias**. Se desarrolla **fase a fase, punto por punto**.

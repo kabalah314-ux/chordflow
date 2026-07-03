@@ -660,3 +660,36 @@
 - [ ] **Fase 19** 🟡 Producción (`Project`, `Task` genérica). Área 11.
 - [ ] **Fase 20** 🟡 Merch (`MerchProduct`/`MerchVariant`). Área 13.
 - [ ] **Fase 21** ⚪ Legal/administrativo (fiscales banda + documentos). Área 12.
+
+---
+
+## 🎯 V5 — Pulido integral (guía vigente: `GUIA_MAESTRA_V5.md`, 2026-07-03)
+
+> **La V5 REORDENA lo pendiente de arriba** (V3-F6…F11 y Fases 15–21 quedan absorbidas o pospuestas
+> según la tabla de herencia de `GUIA_MAESTRA_V5.md` §0.2). Las tareas T-NNN de cada fase se abren
+> aquí cuando Oscar cierra las decisiones abiertas de su sección (§13 de la guía). Método:
+> sección a sección, bucle de oro por tarea.
+
+- [ ] **V5-F1** 🔴 Estética global "de cutre a profesional" (guía §2.3, T-V5-01…06: bugs visibles →
+      barrido emoji→bfIcon → unificar botones/tarjetas/grids → tema coherente → detalles → identidad 🔌).
+      ⏳ Espera decisiones D-EST-1/2/3.
+- [ ] **V5-F2** 🔴 Reproductor de directo (guía §3: acorde=4 negras + ajuste ×½/×2, cuenta atrás 4/8,
+      metrónomo 2/4·3/4·4/4·6/8, tempo press-and-hold, compás en la barra, foto→partitura beta ⚠️).
+      El motor (`sync_engine.js`) NO se toca. ⏳ Espera D-PLY-1/2/3.
+- [ ] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4, `metronome.js` compartido con el player).
+- [ ] **V5-F4** 🔴 Perfil de músico 2.0 (guía §5.2: estado buscando/abierto/no-busco, instrumentos por
+      banda, `visibility`, contacto). ⏳ Espera D-EXP-1/2/3.
+- [ ] **V5-F5** 🔴 Explorar por pestañas (guía §5.3–5.6: a Músicos · b Descubrir originales de bandas ·
+      c Material 🔌 · d Colaboraciones). ⏳ Espera D-EXP-4 y V5-F4.
+- [ ] **V5-F6** 🟠 Agenda calendario mensual + semanal (guía §7, componente `bf-calendar` reutilizable).
+- [ ] **V5-F7** 🟠 Chat 2.0 (guía §8: grupos Mis bandas/Contactos, etiquetas de color; banda = atajo al
+      chat global si Oscar confirma D-CHT-1).
+- [ ] **V5-F8** 🟠 Biblioteca espejo de Explorar (guía §6: proyectos, contactos, guardados).
+- [ ] **V5-F9** 🔴 Bandas 2.0 (guía §9: pizarra `BandNote`, estado del repertorio `SongStatus`,
+      propuestas de evento con votación, Resumen reordenado, identidad con fotos 🔌, crear canción
+      desde el repertorio con foto→partitura).
+- [ ] **V5-F10** 🟠 Conciertos: asistente "organiza tu concierto" + checklist (guía §10; giras después).
+- [ ] **V5-F11** 🟠 Finanzas integral (guía §11) — **AL FINAL por orden explícita de Oscar** (necesita
+      el contexto de material/conciertos/pizarra).
+- [ ] **Transversal 🔌** Supabase Storage (bloqueado en config de Oscar) — desbloquea fotos de perfil,
+      logo/fondo de banda y fotos de material (T-V5-06, V5-F5c, V5-F9).
