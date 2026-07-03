@@ -53,6 +53,7 @@
         trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
         x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
         note: '<path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/><path d="m15 5 3 3"/>',
+        link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
     };
 
     window.bfIcon = function (name, opts) {
@@ -64,6 +65,26 @@
             `stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ` +
             `aria-hidden="true">${body}</svg>`;
     };
+
+    /**
+     * bfApplyIcons — icono declarativo para HTML estático (T-V5-02).
+     * Cualquier elemento con `data-icon="nombre"` recibe el SVG al principio (antes de su texto),
+     * de modo que un botón estático `<button data-icon="plus">Nueva banda</button>` se pinta como
+     * "[icono] Nueva banda" sin tocar el JS de cada página. Idempotente (marca `data-icon-done`).
+     * Se ejecuta solo al cargar el DOM; también exportado por si hay contenido inyectado después.
+     */
+    window.bfApplyIcons = function (root) {
+        (root || document).querySelectorAll('[data-icon]:not([data-icon-done])').forEach(function (el) {
+            const size = parseInt(el.getAttribute('data-icon-size'), 10) || 16;
+            el.insertAdjacentHTML('afterbegin', window.bfIcon(el.getAttribute('data-icon'), { size }));
+            el.setAttribute('data-icon-done', '');
+        });
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { window.bfApplyIcons(); });
+    } else {
+        window.bfApplyIcons();
+    }
 
     /**
      * bfEmpty — estado vacío reutilizable (.bf-empty de design-system.css, T-084).

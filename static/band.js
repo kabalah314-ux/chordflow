@@ -112,7 +112,7 @@
                         · ${active.length} ${active.length === 1 ? 'miembro' : 'miembros'}
                     </div>
                 </div>
-                ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="bs-invite">🔗 Invitar</button>` : ''}
+                ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="bs-invite">${bfIcon('link', { size: 15 })} Invitar</button>` : ''}
             </div>
 
             <div class="bf-tabs" role="tablist" style="margin:1rem 0;">
@@ -134,7 +134,7 @@
                     <div id="b-collections-wrap">
                         <div class="bf-row bf-row--between" style="margin-bottom:.3rem;">
                             <h3 class="bf-h3">Colecciones</h3>
-                            ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-collection">➕ Nueva colección</button>`}
+                            ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-collection">${bfIcon('plus', { size: 15 })}Nueva colección</button>`}
                         </div>
                         <p class="bf-muted" style="margin:.1rem 0 .6rem;font-size:.82rem;">Agrupa tus canciones por tema (acústico, cañero, bodas…). Para el orden de un bolo, usa los <b>Setlists</b>.</p>
                         <ul class="setlist-list" id="b-collections"><li><small>Cargando…</small></li></ul>
@@ -143,7 +143,7 @@
                     <!-- Pool: todas las canciones de la banda -->
                     <div class="bf-row bf-row--between" style="margin:1.4rem 0 .6rem;">
                         <h3 class="bf-h3">Todas las canciones</h3>
-                        ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-add-song">➕ Copiar de mis partituras</button>`}
+                        ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-add-song">${bfIcon('plus', { size: 15 })}Copiar de mis partituras</button>`}
                     </div>
                     <ul class="setlist-list" id="b-repertoire"><li><small>Cargando…</small></li></ul>
                 </div>
@@ -152,7 +152,7 @@
                     <div id="b-setlist-list-wrap">
                         <div class="bf-row bf-row--between" style="margin-bottom:.6rem;">
                             <h3 class="bf-h3">Setlists</h3>
-                            ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-setlist">➕ Nuevo setlist</button>`}
+                            ${ctx.iAmGuest ? '' : `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-setlist">${bfIcon('plus', { size: 15 })}Nuevo setlist</button>`}
                         </div>
                         <ul class="setlist-list" id="b-setlists"><li><small>Cargando…</small></li></ul>
                     </div>
@@ -162,13 +162,13 @@
                 <div class="bs-panel" data-panel="agenda" hidden>
                     <div class="bf-row bf-row--between" style="margin-bottom:.6rem;">
                         <h3 class="bf-h3">Agenda</h3>
-                        ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-event">➕ Nuevo evento</button>` : ''}
+                        ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-event">${bfIcon('plus', { size: 15 })}Nuevo evento</button>` : ''}
                     </div>
                     <div id="b-agenda"><p class="loading-text">Cargando…</p></div>
                     <!-- Salas reutilizables (T-116): infraestructura de booking, gestionada por admin. -->
                     <div class="bf-row bf-row--between" style="margin:1.6rem 0 .6rem;">
                         <h3 class="bf-h3">Salas</h3>
-                        ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm" id="b-new-venue">➕ Nueva sala</button>` : ''}
+                        ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm" id="b-new-venue">${bfIcon('plus', { size: 15 })}Nueva sala</button>` : ''}
                     </div>
                     <ul class="setlist-list" id="b-venues"><li><small>Cargando…</small></li></ul>
                 </div>
@@ -177,8 +177,8 @@
                     <div class="bf-row bf-row--between" style="margin-bottom:.6rem;">
                         <h3 class="bf-h3">Finanzas</h3>
                         ${ctx.iAmAdmin ? `<span class="bf-row">
-                            <button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-tx">➕ Movimiento</button>
-                            <button class="bf-btn bf-btn--sm" id="b-settle">💸 Liquidar</button>
+                            <button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-tx">${bfIcon('plus', { size: 15 })}Movimiento</button>
+                            <button class="bf-btn bf-btn--sm" id="b-settle">${bfIcon('wallet', { size: 15 })} Liquidar</button>
                         </span>` : ''}
                     </div>
                     <div id="b-finance"><p class="loading-text">Cargando…</p></div>
@@ -196,7 +196,7 @@
                     <div id="b-tours-list-wrap">
                         <div class="bf-row bf-row--between" style="margin-bottom:.6rem;">
                             <h3 class="bf-h3">Giras</h3>
-                            ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-tour">➕ Nueva gira</button>` : ''}
+                            ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--primary" id="b-new-tour">${bfIcon('plus', { size: 15 })}Nueva gira</button>` : ''}
                         </div>
                         <div id="b-tours"><p class="loading-text">Cargando…</p></div>
                     </div>
@@ -226,7 +226,7 @@
                                 <p class="bf-muted" style="font-size:var(--bf-fs-xs);margin-top:.3rem;">El logo aparece en el círculo del banner y en "Mis bandas"; el fondo, detrás de la cabecera.</p>
                             </div>
                             <hr style="border:none;border-top:1px solid var(--bf-border);margin:.3rem 0;">
-                            <div><button class="bf-btn bf-btn--danger" id="set-delete">🗑️ Borrar banda</button></div>
+                            <div><button class="bf-btn bf-btn--danger" id="set-delete">${bfIcon('trash', { size: 15 })} Borrar banda</button></div>
                         </div>`
                         : `<div class="bf-card"><p class="bf-muted">Solo un admin puede editar la banda.</p></div>`}
                 </div>

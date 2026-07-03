@@ -34,9 +34,11 @@
     const H_ATT = { yes: '✅ Voy', maybe: '🤔 Quizás', no: '❌ No voy' };
 
     // Fila de "acceso/paso" reutilizable (onboarding y accesos rápidos).
+    // `icon` = nombre de icono de icons.js (T-V5-02; antes un emoji inline).
     function step(href, icon, title, hint) {
         return `<a class="bf-list-item" href="${href}" style="text-decoration:none;color:inherit;">
-            <span class="bf-grow">${icon} <strong>${title}</strong>${hint ? ` <span class="bf-faint">— ${hint}</span>` : ''}</span>
+            <span class="bf-nav-icon" style="color:var(--bf-primary)">${bfIcon(icon, { size: 18 })}</span>
+            <span class="bf-grow"><strong>${title}</strong>${hint ? ` <span class="bf-faint">— ${hint}</span>` : ''}</span>
             <span class="bf-faint">→</span></a>`;
     }
 
@@ -103,9 +105,9 @@
                         <p class="bf-muted">BandFlow es tu cuartel general como músico. Empieza por aquí:</p>
                     </div>
                     <div class="bf-card"><div class="bf-list" id="home-onboarding">
-                        ${step('library.html', '🎸', 'Añade tu primera canción', 'pega acordes o impórtalos de internet')}
-                        ${step('bands.html', '👥', 'Crea o únete a una banda', 'repertorio, agenda y cuentas compartidos')}
-                        ${step('biblioteca-global.html', '🌍', 'Explora la biblioteca global', 'miles de partituras de la comunidad')}
+                        ${step('library.html', 'music', 'Añade tu primera canción', 'pega acordes o impórtalos de internet')}
+                        ${step('bands.html', 'users', 'Crea o únete a una banda', 'repertorio, agenda y cuentas compartidos')}
+                        ${step('biblioteca-global.html', 'globe', 'Explora la biblioteca global', 'miles de partituras de la comunidad')}
                     </div></div>
                 </div>`;
             return;
@@ -147,9 +149,9 @@
             <div class="bf-card bf-stack">
                 <h2 class="bf-h3">Accesos rápidos</h2>
                 <div class="bf-list">
-                    ${step('agenda.html', '📅', 'Agenda', 'tus próximos bolos y ensayos')}
-                    ${step('finanzas.html', '💶', 'Finanzas', 'saldos y movimientos')}
-                    ${step('library.html', '🎸', 'Biblioteca', 'tus canciones y las de tus bandas')}
+                    ${step('agenda.html', 'calendar', 'Agenda', 'tus próximos bolos y ensayos')}
+                    ${step('finanzas.html', 'wallet', 'Finanzas', 'saldos y movimientos')}
+                    ${step('library.html', 'library', 'Biblioteca', 'tus canciones y las de tus bandas')}
                 </div>
             </div>`;
 

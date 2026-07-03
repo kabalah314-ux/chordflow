@@ -670,10 +670,17 @@
 > aquí cuando Oscar cierra las decisiones abiertas de su sección (§13 de la guía). Método:
 > sección a sección, bucle de oro por tarea.
 
-- [ ] **V5-F1** 🔴 Estética global "de cutre a profesional" (guía §2.3, T-V5-01…06: bugs visibles →
-      barrido emoji→bfIcon → unificar botones/tarjetas/grids → tema coherente → detalles → identidad 🔌).
-      ✅ Decisiones cerradas 2026-07-03 (pulir identidad actual; player siempre oscuro; Storage YA) —
-      **LISTA PARA ARRANCAR**.
+- [~] **V5-F1** 🔴 Estética global "de cutre a profesional" (guía §2.3). Decisiones cerradas
+      2026-07-03. EN CURSO:
+  - [x] **T-V5-06** identidad con fotos (perfil/logo/fondo) — hecho y desplegado.
+  - [x] **T-V5-01** bugs visibles: `.search-box` legible en modo claro (tokenizada) + quitado el
+        "(T-091)" del afinador (initialsFrom "O(" ya cayó con T-V5-06). e2e nuevo.
+  - [x] **T-V5-02** barrido emoji→SVG: helper declarativo `bfApplyIcons()` (`data-icon`) + `bfIcon`
+        en botones estáticos y generados por JS (bands/band/home/library/editor/setlists/join).
+        Emojis de contenido y del player (runtime) se conservan.
+  - [ ] **T-V5-03** unificar los dos sistemas (botones/tarjetas/grids `.song-card`↔`.bf-card`,
+        `.primary-btn`↔`.bf-btn`, `.song-grid`↔`.bf-grid`).
+  - [ ] **T-V5-04/05** tema coherente (editor/join) + detalles sueltos.
 - [ ] **V5-F2** 🔴 Reproductor de directo (guía §3: acorde=4 negras + ajuste ×½/×2, cuenta atrás 4/8,
       metrónomo 2/4·3/4·4/4·6/8, tempo press-and-hold, compás en la barra, foto→partitura beta ⚠️).
       El motor (`sync_engine.js`) NO se toca. ⏳ Espera D-PLY-1/2/3.

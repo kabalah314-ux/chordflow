@@ -973,8 +973,10 @@ button {
 
 .search-box {
     width: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Tokenizado (T-V5-01): antes rgba(0,0,0,.5) hardcodeado → en modo claro quedaba una barra
+       negra con texto invisible. Ahora hereda superficie/borde del design-system (claro y oscuro). */
+    background: var(--bf-surface-2, rgba(0, 0, 0, 0.5));
+    border: 1px solid var(--bf-border, rgba(255, 255, 255, 0.1));
     color: var(--text-primary);
     padding: 0.9rem 1.2rem;
     border-radius: 12px;
@@ -984,10 +986,12 @@ button {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.search-box::placeholder { color: var(--bf-text-faint, #82828e); }
+
 .search-box:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(255, 107, 74, 0.2);
+    box-shadow: 0 0 8px var(--bf-accent-glow, rgba(255, 107, 74, 0.2));
 }
 
 /* Filtros de la biblioteca unificada (Todas · Personales · [banda]), T-077 */

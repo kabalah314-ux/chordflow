@@ -942,7 +942,7 @@ async function newBandSetlist(bandId, opts = {}) {
                 <div><h4>Repertorio</h4><ul id="sl-available" class="setlist-list"></ul></div>
                 <div><h4>En el setlist (en orden)</h4><ul id="sl-selected" class="setlist-list"></ul></div>
             </div>
-            <div class="form-actions"><button id="sl-save" class="primary-btn">${editing ? '💾 Guardar cambios' : '💾 Crear setlist'}</button></div>
+            <div class="form-actions"><button id="sl-save" class="primary-btn">${bfIcon('save', { size: 15 })} ${editing ? 'Guardar cambios' : 'Crear setlist'}</button></div>
         </div>`;
     document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); onDone(); });
 
@@ -1126,7 +1126,7 @@ async function openCollection(bandId, collectionId, canEdit) {
             <a href="#" id="col-back" class="back-link">← Volver a Colecciones</a>
             <div class="bf-row bf-row--between" style="align-items:baseline;gap:.6rem;flex-wrap:wrap;">
                 <h3>📁 ${escapeHtml(col.name)} <small class="bf-muted">· ${currentIds.length} ${currentIds.length === 1 ? 'canción' : 'canciones'}</small></h3>
-                ${canEdit && currentIds.length ? `<button class="bf-btn bf-btn--sm" id="col-to-setlist" title="Crear un setlist (orden de bolo) con estas canciones">🎵 Crear setlist con estas</button>` : ''}
+                ${canEdit && currentIds.length ? `<button class="bf-btn bf-btn--sm" id="col-to-setlist" title="Crear un setlist (orden de bolo) con estas canciones">${bfIcon('music', { size: 15 })} Crear setlist con estas</button>` : ''}
             </div>
             <ul class="setlist-list" id="col-songs"></ul>
             ${canEdit && available.length ? `<h4 style="margin-top:1rem;">Añadir del repertorio</h4>

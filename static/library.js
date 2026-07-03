@@ -218,7 +218,7 @@ function renderGrid(songs, query) {
                     <div class="empty-icon">🎸</div>
                     <h3>Aún no tienes partituras</h3>
                     <p>Crea tu primera canción pegando acordes desde Ultimate Guitar o LaCuerda.</p>
-                    <a href="editor.html" class="primary-btn" style="text-decoration:none; margin-top:1rem;">➕ Crear mi primera partitura</a>
+                    <a href="editor.html" class="primary-btn" style="text-decoration:none; margin-top:1rem;">${bfIcon('plus', { size: 16 })} Crear mi primera partitura</a>
                 </div>`;
         } else {
             elGrid.innerHTML = `<p class="loading-text">Esta banda aún no tiene canciones en su repertorio.</p>`;

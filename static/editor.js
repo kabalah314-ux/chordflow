@@ -372,7 +372,7 @@ async function initEditor() {
         // Ajustar textos de la UI a "edición"
         document.querySelector('.song-info h1').textContent = 'Editar Partitura';
         document.querySelector('.song-info h2').textContent = song.title;
-        document.getElementById('btn-save').innerHTML = '💾 Guardar cambios';
+        document.getElementById('btn-save').innerHTML = bfIcon('save') + ' Guardar cambios';
     } catch (err) {
         console.error(err);
         toast('Error cargando la canción para editar: ' + err.message, 'error');
@@ -411,7 +411,7 @@ function updateReferencePreview() {
         elRefPreview.innerHTML =
             `<a class="ref-thumb" href="${escapeHtml(elRefUrl.value.trim())}" target="_blank" rel="noopener noreferrer" title="Abrir en YouTube">
                 <img src="${escapeHtml(thumb)}" alt="Carátula del vídeo de referencia" loading="lazy">
-                <span class="ref-thumb__play">▶</span>
+                <span class="ref-thumb__play">${bfIcon('play', { size: 22 })}</span>
             </a>`;
         elRefPreview.hidden = false;
     } else {

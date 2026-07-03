@@ -8,6 +8,58 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎨 V5-F1 · T-V5-01 — Bugs visibles de estética (2026-07-03) ✅
+
+**Qué:** arreglados los dos bugs visibles que quedaban del repaso de diseño (el tercero,
+`initialsFrom` "O(", ya cayó con T-V5-06):
+1. **Buscador ilegible en modo claro.** `.search-box` ([style.css](static/style.css)) tenía
+   `background: rgba(0,0,0,0.5)` **hardcodeado** → en tema claro quedaba una barra casi-negra con
+   texto oscuro (invisible). Ahora hereda `--bf-surface-2`/`--bf-border`/`--bf-accent-glow` del
+   design-system (funciona en claro y oscuro) + `::placeholder` tokenizado.
+2. **Texto interno de desarrollo visible al usuario.** Quitado el "(T-091)" del copy de
+   [afinador.html](static/afinador.html).
+
+**Por qué:** primer paso de V5-F1 (estética profesional, `GUIA_MAESTRA_V5.md` §2.3): los bugs
+visibles primero, antes del barrido de iconos y la unificación de componentes.
+
+**Verificación:** e2e `test_buscador_biblioteca_legible_en_claro` ([test_modo_claro_legacy.py](tests/e2e/test_modo_claro_legacy.py))
+— el fondo del buscador adapta al tema y su suma RGB en claro es alta (no la barra negra de antes) +
+verificado en el navegador (fondo `rgb(250,250,248)` con texto oscuro en claro, `rgb(28,28,35)` con
+texto claro en oscuro). `run_checks` TODO VERDE. `cachebust` al día. Sin migración.
+
+---
+
+## 🎨 V5-F1 · T-V5-02 — Barrido de emojis-icono → SVG (2026-07-03) ✅
+
+**Qué:** los emojis usados como **icono de botón/acción** se sustituyen por iconos SVG (`bfIcon`),
+para un lenguaje visual único y profesional. Los emojis que son **contenido** (tipos de evento en
+la agenda, chips de estado ⏰/🔗, mensajes de chat, decoración de `<h1>`, opciones de `<select>`
+que no admiten SVG) se conservan.
+
+**Cómo:**
+- **Helper declarativo nuevo `bfApplyIcons()`** en [icons.js](static/icons.js): cualquier elemento
+  con `data-icon="nombre"` recibe el SVG al principio, al cargar el DOM (idempotente). Así los
+  botones **estáticos** en HTML no necesitan tocar el JS de su página. Icono `link` añadido a `PATHS`.
+- **Botones estáticos** (`data-icon`): "Nueva banda" ([bands.html](static/bands.html)), "Setlists"/
+  "Nueva partitura" ([library.html](static/library.html)), "Nuevo setlist" ([setlists.html](static/setlists.html)),
+  "Guardar y Reproducir" ([editor.html](static/editor.html)), botón "Mis bandas" de
+  [join.html](static/join.html) (que además ahora carga `icons.js` + `design-system.css`).
+- **Botones generados por JS** (`bfIcon(...)`): Invitar 🔗→link, Nueva colección/setlist/evento/sala/
+  gira/movimiento/"Copiar de mis partituras" ➕→plus, Borrar banda 🗑️→trash, Liquidar 💸→wallet,
+  Guardar/Crear setlist 💾→save, "Crear setlist con estas" 🎵→music ([band.js](static/band.js),
+  [bands.js](static/bands.js)); accesos rápidos y "primeros pasos" del Inicio 🎸👥🌍📅💶→iconos
+  ([home.js](static/home.js), `step()` reescrito); "Crear mi primera partitura" ➕ ([library.js](static/library.js));
+  ▶ del overlay de la miniatura de YouTube ([editor.js](static/editor.js)) + "Guardar cambios".
+- **Se dejan como están (justificado):** los emojis del reproductor (`index.html`) los sustituye
+  `paintPlayerIcons()` en runtime (fallback progresivo, la guía dice no tocarlos); glifos
+  tipográficos `♭ ♯ ◀ ▶ ← ⠿` (se leen mejor que un SVG); chips de estado y contenido de chat.
+
+**Verificación:** verificado en el navegador (data-icon inyecta 1 SVG por botón, texto limpio sin
+emoji, alineación por el `gap` de flex; sin errores de consola) + los e2e localizan por id/clase
+(no por el emoji), así que siguen pasando. `run_checks` TODO VERDE. `cachebust` al día. Sin migración.
+
+---
+
 ## 📸 V5 · T-V5-06 — Identidad con imágenes: foto de perfil + logo y fondo de banda (2026-07-03) ✅ (código) · ⏳ migración a prod
 
 **Qué:** primeras IMÁGENES reales de la app (V5 §2.3-T-V5-06, tras configurar Oscar el bucket
