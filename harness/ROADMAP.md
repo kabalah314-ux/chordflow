@@ -708,8 +708,11 @@
   - [ ] **T-V5-10** 🔴 **Duración por acorde**: mini-control **×½/×2** en la vista previa del editor
         (parte/dobla los beats del acorde) + **tap tempo por acorde** (D-PLY-1) → escribe beats del
         `ChordMarker`. Cambio de DATOS; `alembic check`; el motor no cambia.
-  - [ ] **T-V5-11** 🟢 **Foto→partitura (beta)**: input `capture=environment` → modelo de **visión
-        gratuito** vía OpenRouter (patrón `importer.py`) → precarga el editor para REVISAR (D-PLY-3).
+  - [x] **T-V5-11** 🟢 **Foto→partitura (beta)** (2026-07-04): botón 📷 en el editor (input
+        `capture=environment`) → resize en cliente (`bfImageToDataUrl`) → `POST /import/photo` →
+        **modelo de visión gratuito** OpenRouter (`extract_chords_from_image`, `openrouter_vision_model`
+        configurable) → precarga el editor para REVISAR (D-PLY-3). ⚠️ Beta (visión gratis floja con
+        manuscritos). Tests unit+e2e (IA mockeada). run_checks VERDE. Sin migración.
 - [ ] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4, `metronome.js` compartido con el player).
 - [ ] **V5-F4** 🔴 Perfil de músico 2.0 (guía §5.2: estado buscando/abierto/no-busco, instrumentos por
       banda, `visibility`, contacto). ⏳ Espera D-EXP-1/2/3.

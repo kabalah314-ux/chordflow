@@ -4,7 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, HttpUrl
 
 from ..services.auth import get_current_user
-from ..services.importer import ImportError_, import_from_url, search_song
+from ..services.importer import (
+    ImportError_,
+    extract_chords_from_image,
+    import_from_url,
+    search_song,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +22,10 @@ class ImportRequest(BaseModel):
 
 class ImportResponse(BaseModel):
     raw_text: str
+
+
+class PhotoRequest(BaseModel):
+    image: str  # data URL: data:image/...;base64,... (ya redimensionada en el cliente)
 
 
 class SearchResult(BaseModel):
@@ -45,8 +54,24 @@ def import_song(req: ImportRequest, user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="Error interno al importar")
 
 
+@router.post("/photo", response_model=ImportResponse)
+def import_photo(req: PhotoRequest, user_id: str = Depends(get_current_user)):
+    """Foto de una hoja → partitura (T-V5-11, beta). Un modelo de visión gratuito transcribe la
+    imagen al formato del editor para revisarla antes de guardar. Requiere auth."""
+    try:
+        raw_text = extract_chords_from_image(req.image)
+        return ImportResponse(raw_text=raw_text)
+    except ImportError_ as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error inesperado en foto→partitura: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error interno al procesar la foto")
+
+
 @router.get("/search", response_model=SearchResponse)
-def search(q: str = Query(..., min_length=1, max_length=200), user_id: str = Depends(get_current_user)):
+def search(
+    q: str = Query(..., min_length=1, max_length=200), user_id: str = Depends(get_current_user)
+):
     """Buscar una canción por nombre en CifraClub/LaCuerda (T-162). Requiere auth. Devuelve una
     preselección de candidatos (título/artista/url/origen) para elegir antes de importar."""
     try:

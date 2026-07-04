@@ -523,6 +523,42 @@ if (elBtnImport) elBtnImport.addEventListener('click', async () => {
     }
 });
 
+// ─── Foto → partitura con IA de visión (T-V5-11, beta) ────────────────────────
+const elImportPhoto = document.getElementById('import-photo');
+const elBtnImportPhoto = document.getElementById('btn-import-photo');
+
+if (elBtnImportPhoto) elBtnImportPhoto.addEventListener('click', () => elImportPhoto && elImportPhoto.click());
+
+if (elImportPhoto) elImportPhoto.addEventListener('change', async () => {
+    const file = elImportPhoto.files && elImportPhoto.files[0];
+    if (!file) return;
+    const labelOriginal = elBtnImportPhoto.textContent;
+    elBtnImportPhoto.disabled = true;
+    elBtnImportPhoto.textContent = 'Leyendo la foto…';
+    try {
+        const image = await bfImageToDataUrl(file, 1600);   // redimensiona en el cliente (upload.js)
+        const res = await apiFetch('/import/photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            toast(data.detail || 'No se pudo leer la foto.', 'error');
+            return;
+        }
+        elRawText.value = data.raw_text || '';
+        updatePreview();
+        toast('Foto transcrita. Revísala antes de guardar.', 'success');
+    } catch (err) {
+        toast(err.message || 'Error al procesar la foto.', 'error');
+    } finally {
+        elBtnImportPhoto.disabled = false;
+        elBtnImportPhoto.textContent = labelOriginal;
+        elImportPhoto.value = '';   // permite volver a elegir la misma foto
+    }
+});
+
 // ─── Formulario ─────────────────────────────────────────────────────────────
 document.getElementById('song-form').addEventListener('submit', async (e) => {
     e.preventDefault();

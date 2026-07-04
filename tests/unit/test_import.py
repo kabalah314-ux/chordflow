@@ -17,6 +17,7 @@ def test_import_devuelve_texto(client, monkeypatch):
     monkeypatch.setattr(importer, "import_from_url", lambda url: "Verso:\nAm  C\nhola mundo")
     # el router importó la función por nombre → parchear también ahí
     from src.api import import_router
+
     monkeypatch.setattr(import_router, "import_from_url", lambda url: "Verso:\nAm  C\nhola mundo")
 
     r = client.post("/import/", json={"url": "https://www.lacuerda.net/algo"})
@@ -53,15 +54,80 @@ def test_import_sin_token_da_401(client, monkeypatch):
     assert r.status_code == 401
 
 
+# ─── Foto → partitura con IA de visión (T-V5-11, beta) ─────────────────────────
+
+
+def test_import_photo_devuelve_texto(client, monkeypatch):
+    """POST /import/photo con imagen válida → 200 con el texto (IA de visión mockeada)."""
+    from src.api import import_router
+
+    monkeypatch.setattr(
+        import_router, "extract_chords_from_image", lambda img: "Verso:\nAm  C\nhola foto"
+    )
+    r = client.post("/import/photo", json={"image": "data:image/png;base64,iVBORw0KGgo="})
+    assert r.status_code == 200, r.text
+    assert "hola foto" in r.json()["raw_text"]
+
+
+def test_import_photo_error_se_traduce_a_502(client, monkeypatch):
+    """Un ImportError_ (foto ilegible, IA de visión caída...) → 502 con el mensaje de usuario."""
+    from src.api import import_router
+    from src.services.importer import ImportError_
+
+    def boom(img):
+        raise ImportError_("No encontré una partitura de acordes en esa foto.")
+
+    monkeypatch.setattr(import_router, "extract_chords_from_image", boom)
+    r = client.post("/import/photo", json={"image": "data:image/png;base64,iVBORw0KGgo="})
+    assert r.status_code == 502
+    assert "foto" in r.json()["detail"]
+
+
+def test_import_photo_sin_token_da_401(client, monkeypatch):
+    from src.services import auth
+
+    monkeypatch.setattr(auth, "TEST_MODE", False)
+    r = client.post("/import/photo", json={"image": "data:image/png;base64,iVBORw0KGgo="})
+    assert r.status_code == 401
+
+
+def test_extract_chords_from_image_rechaza_lo_que_no_es_imagen(monkeypatch):
+    """Con la clave puesta, una entrada que NO es un data URL de imagen → ImportError_ SIN tocar la red
+    (el `_http_post_json` mockeado no debe llegar a llamarse)."""
+    from src.services import importer
+    from src.services.importer import ImportError_
+
+    monkeypatch.setattr(importer.settings, "openrouter_api_key", "test-key")
+    monkeypatch.setattr(
+        importer,
+        "_http_post_json",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debe llamar a la red")),
+    )
+    for bad in ("esto no es una imagen", "data:text/plain;base64,QQ==", ""):
+        with pytest.raises(ImportError_):
+            importer.extract_chords_from_image(bad)
+
+
 # ─── Buscar canción por nombre (T-162) ─────────────────────────────────────────
+
 
 def test_import_search_devuelve_candidatos(client, monkeypatch):
     """GET /import/search?q=... → 200 con la lista de candidatos (búsqueda mockeada)."""
     from src.api import import_router
 
     candidatos = [
-        {"title": "Wonderwall", "artist": "Oasis", "url": "https://www.cifraclub.com/oasis/wonderwall/", "source": "CifraClub"},
-        {"title": "Wonderwall (acústica)", "artist": "Oasis", "url": "https://www.lacuerda.net/oasis/wonderwall.html", "source": "LaCuerda"},
+        {
+            "title": "Wonderwall",
+            "artist": "Oasis",
+            "url": "https://www.cifraclub.com/oasis/wonderwall/",
+            "source": "CifraClub",
+        },
+        {
+            "title": "Wonderwall (acústica)",
+            "artist": "Oasis",
+            "url": "https://www.lacuerda.net/oasis/wonderwall.html",
+            "source": "LaCuerda",
+        },
     ]
     monkeypatch.setattr(import_router, "search_song", lambda q: candidatos)
 
@@ -121,9 +187,14 @@ def test_search_song_usa_parsers_propios_sin_llamar_a_la_ia(monkeypatch):
     fake_adapters = {
         "cifraclub.com": {
             **importer._SITE_ADAPTERS["cifraclub.com"],
-            "parse_search": lambda page, query: [{"title": "Wonderwall", "artist": "Oasis",
-                                                    "url": "https://www.cifraclub.com/oasis/wonderwall/",
-                                                    "source": "CifraClub"}],
+            "parse_search": lambda page, query: [
+                {
+                    "title": "Wonderwall",
+                    "artist": "Oasis",
+                    "url": "https://www.cifraclub.com/oasis/wonderwall/",
+                    "source": "CifraClub",
+                }
+            ],
         },
         "lacuerda.net": {
             **importer._SITE_ADAPTERS["lacuerda.net"],
@@ -149,7 +220,9 @@ def test_search_song_cae_a_ia_si_los_parsers_no_encuentran_nada(monkeypatch):
 
     def fake_search_via_llm(query):
         llm_called_with.append(query)
-        return [{"title": "Wonderwall", "artist": "Oasis", "url": "https://x.com/w", "source": "web"}]
+        return [
+            {"title": "Wonderwall", "artist": "Oasis", "url": "https://x.com/w", "source": "web"}
+        ]
 
     monkeypatch.setattr(importer, "_search_song_via_llm", fake_search_via_llm)
 
@@ -245,8 +318,12 @@ def test_parse_cifraclub_search_filtra_por_relevancia():
 
     results = _parse_cifraclub_search(CC_SEARCH_HTML, "wonderwall")
     assert len(results) == 1
-    assert results[0] == {"title": "Wonderwall", "artist": "Oasis",
-                           "url": "https://www.cifraclub.com/oasis/wonderwall/", "source": "CifraClub"}
+    assert results[0] == {
+        "title": "Wonderwall",
+        "artist": "Oasis",
+        "url": "https://www.cifraclub.com/oasis/wonderwall/",
+        "source": "CifraClub",
+    }
 
 
 def test_parse_cifraclub_search_sin_query_no_filtra():
@@ -261,10 +338,10 @@ def test_parse_cifraclub_song_extrae_acordes_y_secciones():
 
     text = _parse_cifraclub_song(CC_SONG_HTML)
     assert text is not None
-    assert "Primera Parte:" in text          # [Primera Parte] -> "Primera Parte:"
-    assert "Em7           G" in text          # el <b data-chord-name> se sustituye por el nombre
+    assert "Primera Parte:" in text  # [Primera Parte] -> "Primera Parte:"
+    assert "Em7           G" in text  # el <b data-chord-name> se sustituye por el nombre
     assert "Today is gonna be the day" in text
-    assert "That they're gonna" in text       # &#x27; desescapado
+    assert "That they're gonna" in text  # &#x27; desescapado
     assert "<b" not in text and "<div" not in text
 
 
@@ -294,7 +371,9 @@ def test_parse_lacuerda_search_longitudes_no_cuadran_devuelve_vacio():
     """Si `hds`/`fns` no cuadran en longitud con las filas, no arriesga un enlace equivocado."""
     from src.services.importer import _parse_lacuerda_search
 
-    html_roto = LC_SEARCH_HTML.replace("var fns=['oasis','oasis_de_agua_fresca'];", "var fns=['oasis'];")
+    html_roto = LC_SEARCH_HTML.replace(
+        "var fns=['oasis','oasis_de_agua_fresca'];", "var fns=['oasis'];"
+    )
     assert _parse_lacuerda_search(html_roto, "oasis") == []
 
 
@@ -346,7 +425,9 @@ def test_import_from_url_cae_a_ia_si_el_parser_no_extrae_nada(monkeypatch):
 
     monkeypatch.setattr(importer, "_fetch_raw_html", lambda url: "<html>sin acordes</html>")
     monkeypatch.setattr(importer, "fetch_page_text", lambda url: "texto crudo de la página")
-    monkeypatch.setattr(importer, "extract_chords", lambda text: "Verso:\nAm  C\nresultado de la IA")
+    monkeypatch.setattr(
+        importer, "extract_chords", lambda text: "Verso:\nAm  C\nresultado de la IA"
+    )
 
     text = importer.import_from_url("https://www.cifraclub.com/oasis/wonderwall/")
     assert text == "Verso:\nAm  C\nresultado de la IA"

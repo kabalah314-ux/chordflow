@@ -33,6 +33,22 @@ async function _bfResizeImage(file, maxSide, quality) {
 }
 
 /**
+ * Redimensiona una imagen y la devuelve como data URL (base64), SIN subirla a Storage.
+ * Para enviar una foto a la IA de visión (foto→partitura, T-V5-11). Funciona en modo test
+ * (no toca Supabase). `maxSide` grande (1600) para no perder legibilidad de los acordes.
+ */
+async function bfImageToDataUrl(file, maxSide = 1600) {
+    if (!file || !file.type.startsWith('image/')) throw new Error('Elige un archivo de imagen.');
+    const { blob } = await _bfResizeImage(file, maxSide, 0.85);
+    return await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = () => rej(new Error('No se pudo leer la imagen.'));
+        r.readAsDataURL(blob);
+    });
+}
+
+/**
  * Sube una imagen al Storage y devuelve su URL pública.
  * @param {File} file    imagen elegida por el usuario
  * @param {string} kind  prefijo del archivo ('avatar' | 'band-logo' | 'band-cover' | ...)

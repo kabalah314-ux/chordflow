@@ -8,6 +8,33 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V5-F2 · T-V5-11 — Foto → partitura (beta, IA de visión) (2026-07-04) ✅
+
+**Qué:** en el editor, un botón **📷 "Elegir o hacer una foto"** deja al usuario fotografiar una hoja
+con acordes (input `capture="environment"` → cámara trasera en móvil). La imagen se **redimensiona en
+el cliente** (reusa `_bfResizeImage` de `upload.js` → nuevo `bfImageToDataUrl`, sin subir a Storage) y
+se envía a `POST /import/photo`, que pasa la foto a un **modelo de visión gratuito** de OpenRouter; este
+transcribe la partitura al **formato del editor** y precarga el textarea + la vista previa **para revisar
+antes de guardar** (igual que el import por URL).
+
+**Cómo:** `extract_chords_from_image()` en [importer.py](src/services/importer.py) (mismo
+patrón que `extract_chords` pero con `image_url` en el mensaje y `_VISION_SYSTEM_PROMPT`; valida el data
+URL y acota el tamaño); endpoint `POST /import/photo` en [import_router.py](src/api/import_router.py)
+(auth, 502 en error de dependencia); `openrouter_vision_model` configurable (default
+`meta-llama/llama-3.2-11b-vision-instruct:free`) en [config.py](src/services/config.py); UI en
+[editor.html](static/editor.html)/[editor.js](static/editor.js) + `upload.js`.
+
+**Por qué:** V5-F2 §3 (feature 6) + **D-PLY-3** (beta con modelo **gratuito** → coste 0). ⚠️ **Beta**:
+los modelos de visión gratis son flojos con manuscritos; funciona mejor con hojas impresas/fotos claras.
+Si Oscar quiere más calidad, basta cambiar `OPENROUTER_VISION_MODEL` a uno de pago.
+
+**Verificación:** `run_checks` **TODO VERDE**. Tests: unit `test_import.py` (endpoint 200/502/401 +
+validación del data URL sin tocar la red — todo mockeado) + e2e `test_editor.py`
+(`test_importar_desde_foto_rellena_el_editor`: elegir una foto → textarea + preview, con la IA
+mockeada y un PNG válido generado en el test). Sin migración. `cachebust` al día.
+
+---
+
 ## 🎸 V5-F2 · T-V5-09 — Tempo ágil: mantener pulsado +/− acelera el BPM (2026-07-04) ✅
 
 **Qué:** los botones **+/−** de BPM del reproductor pasan de "un clic = ±1" a **press-and-hold**: al

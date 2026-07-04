@@ -34,8 +34,10 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
-_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-       "(KHTML, like Gecko) Chrome/124 Safari/537.36")
+_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124 Safari/537.36"
+)
 
 
 class ImportError_(Exception):
@@ -69,8 +71,17 @@ def _looks_blocked(text: str) -> bool:
     if len(text.strip()) < 200:
         return True
     head = text[:400].lower()
-    señales = ("just a moment", "error 403", "error 404", "error 429", "forbidden",
-               "rate limit", "captcha", "are you a robot", "enable javascript")
+    señales = (
+        "just a moment",
+        "error 403",
+        "error 404",
+        "error 429",
+        "forbidden",
+        "rate limit",
+        "captcha",
+        "are you a robot",
+        "enable javascript",
+    )
     return any(s in head for s in señales)
 
 
@@ -79,7 +90,7 @@ def _html_to_text(html_doc: str) -> str:
     línea/espacios, desescapa entidades y colapsa el exceso de líneas en blanco."""
     html_doc = re.sub(r"(?is)<(script|style|noscript|head)\b.*?</\1>", " ", html_doc)
     html_doc = re.sub(r"(?i)<(br|/p|/div|/li|/h[1-6]|/tr)\s*>", "\n", html_doc)
-    text = re.sub(r"(?s)<[^>]+>", "", html_doc)        # quitar el resto de tags
+    text = re.sub(r"(?s)<[^>]+>", "", html_doc)  # quitar el resto de tags
     text = html.unescape(text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n[ \t]+", "\n", text)
@@ -133,8 +144,10 @@ def fetch_page_text(url: str) -> str:
             logger.warning(f"Descarga directa falló para {url}: {e}")
 
     if not text or _looks_blocked(text):
-        raise ImportError_("No se pudo leer esa página (puede bloquear bots). "
-                           "Prueba con CifraClub/LaCuerda o pega el texto manualmente.")
+        raise ImportError_(
+            "No se pudo leer esa página (puede bloquear bots). "
+            "Prueba con CifraClub/LaCuerda o pega el texto manualmente."
+        )
     return text[: settings.chordflow_import_max_chars]
 
 
@@ -180,6 +193,95 @@ def extract_chords(page_text: str) -> str:
     return content
 
 
+# ─── Foto → partitura con IA de visión (T-V5-11, beta) ─────────────────────────
+# Mismo formato de salida que el editor, pero la entrada es una FOTO (data URL base64) en vez de
+# texto de una web. Usa un modelo de VISIÓN de OpenRouter (gratuito por defecto). Beta: los modelos
+# gratis fallan con manuscritos; funciona mejor con hojas impresas/claras.
+
+_VISION_SYSTEM_PROMPT = (
+    "Eres un extractor de partituras de acordes. Recibes una FOTOGRAFÍA de una hoja de papel (o "
+    "pantalla) con acordes y letra, y devuelves SOLO la canción en este formato de texto plano, sin "
+    "explicaciones ni markdown:\n"
+    "- Cada sección empieza con su nombre seguido de dos puntos (p. ej. 'Verso:', 'Estribillo:').\n"
+    "- La línea de ACORDES va justo encima de su línea de LETRA, con los acordes alineados por "
+    "posición sobre la sílaba correspondiente (usa espacios para alinear).\n"
+    "- Una línea en blanco entre secciones.\n"
+    "- Conserva los acordes tal cual (Am, F#m7, Csus4, G/B...). No inventes acordes ni letra: "
+    "transcribe SOLO lo que se ve en la foto; si algo es ilegible, omítelo.\n"
+    "Si la foto no contiene una partitura de acordes, responde exactamente: SIN_PARTITURA"
+)
+
+# data URL de imagen (data:image/...;base64,...). Acota tipos y evita mandar basura al modelo.
+_IMG_DATA_URL_RE = re.compile(
+    r"^data:image/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=\s]+$", re.IGNORECASE
+)
+_MAX_IMG_CHARS = 12_000_000  # ~9 MB de imagen en base64 (el cliente ya la reduce)
+
+
+def extract_chords_from_image(image_data_url: str) -> str:
+    """Pide a un modelo de VISIÓN (OpenRouter) que transcriba la partitura de una FOTO. Recibe la
+    imagen como data URL (`data:image/...;base64,...`, ya redimensionada en el cliente) y devuelve el
+    texto en el formato del editor. Lanza ImportError_ si no hay clave, la imagen no es válida, falla
+    la llamada o no hay partitura."""
+    if not settings.openrouter_api_key:
+        raise ImportError_("Falta configurar OPENROUTER_API_KEY en el servidor.")
+    image_data_url = (image_data_url or "").strip()
+    if not _IMG_DATA_URL_RE.match(image_data_url):
+        raise ImportError_("La imagen no es válida. Sube una foto (JPG o PNG).")
+    if len(image_data_url) > _MAX_IMG_CHARS:
+        raise ImportError_("La imagen es demasiado grande. Prueba con una foto más pequeña.")
+
+    headers = {
+        "Authorization": f"Bearer {settings.openrouter_api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://chordflow-ecru.vercel.app",
+        "X-Title": "ChordFlow",
+    }
+    payload = {
+        "model": settings.openrouter_vision_model,
+        "messages": [
+            {"role": "system", "content": _VISION_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Transcribe la partitura (acordes y letra) de esta foto.",
+                    },
+                    {"type": "image_url", "image_url": {"url": image_data_url}},
+                ],
+            },
+        ],
+        "temperature": 0.1,
+    }
+    try:
+        body = _http_post_json(
+            settings.openrouter_base_url + "/chat/completions", payload, headers, timeout=60.0
+        )
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:200]
+        logger.error(f"OpenRouter HTTP {e.code} (visión): {detail}")
+        raise ImportError_(
+            "El servicio de IA de visión no está disponible ahora mismo. " "Inténtalo más tarde."
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error llamando a OpenRouter (visión): {e}")
+        raise ImportError_("No se pudo contactar con el servicio de IA.")
+
+    try:
+        content = body["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError, AttributeError, TypeError):
+        logger.error(f"Respuesta inesperada de OpenRouter (visión): {str(body)[:300]}")
+        raise ImportError_("La IA devolvió una respuesta inesperada.")
+
+    if not content or content.strip() == "SIN_PARTITURA":
+        raise ImportError_(
+            "No encontré una partitura de acordes en esa foto. "
+            "Prueba con una foto más clara o de una hoja impresa."
+        )
+    return content
+
+
 # ─── Parsers propios por sitio, SIN IA (T-163) ─────────────────────────────────
 # CifraClub y LaCuerda tienen HTML suficientemente estable (verificado a mano, no es una
 # suposición) para sacar resultados de búsqueda y acordes/letra con regex puro — sin gastar una
@@ -215,7 +317,7 @@ def _parse_cifraclub_search(page_html: str, query: str) -> list[dict]:
         if words and not any(w in haystack for w in words):
             continue
         # El href del resultado envuelve la carátula por fuera: es el más cercano hacia atrás.
-        window = page_html[max(0, m.start() - 1200):m.start()]
+        window = page_html[max(0, m.start() - 1200) : m.start()]
         hrefs = _CC_HREF_RE.findall(window)
         if not hrefs:
             continue
@@ -295,12 +397,14 @@ def _parse_lacuerda_search(page_html: str, query: str) -> list[dict]:
     results = []
     for i, (_href, artist, title) in enumerate(rows):
         url = f"https://acordes.lacuerda.net/{hds[i]}/{fns_rev[i]}"
-        results.append({
-            "title": html.unescape(title).strip(),
-            "artist": html.unescape(artist).strip(),
-            "url": url,
-            "source": "LaCuerda",
-        })
+        results.append(
+            {
+                "title": html.unescape(title).strip(),
+                "artist": html.unescape(artist).strip(),
+                "url": url,
+                "source": "LaCuerda",
+            }
+        )
     return results
 
 
@@ -314,7 +418,7 @@ def _parse_lacuerda_song(page_html: str) -> str | None:
     end = page_html.find("</pre>", start)
     if end == -1:
         return None
-    block = page_html[start + len("<pre>"):end]
+    block = page_html[start + len("<pre>") : end]
     if len(_LC_CHORD_RE.findall(block)) < 2:
         return None
 
@@ -456,12 +560,14 @@ def _rank_search_results(query: str, page_text: str) -> list[dict]:
         title = str(item.get("title") or "").strip()
         if not url or not title:
             continue
-        results.append({
-            "title": title,
-            "artist": str(item.get("artist") or "").strip(),
-            "url": url,
-            "source": _guess_source(url),
-        })
+        results.append(
+            {
+                "title": title,
+                "artist": str(item.get("artist") or "").strip(),
+                "url": url,
+                "source": _guess_source(url),
+            }
+        )
     return results
 
 
@@ -480,8 +586,10 @@ def _search_song_via_llm(query: str) -> list[dict]:
             logger.warning(f"Búsqueda con IA en {source} falló para «{query}»: {e}")
 
     if not fetched:
-        raise ImportError_("No se pudo buscar en CifraClub/LaCuerda ahora mismo. "
-                           "Prueba a pegar el enlace directamente.")
+        raise ImportError_(
+            "No se pudo buscar en CifraClub/LaCuerda ahora mismo. "
+            "Prueba a pegar el enlace directamente."
+        )
 
     combined = "\n\n".join(f"=== Resultados de {source} ===\n{text}" for source, text in fetched)
     return _rank_search_results(query, combined)

@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     # Modelo gratuito por defecto (verificado funcionando). Si deja de estar gratis/disponible,
     # cambiar por env var OPENROUTER_MODEL a otro `:free` (ver openrouter.ai/models).
     openrouter_model: str = "openai/gpt-oss-120b:free"
+    # Modelo de VISIÓN para foto→partitura (T-V5-11, beta). Gratuito por defecto; los modelos de
+    # visión gratis son flojos con manuscritos → configurable por env OPENROUTER_VISION_MODEL para
+    # subir a uno mejor (de pago) si Oscar quiere. Debe aceptar imágenes (image_url).
+    openrouter_vision_model: str = "meta-llama/llama-3.2-11b-vision-instruct:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     # Lector que renderiza JS/sortea anti-bot y devuelve texto limpio (prefijo de URL).
     chordflow_reader_url: str = "https://r.jina.ai/"
