@@ -130,6 +130,10 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* T-V5-09: el mantener-pulsado de +/− no debe seleccionar texto ni hacer doble-tap-zoom. */
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .icon-btn:hover {

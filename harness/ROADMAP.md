@@ -702,8 +702,9 @@
         **suena solo con el metrónomo activo** (D-PLY-2), si no solo visual. Botón junto al metrónomo que
         cicla apagada·4·8 y persiste; **default 4** (confirmado por Oscar). Reanudar desde pausa no cuenta;
         2º toque/Stop abortan. Motor intacto. Test `test_cuenta_atras`. run_checks VERDE. Sin migración.
-  - [ ] **T-V5-09** 🟠 **Tempo ágil**: mantener pulsado +/− acelera el cambio de BPM (press-and-hold,
-        touch-friendly). La "ruleta" queda como alternativa si no convence en uso real.
+  - [x] **T-V5-09** 🟠 **Tempo ágil** (2026-07-04): mantener pulsado +/− acelera el cambio de BPM
+        (`holdRepeatBpm`, pointer events, acelera de 400→35 ms; toque corto = ±1; teclado = un paso).
+        Motor acota [40,240]; `sync_engine.js` intacto. Test `test_tempo`. run_checks VERDE. Sin migración.
   - [ ] **T-V5-10** 🔴 **Duración por acorde**: mini-control **×½/×2** en la vista previa del editor
         (parte/dobla los beats del acorde) + **tap tempo por acorde** (D-PLY-1) → escribe beats del
         `ChordMarker`. Cambio de DATOS; `alembic check`; el motor no cambia.

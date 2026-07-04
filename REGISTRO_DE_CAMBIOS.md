@@ -8,6 +8,25 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 🎸 V5-F2 · T-V5-09 — Tempo ágil: mantener pulsado +/− acelera el BPM (2026-07-04) ✅
+
+**Qué:** los botones **+/−** de BPM del reproductor pasan de "un clic = ±1" a **press-and-hold**: al
+mantenerlos pulsados, el BPM cambia repetidamente **acelerando** (empieza lento —400 ms— y baja hasta
+~35 ms). Un **toque corto sigue siendo ±1**. Touch-friendly (`pointer` events + `touch-action:manipulation`
++ `user-select:none`) y **accesible por teclado** (Enter/Espacio = un paso).
+
+**Cómo:** `holdRepeatBpm()` en [app.js](static/app.js) (pointerdown arranca un `setTimeout` que se
+reprograma acelerando; pointerup/leave/cancel lo paran). El motor ya **acota** el BPM a [40, 240]
+(`setBpm`), así que mantener en el límite no se pasa. **`sync_engine.js` NO se toca.**
+
+**Por qué:** V5-F2 §3 (feature 4). La "ruleta" queda como alternativa si el press-and-hold no convence
+en uso real.
+
+**Verificación:** `run_checks` **TODO VERDE**. Test `test_tempo.py` (toque simple = ±1; mantener ~1,5 s
+sube ≥3 pasos y no se pasa de 240). `cachebust` al día. Sin migración.
+
+---
+
 ## 🎸 V5-F2 · T-V5-08 — Cuenta atrás (pre-roll) antes de reproducir (2026-07-03) ✅
 
 **Qué:** al darle a **Play desde el principio** (motor en `idle`), el reproductor cuenta N golpes al BPM
