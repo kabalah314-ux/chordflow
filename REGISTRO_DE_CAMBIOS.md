@@ -16,12 +16,12 @@ actual con un **overlay grande 4-3-2-1** y luego arranca. Detalles:
   y **persiste** en el dispositivo (`localStorage bf-countin`). Estado activo con fondo coral (como el metrónomo).
 - **Suena solo si el metrónomo está activado** (decisión **D-PLY-2**): con el metrónomo apagado, la cuenta
   es **solo visual** (overlay, sin clics). Con metrónomo, cada golpe suena (acento en el primero).
-- **Default APAGADA** (`–`): no fuerza un pre-roll en cada Play (práctica ágil); se activa a 4/8 con el
-  botón. ⚠️ **Cambio respecto a lo hablado** ("default 4"): forzar 2 s de cuenta en cada Play resultaba
-  intrusivo y rompía la expectativa de arranque inmediato; se deja opt-in. Fácil de volver a 4 si Oscar
-  lo prefiere (una constante).
+- **Default 4 golpes** (confirmado por Oscar): un compás de aviso antes de arrancar. El botón la cambia
+  a 8 o la apaga (`–`) y la elección se recuerda. (Se probó primero default apagada, pero Oscar prefiere
+  4 por defecto.)
 - **Reanudar desde pausa NO cuenta** (solo al arrancar desde el principio); un 2º toque o Stop **abortan**
-  la cuenta. Overlay `pointer-events:none`, respeta `prefers-reduced-motion`.
+  la cuenta. Overlay `pointer-events:none`, respeta `prefers-reduced-motion`. Los tests de reproducción
+  del player apagan la cuenta (`_apagar_cuenta`) para medir el arranque inmediato.
 
 **Cómo:** todo en `app.js` (enrutado del Play por `handlePlayPause()`, `runCountIn`/`cancelCountIn`,
 overlay + botón) + CSS del overlay ([style.css](static/style.css)). **El motor (`sync_engine.js`) NO se

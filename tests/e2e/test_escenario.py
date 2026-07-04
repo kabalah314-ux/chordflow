@@ -27,6 +27,11 @@ def test_escenario_realce_y_bolita_pulsante(page, live_server, api):
     assert dot_anim == "stage-dot-pulse"
 
     # Reproducir un poco para tener línea activa e inactivas, y comprobar el apagado fuerte.
+    # Apagamos la cuenta atrás (default 4, T-V5-08) para que el motor arranque ya.
+    for _ in range(3):
+        if page.inner_text("#btn-countin") == "–":
+            break
+        page.click("#btn-countin")
     page.locator("#score-container").click()
     page.click("#btn-play-pause")
     page.wait_for_timeout(700)

@@ -384,8 +384,9 @@ engine.subscribe((state) => {
 const COUNTIN_KEY = 'bf-countin';
 const COUNTIN_STEPS = [0, 4, 8];   // ciclo del botón
 const _savedCountIn = parseInt(localStorage.getItem(COUNTIN_KEY), 10);
-// Default APAGADA: no forzamos un pre-roll en cada Play (práctica ágil); se activa a 4/8 con el botón.
-let countInBeats = COUNTIN_STEPS.includes(_savedCountIn) ? _savedCountIn : 0;
+// Default 4 golpes (elección de Oscar): un compás de aviso antes de arrancar. El botón la cambia a 8
+// o la apaga (–), y la elección se recuerda en el dispositivo.
+let countInBeats = COUNTIN_STEPS.includes(_savedCountIn) ? _savedCountIn : 4;
 let countInTimer = null;
 
 const elBtnCountIn = document.getElementById('btn-countin');

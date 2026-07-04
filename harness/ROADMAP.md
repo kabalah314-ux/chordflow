@@ -700,9 +700,8 @@
         Tests `test_compas` + `test_player`/`test_iconos` (leen `data-beat`). run_checks VERDE. Sin migración.
   - [x] **T-V5-08** 🟠 **Cuenta atrás** (2026-07-03): pre-roll overlay 4-3-2-1 al Play desde el principio;
         **suena solo con el metrónomo activo** (D-PLY-2), si no solo visual. Botón junto al metrónomo que
-        cicla apagada·4·8 y persiste; **default apagada** (opt-in, no fuerza pre-roll en cada Play — cambio
-        vs "default 4" hablado). Reanudar desde pausa no cuenta; 2º toque/Stop abortan. Motor intacto.
-        Test `test_cuenta_atras`. run_checks VERDE. Sin migración.
+        cicla apagada·4·8 y persiste; **default 4** (confirmado por Oscar). Reanudar desde pausa no cuenta;
+        2º toque/Stop abortan. Motor intacto. Test `test_cuenta_atras`. run_checks VERDE. Sin migración.
   - [ ] **T-V5-09** 🟠 **Tempo ágil**: mantener pulsado +/− acelera el cambio de BPM (press-and-hold,
         touch-friendly). La "ruleta" queda como alternativa si no convence en uso real.
   - [ ] **T-V5-10** 🔴 **Duración por acorde**: mini-control **×½/×2** en la vista previa del editor

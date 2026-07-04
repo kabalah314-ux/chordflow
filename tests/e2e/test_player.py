@@ -18,6 +18,15 @@ def _crear_y_abrir(page, live_server, api, title="Cancion Player"):
     return sid
 
 
+def _apagar_cuenta(page):
+    """T-V5-08: la cuenta atrás viene en 4 por defecto; la apagamos para probar el arranque
+    inmediato del motor (si no, el Play tendría 2 s de pre-roll antes de avanzar el beat)."""
+    for _ in range(3):
+        if page.inner_text("#btn-countin") == "–":
+            return
+        page.click("#btn-countin")
+
+
 def test_carga_la_cancion(page, live_server, api):
     _crear_y_abrir(page, live_server, api, title="Cancion Cargada")
     assert page.inner_text("#song-title") == "Cancion Cargada"
@@ -54,6 +63,7 @@ def test_songid_inexistente_avisa_al_usuario(page, live_server, api):
 
 def test_play_avanza_el_beat(page, live_server, api):
     _crear_y_abrir(page, live_server, api)
+    _apagar_cuenta(page)   # sin pre-roll, para medir el arranque inmediato
     # T-V5-07: la barra muestra el COMPÁS ("Compás N"); el beat crudo va en data-beat.
     assert page.inner_text("#current-beat-display").startswith("Compás")
     assert float(page.get_attribute("#current-beat-display", "data-beat")) == 0.0
@@ -68,6 +78,7 @@ def test_play_avanza_el_beat(page, live_server, api):
 def test_accesibilidad_aria_y_atajo_espacio(page, live_server, api):
     """Los botones de emoji tienen aria-label y la barra espaciadora alterna play/pausa (T-021)."""
     _crear_y_abrir(page, live_server, api)
+    _apagar_cuenta(page)   # sin pre-roll, para medir el arranque inmediato
     # aria-label en botones de icono/emoji.
     for sel, etiqueta in [("#btn-stop", "Detener"), ("#btn-key-save", "Guardar tono"),
                           ("#btn-bpm-up", "Subir BPM")]:
@@ -107,6 +118,7 @@ def test_autoscroll_mantiene_visible_el_acorde_activo(page, live_server, api):
     page.goto(live_server + f"/static/index.html?songId={sid}", wait_until="networkidle")
     page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
 
+    _apagar_cuenta(page)   # sin pre-roll: medir el auto-scroll durante la reproducción real
     page.locator("#score-container").click()
     page.click("#btn-play-pause")
     page.wait_for_timeout(2500)  # dejar avanzar varios acordes
@@ -131,6 +143,7 @@ def test_acorde_activo_tiene_glow(page, live_server, api):
     visual (glow coral) — su box-shadow computado deja de ser 'none'. Solo CSS; la estructura del
     render no cambia (sigue habiendo acordes, como verifican los demás tests)."""
     _crear_y_abrir(page, live_server, api, title="Cancion Glow")
+    _apagar_cuenta(page)   # sin pre-roll: que el acorde activo aparezca ya
     page.locator("#score-container").click()
     page.click("#btn-play-pause")
     page.wait_for_timeout(700)
@@ -151,6 +164,7 @@ def test_bolita_de_posicion_avanza(page, live_server, api):
     sid = api.post("/songs/", json=_payload_largo()).json()["id"]
     page.goto(live_server + f"/static/index.html?songId={sid}", wait_until="networkidle")
     page.wait_for_selector(".chord-container, .chord-pill", timeout=8000)
+    _apagar_cuenta(page)   # sin pre-roll: medir el avance de la bolita durante la reproducción
     page.locator("#score-container").click()
     page.click("#btn-play-pause")
     page.wait_for_timeout(1200)

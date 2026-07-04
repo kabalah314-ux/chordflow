@@ -1,10 +1,10 @@
 """
 E2E T-V5-08 — Cuenta atrás (pre-roll) antes de reproducir.
 
-- El botón cicla apagada (–) · 4 · 8 y persiste (localStorage). Por defecto está apagada: Play arranca
-  directo (no cambia el comportamiento previo).
+- Por defecto está en 4 (elección de Oscar): Play desde el principio cuenta 4 golpes antes de arrancar.
+- El botón cicla 4 · 8 · apagada (–) y persiste (localStorage).
 - Con la cuenta activa, Play desde el principio muestra el overlay 4-3-2-1 y, al terminar, el motor
-  arranca (el beat avanza). El motor no avanza durante la cuenta.
+  arranca (el beat avanza). El motor no avanza durante la cuenta. Apagada → arranca directo, sin overlay.
 """
 
 import pytest
@@ -22,27 +22,35 @@ def _abrir(page, live_server, api, title="Cuenta Atras"):
     return sid
 
 
+def _apagar_cuenta(page):
+    """Ciclа el botón hasta '–' (apagada); default es 4, así que como mucho 3 clics."""
+    for _ in range(3):
+        if page.inner_text("#btn-countin") == "–":
+            return
+        page.click("#btn-countin")
+
+
 def test_boton_cuenta_atras_cicla_y_persiste(page, live_server, api):
     _abrir(page, live_server, api)
     b = "#btn-countin"
-    assert page.inner_text(b) == "–"          # por defecto, apagada
-    page.click(b)
-    assert page.inner_text(b) == "4"
+    assert page.inner_text(b) == "4"          # por defecto, 4 golpes
     page.click(b)
     assert page.inner_text(b) == "8"
     page.click(b)
+    assert page.inner_text(b) == "–"          # apagada
+    page.click(b)
+    assert page.inner_text(b) == "4"
+    # Persiste entre recargas: la dejamos APAGADA y comprobamos que sigue apagada (≠ default 4).
+    _apagar_cuenta(page)
     assert page.inner_text(b) == "–"
-    # Persiste entre recargas: la dejamos en 4 y comprobamos tras recargar.
-    page.click(b)                              # 4
     page.reload(wait_until="networkidle")
     page.wait_for_selector(b, timeout=8000)
-    assert page.inner_text(b) == "4"
+    assert page.inner_text(b) == "–"
 
 
 def test_play_con_cuenta_muestra_overlay_y_luego_arranca(page, live_server, api):
     _abrir(page, live_server, api)
-    page.click("#btn-countin")                 # activar cuenta atrás (4)
-    assert page.inner_text("#btn-countin") == "4"
+    assert page.inner_text("#btn-countin") == "4"   # activa por defecto
 
     page.locator("#score-container").click()
     page.click("#btn-play-pause")
@@ -61,7 +69,7 @@ def test_play_con_cuenta_muestra_overlay_y_luego_arranca(page, live_server, api)
 
 def test_cuenta_apagada_arranca_directo_sin_overlay(page, live_server, api):
     _abrir(page, live_server, api)
-    # Por defecto apagada: Play arranca ya, sin overlay.
+    _apagar_cuenta(page)
     assert page.inner_text("#btn-countin") == "–"
     page.locator("#score-container").click()
     page.click("#btn-play-pause")

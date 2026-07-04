@@ -30,7 +30,12 @@ def test_player_iconos_svg(page, live_server, api):
     assert page.get_attribute("#btn-stop", "aria-label") == "Detener"
     assert page.get_attribute("#btn-key-save", "aria-label") == "Guardar tono"
 
-    # El play/pausa sigue arrancando la reproducción.
+    # El play/pausa sigue arrancando la reproducción. Apagamos la cuenta atrás (default 4, T-V5-08)
+    # para medir el arranque inmediato sin el pre-roll.
+    for _ in range(3):
+        if page.inner_text("#btn-countin") == "–":
+            break
+        page.click("#btn-countin")
     page.locator("#score-container").click()
     page.click("#btn-play-pause")
     page.wait_for_timeout(700)
