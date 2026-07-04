@@ -8,6 +8,40 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
 ---
 
+## 📌 RETOMAR AQUÍ (handoff 2026-07-04) — para empezar en otra conversación
+
+**Dónde estamos en la V5** (guía única `GUIA_MAESTRA_V5.md`; rama `claude/friendly-taussig-b9f026`):
+
+- ✅ **V5-F1 (estética) COMPLETA + en prod.**
+- ✅ **V5-F2 (reproductor): T-V5-07, T-V5-08, T-V5-09, T-V5-11 HECHOS + desplegados y verificados en
+  prod** (chordflow-ecru.vercel.app). Último commit en `main` desplegado: **`3481000`** (T-V5-11).
+  - Compás en la barra + metrónomo por compás + selector de compás (07); cuenta atrás overlay 4-3-2-1
+    **default 4** (08); tempo press-and-hold en +/− (09); foto→partitura beta con IA de visión (11).
+- ⏸️ **T-V5-10 (duración por acorde ×½/×2 + tap tempo) APARCADO por Oscar.** Bloqueado en **2 decisiones
+  suyas**: (1) qué **interacción de tap tempo** quiere (tocar al ritmo mientras suena / tap tempo por
+  sección / marcar cada acorde); (2) **cómo persisten las duraciones** en el editor, que es DE TEXTO
+  (`parseRawText`/`songToRawText` NO codifican `duration_beats` → un ×½/×2 en la preview se perdería al
+  guardar; opciones: sintaxis en el texto tipo `Am*2` / `C/2`, o un modo aparte). El modelo YA tiene
+  `ChordMarker.duration_beats`. **NO construir hasta que Oscar decida.**
+- 🚧 **V5-F3 (Afinador/Metrónomo, guía §4) ARRANCADA — T-V5-12 a MEDIAS y SIN VERIFICAR.** Se creó
+  `static/metronome.js` (clic + acento por compás + clase `BfMetronome` standalone con tap-tempo) y se
+  refactorizó `app.js` para usarlo (`playClick`→`bfMetronomeClick`, hook usa `bfBeatAccent`) + se cargó
+  en `index.html`. **PENDIENTE antes de dar por bueno T-V5-12:** correr `run_checks` (verificar que el
+  PLAYER sigue intacto — es la joya), `cachebust`, y solo entonces commit + push. Va commiteado como
+  **WIP sin verificar** en la rama (NO desplegado). Luego **T-V5-13** (metrónomo standalone en la sección:
+  BPM press-and-hold, compases, flash visual + sonoro, tap-tempo; nav "Afinador"→"Afinador / Metrónomo")
+  y **T-V5-14** (afinador 2.0: aguja fluida, indicador grande, selector A4, nombres grandes).
+- ⏭️ **Después de V5-F3:** seguir con las demás secciones V5 (F6 agenda calendario, F7 chat 2.0, F9
+  bandas 2.0…; F4/F5 Explorar necesitan cerrar D-EXP-1/2/3/4 con Oscar; F11 finanzas AL FINAL).
+
+**Directiva de trabajo de Oscar (2026-07-04):** permiso TOTAL para todo lo que quiera poner; **no parar**;
+**no pedir permiso**; **solo preguntar cuando haya duda de CÓMO ponerlo/diseñarlo** (bifurcación de
+diseño real → AskUserQuestion con opciones). Si no responde una pregunta de diseño, aparcar ESA pieza y
+seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+deploy por tarea,
+`run_checks` VERDE antes de cada push, autor `kabalah314-ux <kabalah314@gmail.com>`.
+
+---
+
 ## 🎸 V5-F2 · T-V5-11 — Foto → partitura (beta, IA de visión) (2026-07-04) ✅
 
 **Qué:** en el editor, un botón **📷 "Elegir o hacer una foto"** deja al usuario fotografiar una hoja

@@ -356,23 +356,9 @@ let audioCtx = null;
 let lastClickedBeat = -1; // último beat entero al que ya sonó el clic
 const elBtnMetronome = document.getElementById('btn-metronome');
 
-// level: 2 = acento fuerte (primer tiempo), 1 = acento medio (grupo de compás compuesto, p. ej. 6/8),
-// 0 = tiempo débil. Distinto tono/volumen por nivel para que "suene distinto el 1".
-function playClick(level) {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.frequency.value = level >= 2 ? 1500 : level === 1 ? 1200 : 900;
-    const now = audioCtx.currentTime;
-    const vol = level >= 2 ? 0.5 : level === 1 ? 0.4 : 0.3;
-    gain.gain.setValueAtTime(vol, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05); // clic corto
-    osc.start(now);
-    osc.stop(now + 0.05);
-}
+// T-V5-12: el clic y el acento por compás viven en `metronome.js` (compartido con la sección
+// Afinador/Metrónomo). `playClick` es un alias fino sobre `bfMetronomeClick` con el audioCtx del player.
+function playClick(level) { bfMetronomeClick(audioCtx, level); }
 
 if (elBtnMetronome) elBtnMetronome.addEventListener('click', () => {
     metronomeOn = !metronomeOn;
@@ -395,11 +381,7 @@ engine.subscribe((state) => {
         lastClickedBeat = beat;
         const num = (currentSong && currentSong.time_signature_num) || 4;
         const den = (currentSong && currentSong.time_signature_den) || 4;
-        const inBar = ((beat % num) + num) % num;
-        let level = 0;
-        if (inBar === 0) level = 2;                                        // primer tiempo: acento fuerte
-        else if (den === 8 && num % 3 === 0 && inBar % 3 === 0) level = 1; // compuesto (6/8, 9/8…): acento medio por grupo
-        playClick(level);
+        playClick(bfBeatAccent(beat, num, den));   // acento por compás (compartido, T-V5-12)
     }
 });
 

@@ -713,7 +713,16 @@
         **modelo de visión gratuito** OpenRouter (`extract_chords_from_image`, `openrouter_vision_model`
         configurable) → precarga el editor para REVISAR (D-PLY-3). ⚠️ Beta (visión gratis floja con
         manuscritos). Tests unit+e2e (IA mockeada). run_checks VERDE. Sin migración.
-- [ ] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4, `metronome.js` compartido con el player).
+- [~] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4, `metronome.js` compartido con el player).
+  - [~] **T-V5-12** 🟠 Extraer `metronome.js` compartido (click + acento por compás + clase `BfMetronome`
+        standalone con tap-tempo); `app.js` (player) lo usa sin cambiar de comportamiento (joya intacta).
+        **WIP SIN VERIFICAR** (2026-07-04): `metronome.js` creado + `app.js`/`index.html` refactorizados,
+        commiteado en la rama pero **NO desplegado**. Falta: `run_checks` VERDE (player intacto) →
+        `cachebust` → commit final → push. Ver §"RETOMAR AQUÍ" del REGISTRO.
+  - [ ] **T-V5-13** 🟠 Metrónomo standalone en la sección: BPM press-and-hold, compases 2/4·3/4·4/4·6/8,
+        acento visual (flash) + sonoro, tap-tempo. Nav "Afinador" → "Afinador / Metrónomo", dos paneles.
+  - [ ] **T-V5-14** 🟠 Afinador 2.0: aguja fluida, indicador grande afinado/alto/bajo, selector A4=440,
+        nombres de nota grandes. Reusa `bfDetectPitch`/`bfFreqToNote`.
 - [ ] **V5-F4** 🔴 Perfil de músico 2.0 (guía §5.2: estado buscando/abierto/no-busco, instrumentos por
       banda, `visibility`, contacto). ⏳ Espera D-EXP-1/2/3.
 - [ ] **V5-F5** 🔴 Explorar por pestañas (guía §5.3–5.6: a Músicos · b Descubrir originales de bandas ·
