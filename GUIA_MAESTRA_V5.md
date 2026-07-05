@@ -36,11 +36,12 @@
    cambiar el texto de un botón, grep en `tests/e2e/`.
 6. Migraciones: tras tocar `src/services/models.py` → `alembic revision --autogenerate` + revisar SQL
    + `alembic check` limpio. En prod se aplican por el pooler de sesión (5432) ANTES del push a main.
-7. **Regla dura de decisiones (Oscar, 2026-07-05): NO se implementa ninguna sección que tenga
-   decisiones D-* abiertas** en su apartado o en §13. Primero se preguntan a Oscar (con opciones y
-   recomendación), se registra la respuesta en §13, y SOLO entonces se abren tareas. Si Oscar no
+7. **Regla dura de decisiones (Oscar, 2026-07-05):** una decisión D-* abierta **bloquea únicamente
+   las piezas listadas en su "Bloquea exactamente:"** (en la sección donde vive la D-*); el resto de
+   la sección puede avanzar. Antes de tocar una pieza bloqueada: preguntar a Oscar (con opciones y
+   recomendación), registrar la respuesta en §13, y SOLO entonces abrir la tarea. Si Oscar no
    responde, se aparca ESA pieza y se sigue con otra — nunca se decide por él en una bifurcación
-   de producto.
+   de producto. Las "propuestas por defecto" NO se asumen: o Oscar las confirma o la pieza espera.
 8. **Coherencia inter-sección:** antes de dar por cerrada una sección, repasar su fila y columna en
    el mapa de interconexiones (§14) y verificar que cada flujo que la toca sigue funcionando o
    queda actualizado. §14 es parte del contrato, no documentación decorativa.
@@ -54,7 +55,7 @@
 | EPK + página pública banda + RSVP + fans | V3-F8 | §5.6 (Descubrir) + §10 (Conciertos); RSVP/fans siguen ahí |
 | Red acotada: directorio + `CollabPost` | V3-F10 | §5 entero (Explorar es su superset) |
 | Monetización Stripe/Pro | V3-F11 | Post-V5 (sin cambios, `Band.plan` ya andamiado) |
-| Storage Supabase (avatares/logos/archivos) 🔌 | V3-F3 T-099 / V4-F6 T-153 | **Prerequisito transversal** de §2.3, §5.4, §9.2 — sigue BLOQUEADO en config de Oscar |
+| Storage Supabase (avatares/logos/archivos) | V3-F3 T-099 / V4-F6 T-153 | **✅ CONFIGURADO (2026-07-03**, bucket `media` + RLS; T-V5-06 hecho). `upload.js` es el módulo compartido para TODA subida nueva (fotos de material §5.4, futuras). Ya NO es bloqueante |
 | Notificaciones/push 🔌 | V4-F6 T-155 | Post-V5 salvo que una sección lo exija antes |
 | Loop A-B, tempo trainer, metrónomo lookahead | V3-F4 diferidos | §3 y §4 (el metrónomo nuevo los cubre en parte) |
 | Mapa Leaflet en giras · ligar gasto real a gira | V3-F5 diferidos | §10 |
@@ -156,9 +157,9 @@ mensajes de chat, `evento.html` público) son aceptables y se quedan.
 5. **Profundidad y estados.** Sistema único de elevación (sombras token), hover/focus/active en TODO
    lo clicable, skeletons en toda carga, transiciones 150-200ms con `prefers-reduced-motion`.
 6. **Iconografía 100% SVG** (barrido §2.1) con `title`+`aria-label`.
-7. **Identidad visual real:** fotos de perfil, logo/fondo de banda (→ necesita Storage 🔌), página
-   de login con más marca. Sin fotos, la app siempre parecerá una demo — **este es el mayor salto
-   de percepción disponible** y está bloqueado solo por config de Supabase de Oscar.
+7. **Identidad visual real:** fotos de perfil, logo/fondo de banda — **✅ HECHO (T-V5-06,
+   2026-07-03)**: Storage configurado (bucket `media` + RLS) y fotos implementadas vía `upload.js`.
+   Ese módulo es la vía compartida para toda subida futura (material §5.4).
 8. **Un tema por contexto:** app = claro/oscuro a elección; player = decisión de Oscar (§2.4).
 
 ### 2.3 Plan de tareas V5-F1 (orden de ejecución)
@@ -222,8 +223,8 @@ mensajes de chat, `evento.html` público) son aceptables y se quedan.
   acento (frecuencia/volumen distinto) en el tiempo 1 y subdivisión en 6/8. Guardar por canción
   (campo `Song.time_signature`, migración aditiva) con default 4/4.
 - **(4) Tempo ágil:** mantener pulsado +/− repite con aceleración (pointerdown + setInterval
-  acelerante, patrón estándar, touch-friendly). La "ruleta" queda como alternativa si esto no
-  convence a Oscar en uso real.
+  acelerante, patrón estándar, touch-friendly). (La "ruleta" presionable quedó **DESCARTADA por
+  Oscar el 2026-07-05**: el press-and-hold de T-V5-09 cumple — ver §13.)
 - **(5) Compás en la barra:** compás actual = `floor(beat / beats_por_compás) + 1` — client-side
   puro con el `time_signature` de (3). Mostrar "Compás 12" donde hoy "Beat: 47.0". (El e2e
   `test_player` referencia `#current-beat-display`: mantener id, cambiar contenido.)
@@ -276,6 +277,15 @@ mensajes de chat, `evento.html` público) son aceptables y se quedan.
 | **Descubrir** | La música original de las bandas de BandFlow | Originales publicados (§5.6) |
 
 Reglas de la estructura:
+- **Los nombres de pestaña de la UI son EXACTAMENTE: Músicos, Bandas, Material, Canciones,
+  Descubrir** (los literales "Buscar músicos"/"Buscar banda" de conversaciones previas NO se usan
+  en la UI).
+- **Explorar (las 5 pestañas) requiere SESIÓN** — vive dentro del shell con login. Los endpoints
+  `/explore/*` llevan `Depends(get_current_user)` pero devuelven SOLO proyección segura (defensa
+  en profundidad). Lo único público sin login: `evento.html` (V3-F7) y la página pública de banda
+  (§5.6). El plano público de Explorar sin login queda como iteración futura, no V5.
+- **Límites comunes de `/explore/*`**: `limit` default 20 máx 50; `skip` ≥ 0; zona
+  case-insensitive (ILIKE / `lower()` en SQLite).
 - **Toda pieza de Explorar está asociada a un perfil** (de músico o de banda) — principio de Oscar.
 - El **shell de pestañas se construye primero** (una tarea propia); cada pestaña es después una
   fase/tarea independiente.
@@ -297,18 +307,36 @@ Reglas de la estructura:
   - ("busco músicos" ya NO es estado del perfil personal: eso es el ANUNCIO de banda, §5.5.
   "Disponible para bolos" descartado de momento.)
 - **Instrumentos asociados a bandas**: "toco guitarra y bajo en The Rooftops" → instrumentos
-  generales del perfil (ya existe) + instrumentos POR MEMBRESÍA (`BandMembership.instruments`,
-  migración aditiva) que se pintan como chips "🎸 en The Rooftops".
+  generales del perfil (ya existe) + instrumentos POR MEMBRESÍA que se pintan como chips
+  "🎸 en The Rooftops". ⚠️ Colisión: `band_memberships` YA TIENE `instrument` String(64)
+  singular — EVOLUCIONAR: añadir `instruments` JSON + migración de datos que copie el valor
+  actual como lista de 1; `instrument` queda deprecated (no borrar, no usar en código nuevo).
 - **Contacto — ✅ D-EXP-1 CERRADA (2026-07-05): chat interno + WhatsApp opcional.** Botón
-  "Contactar" en el perfil → abre un **DM interno** (modelo §8). Si el perfil ha añadido su
-  teléfono Y activado "mostrar botón de WhatsApp", aparece además el botón `wa.me`. El teléfono
-  JAMÁS se muestra ni viaja en la proyección pública: el botón wa.me se genera server-side o
-  solo para perfiles que lo activaron. Privacidad por defecto.
-- `visibility` en el perfil (hereda el pendiente V3-F7): privado por defecto, opt-in a aparecer en
-  Explorar (poner estado ≠ `no_busco` YA es el opt-in de la pestaña Músicos; `visibility` cubre el
-  resto de exposiciones). Proyección segura (nunca email/teléfono).
-- **Zona** (D-EXP-3, propuesta por defecto si Oscar no dice otra cosa): texto libre corto
-  ("Murcia", "Madrid sur") — simple, sin geocoding; se filtra por `contains`.
+  "Contactar" en el perfil → abre un **DM interno** (modelo §8). Reglas de privacidad del
+  teléfono: (1) el teléfono NUNCA aparece en los LISTADOS (`/explore/musicians|gear|bands`) —
+  test de no-fuga con grep del JSON; (2) el enlace `wa.me` solo se sirve en el DETALLE de
+  perfil/pieza a usuarios AUTENTICADOS y solo si el dueño hizo opt-in. El opt-in ES consentimiento
+  a que su número sea visible para usuarios logueados (un enlace wa.me lo contiene por
+  construcción; no se puede ocultar tras el clic — la UI del opt-in lo avisa con esa frase).
+- **Matriz de visibilidad (precedencias explícitas):** (1) pestaña Músicos — manda
+  `seeking_status` (estado activo = opt-in que prevalece sobre `visibility`); (2) publicar
+  material o anuncio — implica exposición mínima inevitable (display_name + avatar + zona; la UI
+  de publicar lo avisa con una línea); (3) página de perfil completa — gobernada por `visibility`
+  (privado por defecto, hereda el pendiente V3-F7). Proyección segura siempre (nunca
+  email/teléfono).
+- **Zona — ✅ D-EXP-3 CERRADA (2026-07-05): texto libre** corto ("Murcia", "Madrid sur") — sin
+  geocoding; el filtro busca por `contains` case-insensitive (ILIKE / `lower()` en SQLite).
+- **Modelo (F4, migración aditiva sobre `musician_profiles`)**: `seeking_status` String(16)
+  CHECK in ('busco_banda','abierto','no_busco') default 'no_busco' (valores en español =
+  convención declarada de este campo) · `zone` String(120) NULL · `bio` Text NULL · `visibility`
+  String(16) in ('private','public') default 'private' · `phone` String(32) NULL ·
+  `whatsapp_optin` Boolean default false.
+- **Presencia pública de BANDA (opt-in derivado):** una banda tiene presencia pública SOLO si
+  anuncio activo ∨ originales publicados ∨ algún concierto `public`; los chips "en {banda}" del
+  perfil solo muestran bandas con presencia pública. Test de no-fuga: banda sin nada publicado
+  JAMÁS aparece en `/explore/*`.
+- **El perfil público lista el material publicado**: sección "Material en alquiler" (piezas con
+  `is_listed`, misma proyección segura de §5.4b) — enlace bidireccional pieza↔perfil del dueño.
 
 ### 5.3 Pestaña Músicos [V5-F5a]
 
@@ -329,17 +357,29 @@ Directorio filtrable de perfiles con estado `busco_banda`/`abierto`:
 tiene dos caras y un solo modelo:
 
 **(a) Mi material (sección personal, en el lateral):**
-- Tu inventario: subes cada pieza con **foto** (🔌 Storage, `upload.js` ya existe), título, tipo
-  (ampli, micro, pedal, instrumento, PA, luces, otro), descripción/estado físico y zona.
-- Cada pieza tiene botón **"Poner a alquilar / prestar"** → formulario corto: precio/día o
-  "presto gratis", fianza opcional → la pieza queda **publicada** y aparece en Explorar>Material.
-  Botón inverso "Retirar" → desaparece de Explorar (la pieza sigue en tu inventario).
-- Estados de pieza: `privado` (solo tú la ves) · `publicado` (visible en Explorar) ·
-  `prestado/alquilado` (marcada manualmente: "se la dejé a X el {fecha}" — texto libre o contacto
-  de la app) → este estado alimenta **Finanzas>Personal (§11)**.
-- Modelo: `GearItem(owner_id, title, kind, photo_url, description, zone, status, price_day,
-  is_free, deposit, lent_to, lent_at, created_at)` + migración aditiva + router owner-scoped
-  (ajeno→404) + test de aislamiento.
+- Tu inventario: subes cada pieza con **foto** (OPCIONAL — placeholder por tipo si no hay; UNA
+  foto por pieza en V5; vía `upload.js`, que manda sus límites de tamaño), título, tipo
+  (ampli, micro, pedal, instrumento, PA, luces, otro), descripción/estado físico y zona (texto
+  libre, D-EXP-3 ✅).
+- **Dos dimensiones INDEPENDIENTES por pieza** (no un único estado):
+  - `is_listed` (bool) — ¿aparece en Explorar>Material? Botón **"Poner a alquilar / prestar"**
+    (formulario corto: precio/día o "presto gratis", fianza opcional) lo activa; "Retirar" lo
+    desactiva. La pieza siempre sigue en tu inventario.
+  - `loan_status` (`libre` | `prestado`) — ¿la tienes tú o la tiene alguien? "Marcar prestada"
+    abre el formulario de préstamo (a quién, desde cuándo) y **por defecto la des-lista**
+    (checkbox "mantener anunciada" para el alquiler recurrente: pieza prestada que sigue
+    anunciada). "Marcar devuelta" cierra el préstamo; la pieza conserva su `is_listed`.
+  - Diagrama completo: privado → publicado → (contacto I-3) → prestado → devuelto →
+    publicado/privado.
+- **Modelo**: `GearItem(owner_id, title, kind, photo_url, description, zone, is_listed,
+  loan_status, price_day, is_free, deposit, created_at)` + **`GearLoan`** para los préstamos con
+  histórico: `GearLoan(gear_item_id, borrower_user_id String(36) NULL — FK a usuario si el
+  contacto vino por I-3, borrower_name String(120) NULL — texto libre, price_day, deposit,
+  started_at, ended_at NULL, notes)`; al menos uno de los dos `borrower_*` obligatorio. Cada
+  préstamo = una fila. Migración aditiva + router owner-scoped (ajeno→404) + test de aislamiento.
+- **Reparto por fases**: `GearLoan` se crea en F5c y se rellena al marcar prestado/devuelta (solo
+  estado, sin UI de pagos); **Finanzas>Personal (§11.3, F11) LEE de `GearLoan`** — no del estado
+  de la pieza — y ahí se cierra I-4.
 
 **(b) Pestaña Explorar>Material:**
 - Lista SOLO las piezas `publicado` (proyección segura: sin datos del dueño más allá de
@@ -365,7 +405,8 @@ tiene dos caras y un solo modelo:
 - Modelo: `BandOpening(band_id, instruments, body, zone, is_active, created_by, created_at)`
   (o campos en `Band` si se decide 1 anuncio máx por banda — ver D-BND-2 en §5.7) + aislamiento.
 - ⛳ Interconexión: la pestaña **"Unirme a banda"** de §9.1 aterriza AQUÍ (Explorar>Bandas).
-- (Pendiente D-BND-1, recomendación: solo el admin publica/edita el anuncio.)
+- **✅ D-BND-1 (2026-07-05): SOLO el admin** publica/edita/desactiva el anuncio (como las
+  colaboraciones: en nombre de la banda).
 
 **(b) Colaboraciones banda↔banda** (hereda `CollabPost` de V3-F10, fusionado aquí):
 - Anuncios "compartimos cartel el 12/09", "buscamos telonera", "intercambio de local".
@@ -376,11 +417,18 @@ tiene dos caras y un solo modelo:
 ### 5.6 Pestaña Descubrir (la música de las bandas de BandFlow) [V5-F5b]
 
 - Las bandas **suben sus canciones originales** (letra+acordes que no están en ningún otro sitio) →
-  los demás músicos pueden verlas y TOCARLAS con la joya. Reusa el catálogo (V3-F9,
-  `MusicalWork/PublicScore`) añadiendo `is_original`+`band_id` (proyección segura) y una **página
-  pública de banda** (nombre, foto 🔌, sus originales, próximos conciertos `unlisted/public`).
-- Guardarse un original → va a una **carpeta de la Biblioteca** (§6). Publicar el original se hace
-  desde el repertorio de banda (§9.4), nunca "desde Explorar" (regla §5.1).
+  los demás músicos pueden verlas y TOCARLAS con la joya. Reusa el catálogo (V3-F9).
+- **Modelo:** `is_original` Boolean default false + `band_id` String(36) NULL index van en
+  **`PublicScore`** (la unidad publicada; `MusicalWork` no se toca). Publica cualquier **ADMIN**
+  de la banda desde el repertorio (§9.4), nunca "desde Explorar" (regla §5.1).
+- **Página pública de banda (ENTRA EN F5b** — Descubrir sin página de banda es un flujo a
+  medias, regla §14.2.7): `static/banda.html?id=…` sin login (patrón `evento.html`),
+  `GET /public/bands/{id}` con proyección segura: nombre, avatar/cover, bio, originales
+  publicados, próximos conciertos `public/unlisted` con RSVP, anuncio activo si lo hay (§9.9),
+  botón Contactar→I-3.
+- **"Tocar" ≠ guardar**: "tocar" abre el player en modo solo-lectura sobre la partitura pública
+  (sin copia, sin persistir tempo/transposición — reutiliza el flujo del catálogo V3-F9);
+  "Guardar en Biblioteca" (I-5) es el paso opt-in para tenerla editable en una carpeta (§6).
 - **Futuro (registrado, no ahora):** reproducir el audio de la canción (YouTube embebido u otra
   fuente) sincronizado con la partitura — `Song.reference_url` ya existe y es la semilla.
   (El caso "músico individual sube su original sin banda" también queda para esta iteración
@@ -394,10 +442,31 @@ tiene dos caras y un solo modelo:
   músicos" es el anuncio de la BANDA; "disponible para bolos" descartado de momento).
 - **D-EXP-4 ✅ CERRADA**: pestañas = **Músicos · Bandas · Material · Canciones · Descubrir**
   (Colaboraciones fusionada en Bandas).
-- **D-EXP-3 ⏳ ABIERTA** (zona texto libre vs estructurada) — propuesta por defecto: texto libre.
-- **D-BND-1 ⏳ ABIERTA**: ¿solo el admin publica el anuncio "buscamos músico"? (recomendado: sí).
+- **D-BND-1 ✅ CERRADA (2026-07-05)**: SOLO el admin publica/edita/desactiva el anuncio.
+- **D-EXP-3 ✅ CERRADA (2026-07-05)**: zona = **texto libre** (filtro por `contains`).
 - **D-BND-2 ⏳ ABIERTA**: ¿1 anuncio máximo por banda (campos en `Band`) o varios (`BandOpening`
   como filas)? (recomendado: 1 activo por banda, tabla propia para histórico).
+  **Bloquea exactamente:** el modelo y permisos del anuncio → la tarea T-V5-26 (pestaña Bandas,
+  F5d). NO bloquea F5a/b/c ni F4.
+
+### 5.8 Plan de tareas V5-F4/F5 (el equivalente a la lista T-V5-01..06 de F1)
+
+> Se abren como T-NNN en ROADMAP al arrancar. S/M/L = esfuerzo. Orden de ejecución = orden de lista.
+
+1. **T-V5-20 (M) Perfil 2.0**: migración aditiva de `musician_profiles` (campos de §5.2) +
+   `band_memberships.instruments` (evolución del singular) + UI del perfil (estado con 3 valores,
+   zona, bio, teléfono+opt-in WhatsApp con su aviso, instrumentos por banda) + proyección pública.
+2. **T-V5-21 (S) DM base** (§8): modelo + router + grupo mínimo "Otros contactos" en Chat.
+3. **T-V5-22 (S) Shell de Explorar**: `biblioteca-global.html` SE CONSERVA como archivo (no
+   romper URLs/tests) pero gana la barra de 5 pestañas; la vista actual pasa a ser la pestaña
+   "Canciones"; título y lateral pasan a "Explorar".
+4. **T-V5-23 (M) Pestaña Músicos** (§5.3) con test de no-fuga + test de flujo I-1.
+5. **T-V5-24 (M) Descubrir + página pública de banda** (§5.6) + flujo I-6/I-16.
+6. **T-V5-25 (L) Mi material + pestaña Material** (§5.4, sin decisiones abiertas) + flujo I-4.
+7. **T-V5-26 (M) Pestaña Bandas** (§5.5) — ⏳ BLOQUEADA por D-BND-2 (preguntar antes de abrir).
+
+**Criterio de "hecho" por pestaña:** filtros funcionando · tarjeta según spec · empty state
+`bfEmpty` con CTA · test de no-fuga · test de flujo I-N correspondiente · móvil revisado.
 
 ---
 
@@ -411,10 +480,14 @@ tiene dos caras y un solo modelo:
    (relación N:M). Las **colecciones personales ya existentes** (`SongCollection` con `owner_id`,
    T-114) SON la semilla de estas carpetas: se renombran/elevan a "carpetas" — no se crea un
    modelo paralelo, se evoluciona el que hay.
-2. **Setlists abiertos** — dentro salen **los setlists de cada banda activa** que tengas
-   (membresía activa). Acceso rápido de músico: abrir y ▶ tocar. (D-BIB-2 abierta: ¿también
-   editar desde aquí? — recomendado: solo ver/reproducir; editar se queda en el espacio de banda.)
-3. **➕ "Añadir nueva"** — botón siempre visible para crear una carpeta nueva (nombre libre).
+2. **Mis setlists** — **✅ D-BIB-3 (2026-07-05): bloque propio** para tus setlists PERSONALES de
+   siempre (se crean/editan aquí como hasta ahora — `setlists.html`/su flujo se integra o enlaza
+   desde este bloque; nada se rompe).
+3. **Setlists abiertos** — dentro salen **los setlists de cada banda activa** que tengas.
+   "Banda activa" = `band_memberships.status='active'` (ya existe; baja blanda con `'left'`) Y
+   `bands.deleted_at IS NULL` — no crear flags nuevos. **✅ D-BIB-2 (2026-07-05): solo ver y
+   ▶ tocar** — editar se queda en el espacio de banda (una sola fuente de edición, regla §14.2.3).
+4. **➕ "Añadir nueva"** — botón siempre visible para crear una carpeta nueva (nombre libre).
 
 Detalles de comportamiento:
 - "Guardarse" una canción desde Explorar>Canciones o Descubrir → elige carpeta (o "Sin carpeta",
@@ -422,10 +495,12 @@ Detalles de comportamiento:
   editable sin tocar el original) — coherente con lo que ya hace V3-F9.
 - El buscador y el filtro por banda actuales de la Biblioteca se conservan por encima de las
   carpetas (buscar no debe obligar a navegar carpetas).
-- Los CONTACTOS ya no viven aquí (D-BIB-1, recomendado: viven SOLO en Chat>Otros contactos §8);
-  si Oscar prefiere duplicarlos en Biblioteca, se añade una carpeta virtual "Mis contactos".
+- **✅ D-BIB-1 (2026-07-05): los CONTACTOS viven SOLO en Chat>Otros contactos (§8)** — la
+  Biblioteca queda exclusivamente para música (sin carpeta "Mis contactos").
 - Modelo: evolución de `SongCollection` (añadir `parent_id` NULL para sub-carpetas SOLO si Oscar
-  lo pide; de inicio un nivel es suficiente y más simple) + N:M ya existente.
+  lo pide; de inicio un nivel es suficiente y más simple) + N:M ya existente. **Alcance:** la
+  evolución SongCollection→carpetas afecta SOLO a las filas con `owner_id` (`band_id` NULL); las
+  colecciones de banda (T-114) no cambian.
 - 🔐 Owner-scoped estricto (ajeno→404) + test de aislamiento; "Setlists abiertos" exige
   membresía activa (test: baja de banda → sus setlists desaparecen de la Biblioteca).
 
@@ -436,9 +511,14 @@ Detalles de comportamiento:
 - Vista **calendario mensual** (rejilla, puntos/chips por evento con color de banda `bandColor`) +
   debajo **vista semanal** (lista por día con horas). TODO lo que tenga fecha/hora aparece:
   eventos de todas las bandas, propuestas pendientes (§9.5), fechas de notas de pizarra (§9.3).
-- Client-side puro sobre `/me/events` (ya agrega todas las bandas): componente `bf-calendar`
-  reutilizable — **el mismo componente se usa en la agenda de banda (§9.5) y en el Resumen (§9.2)**.
-  Sin dependencias externas (nada de FullCalendar; rejilla CSS propia con los tokens).
+- **Contrato tipado**: `/me/events` evoluciona a items `{kind: 'event'|'proposal'|'note'|'checklist',
+  id, band_id, title, date, status…}`. En F6 solo emite `kind='event'`; F9 AÑADE `proposal`
+  (eventos `status='proposed'` de tus bandas) y `note` (`BandNote` con `due_date` sin `done_at`);
+  F10 añade `checklist`. **`bf-calendar` se escribe desde F6 contra ese contrato** (estilo
+  fantasma para `proposal`, punto secundario para `note`) → F9/F10 no tocan el componente. Mismo
+  contrato para la agenda de banda filtrada por `band_id`. Componente `bf-calendar` reutilizable —
+  **el mismo se usa en la agenda de banda (§9.5) y en el Resumen (§9.6)**. Sin dependencias
+  externas (nada de FullCalendar; rejilla CSS propia con los tokens).
 - La lista actual no se tira: es la vista "Próximos" (toggle Lista/Calendario, persistido).
 
 ---
@@ -465,6 +545,19 @@ Detalles de comportamiento:
   deleted_at)` — o el equivalente mínimo que el implementador justifique. 🔐 Solo los 2 miembros
   leen/escriben (ajeno→404, test de aislamiento); XSS escapado; sin realtime en V5 (refresco
   periódico como el chat de banda, 6s).
+- **Alcance de "DM base" (entra en V5-F4, rompe la circularidad F4→F5a→F7):** modelo de arriba +
+  router (`POST /dm/{user_id}` crea-o-reabre, `GET/POST /dm/{conversation_id}/messages`) + en la
+  página de Chat actual un grupo mínimo "Otros contactos" (lista plana + hilo, refresco 6 s, sin
+  pulir). Con esto I-3 e I-13 quedan completos desde F4/F5a. **V5-F7 NO añade funcionalidad de
+  DM**: reordena la página (grupos claros, colores de banda, preview en el espacio de banda).
+- **Semántica del DM (I-3/I-13):** SIEMPRE 1 conversación por par de usuarios. Contactar de nuevo
+  por otro origen NO crea conversación: reabre la existente e inserta un **mensaje-sistema de
+  contexto** — por eso `context_ref` vive en el MENSAJE, no en la conversación. Formato JSON:
+  `{kind: 'gear'|'opening'|'collab'|'profile'|'score', id, label}`; la UI pinta "(sobre: {label})"
+  con enlace al detalle. El DM es INDEPENDIENTE de su origen: si el perfil pasa a `no_busco`, la
+  pieza se retira o el anuncio se desactiva, la conversación NO se borra ni bloquea (solo deja de
+  poder iniciarse desde Explorar); si `context_ref` apunta a algo retirado, se pinta el label sin
+  enlace. Los tests de I-3 aseveran `kind`+`id`, no texto visible.
 - `/me/conversations` (vista agregada actual) evoluciona para devolver AMBOS grupos ya separados.
 
 ---
@@ -479,7 +572,7 @@ Detalles de comportamiento:
   quede mejor", Oscar 2026-07-05). Diseño de tarjetas más bonito (ya rico desde T-132; se
   repasa con la estética V5-F1).
 
-### 9.2 Identidad de banda y miembros (🔌 Storage para fotos)
+### 9.2 Identidad de banda y miembros (✅ Storage listo; fotos hechas en T-V5-06)
 
 - **Miembros**: nada de letras sueltas — **nombre de usuario elegido** (display_name, ya existe) +
   **foto de perfil** (Storage). El propietario/admin puede además poner **imagen de fondo** en la
@@ -510,11 +603,16 @@ Detalles de comportamiento:
 ### 9.5 Agenda de banda con PROPUESTAS
 
 - Misma agenda/calendario que la personal (§7, mismo componente) pero de la banda.
-- **Flujo nuevo de propuesta:** un miembro **propone** un evento → los miembros marcan si les va
-  bien (reutiliza el modelo de asistencia como votación previa) → cuando el admin confirma, pasa
-  al calendario oficial. `Event.status` gana el estado `proposed` (el pipeline de booking ya
-  existe, es aditivo). Las propuestas pendientes se ven en Resumen y en la agenda con estilo
-  "fantasma".
+- **Flujo nuevo de propuesta (I-15):** **cualquier miembro activo** crea el evento con
+  `status='proposed'` (añadir a `EVENT_STATUSES` — ⚠️ OJO: existe el CheckConstraint
+  `ck_events_status`; la migración debe RECREARLO con `render_as_batch`, NO es aditiva sin más) →
+  los miembros marcan si les va bien (**la votación ES `EventAttendance` normal** — yes/no/maybe —
+  sobre el `proposed`) → **solo un admin** confirma (`proposed→confirmed`) o descarta
+  (`proposed→cancelled`; queda histórico). El autor puede editar/cancelar su propuesta mientras
+  esté `proposed`. Las propuestas pendientes se ven en Resumen y en las agendas (banda + personal
+  de cada miembro) con estilo "fantasma" (contrato `kind='proposal'` de §7).
+  Tests: proponer→votar→confirmar→aparece sin estilo fantasma en `/me/events` de otro miembro;
+  permisos: miembro no-admin crea propuesta OK pero NO puede confirmarla.
 
 ### 9.6 Resumen de banda (nuevo orden, de arriba a abajo — literal de Oscar)
 
@@ -531,6 +629,18 @@ Pensar en TODO lo que una banda gasta (estudio completo en esa fase, con el cont
 
 ### 9.8 Chat de banda → ver §8 (propuesta: atajo al chat global). Giras → ver §10.
 
+### 9.9 Anuncios de la banda ("buscamos músicos" + colaboraciones)
+
+- El anuncio se **publica/edita desde la pestaña Ajustes** del espacio de banda, bloque
+  "Anuncio: buscamos músicos" (el Resumen §9.6 solo lo MUESTRA con enlace a Ajustes — sin
+  alterar los 4 bloques literales de Oscar). Solo admin (D-BND-1 ✅).
+- Los anuncios **NO caducan** en V5 (se desactivan a mano); la tarjeta en Explorar muestra
+  "hace X días" con el `updated_at`. Orden en Explorar>Bandas: `updated_at` del anuncio desc.
+  (Orden en Explorar>Músicos: `updated_at` de `musician_profiles` desc.)
+- **Cierre del círculo "unirse" (I-16b):** en un DM originado por un anuncio de banda, el admin
+  tiene botón **"Invitar a la banda"** que genera el `BandInvite` existente → membresía.
+  Test de flujo: anuncio → DM → invitación → miembro.
+
 ---
 
 ## 10. Conciertos (antes "Giras") — organiza tu concierto 🟠 [V5-F10]
@@ -539,7 +649,9 @@ Pensar en TODO lo que una banda gasta (estudio completo en esa fase, con el cont
   guiado ("Organiza tu concierto") que va preguntando: ¿en qué sala tocaréis o queréis tocar?
   ¿qué condiciones piden/pedís (caché, entrada, %)? ¿quién pone el material/backline? ¿cómo movéis
   los instrumentos? ¿horarios (prueba de sonido, apertura)? → genera el `Event(type=concert)` con
-  **checklist** por concierto (`EventChecklistItem`: ítem, responsable, hecho) + resumen imprimible.
+  **checklist** por concierto (`EventChecklistItem`: ítem, responsable, hecho, `due_date`
+  DateTime NULL — si tiene fecha aparece en el calendario vía I-8, contrato de §7) + resumen
+  imprimible.
 - Aporta valor real: la checklist y el reparto de responsabilidades es lo que las bandas llevan en
   notas sueltas. Se cruza con Salas (`Venue`, ya existe), booking pipeline (ya existe), pizarra
   (§9.3) y finanzas del evento (caché ya existe en T-115).
@@ -557,13 +669,16 @@ de la app y te da un **resumen de todo**", dividido en:
 
 1. **Resumen global** (arriba): tu posición total de un vistazo — suma de saldos con todas las
    bandas + estado de tu material (alquilado/prestado) + últimos movimientos.
-2. **Bandas**: eliges una banda → **quién debe dinero a quién dentro de cada proyecto** (los
-   balances por banda ya existentes, mejor presentados; D-FIN-1 abierta: si "proyecto" además de
-   la banda debe poder desglosarse POR EVENTO/bolo — los movimientos ya se ligan a eventos T-108,
-   sería agrupar). Gastos del grupo: generales **mensuales** (local de ensayo…) y **puntuales**.
-3. **Personal**: el **material** que tienes alquilado/prestado (de "Mi material" §5.4: a quién,
-   desde cuándo, precio si lo tiene) + **lo que has pagado o te han pagado** + "hay que ver qué
-   más" (se completa en su fase con todo el contexto).
+2. **Bandas**: eliges una banda → **quién debe dinero a quién** (los balances por banda ya
+   existentes, mejor presentados) **✅ D-FIN-1 (2026-07-05): CON desglose por evento/bolo**
+   además del total (los movimientos ya se ligan a eventos T-108 → se agrupan: "quién debe a
+   quién del concierto X"). Gastos del grupo: generales **mensuales** (local de ensayo…) y
+   **puntuales**.
+3. **Personal**: el **material** — **✅ D-FIN-2 (2026-07-05): en AMBAS direcciones** — lo tuyo
+   prestado/alquilado a otros (sale solo de `GearLoan`, §5.4) Y lo que TÚ tienes alquilado de
+   otros (aparece automáticamente cuando el dueño te marca como prestatario en la app:
+   `GearLoan.borrower_user_id` = tú → la misma tabla sirve las dos caras) + **lo que has pagado
+   o te han pagado** + "hay que ver qué más" (se completa en su fase con todo el contexto).
 
 Estudio completo al llegar aquí (Oscar: pensar TODO lo que una banda gasta). Con calendario de
 pagos recurrentes si encaja (cruza con Agenda §7 si tiene fechas).
@@ -578,14 +693,15 @@ pagos recurrentes si encaja (cruza con Agenda §7 si tiene fechas).
 | **V5-F2** 🔴 | Reproductor (§3: datos 4-negras + ×½/×2, countdown, compases metrónomo, tempo hold, compás display; OCR como beta al final) | F1 |
 | **V5-F3** 🟠 | Afinador/Metrónomo sección (§4, extrae `metronome.js` de F2) | F2 |
 | **V5-F4** 🔴 | Perfil 2.0 (§5.2: estado busco_banda/abierto/no_busco, instrumentos/banda, visibility, DM base) | decisiones ✅ cerradas 2026-07-05 |
-| **V5-F5** 🔴 | Explorar 5 pestañas (§5.1 ✅: a Músicos, b Descubrir, c **Mi material**+Material 🔌, d Bandas [buscan músicos+colaboraciones]) | F4 (y Storage para fotos) |
+| **V5-F5** 🔴 | Explorar 5 pestañas (§5.1 ✅: a Músicos, b Descubrir, c **Mi material**+Material, d Bandas [buscan músicos+colaboraciones]) | F4 (Storage ✅ listo) |
 | **V5-F6** 🟠 | Agenda calendario mensual+semanal (§7, componente `bf-calendar`) | F1 |
 | **V5-F7** 🟠 | Chat 2.0 (§8 ✅: grupos "Mis bandas"/"Otros contactos", etiquetas color, DM interno) | F4/F5a |
-| **V5-F8** 🟠 | Biblioteca por carpetas (§6 ✅: Personales+carpetas libres, Setlists abiertos, añadir) | F5 (guardados) — la parte de carpetas NO depende de F5 |
+| **V5-F8a** 🟠 | Biblioteca por carpetas (§6 ✅: Personales+carpetas, Mis setlists, Setlists abiertos, añadir) | — (puede adelantarse) |
+| **V5-F8b** 🟠 | Selector de carpeta al "Guardar" desde Explorar (I-5) | F5 |
 | **V5-F9** 🔴 | Bandas 2.0 (§9: pizarra, estado repertorio, propuestas, resumen nuevo, identidad 🔌) | F1, F6 (calendario) |
 | **V5-F10** 🟠 | Conciertos wizard (§10) | F9 |
 | **V5-F11** 🟠 | Finanzas integral (§11) | TODO lo anterior (orden de Oscar) |
-| Transversal 🔌 | **Storage** (fotos perfil/banda/material) — bloqueado en config de Oscar | — |
+| Transversal ✅ | **Storage** CONFIGURADO (2026-07-03) — fotos de perfil/banda hechas (T-V5-06); material usa el mismo `upload.js` | — |
 
 > El orden F6-F9 es ajustable con Oscar al cerrar cada sección; F1→F2→F3 y F11-último son fijos.
 
@@ -605,10 +721,10 @@ pagos recurrentes si encaja (cruza con Agenda §7 si tiene fechas).
 | 2026-07-03 | §3 | **D-PLY-2 ✅** la cuenta atrás suena **solo si el metrónomo está activado** | con metrónomo off = pre-roll solo visual; N (4/8) en localStorage |
 | 2026-07-03 | §3 | **D-PLY-3 ✅** foto→partitura **beta con modelo gratuito** de visión | coste 0, patrón de import por URL; empezar con foto clara |
 | 2026-07-03 | §3 | **Metrónomo 6/8 ✅ subdividido** (T-V5-07) | 6 clics/compás: acento fuerte en el 1, medio en el 4 (no "en 2") |
-| _(pendiente)_ | §5 | D-EXP-1/2/3/4 | se preguntan al arrancar V5-F4 |
+| 2026-07-03 | §5 | D-EXP-1/2/3/4 abiertas al crear la guía — **SUPERADA**: todas cerradas el 2026-07-05 (ver filas de esa fecha) | **Inventario vivo de abiertas: solo D-BND-2** (¿1 anuncio máx por banda? — bloquea únicamente T-V5-26) |
 | 2026-07-05 | §3 | **Ruleta de tempo DESCARTADA** ("no importa, déjalo") | el press-and-hold (T-V5-09, hecho) cumple; la ruleta no se construye |
 | 2026-07-05 | §3 | **Compases atípicos descartados de momento** ("olvida esto") | solo 2/4 · 3/4 · 4/4 · 6/8 |
-| 2026-07-05 | §5 | **Explorar reestructurado** (palabras de Oscar): subsecciones **Buscar músicos** (perfiles que han puesto que buscan banda) · **Buscar banda** (NUEVA: bandas que buscan uno o varios músicos, y qué tipo de músico) · **Material** (alquilar/prestar) | + **nueva sección personal "Mi material"**: subes el material del que dispones con foto (amplis, micros, lo que sea) y desde ahí se publica a alquiler/préstamo → aparece en Explorar>Material. Definir lista y filtros (§14) |
+| 2026-07-05 | §5 | **Explorar reestructurado** (palabras de Oscar): subsecciones **Buscar músicos** (perfiles que han puesto que buscan banda) · **Buscar banda** (NUEVA: bandas que buscan uno o varios músicos, y qué tipo de músico) · **Material** (alquilar/prestar) [SUPERSEDIDA por D-EXP-4 en esta misma tabla: estructura final de 5 pestañas en §5.1] | + **nueva sección personal "Mi material"**: subes el material del que dispones con foto (amplis, micros, lo que sea) y desde ahí se publica a alquiler/préstamo → aparece en Explorar>Material. Definir lista y filtros (§14) |
 | 2026-07-05 | §6 | **Biblioteca por CARPETAS**: (1) Personales — todas las guardadas y tuyas, divisibles en **carpetas libres** que el usuario crea y nombra como quiera; (2) **Setlists abiertos** — los setlists de cada banda activa que tengas; (3) botón **"Añadir nueva"** (carpeta) | reemplaza el esquema anterior "Mis canciones/Mis contactos/Guardados" |
 | 2026-07-05 | §8 | **Chat: dos grupos CLAROS y visibles — "Mis bandas" y "Otros contactos"** | otros contactos = músicos contactados vía Explorar (buscar banda/músicos, material). SIN sub-etiquetas música/otro-nivel: la separación que pedía Oscar es bandas vs. resto |
 | 2026-07-05 | §9 | "Unirme a banda": **posición libre** ("como quede mejor") | se decide en diseño |
@@ -617,7 +733,15 @@ pagos recurrentes si encaja (cruza con Agenda §7 si tiene fechas).
 | 2026-07-05 | §5 | **D-EXP-4 ✅ Explorar = 5 pestañas: Músicos · Bandas · Material · Canciones · Descubrir** | Colaboraciones NO es pestaña propia: se FUSIONA dentro de "Bandas" (anuncios de banda: buscamos músico / buscamos telonera / compartir cartel…) |
 | 2026-07-05 | §5 | **"Mi material" = item propio en el menú lateral** ("sí, pero piensa bien que tenga todo sentido") | validar coherencia total en §14: enlaces con Explorar>Material, Finanzas>Personal y Perfil |
 | 2026-07-05 | §5/§8 | **D-EXP-1 ✅ Contacto = chat interno + WhatsApp opcional** | "Contactar" abre DM interno (alimenta Chat>Otros contactos); botón WhatsApp SOLO si el perfil añade teléfono y lo activa. Privacidad por defecto |
-| 2026-07-05 | §5 | **D-EXP-2 ✅ Estados del músico: `busco_banda` · `abierto` · `no_busco`** | "busco músicos" deja de ser estado personal → es el ANUNCIO de la banda (pestaña Buscar banda). Sin "disponible para bolos" de momento |
+| 2026-07-05 | §5 | **D-EXP-2 ✅ Estados del músico: `busco_banda` · `abierto` · `no_busco`** | "busco músicos" deja de ser estado personal → es el ANUNCIO de la banda (pestaña Bandas de Explorar, §5.5). Sin "disponible para bolos" de momento |
+| 2026-07-05 | §6/§8 | **D-BIB-1 ✅ Los contactos viven SOLO en Chat>Otros contactos** | la Biblioteca queda solo para música (carpetas + setlists abiertos); sin carpeta "Mis contactos" |
+| 2026-07-05 | §6 | **D-BIB-2 ✅ Setlists abiertos = solo ver y ▶ tocar** | editar se queda en el espacio de banda (una sola fuente de edición, regla §14.2.3) |
+| 2026-07-05 | §5/§9 | **D-BND-1 ✅ Solo el ADMIN publica/edita/desactiva el anuncio "buscamos músico"** | igual que las colaboraciones (publica admin en nombre de la banda) |
+| 2026-07-05 | §11 | **D-FIN-1 ✅ Finanzas>Bandas con desglose POR EVENTO además del total de banda** | "quién debe a quién" de la banda + agrupable por evento/bolo (los movimientos ya se ligan a eventos, T-108) |
+| 2026-07-05 | §5 | **D-EXP-3 ✅ Zona = texto libre** ("Murcia", "Madrid sur") | filtro por `contains` case-insensitive; sin geocoding. Estructurar más = iteración futura |
+| 2026-07-05 | §6 | **D-BIB-3 ✅ Los setlists personales = bloque propio "Mis setlists"** en la Biblioteca | se crean/editan ahí como hasta ahora; NO se fusionan con las carpetas |
+| 2026-07-05 | §11 | **D-FIN-2 ✅ Material en Finanzas>Personal en AMBAS direcciones** | lo tuyo prestado a otros + lo que tú tienes alquilado de otros (automático vía `GearLoan.borrower_user_id`) |
+| 2026-07-05 | Global | **Verificación adversarial de la guía aplicada** (3 lentes: fidelidad, coherencia, "IA menos capaz" — 23 arreglos) | Storage ya-no-bloqueado ×4, regla 7 granular, DM base en F4, máquina de estados del material + `GearLoan`, wa.me solo en detalle con opt-in, plan de tareas §5.8, contrato tipado del calendario, I-15/I-16, §9.9 anuncios |
 
 > **Estado:** V5 abierta y primera ronda de decisiones CERRADA (2026-07-03). **V5-F1 (estética)
 > desbloqueada y lista para arrancar** por el bucle de oro; en paralelo, Oscar configura Supabase
@@ -645,9 +769,10 @@ proyección segura); `no_busco` → desaparece. El estado se cambia SOLO en Perf
 público. Test de flujo: cambiar estado → aparece/desaparece de `/explore/musicians`.
 
 **I-2 · Espacio de banda → Explorar>Bandas**
-El admin activa el anuncio "buscamos músico(s)" (instrumentos+texto) en Ajustes/Resumen de banda
-(§9) → la banda APARECE en Explorar>Bandas; al desactivar, desaparece. Las colaboraciones
-(`CollabPost`) siguen el mismo patrón (publica admin → aparece con badge "Colaboración").
+El admin activa el anuncio "buscamos músico(s)" (instrumentos+texto) en **Ajustes de banda
+(§9.9)** → la banda APARECE en Explorar>Bandas (orden: `updated_at` desc); al desactivar,
+desaparece. Las colaboraciones (`CollabPost`) siguen el mismo patrón (publica admin → aparece
+con badge "Colaboración"). El círculo se cierra con I-16b (invitar desde el DM).
 Test de flujo: activar → listada; desactivar → fuera.
 
 **I-3 · Explorar (cualquier pestaña) → Chat>Otros contactos**
@@ -659,13 +784,18 @@ otros canales por pestaña. Test de flujo: contactar desde material → DM con c
 para los dos.
 
 **I-4 · Mi material → Explorar>Material → Finanzas>Personal** (el ejemplo canónico de Oscar)
-(1) Subes pieza en **Mi material** (foto+datos, estado `privado`). (2) Botón "Poner a
-alquilar/prestar" (+precio/gratis/fianza) → estado `publicado` → APARECE en Explorar>Material
-con los filtros de §5.4(b). (3) Alguien contacta → I-3 (DM). (4) Si la prestas/alquilas, la
-marcas `prestado` (a quién, desde cuándo) → ese estado y sus pagos asociados alimentan
-**Finanzas>Personal** (§11.3). (5) "Retirar" → vuelve a `privado` y sale de Explorar.
-La lista de Explorar NUNCA tiene piezas que no estén `publicado`. Test de flujo completo:
-privado→publicado→listada→prestado→en finanzas→retirada→fuera.
+(1) Subes pieza en **Mi material** (foto opcional + datos; `is_listed=false`). (2) Botón "Poner a
+alquilar/prestar" (+precio/gratis/fianza) → `is_listed=true` → APARECE en Explorar>Material con
+los filtros de §5.4(b). (3) Alguien contacta → I-3 (DM con contexto de la pieza). (4) Si la
+prestas/alquilas → "Marcar prestada" crea una fila **`GearLoan`** (a quién — usuario de la app o
+texto libre —, desde cuándo, precio) y por defecto la des-lista (checkbox "mantener anunciada"
+para alquiler recurrente). (5) "Marcar devuelta" → `GearLoan.ended_at`, la pieza conserva su
+`is_listed`. (6) **Finanzas>Personal (§11.3) LEE de `GearLoan`** — ambas direcciones (D-FIN-2):
+lo tuyo prestado y lo que tú tienes de otros (`borrower_user_id` = tú). (7) "Retirar" →
+`is_listed=false`, fuera de Explorar; la pieza y su histórico de préstamos se conservan.
+La lista de Explorar SOLO tiene piezas `is_listed`. Test de flujo completo (incluida la
+devolución): subir→publicar→listada→prestar→en finanzas→devolver→retirar→fuera.
+El perfil público del dueño lista sus piezas `is_listed` (§5.2) — enlace bidireccional.
 
 **I-5 · Explorar>Canciones / Descubrir → Biblioteca (carpetas)**
 "Guardar" una partitura pública u original → copia personal en **Biblioteca>Personales**, con
@@ -713,6 +843,21 @@ duplican conversaciones: 1 conversación por par de usuarios).
 `SongStatus` por miembro (§9.4, privado por defecto) alimenta el diagrama del Resumen (§9.6):
 el tuyo siempre; el de la banda solo con los compartidos.
 
+**I-15 · Propuesta de evento → votación → calendario oficial**
+Disparador: un miembro activo crea `Event(status='proposed')` (§9.5). Efecto: aparece en estilo
+"fantasma" en la agenda de banda, en la personal de cada miembro (`kind='proposal'`, §7) y en el
+Resumen; los miembros votan con `EventAttendance` (yes/no/maybe). Cierre: un admin confirma
+(`→confirmed`, entra al calendario oficial) o descarta (`→cancelled`, queda histórico).
+Test de flujo: proponer→votar→confirmar→visible sin fantasma en `/me/events` de otro miembro.
+
+**I-16 · Página pública de banda (el escaparate exterior)**
+`GET /public/bands/{id}` + `banda.html` sin login (§5.6): nombre, foto/cover, bio, originales
+(Descubrir), próximos conciertos public/unlisted con RSVP, anuncio activo (§9.9), Contactar→I-3.
+Se llega desde: Descubrir (cada original enlaza a su banda), Explorar>Bandas (la tarjeta del
+anuncio) y los chips "en {banda}" de perfiles (solo bandas con presencia pública, §5.2).
+**I-16b · Cierre del círculo "unirse":** en un DM originado por anuncio de banda, el admin tiene
+botón "Invitar a la banda" → `BandInvite` existente → membresía. Test: anuncio→DM→invitación→miembro.
+
 ### 14.2 Reglas transversales de coherencia (para la IA ejecutora)
 
 1. **Se publica desde lo propio, se descubre en Explorar** (perfil→Músicos, banda→Bandas,
@@ -725,7 +870,9 @@ el tuyo siempre; el de la banda solo con los compartidos.
 5. **Módulos compartidos, no duplicados** (I-11/I-12): si dos sitios hacen lo mismo, se extrae.
 6. **Proyección segura en TODO lo público** + test de no-fuga por pestaña de Explorar.
 7. **Cada flujo I-N se implementa completo** (con su test de flujo end-to-end) o se aparca
-   completo. Nunca "la mitad del flujo".
+   completo. Nunca "la mitad del flujo". Convención: cada flujo tiene UN e2e
+   `tests/e2e/test_flow_iNN_*.py`, escrito en la ÚLTIMA tarea que completa el flujo y requisito
+   de cierre de esa tarea (paso 5 del bucle); la sección no se cierra sin todos sus I-N en verde.
 
 ### 14.3 Cambios en el menú lateral (consecuencia de lo anterior)
 
