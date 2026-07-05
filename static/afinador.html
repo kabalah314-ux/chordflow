@@ -7,28 +7,57 @@
     <meta name="theme-color" content="#0d0d10">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>BandFlow — Afinador</title>
+    <title>BandFlow — Afinador / Metrónomo</title>
     <!-- style.css: trae las clases .tuner-* que reutiliza el panel (T-091). -->
-    <link rel="stylesheet" href="style.css?v=2c78220b">
+    <link rel="stylesheet" href="style.css?v=2a936696">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="design-system.css?v=47faa1ea">
     <link rel="stylesheet" href="shell.css?v=ea7c3336">
 </head>
-<body>
+<!-- bf-legacy-themed (T-V5-13): los botones legacy convergen al look del sistema en ambos temas
+     (en claro, .secondary-btn con fondo blanco translúcido era invisible). -->
+<body class="bf-legacy-themed">
     <div class="bf-shell">
         <main class="bf-shell-main">
             <div class="bf-page">
-                <h1 class="bf-h1">Afinador 🎤</h1>
-                <p class="bf-muted">Detecta la nota y los cents de desvío por el micrófono, sin tener que
-                    abrir antes una canción.</p>
+                <h1 class="bf-h1">Afinador / Metrónomo</h1>
+                <p class="bf-muted">Detecta la nota por el micrófono y marca el tempo: el mismo
+                    metrónomo que suena en el reproductor.</p>
 
-                <!-- Mismos ids que usa tuner.js; sin #btn-tuner el panel queda siempre visible (modo standalone). -->
-                <div id="tuner-panel" class="bf-card" style="max-width:280px;margin-inline:auto;text-align:center;">
-                    <div class="tuner-note" id="tuner-note">—</div>
-                    <div class="tuner-cents" id="tuner-cents"></div>
-                    <div class="tuner-meter"><div class="tuner-needle" id="tuner-needle"></div></div>
-                    <p class="tuner-msg" id="tuner-msg"></p>
-                    <button id="tuner-start" class="secondary-btn">Activar micrófono</button>
+                <div class="tuner-metro-grid">
+                    <!-- Mismos ids que usa tuner.js; sin #btn-tuner el panel queda siempre visible (modo standalone). -->
+                    <div id="tuner-panel" class="bf-card" style="text-align:center;">
+                        <h2 class="metro-card-title">Afinador</h2>
+                        <div class="tuner-note" id="tuner-note">—</div>
+                        <div class="tuner-cents" id="tuner-cents"></div>
+                        <div class="tuner-meter"><div class="tuner-needle" id="tuner-needle"></div></div>
+                        <p class="tuner-msg" id="tuner-msg"></p>
+                        <button id="tuner-start" class="secondary-btn">Activar micrófono</button>
+                    </div>
+
+                    <!-- Metrónomo standalone (T-V5-13): la UI vive en metronome.js (mismo clic que el player). -->
+                    <div id="metro-panel" class="bf-card" style="text-align:center;">
+                        <h2 class="metro-card-title">Metrónomo</h2>
+                        <div class="metro-bpm-row">
+                            <button id="metro-down" class="icon-btn" aria-label="Bajar tempo" title="Bajar tempo (mantén para acelerar)">−</button>
+                            <div class="metro-bpm-display">
+                                <span id="metro-bpm" class="bf-num">120</span>
+                                <span class="metro-bpm-label">BPM</span>
+                            </div>
+                            <button id="metro-up" class="icon-btn" aria-label="Subir tempo" title="Subir tempo (mantén para acelerar)">+</button>
+                        </div>
+                        <div id="metro-beats" class="metro-beats" aria-hidden="true"></div>
+                        <div class="metro-controls">
+                            <select id="metro-meter" aria-label="Compás">
+                                <option>2/4</option>
+                                <option>3/4</option>
+                                <option selected>4/4</option>
+                                <option>6/8</option>
+                            </select>
+                            <button id="metro-tap" class="secondary-btn" title="Marca el tempo tocando al ritmo">Tap</button>
+                            <button id="metro-start" class="primary-btn">Iniciar</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -40,7 +69,8 @@
     <script src="auth.js?v=32867392"></script>
     <script src="util.js?v=3e6f794b"></script>
     <script src="icons.js?v=ce9a2bcd"></script>
-    <script src="shell.js?v=81592dbb"></script>
+    <script src="shell.js?v=77594b41"></script>
+    <script src="metronome.js?v=1225794b"></script>
     <script src="tuner.js?v=11c730fa"></script>
 </body>
 </html>

@@ -95,3 +95,100 @@ class BfMetronome {
 
     toggle() { if (this.running) this.stop(); else this.start(); }
 }
+
+// --- Repetición al mantener pulsado (mismo patrón que el BPM del player, T-V5-09) -------------
+// Toque corto = un paso; mantener = repite acelerando (400→35 ms). Teclado: Enter/Espacio = un paso.
+function bfHoldRepeat(btn, fire) {
+    let timer = null;
+    function stop() { if (timer) { clearTimeout(timer); timer = null; } }
+    btn.addEventListener('pointerdown', (e) => {
+        if (e.button && e.button !== 0) return;    // solo botón principal / toque (ignora clic derecho)
+        stop();
+        fire();                                    // primer cambio inmediato (cubre el toque corto)
+        let wait = 400;                            // la 1ª repetición tarda: un tap normal no repite
+        (function step() {
+            timer = setTimeout(() => {
+                fire();
+                wait = Math.max(35, wait * 0.8);   // …y acelera mientras se mantiene pulsado
+                step();
+            }, wait);
+        })();
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
+    btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); }
+    });
+}
+
+// --- Panel standalone (T-V5-13, afinador.html) ------------------------------------------------
+// Mismo patrón que tuner.js: si la página no tiene el panel, no hacer nada (el player carga este
+// archivo solo por el clic/acento compartidos de arriba).
+(function () {
+    const panel = document.getElementById('metro-panel');
+    if (!panel) return;
+
+    const elBpm = document.getElementById('metro-bpm');
+    const elMeter = document.getElementById('metro-meter');
+    const elStart = document.getElementById('metro-start');
+    const elTap = document.getElementById('metro-tap');
+    const elBeats = document.getElementById('metro-beats');
+
+    const m = new BfMetronome();
+    window.bfMetro = m;   // expuesto para consola y tests (como bfDetectPitch en tuner.js)
+
+    // BPM y compás persistidos en el dispositivo (como la cuenta atrás del player, T-V5-08).
+    const BPM_KEY = 'bf-metro-bpm', METER_KEY = 'bf-metro-meter';
+    const savedBpm = parseInt(localStorage.getItem(BPM_KEY), 10);
+    if (!Number.isNaN(savedBpm)) m.setTempo(savedBpm);
+    const savedMeter = localStorage.getItem(METER_KEY);
+    if (savedMeter && /^\d+\/\d+$/.test(savedMeter)) {
+        const [n, d] = savedMeter.split('/');
+        m.setMeter(parseInt(n, 10), parseInt(d, 10));
+    }
+    elMeter.value = m.num + '/' + m.den;
+
+    function renderBpm() {
+        elBpm.textContent = m.bpm;
+        localStorage.setItem(BPM_KEY, String(m.bpm));
+    }
+
+    // Un punto por beat del compás; `onTick` ilumina el activo (el 1, acentuado, brilla más).
+    function renderPips() {
+        elBeats.innerHTML = '';
+        for (let i = 0; i < m.num; i++) {
+            const dot = document.createElement('span');
+            dot.className = 'metro-pip';
+            elBeats.appendChild(dot);
+        }
+    }
+
+    m.onTick = (beatInBar, level) => {
+        const pips = elBeats.children;
+        for (let i = 0; i < pips.length; i++) {
+            pips[i].classList.toggle('metro-pip--on', i === beatInBar);
+            pips[i].classList.toggle('metro-pip--accent', i === beatInBar && level >= 2);
+        }
+    };
+
+    bfHoldRepeat(document.getElementById('metro-down'), () => { m.setTempo(m.bpm - 1); renderBpm(); });
+    bfHoldRepeat(document.getElementById('metro-up'), () => { m.setTempo(m.bpm + 1); renderBpm(); });
+
+    elMeter.addEventListener('change', () => {
+        const [n, d] = elMeter.value.split('/');
+        m.setMeter(parseInt(n, 10), parseInt(d, 10));
+        localStorage.setItem(METER_KEY, elMeter.value);
+        renderPips();
+    });
+
+    elTap.addEventListener('click', () => { m.tap(); renderBpm(); });
+
+    elStart.addEventListener('click', () => {
+        m.toggle();
+        elStart.textContent = m.running ? 'Parar' : 'Iniciar';
+        elStart.classList.toggle('metro-running', m.running);
+        if (!m.running) renderPips();   // reposo: puntos apagados
+    });
+
+    renderBpm();
+    renderPips();
+})();

@@ -452,6 +452,53 @@ button {
 #tuner-panel.tuner-live .tuner-needle { opacity: 1; }   /* activa solo mientras escucha el micro. */
 .tuner-msg { font-size: 0.8rem; color: var(--text-secondary); margin: 0.6rem 0; min-height: 1.1em; }
 
+/* Metrónomo standalone (T-V5-13): panel hermano del afinador en afinador.html. */
+.tuner-metro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    max-width: 640px;
+    margin-inline: auto;
+    align-items: start;
+}
+.metro-card-title {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.metro-bpm-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+/* Los −/+ del metrónomo deben verse como botones también en claro (el .icon-btn genérico usa un
+   blanco translúcido, invisible sobre fondo claro). Solo esta página; el player no se toca. */
+#metro-panel .icon-btn {
+    background: var(--bf-surface-2, rgba(128, 128, 128, 0.15));
+    border: 1px solid var(--bf-border, rgba(128, 128, 128, 0.25));
+}
+.metro-bpm-display { display: flex; flex-direction: column; min-width: 96px; }
+#metro-bpm { font-size: 2.6rem; font-weight: 800; line-height: 1.1; color: var(--accent-color); }
+.metro-bpm-label { font-size: 0.72rem; letter-spacing: 0.12em; color: var(--text-secondary); }
+.metro-beats { display: flex; justify-content: center; gap: 8px; margin: 14px 0 12px; min-height: 14px; }
+.metro-pip {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: rgba(128, 128, 128, 0.35);
+    transition: transform 0.06s ease, background 0.06s ease, box-shadow 0.06s ease;
+}
+.metro-pip--on { background: var(--accent-color); transform: scale(1.25); }
+.metro-pip--accent { transform: scale(1.55); box-shadow: 0 0 10px var(--accent-color); }
+.metro-controls { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
+.metro-controls select {
+    background: var(--bg-panel, rgba(255, 255, 255, 0.06));
+    color: var(--text-primary);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+    border-radius: 8px;
+    padding: 0.55rem 0.6rem;
+    cursor: pointer;
+}
+#metro-start.metro-running { background: var(--accent-hover, var(--accent-color)); }
+
 /* Vídeo de referencia (V3-F4, T-090): panel flotante con el YouTube de la canción. */
 .reference-panel {
     position: fixed;

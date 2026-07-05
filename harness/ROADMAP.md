@@ -719,8 +719,11 @@
         (player) delega sin cambiar de comportamiento (joya intacta). Verificado: revisión adversarial
         multi-agente (refactor fiel, sin colisiones) + doctor 10/10 + unit 100% + e2e verde + **4 tests
         e2e nuevos** de `metronome.js` en `test_js_logic.py`. Sin migración.
-  - [ ] **T-V5-13** 🟠 Metrónomo standalone en la sección: BPM press-and-hold, compases 2/4·3/4·4/4·6/8,
-        acento visual (flash) + sonoro, tap-tempo. Nav "Afinador" → "Afinador / Metrónomo", dos paneles.
+  - [x] **T-V5-13** 🟠 Metrónomo standalone en la sección (2026-07-05): página "Afinador / Metrónomo"
+        con 2 tarjetas; BPM press-and-hold (`bfHoldRepeat` compartido con el player) + persistencia,
+        compases 2/4·3/4·4/4·6/8 con puntos por beat (acento visual) + sonoro, tap-tempo, iniciar/parar
+        (`BfMetronome`, mismo clic que el player). Nav renombrado. + pulido: `bf-legacy-themed` en
+        afinador.html (botones legibles en claro). e2e `test_metronomo_seccion` (5) + visual en preview.
   - [ ] **T-V5-14** 🟠 Afinador 2.0: aguja fluida, indicador grande afinado/alto/bajo, selector A4=440,
         nombres de nota grandes. Reusa `bfDetectPitch`/`bfFreqToNote`.
 - [ ] **V5-F4** 🔴 Perfil de músico 2.0 (guía §5.2: estado buscando/abierto/no-busco, instrumentos por

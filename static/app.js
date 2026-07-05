@@ -325,28 +325,9 @@ function scheduleBpmSave() {
 // corto sigue siendo ±1; al mantener, repite acelerando. El motor ya acota el BPM a [40, 240].
 function bumpBpm(delta) { engine.setBpm(engine.state.bpm + delta); scheduleBpmSave(); }
 
-function holdRepeatBpm(btn, delta) {
-    let timer = null;
-    function stop() { if (timer) { clearTimeout(timer); timer = null; } }
-    btn.addEventListener('pointerdown', (e) => {
-        if (e.button && e.button !== 0) return;    // solo botón principal / toque (ignora clic derecho)
-        stop();
-        bumpBpm(delta);                            // primer cambio inmediato (cubre el toque corto)
-        let wait = 400;                            // la 1ª repetición tarda: un tap normal no repite
-        (function step() {
-            timer = setTimeout(() => {
-                bumpBpm(delta);
-                wait = Math.max(35, wait * 0.8);   // …y acelera mientras se mantiene pulsado
-                step();
-            }, wait);
-        })();
-    });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
-    // Accesibilidad por teclado: Enter/Espacio = un solo paso (sin repetición).
-    btn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); bumpBpm(delta); }
-    });
-}
+// T-V5-13: la mecánica del press-and-hold vive en `metronome.js` (`bfHoldRepeat`, compartida con la
+// sección Afinador/Metrónomo); aquí solo se enchufa al BPM del motor.
+function holdRepeatBpm(btn, delta) { bfHoldRepeat(btn, () => bumpBpm(delta)); }
 holdRepeatBpm(elBtnBpmUp, 1);
 holdRepeatBpm(elBtnBpmDown, -1);
 

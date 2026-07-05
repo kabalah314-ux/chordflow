@@ -23,13 +23,12 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   (`parseRawText`/`songToRawText` NO codifican `duration_beats` → un ×½/×2 en la preview se perdería al
   guardar; opciones: sintaxis en el texto tipo `Am*2` / `C/2`, o un modo aparte). El modelo YA tiene
   `ChordMarker.duration_beats`. **NO construir hasta que Oscar decida.**
-- ✅ **V5-F3 (Afinador/Metrónomo, guía §4) EN MARCHA — T-V5-12 CERRADO Y VERIFICADO (2026-07-05).**
-  `metronome.js` compartido (clic + acento por compás + `BfMetronome` standalone con tap-tempo);
-  `app.js` delega sin cambio de comportamiento (joya intacta, verificado con revisión adversarial
-  multi-agente + suite completa + 4 tests e2e nuevos). Detalle en la entrada de abajo. Siguiente:
-  **T-V5-13** (metrónomo standalone en la sección: BPM press-and-hold, compases, flash visual +
-  sonoro, tap-tempo; nav "Afinador"→"Afinador / Metrónomo") y **T-V5-14** (afinador 2.0: aguja
-  fluida, indicador grande, selector A4, nombres grandes).
+- ✅ **V5-F3 (Afinador/Metrónomo, guía §4) EN MARCHA — T-V5-12 y T-V5-13 CERRADOS (2026-07-05).**
+  `metronome.js` compartido (T-V5-12, verificado con revisión adversarial + 4 tests e2e) y sección
+  **"Afinador / Metrónomo"** con metrónomo standalone (T-V5-13: BPM press-and-hold persistido,
+  compases con puntos por beat, tap-tempo, iniciar/parar — mismo clic que el player). Queda
+  **T-V5-14** (afinador 2.0: aguja fluida, indicador grande afinado/alto/bajo, selector A4=440,
+  nombres de nota grandes; reusa `bfDetectPitch`/`bfFreqToNote`).
 - ⏭️ **Después de V5-F3:** seguir con las demás secciones V5 (F6 agenda calendario, F7 chat 2.0, F9
   bandas 2.0…; F4/F5 Explorar necesitan cerrar D-EXP-1/2/3/4 con Oscar; F11 finanzas AL FINAL).
 
@@ -38,6 +37,39 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 diseño real → AskUserQuestion con opciones). Si no responde una pregunta de diseño, aparcar ESA pieza y
 seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+deploy por tarea,
 `run_checks` VERDE antes de cada push, autor `kabalah314-ux <kabalah314@gmail.com>`.
+
+---
+
+## 🎸 V5-F3 · T-V5-13 — Metrónomo standalone en la sección (2026-07-05) ✅
+
+**Qué:** la página del afinador pasa a **"Afinador / Metrónomo"** (guía §4): dos tarjetas (Afinador ·
+Metrónomo) y el item del menú renombrado. El metrónomo standalone trae:
+- **BPM grande** con **+/− press-and-hold** (mantener acelera 400→35 ms, igual que el player) y
+  **persistencia** en el dispositivo (`localStorage bf-metro-bpm`).
+- **Compás 2/4·3/4·4/4·6/8** (persistido) con **puntos por beat** que marcan el pulso: el activo se
+  ilumina coral y el 1 (acento) brilla más — flash visual además del sonoro.
+- **Tap-tempo** (botón Tap: promedia los toques recientes, ventana 2 s, clamps [40,240]).
+- **Iniciar/Parar**: bucle propio a BPM (clase `BfMetronome` de T-V5-12) con el MISMO clic y acento
+  que oye el reproductor.
+
+**Cómo:** UI cableada al final de [metronome.js](static/metronome.js) (IIFE guardada por `#metro-panel`,
+patrón tuner.js — el player carga el archivo sin efectos); `bfHoldRepeat(btn, fire)` **compartido**
+(extraído del patrón T-V5-09) y [app.js](static/app.js) delega su `holdRepeatBpm` en él (una fuente,
+cubierto por e2e `test_tempo`); tarjetas y grid en [afinador.html](static/afinador.html) +
+`.metro-*`/`.tuner-metro-grid` en [style.css](static/style.css); label del nav en
+[shell.js](static/shell.js). `window.bfMetro` expuesto (consola/tests). **Pulido de tema:** el body de
+afinador.html gana `bf-legacy-themed` (los botones legacy convergen al look del sistema; en claro el
+`.secondary-btn` translúcido era invisible) + `#metro-panel .icon-btn` tokenizado (solo esta página;
+el player no se toca).
+
+**Por qué:** V5-F3 (guía §4) — sección "con mimo" con el mismo metrónomo que el player. Cierra el
+llamador que faltaba de `BfMetronome` (nota de T-V5-12).
+
+**Verificación:** e2e nuevos [test_metronomo_seccion.py](tests/e2e/test_metronomo_seccion.py) (5:
+paneles+nav, BPM sube/baja y persiste, compás redibuja puntos y persiste, tap determinista vía clamps,
+iniciar/parar con AudioContext stubeado) + dirigidos (`test_tempo` press-and-hold del player,
+`test_js_logic`, `test_shell`) + **verificación visual en preview** (oscuro/claro, interacción real:
+BPM 121 persistido, pips iluminados, toggle) + `run_checks` completo. `cachebust` al día. Sin migración.
 
 ---
 
