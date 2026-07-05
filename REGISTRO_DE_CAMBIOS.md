@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** se hizo, **por qué** y **cómo** (archivos tocados y verificación).
 > Para el contexto general del proyecto, ver [GUIA_MAESTRA.md](GUIA_MAESTRA.md).
-> Última actualización: 2026-07-03
+> Última actualización: 2026-07-05
 
 Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 
@@ -23,14 +23,13 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   (`parseRawText`/`songToRawText` NO codifican `duration_beats` → un ×½/×2 en la preview se perdería al
   guardar; opciones: sintaxis en el texto tipo `Am*2` / `C/2`, o un modo aparte). El modelo YA tiene
   `ChordMarker.duration_beats`. **NO construir hasta que Oscar decida.**
-- 🚧 **V5-F3 (Afinador/Metrónomo, guía §4) ARRANCADA — T-V5-12 a MEDIAS y SIN VERIFICAR.** Se creó
-  `static/metronome.js` (clic + acento por compás + clase `BfMetronome` standalone con tap-tempo) y se
-  refactorizó `app.js` para usarlo (`playClick`→`bfMetronomeClick`, hook usa `bfBeatAccent`) + se cargó
-  en `index.html`. **PENDIENTE antes de dar por bueno T-V5-12:** correr `run_checks` (verificar que el
-  PLAYER sigue intacto — es la joya), `cachebust`, y solo entonces commit + push. Va commiteado como
-  **WIP sin verificar** en la rama (NO desplegado). Luego **T-V5-13** (metrónomo standalone en la sección:
-  BPM press-and-hold, compases, flash visual + sonoro, tap-tempo; nav "Afinador"→"Afinador / Metrónomo")
-  y **T-V5-14** (afinador 2.0: aguja fluida, indicador grande, selector A4, nombres grandes).
+- ✅ **V5-F3 (Afinador/Metrónomo, guía §4) EN MARCHA — T-V5-12 CERRADO Y VERIFICADO (2026-07-05).**
+  `metronome.js` compartido (clic + acento por compás + `BfMetronome` standalone con tap-tempo);
+  `app.js` delega sin cambio de comportamiento (joya intacta, verificado con revisión adversarial
+  multi-agente + suite completa + 4 tests e2e nuevos). Detalle en la entrada de abajo. Siguiente:
+  **T-V5-13** (metrónomo standalone en la sección: BPM press-and-hold, compases, flash visual +
+  sonoro, tap-tempo; nav "Afinador"→"Afinador / Metrónomo") y **T-V5-14** (afinador 2.0: aguja
+  fluida, indicador grande, selector A4, nombres grandes).
 - ⏭️ **Después de V5-F3:** seguir con las demás secciones V5 (F6 agenda calendario, F7 chat 2.0, F9
   bandas 2.0…; F4/F5 Explorar necesitan cerrar D-EXP-1/2/3/4 con Oscar; F11 finanzas AL FINAL).
 
@@ -39,6 +38,43 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 diseño real → AskUserQuestion con opciones). Si no responde una pregunta de diseño, aparcar ESA pieza y
 seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+deploy por tarea,
 `run_checks` VERDE antes de cada push, autor `kabalah314-ux <kabalah314@gmail.com>`.
+
+---
+
+## 🎸 V5-F3 · T-V5-12 — `metronome.js` compartido (player + sección) (2026-07-05) ✅
+
+**Qué:** el "clic" del metrónomo y el acento por compás salen de `app.js` a un módulo compartido
+[metronome.js](static/metronome.js), para que el reproductor y la futura sección "Afinador / Metrónomo"
+suenen **exactamente igual** (guía §4: "el mismo metrónomo"). Expone:
+- `bfMetronomeClick(audioCtx, level)` — el clic Web Audio (nivel 2=acento fuerte, 1=medio, 0=débil).
+- `bfBeatAccent(beat, num, den)` — nivel de acento de un beat según el compás (fuerte el 1; en compuesto
+  6/8·9/8·12/8, medio en cada grupo de 3).
+- `BfMetronome` — metrónomo **standalone** (bucle propio a BPM con `setTimeout`, tap-tempo que promedia
+  los toques recientes, `onTick` para el flash visual, clamps [40,240]). El player NO usa el bucle
+  (clica en los cruces de beat del motor), solo el clic y el acento.
+
+**Cómo:** [app.js](static/app.js) — `playClick` es un alias fino sobre `bfMetronomeClick` con el
+`audioCtx` del player (que sigue viviendo en app.js), y el hook del motor usa `bfBeatAccent` (misma
+fórmula que la inline anterior, byte a byte). [index.html](static/index.html) carga `metronome.js`
+antes de `app.js`. **La joya intacta: cero cambio de comportamiento audible.**
+
+**Por qué:** V5-F3 (guía §4) pide un metrónomo standalone en la sección Afinador que suene IGUAL que el
+del player → una sola fuente. Prepara T-V5-13 (la sección usará `BfMetronome`).
+
+**Verificación:** **revisión adversarial multi-agente** (3 lentes: equivalencia de comportamiento,
+colisiones de namespace/orden de carga, hueco de tests) → veredicto: refactor fiel, sin colisiones
+(el `audioCtx` de tuner.js va encerrado en su IIFE), orden de carga correcto, sw.js no necesita alta.
+Único bloqueador: faltaba el test → añadidos **4 tests e2e** en
+[test_js_logic.py](tests/e2e/test_js_logic.py) (`bfBeatAccent` en 4/4·3/4·2/4·6/8·9/8·12/8 + módulo
+con beats negativos/wrap; clamps y redondeo de `setTempo`; tap-tempo determinista vía clamps; flag
+`running` en start/stop/toggle con AudioContext stubeado). doctor 10/10 · ruff · unit 100% · e2e verde
+(1 flaky conocido T-042 —`test_video_de_referencia_youtube`, ajeno al cambio— pasa al reintentar).
+`cachebust` ya estaba al día (hash `2ed9345a`). Sin migración.
+
+Notas: `BfMetronome` queda sin llamador hasta T-V5-13 (la sección) — esperado, es la mitad "standalone"
+del módulo. Aviso de entorno (Windows): matar un `run_checks` a medias deja un pytest zombi escribiendo
+`test_unit.db` → el siguiente run da fallos masivos fantasma (`no such table` / PermissionError);
+borrar `test_unit.db*` y relanzar limpio.
 
 ---
 

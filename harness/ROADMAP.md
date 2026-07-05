@@ -714,11 +714,11 @@
         configurable) → precarga el editor para REVISAR (D-PLY-3). ⚠️ Beta (visión gratis floja con
         manuscritos). Tests unit+e2e (IA mockeada). run_checks VERDE. Sin migración.
 - [~] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4, `metronome.js` compartido con el player).
-  - [~] **T-V5-12** 🟠 Extraer `metronome.js` compartido (click + acento por compás + clase `BfMetronome`
-        standalone con tap-tempo); `app.js` (player) lo usa sin cambiar de comportamiento (joya intacta).
-        **WIP SIN VERIFICAR** (2026-07-04): `metronome.js` creado + `app.js`/`index.html` refactorizados,
-        commiteado en la rama pero **NO desplegado**. Falta: `run_checks` VERDE (player intacto) →
-        `cachebust` → commit final → push. Ver §"RETOMAR AQUÍ" del REGISTRO.
+  - [x] **T-V5-12** 🟠 Extraer `metronome.js` compartido (2026-07-05): click (`bfMetronomeClick`) +
+        acento por compás (`bfBeatAccent`) + clase `BfMetronome` standalone con tap-tempo; `app.js`
+        (player) delega sin cambiar de comportamiento (joya intacta). Verificado: revisión adversarial
+        multi-agente (refactor fiel, sin colisiones) + doctor 10/10 + unit 100% + e2e verde + **4 tests
+        e2e nuevos** de `metronome.js` en `test_js_logic.py`. Sin migración.
   - [ ] **T-V5-13** 🟠 Metrónomo standalone en la sección: BPM press-and-hold, compases 2/4·3/4·4/4·6/8,
         acento visual (flash) + sonoro, tap-tempo. Nav "Afinador" → "Afinador / Metrónomo", dos paneles.
   - [ ] **T-V5-14** 🟠 Afinador 2.0: aguja fluida, indicador grande afinado/alto/bajo, selector A4=440,

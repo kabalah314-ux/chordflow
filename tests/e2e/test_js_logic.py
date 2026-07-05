@@ -182,6 +182,98 @@ def test_helpers_identidad_en_util(js_page):
     assert js_page.evaluate("initialsFrom('   ')") is None
 
 
+# ── Metrónomo compartido (T-V5-12) ──────────────────────────────────────────
+# metronome.js lo carga index.html (NO editor.html) → fixture propia, no js_page.
+
+
+@pytest.fixture()
+def metro_page(page, live_server):
+    page.goto(live_server + "/static/index.html", wait_until="networkidle")
+    return page
+
+
+def test_bfbeataccent_por_compas(metro_page):
+    """bfBeatAccent reproduce el acento del player (T-V5-07): fuerte el 1 (nivel 2);
+    en compás compuesto (6/8, 9/8, 12/8) acento medio (1) en cada grupo de 3; débil (0) el resto.
+    El módulo ((b%num)+num)%num mantiene el patrón con beats fuera del primer compás."""
+
+    def ev(b, n, d):
+        return metro_page.evaluate("([b,n,d]) => bfBeatAccent(b,n,d)", [b, n, d])
+
+    assert [ev(i, 4, 4) for i in range(4)] == [2, 0, 0, 0]
+    assert [ev(i, 3, 4) for i in range(3)] == [2, 0, 0]
+    assert [ev(i, 2, 4) for i in range(2)] == [2, 0]  # simple (den≠8): sin acento medio
+    assert [ev(i, 6, 8) for i in range(6)] == [2, 0, 0, 1, 0, 0]
+    assert [ev(i, 9, 8) for i in range(9)] == [2, 0, 0, 1, 0, 0, 1, 0, 0]
+    assert [ev(i, 12, 8) for i in range(12)] == [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0]
+    # Wrap / negativos
+    assert ev(4, 4, 4) == 2   # beat 4 == primer tiempo del compás siguiente
+    assert ev(-1, 4, 4) == 0  # último beat del compás anterior
+    assert ev(-4, 4, 4) == 2
+
+
+def test_bfmetronome_settempo_clamp_y_meter(metro_page):
+    """BfMetronome.setTempo acota a [40,240] y redondea (mismo rango que el motor);
+    setMeter fija el compás."""
+    res = metro_page.evaluate(
+        """() => {
+            const m = new BfMetronome();
+            const alto = m.setTempo(300);
+            const bajo = m.setTempo(10);
+            const redondeo = m.setTempo(120.6);
+            m.setMeter(6, 8);
+            return { alto, bajo, redondeo, bpm: m.bpm, num: m.num, den: m.den };
+        }"""
+    )
+    assert res["alto"] == 240
+    assert res["bajo"] == 40
+    assert res["redondeo"] == 121 and res["bpm"] == 121
+    assert res["num"] == 6 and res["den"] == 8
+
+
+def test_bfmetronome_tap_tempo(metro_page):
+    """tap(): un solo toque no cambia el tempo; el promedio de intervalos se acota con los
+    clamps [40,240] (aserciones deterministas, sin depender de tiempos reales)."""
+    res = metro_page.evaluate(
+        """() => {
+            const m = new BfMetronome();
+            const primero = m.tap();               // len<2 → sin cambio (120 por defecto)
+            m._taps = [performance.now() - 100];   // ~600 bpm → clamp superior
+            const rapido = m.tap();
+            m._taps = [performance.now() - 1800];  // ~33 bpm → clamp inferior (ventana 2 s)
+            const lento = m.tap();
+            return { primero, rapido, lento };
+        }"""
+    )
+    assert res["primero"] == 120
+    assert res["rapido"] == 240
+    assert res["lento"] == 40
+
+
+def test_bfmetronome_toggle_running(metro_page):
+    """start/stop/toggle mantienen el flag running (AudioContext stubeado: sin audio real)."""
+    res = metro_page.evaluate(
+        """() => {
+            const Fake = function () {
+                this.currentTime = 0; this.destination = {};
+                this.createOscillator = () => ({ connect(){}, start(){}, stop(){}, frequency:{} });
+                this.createGain = () => ({ connect(){}, gain:{ setValueAtTime(){},
+                                           exponentialRampToValueAtTime(){} } });
+            };
+            const prev = window.AudioContext;
+            window.AudioContext = Fake;
+            const m = new BfMetronome();
+            m.start(); const a = m.running;
+            m.toggle(); const b = m.running;
+            m.toggle(); const c = m.running;
+            m.stop();
+            window.AudioContext = prev;
+            return { a, b, c };
+        }"""
+    )
+    assert res["a"] is True and res["b"] is False and res["c"] is True
+
+
 def test_popup_diagrama_escapa_nombre_malicioso(page, live_server):
     """El popup de diagramas de acorde escapa el nombre (XSS de 2º orden, T-026).
     renderChordDiagramSVG vive en chord_shapes.js, que carga index.html."""
