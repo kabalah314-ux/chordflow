@@ -402,8 +402,10 @@ tiene dos caras y un solo modelo:
   texto → clic = detalle/página de banda → **"Contactar"** (DM al admin que publicó; wa.me
   opcional igual que perfiles).
 - Al desactivar el anuncio, la banda desaparece de la pestaña.
-- Modelo: `BandOpening(band_id, instruments, body, zone, is_active, created_by, created_at)`
-  (o campos en `Band` si se decide 1 anuncio máx por banda — ver D-BND-2 en §5.7) + aislamiento.
+- Modelo — **✅ D-BND-2 (2026-07-05): 1 anuncio ACTIVO máximo por banda** (puede pedir varios
+  instrumentos dentro: "bajista y voz"). Tabla propia para conservar histórico:
+  `BandOpening(band_id, instruments JSON, body, zone, is_active, created_by, created_at,
+  updated_at)` + regla "solo 1 con `is_active` por banda" (validada en el router) + aislamiento.
 - ⛳ Interconexión: la pestaña **"Unirme a banda"** de §9.1 aterriza AQUÍ (Explorar>Bandas).
 - **✅ D-BND-1 (2026-07-05): SOLO el admin** publica/edita/desactiva el anuncio (como las
   colaboraciones: en nombre de la banda).
@@ -444,10 +446,11 @@ tiene dos caras y un solo modelo:
   (Colaboraciones fusionada en Bandas).
 - **D-BND-1 ✅ CERRADA (2026-07-05)**: SOLO el admin publica/edita/desactiva el anuncio.
 - **D-EXP-3 ✅ CERRADA (2026-07-05)**: zona = **texto libre** (filtro por `contains`).
-- **D-BND-2 ⏳ ABIERTA**: ¿1 anuncio máximo por banda (campos en `Band`) o varios (`BandOpening`
-  como filas)? (recomendado: 1 activo por banda, tabla propia para histórico).
-  **Bloquea exactamente:** el modelo y permisos del anuncio → la tarea T-V5-26 (pestaña Bandas,
-  F5d). NO bloquea F5a/b/c ni F4.
+- **D-BND-2 ✅ CERRADA (2026-07-05)**: **1 anuncio activo máximo por banda** (varios instrumentos
+  dentro), tabla `BandOpening` propia para histórico.
+
+> **🎉 §5 sin decisiones abiertas (2026-07-05): TODAS cerradas.** V5-F4/F5 completamente
+> desbloqueadas para cuando Oscar dé la orden de volver a construir.
 
 ### 5.8 Plan de tareas V5-F4/F5 (el equivalente a la lista T-V5-01..06 de F1)
 
@@ -463,7 +466,7 @@ tiene dos caras y un solo modelo:
 4. **T-V5-23 (M) Pestaña Músicos** (§5.3) con test de no-fuga + test de flujo I-1.
 5. **T-V5-24 (M) Descubrir + página pública de banda** (§5.6) + flujo I-6/I-16.
 6. **T-V5-25 (L) Mi material + pestaña Material** (§5.4, sin decisiones abiertas) + flujo I-4.
-7. **T-V5-26 (M) Pestaña Bandas** (§5.5) — ⏳ BLOQUEADA por D-BND-2 (preguntar antes de abrir).
+7. **T-V5-26 (M) Pestaña Bandas** (§5.5) — ✅ desbloqueada (D-BND-1/2 cerradas) + flujos I-2/I-16b.
 
 **Criterio de "hecho" por pestaña:** filtros funcionando · tarjeta según spec · empty state
 `bfEmpty` con CTA · test de no-fuga · test de flujo I-N correspondiente · móvil revisado.
@@ -721,7 +724,7 @@ pagos recurrentes si encaja (cruza con Agenda §7 si tiene fechas).
 | 2026-07-03 | §3 | **D-PLY-2 ✅** la cuenta atrás suena **solo si el metrónomo está activado** | con metrónomo off = pre-roll solo visual; N (4/8) en localStorage |
 | 2026-07-03 | §3 | **D-PLY-3 ✅** foto→partitura **beta con modelo gratuito** de visión | coste 0, patrón de import por URL; empezar con foto clara |
 | 2026-07-03 | §3 | **Metrónomo 6/8 ✅ subdividido** (T-V5-07) | 6 clics/compás: acento fuerte en el 1, medio en el 4 (no "en 2") |
-| 2026-07-03 | §5 | D-EXP-1/2/3/4 abiertas al crear la guía — **SUPERADA**: todas cerradas el 2026-07-05 (ver filas de esa fecha) | **Inventario vivo de abiertas: solo D-BND-2** (¿1 anuncio máx por banda? — bloquea únicamente T-V5-26) |
+| 2026-07-03 | §5 | D-EXP-1/2/3/4 abiertas al crear la guía — **SUPERADA**: todas cerradas el 2026-07-05 (ver filas de esa fecha) | **Inventario vivo de abiertas: NINGUNA (0)** — todas las D-* cerradas a 2026-07-05 |
 | 2026-07-05 | §3 | **Ruleta de tempo DESCARTADA** ("no importa, déjalo") | el press-and-hold (T-V5-09, hecho) cumple; la ruleta no se construye |
 | 2026-07-05 | §3 | **Compases atípicos descartados de momento** ("olvida esto") | solo 2/4 · 3/4 · 4/4 · 6/8 |
 | 2026-07-05 | §5 | **Explorar reestructurado** (palabras de Oscar): subsecciones **Buscar músicos** (perfiles que han puesto que buscan banda) · **Buscar banda** (NUEVA: bandas que buscan uno o varios músicos, y qué tipo de músico) · **Material** (alquilar/prestar) [SUPERSEDIDA por D-EXP-4 en esta misma tabla: estructura final de 5 pestañas en §5.1] | + **nueva sección personal "Mi material"**: subes el material del que dispones con foto (amplis, micros, lo que sea) y desde ahí se publica a alquiler/préstamo → aparece en Explorar>Material. Definir lista y filtros (§14) |
@@ -742,6 +745,7 @@ pagos recurrentes si encaja (cruza con Agenda §7 si tiene fechas).
 | 2026-07-05 | §6 | **D-BIB-3 ✅ Los setlists personales = bloque propio "Mis setlists"** en la Biblioteca | se crean/editan ahí como hasta ahora; NO se fusionan con las carpetas |
 | 2026-07-05 | §11 | **D-FIN-2 ✅ Material en Finanzas>Personal en AMBAS direcciones** | lo tuyo prestado a otros + lo que tú tienes alquilado de otros (automático vía `GearLoan.borrower_user_id`) |
 | 2026-07-05 | Global | **Verificación adversarial de la guía aplicada** (3 lentes: fidelidad, coherencia, "IA menos capaz" — 23 arreglos) | Storage ya-no-bloqueado ×4, regla 7 granular, DM base en F4, máquina de estados del material + `GearLoan`, wa.me solo en detalle con opt-in, plan de tareas §5.8, contrato tipado del calendario, I-15/I-16, §9.9 anuncios |
+| 2026-07-05 | §5 | **D-BND-2 ✅ 1 anuncio activo máximo por banda** (varios instrumentos dentro) | tabla `BandOpening` propia con histórico; regla "solo 1 `is_active`" en el router. **Con esto: 0 decisiones abiertas en toda la guía** |
 
 > **Estado:** V5 abierta y primera ronda de decisiones CERRADA (2026-07-03). **V5-F1 (estética)
 > desbloqueada y lista para arrancar** por el bucle de oro; en paralelo, Oscar configura Supabase
