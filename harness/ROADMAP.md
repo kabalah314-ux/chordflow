@@ -713,7 +713,7 @@
         **modelo de visión gratuito** OpenRouter (`extract_chords_from_image`, `openrouter_vision_model`
         configurable) → precarga el editor para REVISAR (D-PLY-3). ⚠️ Beta (visión gratis floja con
         manuscritos). Tests unit+e2e (IA mockeada). run_checks VERDE. Sin migración.
-- [~] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4, `metronome.js` compartido con el player).
+- [x] **V5-F3** 🟠 Afinador/Metrónomo sección propia (guía §4) — **COMPLETA 2026-07-05** (T-V5-12/13/14).
   - [x] **T-V5-12** 🟠 Extraer `metronome.js` compartido (2026-07-05): click (`bfMetronomeClick`) +
         acento por compás (`bfBeatAccent`) + clase `BfMetronome` standalone con tap-tempo; `app.js`
         (player) delega sin cambiar de comportamiento (joya intacta). Verificado: revisión adversarial
@@ -724,8 +724,10 @@
         compases 2/4·3/4·4/4·6/8 con puntos por beat (acento visual) + sonoro, tap-tempo, iniciar/parar
         (`BfMetronome`, mismo clic que el player). Nav renombrado. + pulido: `bf-legacy-themed` en
         afinador.html (botones legibles en claro). e2e `test_metronomo_seccion` (5) + visual en preview.
-  - [ ] **T-V5-14** 🟠 Afinador 2.0: aguja fluida, indicador grande afinado/alto/bajo, selector A4=440,
-        nombres de nota grandes. Reusa `bfDetectPitch`/`bfFreqToNote`.
+  - [x] **T-V5-14** 🟠 Afinador 2.0 (2026-07-05): aguja fluida (EMA de cents), indicador grande
+        "✓ Afinado / ♭ Bajo / ♯ Alto" (`bfTuneStatus`, pura), selector "La4 =" 435–445 persistido y
+        compartido con el player (`freqToNote(freq, a4)` retrocompatible), nota a 3.8rem en la sección.
+        e2e `test_afinador2` (4) + visual en preview. **V5-F3 COMPLETA.**
 - [ ] **V5-F4** 🔴 Perfil de músico 2.0 (guía §5.2: estado buscando/abierto/no-busco, instrumentos por
       banda, `visibility`, contacto). ⏳ Espera D-EXP-1/2/3.
 - [ ] **V5-F5** 🔴 Explorar por pestañas (guía §5.3–5.6: a Músicos · b Descubrir originales de bandas ·

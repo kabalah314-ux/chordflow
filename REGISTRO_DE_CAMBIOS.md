@@ -23,12 +23,14 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
   (`parseRawText`/`songToRawText` NO codifican `duration_beats` → un ×½/×2 en la preview se perdería al
   guardar; opciones: sintaxis en el texto tipo `Am*2` / `C/2`, o un modo aparte). El modelo YA tiene
   `ChordMarker.duration_beats`. **NO construir hasta que Oscar decida.**
-- ✅ **V5-F3 (Afinador/Metrónomo, guía §4) EN MARCHA — T-V5-12 y T-V5-13 CERRADOS (2026-07-05).**
-  `metronome.js` compartido (T-V5-12, verificado con revisión adversarial + 4 tests e2e) y sección
-  **"Afinador / Metrónomo"** con metrónomo standalone (T-V5-13: BPM press-and-hold persistido,
-  compases con puntos por beat, tap-tempo, iniciar/parar — mismo clic que el player). Queda
-  **T-V5-14** (afinador 2.0: aguja fluida, indicador grande afinado/alto/bajo, selector A4=440,
-  nombres de nota grandes; reusa `bfDetectPitch`/`bfFreqToNote`).
+- ✅ **V5-F3 (Afinador/Metrónomo, guía §4) COMPLETA (2026-07-05): T-V5-12 + T-V5-13 + T-V5-14.**
+  `metronome.js` compartido (T-V5-12, revisión adversarial + 4 tests e2e); sección **"Afinador /
+  Metrónomo"** con metrónomo standalone (T-V5-13: BPM press-and-hold persistido, compases con puntos
+  por beat, tap-tempo — mismo clic que el player); **afinador 2.0** (T-V5-14: aguja fluida EMA,
+  indicador grande ✓/♭/♯, selector "La4 =" 435–445 persistido y compartido, nota a 3.8rem).
+- ⏭️ **Siguiente:** V5-F6 (agenda calendario mensual+semanal, `bf-calendar`) o V5-F9 (bandas 2.0:
+  pizarra, estado del repertorio) — no dependen de decisiones abiertas. V5-F4/F5 (Explorar) esperan
+  D-EXP-1/2/3/4 de Oscar; V5-F11 (finanzas) AL FINAL por orden explícita.
 - ⏭️ **Después de V5-F3:** seguir con las demás secciones V5 (F6 agenda calendario, F7 chat 2.0, F9
   bandas 2.0…; F4/F5 Explorar necesitan cerrar D-EXP-1/2/3/4 con Oscar; F11 finanzas AL FINAL).
 
@@ -37,6 +39,34 @@ Leyenda de estado: ✅ hecho y verificado · 🟡 en curso · ⏳ pendiente
 diseño real → AskUserQuestion con opciones). Si no responde una pregunta de diseño, aparcar ESA pieza y
 seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+deploy por tarea,
 `run_checks` VERDE antes de cada push, autor `kabalah314-ux <kabalah314@gmail.com>`.
+
+---
+
+## 🎸 V5-F3 · T-V5-14 — Afinador 2.0 (2026-07-05) ✅
+
+**Qué:** el afinador de la sección sube de nivel (guía §4):
+- **Nombre de nota grande** (3.8rem en la sección; el panel flotante del player mantiene su tamaño).
+- **Indicador grande afinado/alto/bajo** (`#tuner-status`): "✓ Afinado" (verde, ±5 cents) ·
+  "♭ Bajo" · "♯ Alto" (coral).
+- **Aguja fluida**: media móvil exponencial de los cents mientras la nota no cambia (la
+  autocorrelación tiembla frame a frame; el EMA calma la aguja sin retrasar el cambio de nota).
+- **Selector de referencia "La4 = 435/438/440/442/445 Hz"**, persistido en el dispositivo
+  (`localStorage bf-tuner-a4`) y **compartido con el panel del player** (quien afina a 442, afina
+  a 442 en toda la app; el player no tiene selector pero lee la misma referencia).
+
+**Cómo:** [tuner.js](static/tuner.js) — `freqToNote(freq, a4)` gana el parámetro de referencia
+(retrocompatible: default 440); nueva pura `bfTuneStatus(cents)` (ok/low/high, testeable); EMA
+`smoothCents` en `setReadout`; hook `bfTunerReadout` (pinta una lectura sin micrófono, para consola
+y tests). UI en [afinador.html](static/afinador.html) (indicador + fila A4) y CSS `.tuner-status*`/
+`.tuner-a4-row` en [style.css](static/style.css). `bfDetectPitch` (autocorrelación) NO se toca.
+
+**Por qué:** V5-F3 (guía §4) — afinador "profesional, con mimo". Con esto **V5-F3 queda COMPLETA**.
+
+**Verificación:** e2e nuevos [test_afinador2.py](tests/e2e/test_afinador2.py) (4: `bfFreqToNote` con
+A4 param y cents que cambian con la referencia; `bfTuneStatus`; selector persiste tras recarga;
+indicador grande pinta estado y la nota es grande) + `test_player` (afinador del player intacto) +
+`test_detalles_pulido` (aguja atenuada en reposo) + **visual en preview** (La4 grande coral, "♭ Bajo",
+-12 cents, aguja desviada, selector) + `run_checks` completo. `cachebust` al día. Sin migración.
 
 ---
 

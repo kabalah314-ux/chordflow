@@ -44,9 +44,11 @@
     }
 
     // Hz → nota más cercana + desvío en cents (negativo = bajo, positivo = alto).
-    function freqToNote(freq) {
+    // T-V5-14: `a4` opcional (referencia de afinación, default 440) → selector La4 en la sección.
+    function freqToNote(freq, a4) {
         if (!freq || freq <= 0) return null;
-        const midi = 12 * Math.log2(freq / 440) + 69;     // A4 = 440 Hz = MIDI 69
+        const ref = a4 || 440;
+        const midi = 12 * Math.log2(freq / ref) + 69;     // La4 = `ref` Hz = MIDI 69
         const rounded = Math.round(midi);
         const cents = Math.round((midi - rounded) * 100);
         const name = NOTE_NAMES[((rounded % 12) + 12) % 12];
@@ -54,9 +56,16 @@
         return { name, octave, cents, freq };
     }
 
+    // T-V5-14: clasificación del desvío para el indicador grande (pura, testeable).
+    function tuneStatus(cents) {
+        if (Math.abs(cents) <= 5) return 'ok';
+        return cents < 0 ? 'low' : 'high';
+    }
+
     // Exponer las funciones puras (testeables sin micrófono).
     window.bfDetectPitch = autoCorrelate;
     window.bfFreqToNote = freqToNote;
+    window.bfTuneStatus = tuneStatus;
 
     // --- UI + micrófono ---------------------------------------------------------
     const btn = document.getElementById('btn-tuner');
@@ -69,24 +78,61 @@
     const elNeedle = document.getElementById('tuner-needle');
     const elStart = document.getElementById('tuner-start');
     const elMsg = document.getElementById('tuner-msg');
+    const elStatus = document.getElementById('tuner-status');   // T-V5-14: indicador grande (solo sección)
+    const elA4 = document.getElementById('tuner-a4');           // T-V5-14: selector de referencia (solo sección)
 
     let audioCtx = null, analyser = null, rafId = null, stream = null, running = false;
 
-    function setReadout(note) {
-        if (!note) { elNote.textContent = '—'; elCents.textContent = ''; if (elNeedle) elNeedle.style.left = '50%'; return; }
-        elNote.textContent = note.name + note.octave;
-        elCents.textContent = (note.cents > 0 ? '+' : '') + note.cents + ' cents';
-        const within = Math.abs(note.cents) <= 5;
-        elNote.style.color = within ? 'var(--success-color, #2dd4a7)' : 'var(--accent-color)';
-        if (elNeedle) elNeedle.style.left = Math.max(0, Math.min(100, 50 + note.cents)) + '%';
+    // T-V5-14: referencia La4 configurable, persistida y compartida en el dispositivo (la usa
+    // también el panel del player, que no tiene selector: quien afina a 442 afina a 442 en todo).
+    const A4_KEY = 'bf-tuner-a4';
+    let a4 = parseInt(localStorage.getItem(A4_KEY), 10);
+    if (!(a4 >= 400 && a4 <= 480)) a4 = 440;
+    if (elA4) {
+        elA4.value = String(a4);
+        elA4.addEventListener('change', () => {
+            a4 = parseInt(elA4.value, 10) || 440;
+            localStorage.setItem(A4_KEY, String(a4));
+        });
     }
+
+    // T-V5-14: aguja fluida — media móvil exponencial de los cents mientras la nota no cambie
+    // (la autocorrelación tiembla frame a frame; el EMA la calma sin retrasar el cambio de nota).
+    let smoothCents = null, lastNoteKey = null;
+
+    function setReadout(note) {
+        if (!note) {
+            elNote.textContent = '—'; elCents.textContent = '';
+            if (elNeedle) elNeedle.style.left = '50%';
+            if (elStatus) { elStatus.textContent = ''; elStatus.className = 'tuner-status'; }
+            smoothCents = null; lastNoteKey = null;
+            return;
+        }
+        const key = note.name + note.octave;
+        if (key !== lastNoteKey) { smoothCents = note.cents; lastNoteKey = key; }
+        else smoothCents = smoothCents * 0.65 + note.cents * 0.35;
+        const cents = Math.round(smoothCents);
+
+        elNote.textContent = note.name + note.octave;
+        elCents.textContent = (cents > 0 ? '+' : '') + cents + ' cents';
+        const status = tuneStatus(cents);
+        elNote.style.color = status === 'ok' ? 'var(--success-color, #2dd4a7)' : 'var(--accent-color)';
+        if (elNeedle) elNeedle.style.left = Math.max(0, Math.min(100, 50 + cents)) + '%';
+        if (elStatus) {
+            elStatus.textContent = status === 'ok' ? '✓ Afinado' : status === 'low' ? '♭ Bajo' : '♯ Alto';
+            elStatus.className = 'tuner-status tuner-status--' + status;
+        }
+    }
+
+    // Hook para consola/tests: pinta una lectura sin micrófono (p. ej. bfTunerReadout(bfFreqToNote(438))).
+    window.bfTunerReadout = setReadout;
 
     function loop() {
         if (!running || !analyser) return;
         const buf = new Float32Array(analyser.fftSize);
         analyser.getFloatTimeDomainData(buf);
         const freq = autoCorrelate(buf, audioCtx.sampleRate);
-        if (freq > 0) setReadout(freqToNote(freq));
+        if (freq > 0) setReadout(freqToNote(freq, a4));
         rafId = requestAnimationFrame(loop);
     }
 
