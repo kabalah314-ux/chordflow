@@ -41,8 +41,8 @@ async function loadBands() {
             const ev = nextByBand[b.id];
             const songs = b.song_count || 0;
             return `
-            <div class="song-card band-card" data-id="${escapeHtml(b.id)}">
-                <div class="card-main" data-act="open" style="cursor:pointer;">
+            <div class="song-card band-card${b.cover_url ? ' band-card--cover' : ''}" data-id="${escapeHtml(b.id)}"${b.cover_url ? ` style='--band-cover:url("${b.cover_url}")'` : ''}>
+                <div class="card-main" data-act="open" style="cursor:pointer;" role="link" tabindex="0" aria-label="Abrir ${escapeHtml(b.name)}">
                     <div class="band-card__head">
                         ${bfAvatar({ url: b.avatar_url, name: b.name, color: bandColor(b.id) })}
                         <div style="min-width:0;">
@@ -51,13 +51,19 @@ async function loadBands() {
                         </div>
                     </div>
                     ${ev ? `<p class="band-card__next">${bfEventIcon(ev.type, 14)} ${escapeHtml(ev.title)} <small>${escapeHtml(fmtDate(ev.starts_at))}</small></p>` : ''}
+                    ${(b.member_names || []).length ? `<div class="band-card__people" title="${escapeHtml(b.member_names.join(', '))}">${b.member_names.map(n =>
+                        `<span class="bf-avatar bf-avatar--sm" style="background:${bandColor(n)};color:#fff;">${escapeHtml(initialsFrom(n) || '·')}</span>`).join('')}
+                        ${b.member_count > b.member_names.length ? `<span class="bf-faint">+${b.member_count - b.member_names.length}</span>` : ''}</div>` : ''}
                 </div>
             </div>`;
         }).join('');
         // La ficha de banda vive ahora en band.html (espacio de banda con pestañas, T-075).
-        elGrid.querySelectorAll('.song-card').forEach(card =>
-            card.querySelector('[data-act="open"]').addEventListener('click',
-                () => { window.location.href = `band.html?id=${encodeURIComponent(card.dataset.id)}`; }));
+        elGrid.querySelectorAll('.song-card').forEach(card => {
+            const open = card.querySelector('[data-act="open"]');
+            const go = () => { window.location.href = `band.html?id=${encodeURIComponent(card.dataset.id)}`; };
+            open.addEventListener('click', go);
+            open.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });   // T-V6-59
+        });
     } catch (e) {
         elGrid.innerHTML = `<p class="loading-text">No se pudieron cargar las bandas.</p>`;
     }

@@ -388,6 +388,8 @@ class BandSummary(BaseModel):
     role: Literal["admin", "member", "guest"]  # mi rol en esta banda
     member_count: int = 0
     song_count: int = 0  # nº de canciones de la banda (T-132, agregado en list_my_bands)
+    cover_url: Optional[str] = None  # T-V6-44: tarjeta con fondo
+    member_names: List[str] = []     # T-V6-44: miembros apilados (hasta 4 nombres)
 
     model_config = ConfigDict(from_attributes=True)
 

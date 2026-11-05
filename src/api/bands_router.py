@@ -119,11 +119,21 @@ def list_my_bands(db: Session = Depends(get_db), user_id: str = Depends(get_curr
     band_ids = [b.id for b, _ in rows]
     counts = _active_member_counts(db, band_ids)
     scounts = _song_counts(db, band_ids)
+    # T-V6-44: nombres de algunos miembros para la tarjeta (una sola consulta)
+    names_by_band: dict = {}
+    for bid_, name_ in (db.query(BandMembership.band_id, MusicianProfile.display_name)
+                        .join(MusicianProfile, MusicianProfile.id == BandMembership.user_id)
+                        .filter(BandMembership.band_id.in_(band_ids or [""]),
+                                BandMembership.status == "active").all()):
+        if name_:
+            names_by_band.setdefault(bid_, []).append(name_)
     return [
         BandSummary(
             id=b.id,
             name=b.name,
             avatar_url=b.avatar_url,
+            cover_url=b.cover_url,
+            member_names=names_by_band.get(b.id, [])[:4],
             plan=b.plan,
             role=role,
             member_count=counts.get(b.id, 0),
