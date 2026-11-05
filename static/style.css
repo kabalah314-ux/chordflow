@@ -1646,3 +1646,6 @@ kbd {
   body.bf-print-setlist .bf-sl-insights__warn { display: none !important; }
   body.bf-print-setlist .setlist-song .sl-title { font-size: 20pt; color: #000; }
 }
+/* T-V6-91: modo "solo letra" (cantantes) */
+.view-lyrics .chord-container, .view-lyrics .line-chord-only, .view-lyrics .line-tab, .view-lyrics .chord-pill { display: none !important; }
+.view-lyrics .line-lyric { line-height: 1.6; padding-top: 0 !important; }

@@ -844,7 +844,7 @@
 - [x] **T-V6-84** Modo ensayo
 - [x] **T-V6-86** Hoja del bolo (campos + checklist + página pública imprimible)
 - [x] **T-V6-87** Modo práctica (referencia por sección, bucle, tempo %)
-- [ ] **T-V6-91** Importar desde texto de WhatsApp / PDF; modo solo letra
+- [x] **T-V6-91** Importar desde texto de WhatsApp / PDF; modo solo letra
 - [x] **T-V6-93** Resumen de temporada
 - [x] **T-V6-94** Feedback in-app + eventos de producto (`product_events`)
 - [x] **T-V6-95** Gastos recurrentes con reparto por defecto

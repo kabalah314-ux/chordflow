@@ -525,6 +525,7 @@ async function loadMyKey(songId) {
         const res = await apiFetch(`/songs/${encodeURIComponent(songId)}/my-prefs`);
         if (!res.ok) return;
         const p = await res.json();
+        if (currentSong && currentSong.id === songId) applyViewPrefs(p);   // T-V6-91/55
         if (currentSong && currentSong.id === songId && p.transpose) {
             transposeOffset = Math.max(-11, Math.min(11, p.transpose));
             applyTranspose();
@@ -669,14 +670,29 @@ if (elBtnPractice) elBtnPractice.addEventListener('click', async () => {
               ${[0.5, 0.75, 0.9, 1].map(t => `<label class="bf-chip"><input type="radio" name="pr-tempo" value="${t}" ${practice.tempo === t ? 'checked' : ''}> ${Math.round(t * 100)} %</label>`).join('')}</div></div>
             <div><label class="bf-label" for="pr-loop">Repetir una sección</label>
               <select class="bf-input" id="pr-loop"><option value="">— Canción entera —</option>${opts}</select></div>
+            <div><span class="bf-label">Vista (solo para ti)</span><div class="bf-row bf-wrap" style="gap:.4rem;">
+              <label class="bf-chip"><input type="radio" name="pr-view" value="full" ${viewPrefs.view_mode !== 'lyrics' ? 'checked' : ''}> Letra y acordes</label>
+              <label class="bf-chip"><input type="radio" name="pr-view" value="lyrics" ${viewPrefs.view_mode === 'lyrics' ? 'checked' : ''}> Solo letra</label></div></div>
+            <div><label class="bf-label" for="pr-size">Tamaño de letra: <span id="pr-size-v">${Math.round(viewPrefs.font_scale * 100)} %</span></label>
+              <input type="range" id="pr-size" min="0.7" max="2.2" step="0.1" value="${viewPrefs.font_scale}" style="width:100%;"></div>
             <p class="bf-faint" style="font-size:.85rem;">Al repetir una sección, el reproductor vuelve a su inicio cada vez que acaba. Sin tocar tu tempo guardado.</p>
           </div>`,
         actions: [{ label: 'Quitar práctica', value: 'off' }, { label: 'Aplicar', primary: true, onClick: (root) => ({
             tempo: Number((root.querySelector('input[name="pr-tempo"]:checked') || {}).value || 1),
-            loop: root.querySelector('#pr-loop').value }) }],
+            loop: root.querySelector('#pr-loop').value,
+            view: (root.querySelector('input[name="pr-view"]:checked') || {}).value || 'full',
+            size: Number(root.querySelector('#pr-size').value) || 1 }) }],
+        onMount: (root) => {
+            const r = root.querySelector('#pr-size'), v = root.querySelector('#pr-size-v');
+            r.addEventListener('input', () => { v.textContent = Math.round(Number(r.value) * 100) + ' %'; });
+        },
     });
     if (!r) return;
     if (r === 'off') { practiceReset(); toast('Práctica desactivada.', 'info'); return; }
+    if (r.view !== viewPrefs.view_mode || r.size !== viewPrefs.font_scale) {
+        applyViewPrefs({ view_mode: r.view, font_scale: r.size });
+        saveViewPrefs();
+    }
     practice.tempo = r.tempo;
     engine.state.tempoMultiplier = r.tempo;
     practice.loop = r.loop === '' ? null : { idx: Number(r.loop), ...sectionRanges[Number(r.loop)] };
@@ -706,4 +722,32 @@ if (elBtnMaterial) elBtnMaterial.addEventListener('click', async () => {
             : `<p class="bf-muted">Esta canción aún no tiene material. ${currentSong.band_id ? 'Añade PDFs, audios o enlaces desde el Repertorio de la banda (botón de carpeta).' : ''}</p>`,
         actions: [{ label: 'Cerrar', value: null }],
     });
+});
+
+
+// ── T-V6-91 / T-V6-55: "solo letra" (para cantantes) y tamaño de letra, guardados por músico ──
+const viewPrefs = { view_mode: 'full', font_scale: 1 };
+function applyViewPrefs(p) {
+    viewPrefs.view_mode = (p && p.view_mode) || 'full';
+    viewPrefs.font_scale = (p && p.font_scale) || 1;
+    if (!elScoreContent) return;
+    elScoreContent.classList.toggle('view-lyrics', viewPrefs.view_mode === 'lyrics');
+    elScoreContent.style.fontSize = viewPrefs.font_scale === 1 ? '' : `${viewPrefs.font_scale}em`;
+}
+function saveViewPrefs() {
+    if (!currentSong) return;
+    apiFetch(`/songs/${encodeURIComponent(currentSong.id)}/my-prefs`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ view_mode: viewPrefs.view_mode, font_scale: viewPrefs.font_scale }),
+    }).catch(() => {});
+}
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + "+" / "-" cambian el tamaño de la letra (no el zoom de la página)
+    if (!(e.ctrlKey || e.metaKey) || !currentSong) return;
+    if (e.key === '+' || e.key === '=' || e.key === '-') {
+        e.preventDefault();
+        const d = e.key === '-' ? -0.1 : 0.1;
+        applyViewPrefs({ view_mode: viewPrefs.view_mode, font_scale: Math.round(Math.max(0.7, Math.min(2.2, viewPrefs.font_scale + d)) * 10) / 10 });
+        saveViewPrefs();
+    }
 });

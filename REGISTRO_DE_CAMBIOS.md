@@ -46,6 +46,10 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Importar desde PDF y "solo letra" (T-V6-91) · tamaño de letra por músico (parte de T-V6-55)
+- **Qué:** editor: "Sacar el texto de un PDF" (pdf.js bajo demanda; reconstruye líneas y columnas para que los acordes queden sobre la sílaba; hasta 20 páginas). Pegar texto de WhatsApp ya lo cubría el parser. Reproductor ("P"): vista **Solo letra** para cantantes y **tamaño de letra** (también Ctrl/Cmd + / −), guardados por músico en `my-prefs`.
+- **Verificación:** `node --check`; la persistencia de `view_mode`/`font_scale` la cubre `test_mis_preferencias_por_cancion`.
+
 ### V6 — Recordatorios 24 h (T-V6-89, sin email)
 - **Qué:** `GET /internal/cron/reminders` (protegida por `CRON_SECRET`; sin él, 404) y Vercel Cron diario a las 08:00 UTC en `vercel.json`. Avisa en la app a quien aún no ha respondido a los eventos de las próximas 12–36 h y a los admins de cuántos faltan. Idempotente. El email (proveedor D-V6-7) queda para cuando Oscar elija proveedor: el punto de enganche es `send_reminders()`.
 - **Pendiente de Oscar:** crear la variable `CRON_SECRET` en Vercel (cualquier texto largo) al desplegar.

@@ -664,3 +664,74 @@ if (elBtnClose) elBtnClose.addEventListener('click', async (e) => {
     const session = await requireAuth();
     if (session) initEditor();
 })();
+
+
+// ─── T-V6-91: texto de un PDF (cancionero, hoja de acordes) → editor ─────────
+// pdf.js se carga bajo demanda (solo si se usa). Se reconstruyen las líneas por su altura y las
+// columnas por la posición X, para que los acordes queden encima de la sílaba como en el PDF.
+const elImportPdf = document.getElementById('import-pdf');
+const elBtnImportPdf = document.getElementById('btn-import-pdf');
+const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+function loadPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    return new Promise((resolve, reject) => {
+        const sc = document.createElement('script');
+        sc.src = PDFJS + 'pdf.min.js';
+        sc.crossOrigin = 'anonymous';
+        sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; resolve(window.pdfjsLib); };
+        sc.onerror = () => reject(new Error('No se pudo cargar el lector de PDF (¿sin conexión?).'));
+        document.head.appendChild(sc);
+    });
+}
+async function pdfToText(file) {
+    const lib = await loadPdfJs();
+    const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const out = [];
+    for (let p = 1; p <= Math.min(pdf.numPages, 20); p++) {
+        const page = await pdf.getPage(p);
+        const tc = await page.getTextContent();
+        const items = tc.items.filter(it => it.str && it.str.trim());
+        const cw = items.reduce((a, it) => a + (it.width / Math.max(1, it.str.length)), 0) / Math.max(1, items.length) || 5;
+        const rows = {};
+        items.forEach(it => {
+            const y = Math.round(it.transform[5] / 2) * 2;
+            (rows[y] = rows[y] || []).push(it);
+        });
+        Object.keys(rows).map(Number).sort((a, b) => b - a).forEach(y => {
+            let line = '';
+            rows[y].sort((a, b) => a.transform[4] - b.transform[4]).forEach(it => {
+                const col = Math.max(0, Math.round(it.transform[4] / cw));
+                if (line.length < col) line += ' '.repeat(col - line.length);
+                else if (line.length && !line.endsWith(' ')) line += ' ';
+                line += it.str;
+            });
+            out.push(line.replace(/\s+$/, ''));
+        });
+        out.push('');
+    }
+    // Quita la sangría común (margen del PDF)
+    const indent = Math.min(...out.filter(l => l.trim()).map(l => l.match(/^ */)[0].length));
+    return out.map(l => l.slice(Number.isFinite(indent) ? indent : 0)).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+if (elBtnImportPdf) elBtnImportPdf.addEventListener('click', () => elImportPdf && elImportPdf.click());
+if (elImportPdf) elImportPdf.addEventListener('change', async () => {
+    const file = elImportPdf.files && elImportPdf.files[0];
+    if (!file) return;
+    const label = elBtnImportPdf.textContent;
+    elBtnImportPdf.disabled = true;
+    elBtnImportPdf.textContent = 'Leyendo el PDF…';
+    try {
+        const text = await pdfToText(file);
+        if (!text) throw new Error('El PDF no tiene texto (¿es una foto escaneada? Prueba con "foto a una hoja").');
+        elRawText.value = text;
+        editorDirty = true;
+        updatePreview();
+        toast('Texto del PDF importado. Revisa que los acordes queden encima de la letra.', 'success');
+    } catch (err) {
+        toast(err.message || 'No se pudo leer el PDF.', 'error');
+    } finally {
+        elBtnImportPdf.disabled = false;
+        elBtnImportPdf.textContent = label;
+        elImportPdf.value = '';
+    }
+});
