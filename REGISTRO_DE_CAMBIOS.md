@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Tipografía única IBM Plex sin @import (parte de T-V6-31)
+- **Qué:** se retira Inter/Roboto (se descargaban y no se usaban) y los dos `@import` de Google Fonts en CSS (bloqueaban el pintado y estaban duplicados): cada página carga IBM Plex Sans/Mono con un `<link>` + `preconnect`. El editor usa la fuente mono del sistema de diseño. Autoalojar las fuentes queda pendiente (la red de esta sesión no permite descargarlas).
+
 ### V6 — Mis bandas con tarjetas de fondo y miembros (T-V6-44) · accesibilidad de pestañas y tarjetas (parte de T-V6-59)
 - **Qué:** `GET /bands/` devuelve `cover_url` y hasta 4 nombres de miembros; las tarjetas muestran el fondo de la banda y los miembros apilados, y se abren con Enter/Espacio. Pestañas de banda con el patrón ARIA (flechas, Inicio/Fin, `tabindex` itinerante, `aria-controls`, paneles `tabpanel`). Modales clásicos con foco atrapado y devuelto.
 

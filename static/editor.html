@@ -8,12 +8,13 @@
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Nueva Partitura - BandFlow Editor</title>
-    <link rel="stylesheet" href="design-system.css?v=37136983">
-    <link rel="stylesheet" href="style.css?v=36977ddc">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css?v=ddc8d214">
+    <link rel="stylesheet" href="style.css?v=78d241e6">
     <!-- T-V5-04: el editor respeta el tema claro/oscuro elegido en el shell (design-system + style.css
          ya heredan los tokens bf-*). El reproductor NO carga esto (siempre oscuro, D-EST-2). -->
     <script src="theme.js?v=5283f341"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="bf-legacy-themed">
     <div id="app">
@@ -102,7 +103,7 @@
                         <p class="help-text">O pega la canción directamente desde <strong>Ultimate Guitar</strong>, <strong>LaCuerda.net</strong> o cualquier web de partituras. Detecta solo los acordes sobre la letra. <strong>La vista previa de la derecha te muestra cómo quedará.</strong></p>
                     </div>
                     <div class="editor-split">
-                        <textarea id="raw-text" required style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.6; white-space: pre;" placeholder="Intro:&#10;: F#m : C#7 : D :&#10;&#10;Verso 1:&#10;        Am          F&#10;Today is gonna be the day&#10;        C           G&#10;That they throw it back to you" rows="18"></textarea>
+                        <textarea id="raw-text" required style="font-family: var(--bf-font-mono, monospace); font-size: 0.85rem; line-height: 1.6; white-space: pre;" placeholder="Intro:&#10;: F#m : C#7 : D :&#10;&#10;Verso 1:&#10;        Am          F&#10;Today is gonna be the day&#10;        C           G&#10;That they throw it back to you" rows="18"></textarea>
                         <div class="preview-pane">
                             <div class="preview-label">Vista previa</div>
                             <div id="preview-content" class="preview-content">

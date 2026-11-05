@@ -1,5 +1,5 @@
 /* Fuentes BandFlow (reskin T-081): IBM Plex, como el design-system. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+/* T-V6-31: las fuentes se cargan con <link> en cada página (antes @import duplicado y bloqueante). */
 
 :root {
     /* Paleta BandFlow (reskin T-081): acento coral, fondo casi-negro, IBM Plex.

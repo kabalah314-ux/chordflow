@@ -16,7 +16,7 @@
 
 /* Fuentes BandFlow (Fase A): IBM Plex Sans (UI) + IBM Plex Mono (datos/acordes/importes).
    El design-system es autocontenido: las fuentes viajan con él allá donde se enlace. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+/* T-V6-31: las fuentes se cargan con <link> en cada página (antes @import duplicado y bloqueante). */
 
 /* ── Tokens ─────────────────────────────────────────────────────────────── */
 :root {
