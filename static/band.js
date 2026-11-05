@@ -424,6 +424,46 @@
         loadTours(isAdmin);
     }
 
+    // T-V6-42g: editar / borrar la gira (nombre, estado, fechas, notas)
+    function wireTourAdmin(detail, tour, concerts, isAdmin) {
+        const ed = detail.querySelector('#b-tour-edit');
+        if (ed) ed.addEventListener('click', async () => {
+            const toLocal = (iso) => iso ? String(iso).slice(0, 10) : '';
+            const r = await bfDialog({
+                title: 'Editar gira',
+                body: `<div class="bf-stack">
+                    <div><label class="bf-label" for="tr-name">Nombre</label><input class="bf-input" id="tr-name" maxlength="255" value="${escapeHtml(tour.name)}"></div>
+                    <div class="bf-form-grid">
+                      <div><label class="bf-label" for="tr-status">Estado</label><select class="bf-input" id="tr-status">${Object.entries(TOUR_STATUS).map(([k, l]) => `<option value="${k}"${tour.status === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+                      <div><label class="bf-label" for="tr-start">Inicio</label><input class="bf-input" type="date" id="tr-start" value="${escapeHtml(toLocal(tour.start_date))}"></div>
+                      <div><label class="bf-label" for="tr-end">Fin</label><input class="bf-input" type="date" id="tr-end" value="${escapeHtml(toLocal(tour.end_date))}"></div>
+                    </div>
+                    <div><label class="bf-label" for="tr-notes">Notas</label><textarea class="bf-textarea" id="tr-notes" rows="3">${escapeHtml(tour.notes || '')}</textarea></div></div>`,
+                actions: [{ label: 'Cancelar', value: null }, { label: 'Guardar', primary: true, onClick: (root) => ({
+                    name: root.querySelector('#tr-name').value.trim() || tour.name,
+                    status: root.querySelector('#tr-status').value,
+                    start_date: root.querySelector('#tr-start').value ? root.querySelector('#tr-start').value + 'T00:00:00' : null,
+                    end_date: root.querySelector('#tr-end').value ? root.querySelector('#tr-end').value + 'T00:00:00' : null,
+                    notes: root.querySelector('#tr-notes').value.trim() || null }) }],
+            });
+            if (!r) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/tours/${tour.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(r) });
+                if (!res.ok) throw new Error('http');
+                renderTourDetail(detail, await res.json(), concerts, isAdmin);
+            } catch (e) { toast('No se pudo guardar la gira.', 'error'); }
+        });
+        const del = detail.querySelector('#b-tour-del');
+        if (del) del.addEventListener('click', async () => {
+            if (!(await confirmModal('¿Borrar esta gira? Los conciertos se quedan en la agenda.', { okText: 'Borrar' }))) return;
+            try {
+                const res = await apiFetch(`/bands/${bandId}/tours/${tour.id}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                backToTours(isAdmin);
+            } catch (e) { toast('No se pudo borrar la gira.', 'error'); }
+        });
+    }
+
     function renderTourDetail(detail, tour, concerts, isAdmin) {
         const stops = (tour.stops || []).map(s => `
             <li class="setlist-song">
@@ -449,6 +489,8 @@
                     <div class="bf-band-banner__name">${escapeHtml(tour.name)}</div>
                     <div class="bf-band-banner__meta">${escapeHtml(TOUR_STATUS[tour.status] || tour.status)} · Presupuesto estimado: <span class="bf-num">${money(tour.total_budget)}</span> · Caché conciertos: <span class="bf-num">${money(tour.total_fee)}</span></div>
                 </div>
+                ${isAdmin ? `<span class="bf-row" style="gap:.4rem;"><button class="bf-btn bf-btn--sm" id="b-tour-edit">${bfIco('edit', 14)} Editar</button>
+                    <button class="bf-btn bf-btn--sm bf-btn--danger" id="b-tour-del">${bfIco('trash', 14)} Borrar</button></span>` : ''}
             </div>
 
             <div class="bf-card bf-stack" style="margin-bottom:1rem;">
@@ -472,6 +514,7 @@
             </div>`;
 
         document.getElementById('b-tour-back').addEventListener('click', () => backToTours(isAdmin));
+        wireTourAdmin(detail, tour, concerts, isAdmin);   // T-V6-42g
         const reopen = () => openTour(tour.id, isAdmin);
 
         const addStop = document.getElementById('b-add-stop');
