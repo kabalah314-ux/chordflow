@@ -1,0 +1,11 @@
+# T-V6-22: avisos semanales de dependencias (pip y GitHub Actions). Las subidas se revisan a mano.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    open-pull-requests-limit: 3

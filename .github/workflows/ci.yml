@@ -46,6 +46,13 @@ jobs:
       - name: Tests unitarios (API + lógica)
         run: python -m pytest tests/unit -m unit -q
 
+      # T-V6-22: vulnerabilidades conocidas en las dependencias de runtime (aviso, no bloquea aún)
+      - name: Auditoría de dependencias (pip-audit)
+        continue-on-error: true
+        run: |
+          python -m pip install pip-audit==2.7.3
+          python -m pip_audit -r requirements.txt --progress-spinner off
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 25

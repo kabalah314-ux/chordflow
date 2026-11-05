@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — README, SECURITY, Dependabot y pip-audit (T-V6-22, T-V6-30)
+- **Qué:** `README.md` (qué es, cómo arrancar, estructura, variables, despliegue con migraciones), `SECURITY.md` (cómo avisar de un fallo y reglas de aislamiento/plano público), `.github/dependabot.yml` (pip + Actions semanal) y paso `pip-audit` en CI (informativo). El `.gitignore` ya ignoraba `.env.*`. El lockfile con hashes queda para cuando se pueda instalar `pip-tools` (red de instalación cerrada en esta sesión).
+
 ### V6 — Primeros pasos de una banda (T-V6-64) · pantalla encendida al tocar (parte de T-V6-57)
 - **Qué:** en el Resumen de una banda nueva (admin), tarjeta "Primeros pasos" con 3 pasos que se tachan solos: invitar (enlace), primer ensayo (votación de fechas) y añadir canciones; desaparece al completarlos. Reproductor: **Screen Wake Lock** mientras suena (el móvil no se bloquea a mitad de canción), recuperado al volver a la pestaña.
 - **Verificación:** `node --check`; e2e del Resumen existentes.

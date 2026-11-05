@@ -777,7 +777,7 @@
 - [ ] **T-V6-18** Contrato de fechas UTC de punta a punta (columnas tz-aware o `Z` en serialización, validador común, `toISOString()` en el front, test cruzando zonas)
 - [x] **T-V6-19** Lote backend medio: `active_membership()` único con `Band.deleted_at`; liquidaciones a ex-miembros; `reference_url` al copiar; búsqueda por `norm_*`; `plan` fuera del PATCH; `load_dotenv(override=True)`; longitudes espejo + test en PG; `IntegrityError` en perfil; `except HTTPException: raise` en `get_db`
 - [x] **T-V6-21** CI como gate: SHA-pin, `permissions`, `concurrency`, jobs lint+unit / e2e / migraciones-PG, artefactos en fallo, branch protection con required check antes del auto-deploy
-- [ ] **T-V6-22** Lockfile con hashes, `requirements-dev` pineado, `pip-audit`, Dependabot, `.gitignore` `.env.*`
+- [x] **T-V6-22** Lockfile con hashes, `requirements-dev` pineado, `pip-audit`, Dependabot, `.gitignore` `.env.*`
 - [ ] **T-V6-23** Migración `147a6a78da86` válida en PG; job CI con Postgres (`upgrade head` + `check` + `downgrade base`)
 - [ ] **T-V6-24** Estáticos servidos por Vercel con `Cache-Control: immutable`; la función solo para la API; medir cold start antes/después
 - [ ] **T-V6-25** Tooling JS: `package.json`, ESLint, `tsc --checkJs` + JSDoc, Vitest para módulos puros; integrado en `run_checks.py`; `test_js_logic.py` deja de usar Chromium
@@ -785,7 +785,7 @@
 - [x] **T-V6-27** Gate de aislamiento derivado de `app.routes` (+ dueño no-404) y gate de rol `guest`; `acting_as` fixture; SQLite en memoria; `pytest-randomly`; e2e herméticos (`page.route` CDN)
 - [ ] **T-V6-28** JWT local con JWKS (`exp`, `aud`), gracia solo ante error de red; Supabase remoto como fallback
 - [ ] **T-V6-29** `X-Request-ID`, logs JSON a stdout, Sentry back+front (DSN de Oscar), UptimeRobot a `/health`, silenciar 4xx en `get_db`
-- [ ] **T-V6-30** README, SECURITY, CHANGELOG; `docs/archive/` para V1–V4 y `directives/`; limpiar emails/refs de docs y test; corregir contradicciones de §13.D; `CLAUDE.md` apunta a V6+V5
+- [x] **T-V6-30** README, SECURITY, CHANGELOG; `docs/archive/` para V1–V4 y `directives/`; limpiar emails/refs de docs y test; corregir contradicciones de §13.D; `CLAUDE.md` apunta a V6+V5
 - [ ] **T-V6-31** Tokens nuevos (§6.2), fuentes autoalojadas, escala tipográfica cerrada, quitar Inter/Roboto y los `@import` duplicados
 - [ ] **T-V6-32** Componentes canónicos (§6.3): botón unificado (legacy → `bf-btn`), icon-btn, segmented, menú ⋯, fila, tarjeta, campo/input/select/textarea, buscador, pestañas, badge, chip, avatar con color estable, toast, empty/error, cabecera de página, topbar móvil con título, KPI, importe, fecha. Página de muestra `static/_components.html` (fuera de nav) para revisarlos en los dos temas
 - [x] **T-V6-33** `bfDialog()` único (focus trap, Escape, foco de vuelta, hoja inferior en móvil) y migración de los 9 modales; `confirm()` con foco en Cancelar; "Deshacer" en quitar de setlist
