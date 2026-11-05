@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Navegación: pestañas de banda enlazables y "una banda = menos clics" (T-V6-90, T-V6-42a parcial)
+- **Qué:** las pestañas del espacio de banda viven en el hash (`band.html?id=…#agenda`): se pueden enlazar desde avisos, compartir y el botón atrás funciona; `#ev=<id>` abre la Agenda. Con **una sola banda**, el lateral muestra sus secciones (Agenda, Canciones, Setlists, Finanzas, Chat) directamente bajo la banda. Se descarta redirigir Inicio a la banda (rompería enlaces y tests) y se mantienen las 9 pestañas: la fusión a 7 queda en la guía como mejora visual.
+
 ### V6 — Modo setlist in-page: "Siguiente: …" y parada al final (T-V6-56) · Wake Lock sin reintentos
 - **Qué:** la barra del setlist del reproductor muestra "Siguiente: <título>". Al llegar al último pulso la reproducción se detiene (antes el reloj seguía contando) y, en un setlist, avisa de la siguiente y hace latir el botón ▶ (→/PageDown de la pedalera también pasa). Controlado desde fuera del motor; con "repetir sección" activo no se para. Wake Lock: una sola petición a la vez y sin reintentos si el navegador lo niega.
 

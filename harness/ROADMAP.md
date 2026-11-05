@@ -795,7 +795,7 @@
 - [ ] **T-V6-37** Retirar `style.css` por partes → `components.css` + `player.css` + `editor.css`; cero `style=""` inline en plantillas (utilidades `.bf-stack--*`)
 - [ ] **T-V6-40** Login (dos columnas, pestañas Entrar/Crear, Google oficial, mostrar contraseña) + `reset.html` + Términos/Privacidad
 - [x] **T-V6-41** Join (tarjeta centrada, estados inválida/caducada, login conservando código)
-- [ ] **T-V6-42a** Espacio de banda: cabecera con cover, pestañas con contador + hash, onboarding una sola vez (persistido en perfil)
+- [x] **T-V6-42a** Espacio de banda: cabecera con cover, pestañas con contador + hash, onboarding una sola vez (persistido en perfil)
 - [ ] **T-V6-42b** Agenda de banda: filas 56 px + segmented + ⋯ + panel de detalle (`bf-drawer`); Salas a Ajustes
 - [ ] **T-V6-42c** Chat de banda: agrupación, avatar, hora, fijados colapsables, composer, editar propio
 - [ ] **T-V6-42d** Repertorio + Setlists de banda: "Añadir canción" con menú, meta tono/BPM/capo, ⋯, orden, tarjetas de setlist con duración
@@ -832,7 +832,7 @@
 - [ ] **T-V6-73** Dominio propio + HSTS + CSP con nonce (sin `onclick` inline)
 - [x] **T-V6-74** Rate limiting completo (`/invites`, `/public`, `/catalog`) + cuota diaria de IA por usuario
 - [x] **T-V6-75** Índices compuestos reales + migración de limpieza de columnas muertas
-- [ ] **T-V6-90** Una banda = inicio en la banda; 7 pestañas; Giras → agrupación; Explorar tras bandera
+- [x] **T-V6-90** Una banda = inicio en la banda; 7 pestañas; Giras → agrupación; Explorar tras bandera
 - [x] **T-V6-80** Invitación con preview público + `bfShare` (WhatsApp) en invitación/evento/setlist/hoja/votación
 - [x] **T-V6-82** Votación de fechas sin cuenta (`date_polls`) → evento
 - [x] **T-V6-89** Recordatorios 24 h con respuesta por enlace

@@ -617,7 +617,22 @@
             // En móvil, traer la pestaña activa a la vista (T-128).
             tab.scrollIntoView({ inline: 'nearest', block: 'nearest' });
             loadTab(key, ctx);
+            // T-V6-42a/90: la pestaña va en el hash → se puede enlazar (avisos, lateral, compartir)
+            if (location.hash.slice(1).split('=')[0] !== key) history.replaceState(null, '', '#' + key);
         }));
+        // Abrir directamente la pestaña del hash (band.html?id=…#agenda). "#ev=…" (aviso de un
+        // evento) abre la Agenda.
+        window.addEventListener('hashchange', () => {
+            const k = (location.hash || '').slice(1);
+            const t = tabs.find(x => x.dataset.tab === (k.startsWith('ev=') ? 'agenda' : k));
+            if (t && t.getAttribute('aria-selected') !== 'true') t.click();
+        });
+        const want = (location.hash || '').slice(1);
+        const key0 = want.startsWith('ev=') ? 'agenda' : want;
+        if (key0 && key0 !== 'resumen') {
+            const t = tabs.find(x => x.dataset.tab === key0);
+            if (t) t.click();
+        }
     }
 
     init();

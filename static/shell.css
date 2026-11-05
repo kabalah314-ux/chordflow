@@ -268,3 +268,6 @@ html, body { margin: 0; background: var(--bf-bg); }
   .bf-hamburger { display: flex; }
   .bf-shell-main { padding-top: 52px; }
 }
+/* T-V6-90: con una sola banda, sus secciones directas en el lateral */
+.bf-subnav-sections { display: flex; flex-direction: column; margin-left: 1.4rem; border-left: 1px solid var(--bf-border, #333); padding-left: .3rem; }
+.bf-subnav-item--sec { font-size: var(--bf-fs-sm, .875rem); gap: .45rem; }

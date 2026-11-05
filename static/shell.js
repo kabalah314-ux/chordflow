@@ -132,9 +132,17 @@
             wrap.innerHTML = bands.map(b => {
                 const active = onBand && b.id === activeId ? ' active' : '';
                 return `<a class="bf-subnav-item${active}" href="band.html?id=${encodeURIComponent(b.id)}" title="${escapeHtml(b.name)}">
-                    <span class="bf-avatar bf-avatar--sm" style="background:${bandColor(b.id)};color:#fff;">${escapeHtml(initialsFrom(b.name) || '🎸')}</span>
+                    <span class="bf-avatar bf-avatar--sm" style="background:${bandColor(b.id)};color:#fff;">${escapeHtml(initialsFrom(b.name) || 'B')}</span>
                     <span class="bf-subnav-name">${escapeHtml(b.name)}</span></a>`;
             }).join('');
+            // T-V6-90: con UNA sola banda, sus secciones van directas en el lateral (menos clics).
+            if (bands.length === 1) {
+                const b = bands[0];
+                const SEC = [['agenda', 'Agenda', 'calendar'], ['repertorio', 'Canciones', 'music'],
+                             ['setlists', 'Setlists', 'list-music'], ['finanzas', 'Finanzas', 'wallet'], ['chat', 'Chat', 'chat']];
+                wrap.insertAdjacentHTML('beforeend', `<div class="bf-subnav-sections">${SEC.map(([k, l, i]) =>
+                    `<a class="bf-subnav-item bf-subnav-item--sec" href="band.html?id=${encodeURIComponent(b.id)}#${k}">${bfIcon(i, { size: 14 })}<span class="bf-subnav-name">${l}</span></a>`).join('')}</div>`);
+            }
         } catch (e) { /* el lateral funciona sin las sub-bandas */ }
     }
 
