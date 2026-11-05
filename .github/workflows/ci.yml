@@ -55,7 +55,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     needs: lint-unit
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -83,7 +83,7 @@ jobs:
         run: python harness/doctor.py
 
       - name: Tests e2e (navegador)
-        run: python -m pytest tests/e2e -m e2e -q --tracing=retain-on-failure --output=test-results
+        run: python -m pytest tests/e2e -m e2e -v --timeout=120 -o log_cli=false --tracing=retain-on-failure --output=test-results
 
       - name: Guardar diagnóstico si falla
         if: failure()
