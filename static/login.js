@@ -11,7 +11,7 @@ const elBtnGoogle = document.getElementById('btn-google');
 
 function showMsg(text, isError = true) {
     elMsg.textContent = text;
-    elMsg.style.color = isError ? '#ff6b6b' : 'var(--accent-color)';
+    elMsg.style.color = isError ? 'var(--bf-danger, #ff6b6b)' : 'var(--accent-color)';
 }
 
 // Si ya hay sesión activa, ir directo a la biblioteca

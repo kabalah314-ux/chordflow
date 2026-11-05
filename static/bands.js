@@ -421,7 +421,7 @@ async function newTransaction(bandId, members) {
         const asign = sumSplits();
         const ok = total > 0 && Math.abs(asign - total) < 0.005;
         elSum.textContent = `Asignado ${asign.toFixed(2)} € de ${total.toFixed(2)} €` + (ok ? '  ✓' : '');
-        elSum.style.color = ok ? '#5db075' : 'var(--text-secondary)';
+        elSum.style.color = ok ? 'var(--bf-success, #5db075)' : 'var(--text-secondary)';
     };
     // Al pasar a "personalizado", prerrellena a partes iguales (céntimos a los primeros) como
     // punto de partida editable; el usuario ajusta cada importe.

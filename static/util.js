@@ -35,7 +35,7 @@ function bandColor(id, { s = 55, l = 48 } = {}) {
 }
 
 // 1-2 iniciales en mayúscula a partir de un nombre. Devuelve null si no hay nombre:
-// el llamante decide el fallback (p. ej. '🎸' en el avatar de banda).
+// el llamante decide el fallback (p. ej. '·' en el avatar de banda).
 function initialsFrom(name) {
     // Solo palabras que EMPIEZAN por letra/número: "Oscar (tú)" → "O", no "O(" (repaso 2026-07-02).
     const parts = String(name || '').trim().split(/\s+/)
@@ -48,7 +48,7 @@ function initialsFrom(name) {
 // Fuente ÚNICA del render de avatar: si hay `url` (Storage) pinta la foto llenando el círculo;
 // si no, las iniciales sobre el color. `extraCls` p. ej. 'bf-avatar--lg'/'bf-avatar--sm'.
 function bfAvatar({ url, name, color, extraCls = '' } = {}) {
-    const ini = initialsFrom(name) || '🎸';
+    const ini = initialsFrom(name) || '·';
     const inner = url
         ? `<img class="bf-avatar__img" src="${escapeHtml(url)}" alt="${escapeHtml(name || '')}" loading="lazy">`
         : escapeHtml(ini);

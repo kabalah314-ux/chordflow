@@ -22,7 +22,7 @@
         // T-V5-05: avatar coloreado por banda (como el lateral), no un gris plano.
         return `<a class="bf-list-item" href="band.html?id=${encodeURIComponent(c.band_id)}"
                    style="text-decoration:none;color:inherit;">
-            <span class="bf-avatar" aria-hidden="true" style="background:${bandColor(c.band_id)};color:#fff;">${escapeHtml(initialsFrom(c.band_name) || '🎸')}</span>
+            <span class="bf-avatar" aria-hidden="true" style="background:${bandColor(c.band_id)};color:#fff;">${escapeHtml(initialsFrom(c.band_name) || 'B')}</span>
             <span class="bf-grow" style="min-width:0;">
                 <span style="font-weight:var(--bf-fw-semibold);">${escapeHtml(c.band_name)}</span>
                 <span class="bf-muted" style="display:block;font-size:var(--bf-fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${preview}</span>
