@@ -18,6 +18,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
+from ..services import config as _config
 from ..services.auth import get_current_user
 from ..services.band_auth import require_band_member
 from ..services.db import get_db
@@ -25,6 +26,7 @@ from ..services.models import (
     Band,
     BandMembership,
     Event,
+    EventAttendance,
     MusicianProfile,
     Notification,
     Venue,
@@ -167,3 +169,51 @@ def event_ics(band_id: str, event_id: str, db: Session = Depends(get_db),
     body = _calendar([ev], {band_id: band.name}, {ev.venue_id: venue.name} if venue else {})
     return Response(body, media_type="text/calendar; charset=utf-8",
                     headers={"Content-Disposition": f'attachment; filename="evento-{ev.id[:8]}.ics"'})
+
+
+
+# ── Recordatorios 24 h (T-V6-89) ──────────────────────────────────────────────
+def send_reminders(db: Session) -> int:
+    """Avisa a quien aún no ha respondido a un evento de mañana, y a los admins de cuántos faltan.
+    Idempotente: no repite el mismo aviso (usuario + enlace del evento)."""
+    now = _utcnow().replace(tzinfo=None)
+    evs = (db.query(Event).filter(Event.deleted_at.is_(None), Event.status != "cancelled",
+                                  Event.starts_at >= now + timedelta(hours=12),
+                                  Event.starts_at < now + timedelta(hours=36)).all())
+    sent = 0
+    for ev in evs:
+        link = f"band.html?id={ev.band_id}#ev={ev.id}"
+        members = (db.query(BandMembership).filter(BandMembership.band_id == ev.band_id,
+                                                   BandMembership.status == "active").all())
+        answered = {u for (u,) in db.query(EventAttendance.user_id)
+                    .filter(EventAttendance.event_id == ev.id).all()}
+        pending = [m for m in members if m.user_id not in answered]
+        already = {u for (u,) in db.query(Notification.user_id)
+                   .filter(Notification.kind.in_(("reminder", "reminder_admin")),
+                           Notification.link == link).all()}
+        hour = ev.starts_at.strftime("%H:%M")
+        for m in pending:
+            if m.user_id in already:
+                continue
+            db.add(Notification(user_id=m.user_id, band_id=ev.band_id, kind="reminder",
+                                title=f"Mañana {hour}: {ev.title}", body="¿Vas? Responde con un toque.",
+                                link=link))
+            sent += 1
+        if pending:
+            for a in members:
+                if a.role == "admin" and a.user_id not in already:
+                    db.add(Notification(user_id=a.user_id, band_id=ev.band_id,
+                                        kind="reminder_admin",
+                                        title=f"Faltan {len(pending)} por responder: {ev.title}",
+                                        body="Mañana a las " + hour, link=link))
+                    sent += 1
+    db.commit()
+    return sent
+
+
+@router.get("/internal/cron/reminders", include_in_schema=False)
+def cron_reminders(request: Request, db: Session = Depends(get_db)):
+    secret = _config.settings.cron_secret
+    if not secret or request.headers.get("authorization") != f"Bearer {secret}":
+        raise HTTPException(status_code=404, detail="Not Found")
+    return {"sent": send_reminders(db)}

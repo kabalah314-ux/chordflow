@@ -4,10 +4,21 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python",
-      "config": { "includeFiles": "static/**" }
+      "config": {
+        "includeFiles": "static/**"
+      }
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "api/index.py" }
+    {
+      "src": "/(.*)",
+      "dest": "api/index.py"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/internal/cron/reminders",
+      "schedule": "0 8 * * *"
+    }
   ]
 }

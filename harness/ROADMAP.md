@@ -835,7 +835,7 @@
 - [ ] **T-V6-90** Una banda = inicio en la banda; 7 pestañas; Giras → agrupación; Explorar tras bandera
 - [x] **T-V6-80** Invitación con preview público + `bfShare` (WhatsApp) en invitación/evento/setlist/hoja/votación
 - [x] **T-V6-82** Votación de fechas sin cuenta (`date_polls`) → evento
-- [ ] **T-V6-89** Recordatorios 24 h con respuesta por enlace
+- [x] **T-V6-89** Recordatorios 24 h con respuesta por enlace
 - [x] **T-V6-81** Vista por miembro: mi tono / mi cejilla / mi vista / tamaño
 - [x] **T-V6-88** Setlist inteligente + duración
 - [x] **T-V6-85** Adjuntos (PDF de partitura, audio, imagen) + grabadora

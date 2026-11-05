@@ -76,3 +76,31 @@ def test_calendario_ics_con_token_y_evento_suelto(client):
     with acting_as(MEMBER):
         client.delete("/me/calendar-token")
     assert client.get(f"/public/calendar/{tok}.ics").status_code == 404
+
+
+def test_recordatorio_24h_a_quien_no_ha_respondido(client, monkeypatch):
+    from datetime import timedelta
+
+    from src.services import config
+    from src.services.models import _utcnow
+
+    bid = _band(client)
+    when = (_utcnow().replace(tzinfo=None) + timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S")
+    ev = client.post(f"/bands/{bid}/events/", json={"type": "rehearsal", "title": "Ensayo mañana",
+                                                    "starts_at": when}).json()
+    client.put(f"/bands/{bid}/events/{ev['id']}/attendance", json={"status": "yes"})
+    # Sin secreto configurado la ruta no existe
+    assert client.get("/internal/cron/reminders").status_code == 404
+    monkeypatch.setattr(config.settings, "cron_secret", "s3cr3t-cron")
+    assert client.get("/internal/cron/reminders",
+                      headers={"Authorization": "Bearer otro"}).status_code == 404
+    r = client.get("/internal/cron/reminders", headers={"Authorization": "Bearer s3cr3t-cron"})
+    assert r.status_code == 200 and r.json()["sent"] >= 2
+    with acting_as(MEMBER):
+        assert any(n["kind"] == "reminder" for n in client.get("/me/notifications").json()["items"])
+    admin_items = client.get("/me/notifications").json()["items"]
+    assert any(n["kind"] == "reminder_admin" for n in admin_items)
+    assert not any(n["kind"] == "reminder" and "Ensayo mañana" in n["title"] for n in admin_items)
+    # Idempotente
+    r2 = client.get("/internal/cron/reminders", headers={"Authorization": "Bearer s3cr3t-cron"})
+    assert r2.json()["sent"] == 0

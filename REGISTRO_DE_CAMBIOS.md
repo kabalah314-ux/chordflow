@@ -46,6 +46,11 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Recordatorios 24 h (T-V6-89, sin email)
+- **Qué:** `GET /internal/cron/reminders` (protegida por `CRON_SECRET`; sin él, 404) y Vercel Cron diario a las 08:00 UTC en `vercel.json`. Avisa en la app a quien aún no ha respondido a los eventos de las próximas 12–36 h y a los admins de cuántos faltan. Idempotente. El email (proveedor D-V6-7) queda para cuando Oscar elija proveedor: el punto de enganche es `send_reminders()`.
+- **Pendiente de Oscar:** crear la variable `CRON_SECRET` en Vercel (cualquier texto largo) al desplegar.
+- **Verificación:** `test_recordatorio_24h_a_quien_no_ha_respondido`.
+
 ### V6 — Setlist compartible e imprimible (T-V6-63) · Índices compuestos (T-V6-75)
 - **Qué:** migración `f6a7b8c9d0e1`: `setlists.share_token` + índices `events(band_id, starts_at)`, `transactions(band_id, date)`, `messages(band_id, created_at)`, `notifications(user_id, read_at)` (las consultas más frecuentes: agenda, finanzas, chat, avisos). Setlist: "Imprimir" (versión grande para el suelo del escenario) y "Compartir" (enlace de solo lectura `setlist.html?t=`, sin notas internas, revocable) en setlists personales y de banda.
 - **Verificación:** `test_setlist_compartido_sin_notas_y_revocable`; `test_migraciones_en_sync_con_los_modelos`.

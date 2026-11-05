@@ -85,6 +85,9 @@ class Settings(BaseSettings):
     # Cuotas por usuario de las rutas /import/* (gastan IA y red externa).
     chordflow_import_per_minute: int = 10
     chordflow_import_per_day: int = 60
+    # Tareas programadas (Vercel Cron, T-V6-89): Vercel envía `Authorization: Bearer $CRON_SECRET`.
+    # Vacío = las rutas /internal/cron/* no existen (404).
+    cron_secret: str = ""
 
     @property
     def import_allowed_hosts(self) -> list[str]:
