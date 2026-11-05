@@ -163,8 +163,10 @@
                     <p class="bf-muted">Tu cuartel general.</p>
                 </div>
                 ${hero}
+                <div class="bf-card bf-stack" id="home-todo" hidden></div>
                 <div class="bf-grid">${balanceCard}${quickCard}${msgCard}</div>
             </div>`;
+        loadTodo();   // T-V6-43: "Para ti" (asistencias, votaciones y pendientes de todas tus bandas)
 
         // "¿Vas?" del hero: marca asistencia (PUT) y recarga el Inicio.
         const att = document.getElementById('home-att');
@@ -178,6 +180,20 @@
                 load();
             } catch (e) { toast('No se pudo guardar tu asistencia.', 'error'); }
         }));
+    }
+
+    async function loadTodo() {
+        const box = document.getElementById('home-todo');
+        if (!box) return;
+        let items = [];
+        try { const r = await apiFetch('/me/todo'); if (r.ok) items = await r.json(); } catch (e) { return; }
+        if (!items.length) return;
+        const ICON = { attendance: 'calendar', poll: 'help-circle', note: 'note' };
+        box.hidden = false;
+        box.innerHTML = `<div class="bf-row bf-row--between"><h2 class="bf-h3">Para ti</h2><span class="bf-badge">${items.length}</span></div>
+            <div class="bf-list">${items.map(t => `<a class="bf-list-item" href="${escapeHtml(t.href)}" style="text-decoration:none;color:inherit;">
+                ${bfIco(ICON[t.kind] || 'inbox', 16)}<span class="bf-grow">${escapeHtml(t.title)}
+                <span class="bf-faint">· ${escapeHtml(t.band_name || '')}${t.when ? ' · ' + escapeHtml(fmtDate(t.when)) : ''}</span></span></a>`).join('')}</div>`;
     }
 
     load();

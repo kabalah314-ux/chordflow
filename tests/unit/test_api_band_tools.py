@@ -340,3 +340,22 @@ def test_setlist_compartido_sin_notas_y_revocable(client):
     assert "NOTA-SECRETA" not in pub.text
     client.delete(f"/setlists/{sl['id']}/share")
     assert client.get(f"/public/setlists/{tok}").status_code == 404
+
+
+def test_para_ti_reune_lo_pendiente(client):
+    from datetime import timedelta
+
+    from src.services.models import _utcnow
+
+    bid = _band(client)
+    soon = (_utcnow().replace(tzinfo=None) + timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S")
+    client.post(f"/bands/{bid}/events/", json={"type": "rehearsal", "title": "Ensayo pronto",
+                                               "starts_at": soon})
+    client.post(f"/bands/{bid}/polls", json={"title": "Fechas X",
+                                             "options": [{"starts_at": "2099-01-01T10:00:00"}]})
+    client.post(f"/bands/{bid}/notes", json={"body": "Traer el ampli", "assignee_id": MEMBER})
+    with acting_as(MEMBER):
+        kinds = {t["kind"] for t in client.get("/me/todo").json()}
+        assert {"attendance", "poll", "note"} <= kinds
+    with acting_as(STRANGER):
+        assert client.get("/me/todo").json() == []

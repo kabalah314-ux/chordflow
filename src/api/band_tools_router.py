@@ -1051,3 +1051,43 @@ def public_setlist(token: str, request: Request, db: Session = Depends(get_db)):
     return PublicSetlistOut(
         name=sl.name, items=items, duration_sec=sum(known) if known else None,
         band_name=db.query(Band.name).filter(Band.id == sl.band_id).scalar() if sl.band_id else None)
+
+
+# ══ "Para ti" en el Inicio (T-V6-43): lo que espera algo de MÍ en todas mis bandas ══════════
+@router.get("/me/todo")
+def my_todo(db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
+    from datetime import timedelta
+
+    bands = dict(db.query(Band.id, Band.name).join(BandMembership, BandMembership.band_id == Band.id)
+                 .filter(BandMembership.user_id == user_id, BandMembership.status == "active",
+                         Band.deleted_at.is_(None)).all())
+    bids = list(bands) or [""]
+    now = _utcnow().replace(tzinfo=None)
+    out = []
+    # Eventos de los próximos 7 días sin mi respuesta
+    answered = {e for (e,) in db.query(EventAttendance.event_id)
+                .filter(EventAttendance.user_id == user_id).all()}
+    for ev in (db.query(Event).filter(Event.band_id.in_(bids), Event.deleted_at.is_(None),
+                                      Event.status != "cancelled", Event.starts_at >= now,
+                                      Event.starts_at < now + timedelta(days=7))
+               .order_by(Event.starts_at).limit(20)):
+        if ev.id not in answered:
+            out.append({"kind": "attendance", "title": f"¿Vas a «{ev.title}»?",
+                        "band_name": bands.get(ev.band_id), "band_id": ev.band_id,
+                        "event_id": ev.id, "when": ev.starts_at,
+                        "href": f"band.html?id={ev.band_id}#agenda"})
+    # Votaciones abiertas en las que no he votado
+    for p in (db.query(DatePoll).filter(DatePoll.band_id.in_(bids), DatePoll.status == "open",
+                                        DatePoll.deleted_at.is_(None)).limit(20)):
+        voted = any(v.user_id == user_id for o in p.options for v in o.votes)
+        if not voted:
+            out.append({"kind": "poll", "title": f"Vota fechas: {p.title}",
+                        "band_name": bands.get(p.band_id), "band_id": p.band_id,
+                        "href": f"band.html?id={p.band_id}#agenda"})
+    # Pendientes de la pizarra asignados a mí
+    for n in (db.query(BandNote).filter(BandNote.band_id.in_(bids), BandNote.assignee_id == user_id,
+                                        BandNote.done_at.is_(None), BandNote.deleted_at.is_(None))
+              .order_by(BandNote.due_date.is_(None), BandNote.due_date).limit(20)):
+        out.append({"kind": "note", "title": n.body[:140], "band_name": bands.get(n.band_id),
+                    "band_id": n.band_id, "when": n.due_date, "href": f"band.html?id={n.band_id}"})
+    return out[:30]

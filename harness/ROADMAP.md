@@ -802,7 +802,7 @@
 - [x] **T-V6-42e** Miembros + Invitaciones (lista, revocar, copiar) + Salir de la banda + transferir admin
 - [x] **T-V6-42f** Finanzas de banda: `Intl`, quién pagó, filtros, liquidaciones listadas/borrables, gráfico por mes
 - [ ] **T-V6-42g** Giras: tarjeta + timeline + editar/borrar
-- [ ] **T-V6-43** Inicio: KPIs, "Esta semana" con asistencia in-page, actividad, "Para hoy", vacío sin banda
+- [x] **T-V6-43** Inicio: KPIs, "Esta semana" con asistencia in-page, actividad, "Para hoy", vacío sin banda
 - [ ] **T-V6-44** Mis bandas: tarjetas con cover y miembros apilados; "Unirme con código"; vacío ilustrado
 - [ ] **T-V6-45** Biblioteca + Setlists personales: chips, grid/lista, meta, ⋯ visible en móvil, orden, cargar más
 - [ ] **T-V6-46** Editor: metadatos completos, diálogo "Importar" con 3 pestañas, barra inferior fija, Ctrl+S, preview alineada
