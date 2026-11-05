@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Mis bandas con tarjetas de fondo y miembros (T-V6-44) · accesibilidad de pestañas y tarjetas (parte de T-V6-59)
+- **Qué:** `GET /bands/` devuelve `cover_url` y hasta 4 nombres de miembros; las tarjetas muestran el fondo de la banda y los miembros apilados, y se abren con Enter/Espacio. Pestañas de banda con el patrón ARIA (flechas, Inicio/Fin, `tabindex` itinerante, `aria-controls`, paneles `tabpanel`). Modales clásicos con foco atrapado y devuelto.
+
 ### V6 — Metrónomo con tempos rápidos (T-V6-51) · Editor: Ctrl+S y barra de guardar fija (T-V6-46)
 - **Qué:** metrónomo: botones 60–160 y "mis tempos" guardados en el dispositivo (clic derecho para quitar). Editor: Ctrl/Cmd+S guarda, la barra "Guardar" queda fija abajo, campo Duración (m:ss) e importación desde PDF (ver arriba).
 

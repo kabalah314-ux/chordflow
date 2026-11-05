@@ -622,6 +622,25 @@
         }));
         // Abrir directamente la pestaña del hash (band.html?id=…#agenda). "#ev=…" (aviso de un
         // evento) abre la Agenda.
+        // T-V6-59: pestañas accesibles — flechas/Inicio/Fin mueven el foco y activan (patrón ARIA tabs)
+        tabs.forEach((t, i) => {
+            t.setAttribute('tabindex', t.getAttribute('aria-selected') === 'true' ? '0' : '-1');
+            t.setAttribute('aria-controls', 'bs-panel-' + t.dataset.tab);
+            t.id = t.id || 'bs-tab-' + t.dataset.tab;
+            t.addEventListener('keydown', (e) => {
+                let j = null;
+                if (e.key === 'ArrowRight') j = (i + 1) % tabs.length;
+                if (e.key === 'ArrowLeft') j = (i - 1 + tabs.length) % tabs.length;
+                if (e.key === 'Home') j = 0;
+                if (e.key === 'End') j = tabs.length - 1;
+                if (j === null) return;
+                e.preventDefault();
+                tabs[j].focus();
+                tabs[j].click();
+            });
+            t.addEventListener('click', () => tabs.forEach(x => x.setAttribute('tabindex', x === t ? '0' : '-1')));
+        });
+        panels.forEach(p => { p.id = 'bs-panel-' + p.dataset.panel; p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', 'bs-tab-' + p.dataset.panel); });
         window.addEventListener('hashchange', () => {
             const k = (location.hash || '').slice(1);
             const t = tabs.find(x => x.dataset.tab === (k.startsWith('ev=') ? 'agenda' : k));
