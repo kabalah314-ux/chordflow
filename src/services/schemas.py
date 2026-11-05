@@ -27,6 +27,18 @@ def _validate_http_url(v: Optional[str]) -> Optional[str]:
     return v
 
 
+def _clean_practice_refs(v):
+    """Marcas de práctica (T-V6-87): claves = índice de sección ("0".."199"), valores = segundos
+    del vídeo de referencia (0..10 h). Descarta lo que no encaje."""
+    if v is None:
+        return v
+    out = {}
+    for k, sec in list(v.items())[:200]:
+        if str(k).isdigit() and int(k) < 200 and sec is not None and 0 <= float(sec) <= 36000:
+            out[str(int(k))] = round(float(sec), 1)
+    return out
+
+
 def _validate_image_url(v: Optional[str]) -> Optional[str]:
     """Valida una URL de imagen subida por el usuario (avatar/logo/fondo, T-V5-06): https y sin
     caracteres que permitan escapar de un atributo src o de un url("...") en CSS. `""` → None."""
@@ -130,6 +142,12 @@ class SongBase(BaseModel):
     tags: Optional[List[str]] = None
     duration_beats: Optional[float] = None
     duration_sec: Optional[int] = Field(None, ge=0, le=7200)  # T-V6-88
+    practice_refs: Optional[Dict[str, float]] = None  # T-V6-87: índice de sección → segundo
+
+    @field_validator("practice_refs")
+    @classmethod
+    def _refs(cls, v):
+        return _clean_practice_refs(v)
 
 class SongCreate(SongBase):
     sections: Optional[List[SectionCreate]] = []
@@ -161,6 +179,12 @@ class SongUpdate(BaseModel):
     is_public: Optional[bool] = None
     reference_url: Optional[str] = Field(None, max_length=512)
     duration_sec: Optional[int] = Field(None, ge=0, le=7200)  # T-V6-88
+    practice_refs: Optional[Dict[str, float]] = None  # T-V6-87
+
+    @field_validator("practice_refs")
+    @classmethod
+    def _refs(cls, v):
+        return _clean_practice_refs(v)
 
     @field_validator("reference_url")
     @classmethod
@@ -1426,3 +1450,105 @@ class ReportIn(BaseModel):
     target_kind: Literal["pro", "gig_call", "band", "review"]
     target_id: str = Field(max_length=36)
     reason: str = Field(min_length=3, max_length=2000)
+
+
+
+# ── V6-F9 (3/3): gastos recurrentes, adjuntos, modo ensayo, temporada ─────────
+class RecurringIn(BaseModel):
+    description: str = Field(min_length=1, max_length=255)
+    amount: Decimal = Field(gt=0, max_digits=10, decimal_places=2)
+    category: Optional[str] = Field(None, max_length=64)
+    paid_by: Optional[str] = None
+    paid_by_fund: bool = False
+    day_of_month: int = Field(1, ge=1, le=28)
+
+
+class RecurringOut(BaseModel):
+    id: str
+    description: str
+    amount: Decimal
+    category: Optional[str] = None
+    paid_by: Optional[str] = None
+    paid_by_fund: bool = False
+    day_of_month: int = 1
+    last_logged_month: Optional[str] = None
+    due: bool = False  # ¿toca registrarlo este mes y aún no se ha hecho?
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+AttachmentKind = Literal["audio", "pdf", "image", "link"]
+
+
+class AttachmentIn(BaseModel):
+    kind: AttachmentKind
+    url: str = Field(max_length=1024)
+    title: str = Field(min_length=1, max_length=255)
+    duration_sec: Optional[int] = Field(None, ge=0, le=36000)
+    size_bytes: Optional[int] = Field(None, ge=0, le=50_000_000)
+
+    @field_validator("url")
+    @classmethod
+    def _https(cls, v):
+        v = _validate_http_url(v)
+        if not v or not v.lower().startswith("https://"):
+            raise ValueError("El enlace debe empezar por https://")
+        return v
+
+
+class AttachmentOut(BaseModel):
+    id: str
+    kind: str
+    url: str
+    title: str
+    song_id: Optional[str] = None
+    event_id: Optional[str] = None
+    duration_sec: Optional[int] = None
+    owner_id: str
+    owner_name: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RehearsalStart(BaseModel):
+    event_id: Optional[str] = None
+
+
+class RehearsalItem(BaseModel):
+    song_id: Optional[str] = None
+    title: str = Field(max_length=255)
+    seconds: int = Field(0, ge=0, le=36000)
+    reason: Optional[str] = Field(None, max_length=64)
+
+
+class RehearsalUpdate(BaseModel):
+    items: Optional[List[RehearsalItem]] = Field(None, max_length=100)
+    notes: Optional[str] = Field(None, max_length=4000)
+    post_to_chat: bool = True
+
+
+class RehearsalOut(BaseModel):
+    id: str
+    band_id: str
+    event_id: Optional[str] = None
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+    items: List[RehearsalItem] = []
+    notes: Optional[str] = None
+    suggested: List[RehearsalItem] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SeasonOut(BaseModel):
+    year: int
+    concerts: int = 0
+    rehearsals: int = 0
+    income: Decimal = Decimal("0")
+    expenses: Decimal = Decimal("0")
+    expenses_per_member: Decimal = Decimal("0")
+    members: int = 0
+    top_songs: List[dict] = []  # [{"title", "times"}]
+    new_songs: int = 0
+    currency: str = "EUR"

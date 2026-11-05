@@ -31,6 +31,8 @@ function paintPlayerIcons() {
     byId('btn-tuner', 'mic');
     byId('btn-reference', 'film');
     byId('btn-print', 'printer');
+    byId('btn-practice', 'timer');
+    byId('btn-material', 'folder');
     byId('btn-metronome', 'drum');
     byId('btn-stop', 'stop');
     byId('btn-stage', 'maximize');
@@ -480,6 +482,7 @@ async function fetchAndRenderSong() {
         engine.loadSong(song);
         sectionRanges = computeSectionRanges(song);
         setupReference(song);
+        practiceReset();      // T-V6-87: cada canción empieza sin bucle y al 100 %
         loadMyKey(song.id);   // T-V6-81: "Mi tono" (solo para mí; no toca la canción compartida)
 
     } catch (err) {
@@ -633,3 +636,74 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideChordD
     const session = await requireAuth();
     if (session) fetchAndRenderSong();
 })();
+
+
+// ── T-V6-87: modo práctica (sin tocar el motor) ───────────────────────────────
+// Tempo al 50–100 % (campo `tempoMultiplier` que el motor ya tenía) y "repetir sección": al pasar
+// del final de la sección elegida se vuelve a su inicio reajustando el reloj desde fuera
+// (`pausedAtBeat` + `startTimestamp`), igual que hace setBpm. sync_engine.js no cambia.
+const practice = { loop: null, tempo: 1 };
+engine.subscribe((state) => {
+    const L = practice.loop;
+    if (!L || state.status !== 'playing') return;
+    if (state.currentBeat >= L.endBeat || state.currentBeat < L.startBeat - 0.01) {
+        engine.state.pausedAtBeat = L.startBeat;
+        engine.state.startTimestamp = performance.now();
+    }
+});
+function practiceReset() {
+    practice.loop = null;
+    practice.tempo = 1;
+    engine.state.tempoMultiplier = 1;
+    const b = document.getElementById('btn-practice');
+    if (b) b.classList.remove('is-on');
+}
+const elBtnPractice = document.getElementById('btn-practice');
+if (elBtnPractice) elBtnPractice.addEventListener('click', async () => {
+    if (!currentSong || typeof bfDialog !== 'function') return;
+    const opts = sectionRanges.map((r, i) => `<option value="${i}"${practice.loop && practice.loop.idx === i ? ' selected' : ''}>${escapeHtml(r.name || 'Sección ' + (i + 1))}</option>`).join('');
+    const r = await bfDialog({
+        title: 'Practicar',
+        body: `<div class="bf-stack">
+            <div><span class="bf-label">Tempo</span><div class="bf-row bf-wrap" style="gap:.4rem;">
+              ${[0.5, 0.75, 0.9, 1].map(t => `<label class="bf-chip"><input type="radio" name="pr-tempo" value="${t}" ${practice.tempo === t ? 'checked' : ''}> ${Math.round(t * 100)} %</label>`).join('')}</div></div>
+            <div><label class="bf-label" for="pr-loop">Repetir una sección</label>
+              <select class="bf-input" id="pr-loop"><option value="">— Canción entera —</option>${opts}</select></div>
+            <p class="bf-faint" style="font-size:.85rem;">Al repetir una sección, el reproductor vuelve a su inicio cada vez que acaba. Sin tocar tu tempo guardado.</p>
+          </div>`,
+        actions: [{ label: 'Quitar práctica', value: 'off' }, { label: 'Aplicar', primary: true, onClick: (root) => ({
+            tempo: Number((root.querySelector('input[name="pr-tempo"]:checked') || {}).value || 1),
+            loop: root.querySelector('#pr-loop').value }) }],
+    });
+    if (!r) return;
+    if (r === 'off') { practiceReset(); toast('Práctica desactivada.', 'info'); return; }
+    practice.tempo = r.tempo;
+    engine.state.tempoMultiplier = r.tempo;
+    practice.loop = r.loop === '' ? null : { idx: Number(r.loop), ...sectionRanges[Number(r.loop)] };
+    if (practice.loop && engine.state.status !== 'playing') {
+        engine.state.pausedAtBeat = practice.loop.startBeat;
+        engine.state.currentBeat = practice.loop.startBeat;
+    }
+    elBtnPractice.classList.toggle('is-on', practice.tempo !== 1 || !!practice.loop);
+    toast(`Práctica: ${Math.round(practice.tempo * 100)} %${practice.loop ? ' · repitiendo «' + (practice.loop.name || 'sección') + '»' : ''}.`, 'success');
+});
+
+// ── T-V6-85: material de la canción (PDF de partitura, audios, enlaces) ──────
+const elBtnMaterial = document.getElementById('btn-material');
+if (elBtnMaterial) elBtnMaterial.addEventListener('click', async () => {
+    if (!currentSong || typeof bfDialog !== 'function') return;
+    let rows = [];
+    try {
+        const res = await apiFetch(`/songs/${encodeURIComponent(currentSong.id)}/attachments`);
+        if (res.ok) rows = await res.json();
+    } catch (e) { /* sin red */ }
+    const ICON = { pdf: 'note', audio: 'mic', image: 'camera', link: 'link' };
+    await bfDialog({
+        title: `Material · ${currentSong.title}`,
+        body: rows.length ? `<ul class="bt-atts">${rows.map(a => `<li class="bt-att">
+                <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${bfIcon(ICON[a.kind] || 'link', { size: 15 })} ${escapeHtml(a.title)}</a>
+                ${a.kind === 'audio' ? `<audio controls preload="none" src="${escapeHtml(a.url)}" class="bt-audio"></audio>` : ''}</li>`).join('')}</ul>`
+            : `<p class="bf-muted">Esta canción aún no tiene material. ${currentSong.band_id ? 'Añade PDFs, audios o enlaces desde el Repertorio de la banda (botón de carpeta).' : ''}</p>`,
+        actions: [{ label: 'Cerrar', value: null }],
+    });
+});

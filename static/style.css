@@ -1632,3 +1632,5 @@ kbd {
 .fc-reviews, .fc-calls { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .6rem; }
 .fc-calls li { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
 .fc-reviews p { margin: .2rem 0 0; }
+/* T-V6-87: botón de práctica activo */
+#btn-practice.is-on { background: var(--accent-color) !important; color: #000 !important; }

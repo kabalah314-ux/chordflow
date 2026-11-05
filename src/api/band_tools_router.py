@@ -21,9 +21,11 @@ Feedback y eventos de producto (T-V6-94)
 
 import logging
 import secrets
+from decimal import Decimal
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
@@ -35,6 +37,7 @@ from ..services.band_auth import (
 )
 from ..services.db import get_db
 from ..services.models import (
+    Attachment,
     Band,
     BandMembership,
     BandNote,
@@ -45,8 +48,11 @@ from ..services.models import (
     EventAttendance,
     EventChecklistItem,
     Feedback,
+    Message,
     MusicianProfile,
     ProductEvent,
+    RecurringExpense,
+    RehearsalSession,
     Setlist,
     SetlistItem,
     Song,
@@ -57,6 +63,8 @@ from ..services.models import (
 )
 from ..services.ratelimit import check_rate
 from ..services.schemas import (
+    AttachmentIn,
+    AttachmentOut,
     BandNoteCreate,
     BandNoteOut,
     BandNoteUpdate,
@@ -72,11 +80,19 @@ from ..services.schemas import (
     PollOut,
     PollVotesIn,
     ProductEventIn,
+    RecurringIn,
+    RecurringOut,
+    RehearsalItem,
+    RehearsalOut,
+    RehearsalStart,
+    RehearsalUpdate,
+    SeasonOut,
     SongPrefIn,
     SongPrefOut,
     SongStatusBoard,
     SongStatusOut,
     SongStatusSet,
+    TransactionCreate,
 )
 
 logger = logging.getLogger(__name__)
@@ -655,3 +671,315 @@ def product_event(payload: ProductEventIn, db: Session = Depends(get_db),
         band_id = None  # no se registra contra una banda ajena
     db.add(ProductEvent(user_id=user_id, band_id=band_id, kind=payload.kind))
     db.commit()
+
+
+# ══ Gastos recurrentes (T-V6-95) ═══════════════════════════════════════════════
+def _month(dt=None) -> str:
+    d = dt or _utcnow()
+    return f"{d.year:04d}-{d.month:02d}"
+
+
+def _recurring_out(r: RecurringExpense) -> RecurringOut:
+    out = RecurringOut.model_validate(r)
+    now = _utcnow()
+    out.due = r.last_logged_month != _month(now) and now.day >= r.day_of_month
+    return out
+
+
+def _get_recurring(db: Session, band_id: str, rid: str) -> RecurringExpense:
+    r = (db.query(RecurringExpense)
+         .filter(RecurringExpense.id == rid, RecurringExpense.band_id == band_id,
+                 RecurringExpense.deleted_at.is_(None)).first())
+    if r is None:
+        raise HTTPException(status_code=404, detail="Gasto recurrente no encontrado")
+    return r
+
+
+@router.get("/bands/{band_id}/recurring", response_model=List[RecurringOut])
+def list_recurring(band_id: str, db: Session = Depends(get_db),
+                   membership: BandMembership = Depends(require_band_member)):
+    rows = (db.query(RecurringExpense)
+            .filter(RecurringExpense.band_id == band_id, RecurringExpense.deleted_at.is_(None))
+            .order_by(RecurringExpense.day_of_month).all())
+    return [_recurring_out(r) for r in rows]
+
+
+@router.post("/bands/{band_id}/recurring", response_model=RecurringOut,
+             status_code=status.HTTP_201_CREATED)
+def create_recurring(band_id: str, payload: RecurringIn, db: Session = Depends(get_db),
+                     membership: BandMembership = Depends(require_band_admin)):
+    if not payload.paid_by_fund:
+        if not payload.paid_by:
+            raise HTTPException(status_code=400, detail="Falta quién paga (o el fondo)")
+        _check_member_id(db, band_id, payload.paid_by)
+    r = RecurringExpense(band_id=band_id, created_by=membership.user_id, **payload.model_dump())
+    if r.paid_by_fund:
+        r.paid_by = None
+    db.add(r)
+    db.commit()
+    db.refresh(r)
+    return _recurring_out(r)
+
+
+@router.delete("/bands/{band_id}/recurring/{rid}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_recurring(band_id: str, rid: str, db: Session = Depends(get_db),
+                     membership: BandMembership = Depends(require_band_admin)):
+    r = _get_recurring(db, band_id, rid)
+    r.deleted_at = _utcnow()
+    db.commit()
+
+
+@router.post("/bands/{band_id}/recurring/{rid}/log", response_model=RecurringOut)
+def log_recurring(band_id: str, rid: str, db: Session = Depends(get_db),
+                  membership: BandMembership = Depends(require_band_admin)):
+    """Registra el gasto de ESTE mes (una vez): crea el movimiento con reparto a partes iguales."""
+    r = _get_recurring(db, band_id, rid)
+    if r.last_logged_month == _month():
+        raise HTTPException(status_code=409, detail="Ya está registrado este mes")
+    from .finance_router import create_transaction  # import local: evita ciclo de routers
+
+    create_transaction(band_id, TransactionCreate(
+        type="expense", description=f"{r.description} ({_month()})", amount=r.amount,
+        category=r.category, paid_by=r.paid_by, paid_by_fund=r.paid_by_fund), db, membership)
+    r = _get_recurring(db, band_id, rid)
+    r.last_logged_month = _month()
+    db.commit()
+    db.refresh(r)
+    return _recurring_out(r)
+
+
+# ══ Adjuntos (T-V6-85) ═════════════════════════════════════════════════════════
+def _att_out(db: Session, rows) -> List[AttachmentOut]:
+    names = _names(db, [a.owner_id for a in rows])
+    out = []
+    for a in rows:
+        o = AttachmentOut.model_validate(a)
+        o.owner_name = names.get(a.owner_id)
+        out.append(o)
+    return out
+
+
+def _writable_song(db: Session, song_id: str, user_id: str) -> Song:
+    s = _readable_song(db, song_id, user_id)
+    if s.band_id:
+        m = active_membership(db, s.band_id, user_id)
+        if m is None or m.role == "guest":
+            raise HTTPException(status_code=403, detail="Los invitados solo pueden ver")
+    return s
+
+
+@router.get("/songs/{song_id}/attachments", response_model=List[AttachmentOut])
+def song_attachments(song_id: str, db: Session = Depends(get_db),
+                     user_id: str = Depends(get_current_user)):
+    _readable_song(db, song_id, user_id)
+    rows = (db.query(Attachment).filter(Attachment.song_id == song_id,
+                                        Attachment.deleted_at.is_(None))
+            .order_by(Attachment.created_at.desc()).limit(100).all())
+    return _att_out(db, rows)
+
+
+@router.post("/songs/{song_id}/attachments", response_model=AttachmentOut,
+             status_code=status.HTTP_201_CREATED)
+def add_song_attachment(song_id: str, payload: AttachmentIn, db: Session = Depends(get_db),
+                        user_id: str = Depends(get_current_user)):
+    s = _writable_song(db, song_id, user_id)
+    check_rate(f"attach:{user_id}", 60, 3600)
+    a = Attachment(owner_id=user_id, band_id=s.band_id, song_id=s.id, **payload.model_dump())
+    db.add(a)
+    db.commit()
+    db.refresh(a)
+    return _att_out(db, [a])[0]
+
+
+@router.get("/bands/{band_id}/events/{event_id}/attachments", response_model=List[AttachmentOut])
+def event_attachments(band_id: str, event_id: str, db: Session = Depends(get_db),
+                      membership: BandMembership = Depends(require_band_member)):
+    _band_event(db, band_id, event_id)
+    rows = (db.query(Attachment).filter(Attachment.event_id == event_id,
+                                        Attachment.deleted_at.is_(None))
+            .order_by(Attachment.created_at.desc()).limit(100).all())
+    return _att_out(db, rows)
+
+
+@router.post("/bands/{band_id}/events/{event_id}/attachments", response_model=AttachmentOut,
+             status_code=status.HTTP_201_CREATED)
+def add_event_attachment(band_id: str, event_id: str, payload: AttachmentIn,
+                         db: Session = Depends(get_db),
+                         membership: BandMembership = Depends(require_band_editor)):
+    _band_event(db, band_id, event_id)
+    check_rate(f"attach:{membership.user_id}", 60, 3600)
+    a = Attachment(owner_id=membership.user_id, band_id=band_id, event_id=event_id,
+                   **payload.model_dump())
+    db.add(a)
+    db.commit()
+    db.refresh(a)
+    return _att_out(db, [a])[0]
+
+
+@router.delete("/attachments/{attachment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_attachment(attachment_id: str, db: Session = Depends(get_db),
+                      user_id: str = Depends(get_current_user)):
+    a = db.query(Attachment).filter(Attachment.id == attachment_id,
+                                    Attachment.deleted_at.is_(None)).first()
+    if a is None:
+        raise HTTPException(status_code=404, detail="Adjunto no encontrado")
+    m = active_membership(db, a.band_id, user_id) if a.band_id else None
+    if a.owner_id != user_id:
+        if m is None:  # ajeno: ni se confirma que exista
+            raise HTTPException(status_code=404, detail="Adjunto no encontrado")
+        if m.role != "admin":
+            raise HTTPException(status_code=403, detail="Solo quien lo subió o un admin")
+    a.deleted_at = _utcnow()
+    db.commit()
+
+
+# ══ Modo ensayo (T-V6-84) ══════════════════════════════════════════════════════
+def _suggest(db: Session, band_id: str, user_id: str) -> List[RehearsalItem]:
+    """Primero las canciones del setlist del próximo concierto; luego las que yo (o la banda,
+    en lo compartido) estamos "mejorando"/"pendientes"."""
+    now = _utcnow().replace(tzinfo=None)
+    out: List[RehearsalItem] = []
+    seen = set()
+    ev = (db.query(Event).filter(Event.band_id == band_id, Event.type == "concert",
+                                 Event.deleted_at.is_(None), Event.setlist_id.isnot(None),
+                                 Event.starts_at >= now, Event.status != "cancelled")
+          .order_by(Event.starts_at).first())
+    if ev is not None:
+        rows = (db.query(Song.id, Song.title).join(SetlistItem, SetlistItem.song_id == Song.id)
+                .filter(SetlistItem.setlist_id == ev.setlist_id, Song.deleted_at.is_(None))
+                .order_by(SetlistItem.position).all())
+        for sid, title in rows:
+            if sid not in seen:
+                seen.add(sid)
+                out.append(RehearsalItem(song_id=sid, title=title, reason=f"Bolo: {ev.title}"[:64]))
+    rows = (db.query(SongStatus.song_id, Song.title, SongStatus.status)
+            .join(Song, Song.id == SongStatus.song_id)
+            .filter(SongStatus.band_id == band_id, Song.deleted_at.is_(None),
+                    SongStatus.status != "mastered",
+                    or_(SongStatus.shared.is_(True), SongStatus.user_id == user_id))
+            .all())
+    for sid, title, st in rows:
+        if sid not in seen:
+            seen.add(sid)
+            out.append(RehearsalItem(song_id=sid, title=title,
+                                     reason="Mejorando" if st == "improving" else "Pendiente"))
+    return out[:30]
+
+
+def _get_rehearsal(db: Session, band_id: str, rid: str) -> RehearsalSession:
+    r = (db.query(RehearsalSession)
+         .filter(RehearsalSession.id == rid, RehearsalSession.band_id == band_id).first())
+    if r is None:
+        raise HTTPException(status_code=404, detail="Ensayo no encontrado")
+    return r
+
+
+def _reh_out(db: Session, r: RehearsalSession, user_id: str) -> RehearsalOut:
+    out = RehearsalOut(id=r.id, band_id=r.band_id, event_id=r.event_id, started_at=r.started_at,
+                       ended_at=r.ended_at, notes=r.notes,
+                       items=[RehearsalItem(**i) for i in (r.items or [])])
+    if r.ended_at is None:
+        out.suggested = _suggest(db, r.band_id, user_id)
+    return out
+
+
+@router.post("/bands/{band_id}/rehearsals", response_model=RehearsalOut,
+             status_code=status.HTTP_201_CREATED)
+def start_rehearsal(band_id: str, payload: RehearsalStart, db: Session = Depends(get_db),
+                    membership: BandMembership = Depends(require_band_editor)):
+    if payload.event_id:
+        _band_event(db, band_id, payload.event_id)
+    r = RehearsalSession(band_id=band_id, event_id=payload.event_id,
+                         started_by=membership.user_id, items=[])
+    db.add(r)
+    db.commit()
+    db.refresh(r)
+    return _reh_out(db, r, membership.user_id)
+
+
+@router.get("/bands/{band_id}/rehearsals/{rid}", response_model=RehearsalOut)
+def get_rehearsal(band_id: str, rid: str, db: Session = Depends(get_db),
+                  membership: BandMembership = Depends(require_band_member)):
+    return _reh_out(db, _get_rehearsal(db, band_id, rid), membership.user_id)
+
+
+@router.patch("/bands/{band_id}/rehearsals/{rid}", response_model=RehearsalOut)
+def save_rehearsal(band_id: str, rid: str, payload: RehearsalUpdate,
+                   db: Session = Depends(get_db),
+                   membership: BandMembership = Depends(require_band_editor)):
+    r = _get_rehearsal(db, band_id, rid)
+    if payload.items is not None:
+        r.items = [i.model_dump() for i in payload.items]
+    if payload.notes is not None:
+        r.notes = payload.notes
+    db.commit()
+    db.refresh(r)
+    return _reh_out(db, r, membership.user_id)
+
+
+@router.post("/bands/{band_id}/rehearsals/{rid}/finish", response_model=RehearsalOut)
+def finish_rehearsal(band_id: str, rid: str, payload: RehearsalUpdate,
+                     db: Session = Depends(get_db),
+                     membership: BandMembership = Depends(require_band_editor)):
+    r = _get_rehearsal(db, band_id, rid)
+    if r.ended_at is not None:
+        raise HTTPException(status_code=409, detail="Este ensayo ya terminó")
+    if payload.items is not None:
+        r.items = [i.model_dump() for i in payload.items]
+    if payload.notes is not None:
+        r.notes = payload.notes
+    r.ended_at = _utcnow()
+    played = [i for i in (r.items or []) if i.get("seconds")]
+    if payload.post_to_chat and (played or r.notes):
+        total = sum(i["seconds"] for i in played)
+        lines = [f"Resumen del ensayo · {len(played)} canciones · {total // 60} min"]
+        lines += [f"• {i['title']} ({i['seconds'] // 60}:{i['seconds'] % 60:02d})" for i in played]
+        if r.notes:
+            lines += ["", "Apuntes:", r.notes.strip()]
+        db.add(Message(band_id=band_id, author_id=membership.user_id,
+                       event_id=r.event_id, body="\n".join(lines)[:4000]))
+    db.commit()
+    db.refresh(r)
+    return _reh_out(db, r, membership.user_id)
+
+
+# ══ Resumen de temporada (T-V6-93) ═════════════════════════════════════════════
+@router.get("/bands/{band_id}/season", response_model=SeasonOut)
+def season(band_id: str, year: Optional[int] = Query(None, ge=2000, le=2100),
+           db: Session = Depends(get_db),
+           membership: BandMembership = Depends(require_band_member)):
+    from datetime import datetime as _dt
+
+    from ..services.models import Transaction
+
+    y = year or _utcnow().year
+    start, end = _dt(y, 1, 1), _dt(y + 1, 1, 1)
+    now = _utcnow().replace(tzinfo=None)
+    band = db.get(Band, band_id)
+    evs = (db.query(Event).filter(Event.band_id == band_id, Event.deleted_at.is_(None),
+                                  Event.starts_at >= start, Event.starts_at < end,
+                                  Event.starts_at <= now,
+                                  Event.status.in_(("confirmed", "done"))).all())
+    concerts = [e for e in evs if e.type == "concert"]
+    txs = (db.query(Transaction).filter(Transaction.band_id == band_id,
+                                        Transaction.deleted_at.is_(None),
+                                        Transaction.date >= start, Transaction.date < end).all())
+    income = sum((t.amount for t in txs if t.type == "income"), Decimal("0"))
+    expenses = sum((t.amount for t in txs if t.type == "expense"), Decimal("0"))
+    members = len(_active_members(db, band_id))
+    counts: Dict[str, int] = {}
+    for e in concerts:
+        if not e.setlist_id:
+            continue
+        for (title,) in (db.query(Song.title).join(SetlistItem, SetlistItem.song_id == Song.id)
+                         .filter(SetlistItem.setlist_id == e.setlist_id).all()):
+            counts[title] = counts.get(title, 0) + 1
+    top = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+    new_songs = db.query(Song).filter(Song.band_id == band_id, Song.deleted_at.is_(None),
+                                      Song.created_at >= start, Song.created_at < end).count()
+    return SeasonOut(
+        year=y, concerts=len(concerts), rehearsals=len([e for e in evs if e.type == "rehearsal"]),
+        income=income, expenses=expenses,
+        expenses_per_member=(expenses / members).quantize(Decimal("0.01")) if members else 0,
+        members=members, top_songs=[{"title": t, "times": n} for t, n in top],
+        new_songs=new_songs, currency=band.currency if band else "EUR")

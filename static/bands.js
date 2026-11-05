@@ -359,6 +359,8 @@ async function loadFinance(bandId, iAmAdmin) {
             } catch (e) { toast('No se pudo borrar el movimiento.', 'error'); }
         });
     });
+    // V6-F9: band_tools.js añade los gastos fijos (recurrentes) bajo las finanzas.
+    document.dispatchEvent(new CustomEvent('bf:finance', { detail: { bandId, iAmAdmin } }));
 }
 
 // Registrar movimiento (admin): tipo, descripción, importe, pagador. Reparto a partes iguales.

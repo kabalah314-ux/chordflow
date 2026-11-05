@@ -236,3 +236,87 @@ def test_setlist_lleva_duracion_total_real_o_estimada(client):
     assert det["items"][0]["key_root"] == "E"
     summ = next(s for s in client.get("/setlists/").json() if s["id"] == det["id"])
     assert summ["duration_sec"] == 400
+
+
+# ── Gastos recurrentes (T-V6-95) ──────────────────────────────────────────────
+def test_gasto_recurrente_se_registra_una_vez_al_mes(client):
+    bid = _band(client)
+    r = client.post(f"/bands/{bid}/recurring", json={
+        "description": "Local de ensayo", "amount": "120.00", "paid_by": ADMIN, "day_of_month": 1})
+    assert r.status_code == 201, r.text
+    rid = r.json()["id"]
+    assert r.json()["due"] is True
+    with acting_as(MEMBER):
+        assert client.post(f"/bands/{bid}/recurring/{rid}/log").status_code == 403
+    r = client.post(f"/bands/{bid}/recurring/{rid}/log")
+    assert r.status_code == 200 and r.json()["due"] is False
+    txs = client.get(f"/bands/{bid}/transactions").json()
+    assert len(txs) == 1 and float(txs[0]["amount"]) == 120.0
+    assert client.post(f"/bands/{bid}/recurring/{rid}/log").status_code == 409
+    assert client.post(f"/bands/{bid}/recurring", json={
+        "description": "x", "amount": "1.00", "paid_by": STRANGER}).status_code == 400
+
+
+# ── Adjuntos (T-V6-85) ────────────────────────────────────────────────────────
+def test_adjuntos_de_cancion_y_evento(client):
+    bid = _band(client)
+    s = _song(client, bid)
+    with acting_as(MEMBER):
+        r = client.post(f"/songs/{s['id']}/attachments", json={
+            "kind": "pdf", "url": "https://files.example/partitura.pdf", "title": "Partitura"})
+        assert r.status_code == 201, r.text
+        aid = r.json()["id"]
+    with acting_as(GUEST):
+        assert len(client.get(f"/songs/{s['id']}/attachments").json()) == 1
+        assert client.post(f"/songs/{s['id']}/attachments", json={
+            "kind": "link", "url": "https://x.example", "title": "x"}).status_code == 403
+        assert client.delete(f"/attachments/{aid}").status_code == 403
+    with acting_as(STRANGER):
+        assert client.get(f"/songs/{s['id']}/attachments").status_code == 404
+        assert client.delete(f"/attachments/{aid}").status_code == 404
+    assert client.post(f"/songs/{s['id']}/attachments", json={
+        "kind": "link", "url": "javascript:alert(1)", "title": "x"}).status_code == 422
+    ev = client.post(f"/bands/{bid}/events/", json={"type": "concert", "title": "Bolo adj"}).json()
+    assert client.post(f"/bands/{bid}/events/{ev['id']}/attachments", json={
+        "kind": "image", "url": "https://img.example/cartel.jpg", "title": "Cartel"}
+    ).status_code == 201
+    assert client.delete(f"/attachments/{aid}").status_code == 204  # el admin borra
+
+
+# ── Modo ensayo (T-V6-84) ─────────────────────────────────────────────────────
+def test_modo_ensayo_sugiere_y_publica_resumen(client):
+    bid = _band(client)
+    s = _song(client, bid, "Tema flojo")
+    client.put(f"/bands/{bid}/songs/{s['id']}/status", json={"status": "improving"})
+    r = client.post(f"/bands/{bid}/rehearsals", json={})
+    assert r.status_code == 201, r.text
+    reh = r.json()
+    assert any(i["song_id"] == s["id"] for i in reh["suggested"])
+    with acting_as(GUEST):
+        assert client.post(f"/bands/{bid}/rehearsals", json={}).status_code == 403
+    r = client.post(f"/bands/{bid}/rehearsals/{reh['id']}/finish", json={
+        "items": [{"song_id": s["id"], "title": "Tema flojo", "seconds": 600}],
+        "notes": "Repasar el puente"})
+    assert r.status_code == 200 and r.json()["ended_at"]
+    msgs = client.get(f"/bands/{bid}/messages").json()
+    assert any("Resumen del ensayo" in m["body"] and "Repasar el puente" in m["body"] for m in msgs)
+    assert client.post(f"/bands/{bid}/rehearsals/{reh['id']}/finish", json={}).status_code == 409
+
+
+# ── Temporada (T-V6-93) y marcas de práctica (T-V6-87) ────────────────────────
+def test_resumen_de_temporada_y_marcas_de_practica(client):
+    bid = _band(client)
+    s = _song(client, bid, "La que más")
+    sl = client.post(f"/bands/{bid}/setlists/", json={"name": "Bolo", "song_ids": [s["id"]]}).json()
+    for d in ("2020-03-01T21:00:00", "2020-05-01T21:00:00"):
+        client.post(f"/bands/{bid}/events/", json={"type": "concert", "title": "Bolo",
+                                                   "starts_at": d, "setlist_id": sl["id"]})
+    client.post(f"/bands/{bid}/events/", json={"type": "rehearsal", "title": "Ensayo",
+                                               "starts_at": "2020-02-01T19:00:00"})
+    t = client.get(f"/bands/{bid}/season?year=2020").json()
+    assert t["concerts"] == 2 and t["rehearsals"] == 1
+    assert t["top_songs"][0] == {"title": "La que más", "times": 2}
+
+    r = client.patch(f"/songs/{s['id']}", json={"practice_refs": {"0": 0, "1": 31.25, "x": 5}})
+    assert r.status_code == 200, r.text
+    assert r.json()["practice_refs"] == {"0": 0.0, "1": 31.2}

@@ -350,11 +350,14 @@ function bfDialog({ title = '', body = '', actions = [{ label: 'Cerrar', value: 
         const close = (val) => {
             document.removeEventListener('keydown', onKey, true);
             overlay.remove();
-            document.body.classList.remove('bf-dialog-open');
+            if (!document.querySelector('.bf-dialog-overlay')) document.body.classList.remove('bf-dialog-open');
             if (prev && typeof prev.focus === 'function') prev.focus();
             resolve(val);
         };
         const onKey = (e) => {
+            // Diálogos anidados: solo responde el de arriba.
+            const all = document.querySelectorAll('.bf-dialog-overlay');
+            if (all[all.length - 1] !== overlay) return;
             if (e.key === 'Escape') { e.stopPropagation(); close(null); }
             if (e.key === 'Tab') {
                 const f = focusables();

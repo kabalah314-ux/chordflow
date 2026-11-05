@@ -64,6 +64,7 @@ _SONG_SCALAR_FIELDS = (
     "tuning", "capo", "instrument", "format_version", "is_public",
     "source_type", "source_file_path", "tags", "duration_beats",
     "duration_sec",    # T-V6-88
+    "practice_refs",   # T-V6-87
     "reference_url",   # T-V6-19 (B-08): copiar a la banda conservaba todo menos el vídeo de referencia
 )
 

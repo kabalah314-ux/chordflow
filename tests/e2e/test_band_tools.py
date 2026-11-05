@@ -82,3 +82,41 @@ def test_hoja_del_bolo_publica(page, live_server, api):
     txt = page.inner_text("#pub-card")
     assert "Bolo Hoja E2E" in txt and "Batería de la sala" in txt and "Llevar DI" in txt
     assert "300" not in txt
+
+
+def test_gastos_fijos_y_modo_ensayo(page, live_server, api):
+    bid = api.post("/bands/", json={"name": "Banda Fijos E2E"}).json()["id"]
+    me = next(m for m in api.get(f"/bands/{bid}/members").json() if m["is_me"])["user_id"]
+    api.post(f"/bands/{bid}/recurring", json={"description": "Local E2E", "amount": "90.00",
+                                              "paid_by": me, "day_of_month": 1})
+    sid = api.post(f"/bands/{bid}/songs/", json={"title": "Tema Ensayo E2E"}).json()["id"]
+    api.put(f"/bands/{bid}/songs/{sid}/status", json={"status": "improving"})
+
+    page.goto(live_server + f"/static/band.html?id={bid}", wait_until="networkidle")
+    # Modo ensayo desde el Resumen: la canción "mejorando" sale sugerida
+    page.click("#bt-start-reh")
+    page.wait_for_selector(".bf-dialog .bt-reh-item:has-text('Tema Ensayo E2E')", timeout=8000)
+    page.click(".bf-dialog .bt-reh-item [data-act='toggle']")
+    page.wait_for_timeout(1300)
+    page.fill("#bt-reh-notes", "Cerrar el final")
+    page.click('.bf-dialog [data-bfd-act="1"]')
+    page.wait_for_selector(".bf-dialog", state="detached", timeout=8000)
+    page.wait_for_timeout(500)
+    msgs = api.get(f"/bands/{bid}/messages").json()
+    assert any("Resumen del ensayo" in m["body"] for m in msgs)
+
+    # Gastos fijos en Finanzas: "Registrar" crea el movimiento
+    page.click('.bf-tab[data-tab="finanzas"]')
+    page.wait_for_selector("#bt-recurring [data-act='log']", timeout=8000)
+    page.click("#bt-recurring [data-act='log']")
+    page.wait_for_selector("#bt-recurring [data-act='log']", state="detached", timeout=8000)
+    assert len(api.get(f"/bands/{bid}/transactions").json()) == 1
+
+    # Material de una canción desde el Repertorio (añadir un enlace)
+    page.click('.bf-tab[data-tab="repertorio"]')
+    page.click(f'#b-repertoire li[data-id="{sid}"] [data-act="att"]')
+    page.wait_for_selector(".bf-dialog #bt-att-url", timeout=8000)
+    page.fill("#bt-att-url", "https://example.com/partitura.pdf")
+    page.fill("#bt-att-title", "Partitura E2E")
+    page.click("#bt-att-link")
+    page.wait_for_selector(".bf-dialog .bt-att:has-text('Partitura E2E')", timeout=8000)

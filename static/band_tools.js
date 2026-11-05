@@ -229,11 +229,15 @@
             wrap = document.createElement('div');
             wrap.id = 'bt-summary';
             wrap.className = 'bs-summary bt-summary';
-            wrap.innerHTML = `<div class="bs-summary__col"><div class="bf-card" id="bt-board"></div></div>
-                              <div class="bs-summary__col"><div class="bf-card bf-stack" id="bt-prep"></div><div class="bf-card bf-stack" id="bt-polls-mini" hidden></div></div>`;
+            wrap.innerHTML = `<div class="bs-summary__col"><div class="bf-card" id="bt-board"></div>
+                                ${ctx.iAmGuest ? '' : `<div class="bf-card bf-row bf-row--between bf-wrap"><div><strong>¿Ensayáis hoy?</strong><div class="bf-faint" style="font-size:.85rem;">Lista sugerida, cronómetro y resumen al chat.</div></div><button class="bf-btn bf-btn--primary bf-btn--sm" id="bt-start-reh">${bfIco('timer', 15)} Empezar ensayo</button></div>`}</div>
+                              <div class="bs-summary__col"><div class="bf-card bf-stack" id="bt-prep"></div><div class="bf-card bf-stack" id="bt-polls-mini" hidden></div><div class="bf-card bf-stack" id="bt-season" hidden></div></div>`;
             el.appendChild(wrap);
         }
         renderBoard(bandId, ctx, wrap.querySelector('#bt-board'));
+        const sr = wrap.querySelector('#bt-start-reh');
+        if (sr) sr.addEventListener('click', () => rehearsalMode(bandId, ctx));
+        renderSeason(bandId, wrap.querySelector('#bt-season'));
         const prep = wrap.querySelector('#bt-prep');
         try {
             const b = await jsonOrThrow(await apiFetch(`/bands/${bandId}/song-status`));
@@ -423,6 +427,7 @@
                         <select class="bf-input" id="bt-s-newwho" aria-label="Responsable" style="max-width:12rem;">${memberOptions(list, null)}</select>
                         <button type="button" class="bf-btn bf-btn--sm" id="bt-s-additem">${bfIco('plus', 14)} Añadir</button></div>`}
                 </div>
+                <div><button type="button" class="bf-btn bf-btn--sm" id="bt-s-att">${bfIco('folder', 14)} Material del bolo (rider, cartel, planos…)</button></div>
                 ${ctx.iAmAdmin ? `<div class="bf-row bf-wrap" style="gap:.5rem;">
                     <button type="button" class="bf-btn bf-btn--sm" id="bt-s-share">${bfIco('share', 14)} Compartir hoja (solo lectura)</button>
                     ${ev.sheet_token ? `<button type="button" class="bf-btn bf-btn--sm bf-btn--ghost" id="bt-s-revoke">Desactivar enlace</button>` : ''}
@@ -466,6 +471,9 @@
                     add.addEventListener('click', addItem);
                     root.querySelector('#bt-s-newitem').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } });
                 }
+                root.querySelector('#bt-s-att').addEventListener('click', () => attachmentsDialog({
+                    listUrl: `/bands/${bandId}/events/${eid}/attachments`, postUrl: `/bands/${bandId}/events/${eid}/attachments`,
+                    title: `Material · ${ev.title}`, canAdd: !ctx.iAmGuest }));
                 const sh = root.querySelector('#bt-s-share');
                 if (sh) sh.addEventListener('click', async () => {
                     try {
@@ -528,9 +536,286 @@
             btn.addEventListener('click', (ev) => { ev.stopPropagation(); openSheet(bandId, li.dataset.id, ctx); });
             const thread = li.querySelector('[data-act="thread"]');
             if (thread) thread.insertAdjacentElement('afterend', btn);
+            // Ensayos: "Empezar ensayo" (no para invitados)
+            const isRehearsal = /Ensayo/i.test((li.querySelector('small') || {}).textContent || '');
+            if (isRehearsal && !ctx.iAmGuest) {
+                const go = document.createElement('button');
+                go.className = 'setlist-item-btn';
+                go.dataset.act = 'rehearse';
+                go.title = 'Empezar ensayo';
+                go.setAttribute('aria-label', 'Empezar ensayo');
+                go.innerHTML = bfIco('timer', 16);
+                go.addEventListener('click', (ev) => { ev.stopPropagation(); rehearsalMode(bandId, ctx, li.dataset.id); });
+                btn.insertAdjacentElement('afterend', go);
+            }
         });
     });
     BT.loadPolls = loadPolls;
+
+    // ══ Gastos fijos / recurrentes (T-V6-95) ══════════════════════════════════
+    async function renderRecurring(bandId, ctx) {
+        const fin = document.getElementById('b-finance');
+        if (!fin) return;
+        let box = document.getElementById('bt-recurring');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'bt-recurring';
+            box.className = 'bf-card bf-stack bt-recurring';
+            fin.insertAdjacentElement('afterend', box);
+        }
+        let rows = [], list = [];
+        try { [rows, list] = await Promise.all([jsonOrThrow(await apiFetch(`/bands/${bandId}/recurring`)), members(bandId)]); }
+        catch (e) { box.innerHTML = '<p class="bf-muted">No se pudieron cargar los gastos fijos.</p>'; return; }
+        const names = Object.fromEntries(list.map(m => [m.user_id, m.display_name || 'Miembro']));
+        box.innerHTML = `
+            <div class="bf-row bf-row--between bf-wrap"><h3 class="bf-h3">Gastos fijos</h3>
+              ${ctx.iAmAdmin ? `<button class="bf-btn bf-btn--sm" id="bt-rec-new">${bfIco('plus', 14)} Nuevo gasto fijo</button>` : ''}</div>
+            ${rows.length ? `<ul class="setlist-list">${rows.map(r => `<li class="setlist-song" data-rec="${escapeHtml(r.id)}">
+                <span class="sl-title">${escapeHtml(r.description)} <small>${bfMoney(r.amount)} · día ${r.day_of_month} · paga ${r.paid_by_fund ? 'el fondo' : escapeHtml(names[r.paid_by] || '—')}${r.last_logged_month ? ' · último: ' + escapeHtml(r.last_logged_month) : ''}</small></span>
+                ${r.due ? '<span class="bf-badge bt-due">Toca este mes</span>' : ''}
+                ${ctx.iAmAdmin ? `${r.due ? `<button class="bf-btn bf-btn--sm bf-btn--primary" data-act="log">Registrar</button>` : ''}
+                  <button class="setlist-item-btn" data-act="del" aria-label="Quitar gasto fijo" title="Quitar">${bfIco('trash', 15)}</button>` : ''}
+              </li>`).join('')}</ul>`
+              : `<p class="bf-muted">El local de ensayo, la cuota de la web… Apúntalos una vez y regístralos cada mes con un clic (se reparten a partes iguales).</p>`}`;
+        const nb = box.querySelector('#bt-rec-new');
+        if (nb) nb.addEventListener('click', async () => {
+            const r = await bfDialog({
+                title: 'Nuevo gasto fijo',
+                body: `<div class="bf-stack">
+                    <div><label class="bf-label" for="rec-desc">Concepto</label><input class="bf-input" id="rec-desc" maxlength="255" placeholder="Local de ensayo" autofocus></div>
+                    <div class="bf-form-grid">
+                      <div><label class="bf-label" for="rec-amount">Importe (€)</label><input class="bf-input" id="rec-amount" type="number" min="0.01" step="0.01"></div>
+                      <div><label class="bf-label" for="rec-day">Día del mes</label><input class="bf-input" id="rec-day" type="number" min="1" max="28" value="1"></div>
+                      <div><label class="bf-label" for="rec-who">Lo paga</label><select class="bf-input" id="rec-who"><option value="__fund">El fondo de la banda</option>${list.map(m => `<option value="${escapeHtml(m.user_id)}"${m.is_me ? ' selected' : ''}>${escapeHtml(m.display_name || 'Miembro')}</option>`).join('')}</select></div>
+                    </div></div>`,
+                actions: [{ label: 'Cancelar', value: null }, { label: 'Guardar', primary: true, onClick: (root) => {
+                    const description = root.querySelector('#rec-desc').value.trim();
+                    const amount = root.querySelector('#rec-amount').value;
+                    if (!description || !(Number(amount) > 0)) { toast('Pon concepto e importe.', 'error'); return false; }
+                    const who = root.querySelector('#rec-who').value;
+                    return { description, amount: Number(amount).toFixed(2), day_of_month: Number(root.querySelector('#rec-day').value) || 1,
+                             paid_by_fund: who === '__fund', paid_by: who === '__fund' ? null : who };
+                } }],
+            });
+            if (!r) return;
+            try { await jsonOrThrow(await apiFetch(`/bands/${bandId}/recurring`, J('POST', r))); renderRecurring(bandId, ctx); }
+            catch (e) { toast('No se pudo guardar.', 'error'); }
+        });
+        box.querySelectorAll('[data-rec]').forEach(li => {
+            const rid = li.dataset.rec;
+            const lg = li.querySelector('[data-act="log"]');
+            if (lg) lg.addEventListener('click', async () => {
+                try {
+                    await jsonOrThrow(await apiFetch(`/bands/${bandId}/recurring/${rid}/log`, { method: 'POST' }));
+                    toast('Gasto registrado y repartido.', 'success');
+                    if (typeof loadFinance === 'function') loadFinance(bandId, ctx.iAmAdmin);
+                } catch (e) { toast(e.message && e.message !== 'http' ? e.message : 'No se pudo registrar.', 'error'); }
+            });
+            const del = li.querySelector('[data-act="del"]');
+            if (del) del.addEventListener('click', async () => {
+                if (!(await confirmModal('¿Quitar este gasto fijo? Los movimientos ya registrados se quedan.', { okText: 'Quitar' }))) return;
+                try { await jsonOrThrow(await apiFetch(`/bands/${bandId}/recurring/${rid}`, { method: 'DELETE' })); renderRecurring(bandId, ctx); }
+                catch (e) { toast('No se pudo quitar.', 'error'); }
+            });
+        });
+    }
+    document.addEventListener('bf:finance', (e) => renderRecurring(e.detail.bandId, BT.ctx || { iAmAdmin: !!e.detail.iAmAdmin }));
+
+    // ══ Temporada (T-V6-93) ═══════════════════════════════════════════════════
+    async function renderSeason(bandId, el) {
+        let t;
+        try { t = await jsonOrThrow(await apiFetch(`/bands/${bandId}/season`)); } catch (e) { return; }
+        if (!t.concerts && !t.rehearsals && !Number(t.expenses) && !Number(t.income)) { el.hidden = true; return; }
+        el.hidden = false;
+        el.innerHTML = `<div class="bf-row bf-row--between"><h3 class="bf-h3">Temporada ${t.year}</h3>
+              <button class="bf-btn bf-btn--sm bf-btn--ghost" id="bt-season-share">${bfIco('share', 14)} Compartir</button></div>
+            <div class="bs-counts">
+              <div class="bs-count"><span class="bs-count__n">${t.concerts}</span><span class="bs-count__label">${t.concerts === 1 ? 'bolo' : 'bolos'}</span></div>
+              <div class="bs-count"><span class="bs-count__n">${t.rehearsals}</span><span class="bs-count__label">${t.rehearsals === 1 ? 'ensayo' : 'ensayos'}</span></div>
+              <div class="bs-count"><span class="bs-count__n">${t.new_songs}</span><span class="bs-count__label">temas nuevos</span></div>
+            </div>
+            <p class="bf-muted" style="font-size:.85rem;">Ingresos ${bfMoney(t.income)} · gastos ${bfMoney(t.expenses)}${t.members ? ` (${bfMoney(t.expenses_per_member)} por cabeza)` : ''}</p>
+            ${t.top_songs.length ? `<p class="bf-faint" style="font-size:.8rem;">Las más tocadas: ${t.top_songs.map(x => `${escapeHtml(x.title)} (${x.times})`).join(', ')}</p>` : ''}`;
+        el.querySelector('#bt-season-share').addEventListener('click', () => bfShare({ title: `Nuestra temporada ${t.year}`,
+            text: `Temporada ${t.year}: ${t.concerts} bolos, ${t.rehearsals} ensayos y ${t.new_songs} temas nuevos.${t.top_songs[0] ? ` La que más sonó: ${t.top_songs[0].title}.` : ''} Organizado con BandFlow.`,
+            url: location.origin + '/static/app.html' }));
+    }
+
+    // ══ Adjuntos: PDF, audio, imagen o enlace (T-V6-85) ═══════════════════════
+    const ATT_ICON = { pdf: 'note', audio: 'mic', image: 'camera', link: 'link' };
+    function attRow(a) {
+        const media = a.kind === 'audio' ? `<audio controls preload="none" src="${escapeHtml(a.url)}" class="bt-audio"></audio>` : '';
+        return `<li class="bt-att" data-att-id="${escapeHtml(a.id)}">
+            <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${bfIco(ATT_ICON[a.kind] || 'link', 15)} ${escapeHtml(a.title)}</a>
+            <span class="bf-faint">${escapeHtml(a.owner_name || '')}</span>
+            <button class="bf-icon-btn" data-act="rm" aria-label="Quitar adjunto">${bfIco('x', 14)}</button>
+            ${media}</li>`;
+    }
+    async function attachmentsDialog({ listUrl, postUrl, title, canAdd }) {
+        let rows = [];
+        try { rows = await jsonOrThrow(await apiFetch(listUrl)); } catch (e) { toast('No se pudo cargar el material.', 'error'); return; }
+        await bfDialog({
+            title,
+            body: `<ul class="bt-atts" id="bt-atts">${rows.map(attRow).join('') || '<li class="bf-muted">Aún no hay material.</li>'}</ul>
+                ${canAdd ? `<div class="bf-stack bt-att-add">
+                  <div class="bf-row bf-wrap" style="gap:.4rem;">
+                    <button type="button" class="bf-btn bf-btn--sm" id="bt-att-file">${bfIco('download', 14)} Subir PDF, audio o foto</button>
+                    <button type="button" class="bf-btn bf-btn--sm" id="bt-att-rec">${bfIco('mic', 14)} Grabar</button>
+                  </div>
+                  <div class="bf-form-grid">
+                    <div><label class="bf-label" for="bt-att-url">…o pega un enlace (Drive, Dropbox, YouTube)</label><input class="bf-input" id="bt-att-url" placeholder="https://"></div>
+                    <div><label class="bf-label" for="bt-att-title">Título</label><input class="bf-input" id="bt-att-title" maxlength="255"></div>
+                  </div>
+                  <div><button type="button" class="bf-btn bf-btn--sm bf-btn--primary" id="bt-att-link">Añadir enlace</button></div>
+                </div>` : ''}`,
+            onMount: (root) => {
+                const ul = root.querySelector('#bt-atts');
+                const add = async (body) => {
+                    try {
+                        const a = await jsonOrThrow(await apiFetch(postUrl, J('POST', body)));
+                        if (ul.querySelector('.bf-muted')) ul.innerHTML = '';
+                        ul.insertAdjacentHTML('afterbegin', attRow(a)); wire();
+                        toast('Añadido.', 'success');
+                    } catch (e) { toast('No se pudo añadir (el enlace debe empezar por https://).', 'error'); }
+                };
+                const wire = () => ul.querySelectorAll('[data-att-id]').forEach(li => {
+                    if (li.dataset.wired) return; li.dataset.wired = '1';
+                    li.querySelector('[data-act="rm"]').addEventListener('click', async () => {
+                        try { await jsonOrThrow(await apiFetch(`/attachments/${li.dataset.attId}`, { method: 'DELETE' })); li.remove(); }
+                        catch (e) { toast(e.message && e.message !== 'http' ? e.message : 'No se pudo quitar.', 'error'); }
+                    });
+                });
+                wire();
+                const linkBtn = root.querySelector('#bt-att-link');
+                if (linkBtn) linkBtn.addEventListener('click', () => {
+                    const url = root.querySelector('#bt-att-url').value.trim();
+                    if (!url) return;
+                    const t = root.querySelector('#bt-att-title').value.trim() || url.replace(/^https?:\/\//, '').slice(0, 60);
+                    add({ kind: 'link', url, title: t });
+                });
+                const fileBtn = root.querySelector('#bt-att-file');
+                if (fileBtn) fileBtn.addEventListener('click', () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'application/pdf,audio/*,image/*';
+                    input.addEventListener('change', async () => {
+                        const f = input.files && input.files[0];
+                        if (!f) return;
+                        try {
+                            toast('Subiendo…', 'info');
+                            const up = await bfUploadFile(f, 'adjunto');
+                            add({ kind: up.kind, url: up.url, title: root.querySelector('#bt-att-title').value.trim() || f.name.slice(0, 200), size_bytes: f.size });
+                        } catch (e) { toast(e.message || 'No se pudo subir.', 'error'); }
+                    });
+                    input.click();
+                });
+                const recBtn = root.querySelector('#bt-att-rec');
+                if (recBtn) recBtn.addEventListener('click', () => bfRecorder(recBtn, async (blob, secs) => {
+                    try {
+                        toast('Subiendo grabación…', 'info');
+                        const file = new File([blob], `grabacion-${Date.now()}.webm`, { type: blob.type || 'audio/webm' });
+                        const up = await bfUploadFile(file, 'grabacion');
+                        add({ kind: 'audio', url: up.url, title: `Grabación ${new Date().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`, duration_sec: secs, size_bytes: file.size });
+                    } catch (e) { toast(e.message || 'No se pudo subir la grabación.', 'error'); }
+                }));
+            },
+            actions: [{ label: 'Cerrar', value: null }],
+        });
+    }
+    BT.attachmentsDialog = attachmentsDialog;
+
+    // Botón "Material" en cada canción del repertorio de la banda.
+    document.addEventListener('bf:repertoire', (e) => {
+        const list = document.getElementById('b-repertoire');
+        if (!list) return;
+        const ctx = BT.ctx || {};
+        list.querySelectorAll('.setlist-song[data-id]').forEach(li => {
+            if (li.querySelector('[data-act="att"]')) return;
+            const btn = document.createElement('button');
+            btn.className = 'setlist-item-btn';
+            btn.dataset.act = 'att';
+            btn.title = 'Material: PDF, audios, enlaces';
+            btn.setAttribute('aria-label', 'Material de la canción');
+            btn.innerHTML = bfIco('folder', 16);
+            btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const title = (li.querySelector('.sl-title') || li).firstChild.textContent.trim();
+                attachmentsDialog({ listUrl: `/songs/${li.dataset.id}/attachments`, postUrl: `/songs/${li.dataset.id}/attachments`,
+                                    title: `Material · ${title}`, canAdd: !ctx.iAmGuest });
+            });
+            const play = li.querySelector('[data-act="play"]');
+            if (play) play.insertAdjacentElement('afterend', btn); else li.appendChild(btn);
+        });
+    });
+
+    // ══ Modo ensayo (T-V6-84) ═════════════════════════════════════════════════
+    async function rehearsalMode(bandId, ctx, eventId = null) {
+        let reh;
+        try { reh = await jsonOrThrow(await apiFetch(`/bands/${bandId}/rehearsals`, J('POST', { event_id: eventId }))); }
+        catch (e) { toast('No se pudo empezar el ensayo.', 'error'); return; }
+        const items = reh.suggested.map(i => ({ ...i, seconds: 0 }));
+        let running = null, tick = null;
+        const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        const row = (i, idx) => `<li class="bt-reh-item${running === idx ? ' is-running' : ''}" data-idx="${idx}">
+            <div class="bt-reh-item__title"><strong>${escapeHtml(i.title)}</strong>${i.reason ? ` <span class="bf-faint">· ${escapeHtml(i.reason)}</span>` : ''}</div>
+            <span class="bt-reh-time" aria-live="off">${fmt(i.seconds)}</span>
+            <button type="button" class="bf-btn bf-btn--sm${running === idx ? ' bf-btn--primary' : ''}" data-act="toggle">${running === idx ? 'Parar' : 'Tocar'}</button>
+            ${i.song_id ? `<a class="bf-icon-btn" href="index.html?songId=${encodeURIComponent(i.song_id)}" target="_blank" rel="noopener" aria-label="Abrir en el reproductor">${bfIco('play', 15)}</a>` : ''}
+        </li>`;
+        const r = await bfDialog({
+            title: 'Modo ensayo',
+            wide: true,
+            body: `<p class="bf-muted" style="margin-bottom:.5rem;">Primero lo del próximo bolo, luego lo que estáis mejorando. Pulsa <b>Tocar</b> para cronometrar cada canción.</p>
+                <ul class="bt-reh-list" id="bt-reh-list">${items.map(row).join('') || '<li class="bf-muted">Sin sugerencias: añade canciones abajo o marca en el Repertorio las que estáis mejorando.</li>'}</ul>
+                <div class="bt-note-add"><input class="bf-input" id="bt-reh-add" placeholder="Añadir otra canción o ejercicio" maxlength="255"><button type="button" class="bf-btn bf-btn--sm" id="bt-reh-addbtn">${bfIco('plus', 14)} Añadir</button></div>
+                <div style="margin-top:.8rem;"><label class="bf-label" for="bt-reh-notes">Apuntes del ensayo</label>
+                  <textarea class="bf-textarea" id="bt-reh-notes" rows="3" maxlength="4000" placeholder="El puente de X va corrido, falta cerrar el final de Y…"></textarea>
+                  <button type="button" class="bf-btn bf-btn--sm" id="bt-reh-board" style="margin-top:.3rem;">${bfIco('note', 14)} Pasar a la pizarra</button></div>
+                <label style="display:block;margin-top:.6rem;"><input type="checkbox" id="bt-reh-chat" checked> Publicar el resumen en el chat de la banda</label>`,
+            onMount: (root) => {
+                const ul = root.querySelector('#bt-reh-list');
+                const paint = () => { ul.innerHTML = items.map(row).join(''); wire(); };
+                const wire = () => ul.querySelectorAll('[data-idx]').forEach(li => li.querySelector('[data-act="toggle"]').addEventListener('click', () => {
+                    const idx = Number(li.dataset.idx);
+                    clearInterval(tick);
+                    if (running === idx) { running = null; paint(); return; }
+                    running = idx; paint();
+                    tick = setInterval(() => {
+                        items[running].seconds += 1;
+                        const t = ul.querySelector(`[data-idx="${running}"] .bt-reh-time`);
+                        if (t) t.textContent = fmt(items[running].seconds);
+                    }, 1000);
+                }));
+                wire();
+                const addBtn = root.querySelector('#bt-reh-addbtn');
+                addBtn.addEventListener('click', () => {
+                    const inp = root.querySelector('#bt-reh-add');
+                    const t = inp.value.trim();
+                    if (!t) return;
+                    items.push({ song_id: null, title: t, seconds: 0 });
+                    inp.value = ''; paint();
+                });
+                root.querySelector('#bt-reh-board').addEventListener('click', async () => {
+                    const body = root.querySelector('#bt-reh-notes').value.trim();
+                    if (!body) return;
+                    try { await jsonOrThrow(await apiFetch(`/bands/${bandId}/notes`, J('POST', { body: body.slice(0, 2000), event_id: eventId }))); toast('Apunte en la pizarra.', 'success'); }
+                    catch (e) { toast('No se pudo apuntar.', 'error'); }
+                });
+            },
+            actions: [{ label: 'Salir sin guardar', value: null }, { label: 'Terminar ensayo', primary: true, onClick: (root) => ({
+                notes: root.querySelector('#bt-reh-notes').value.trim() || null,
+                post_to_chat: root.querySelector('#bt-reh-chat').checked }) }],
+        });
+        clearInterval(tick);
+        if (!r) return;
+        try {
+            await jsonOrThrow(await apiFetch(`/bands/${bandId}/rehearsals/${reh.id}/finish`, J('POST', {
+                items: items.filter(i => i.seconds > 0).map(i => ({ song_id: i.song_id, title: i.title, seconds: i.seconds })),
+                notes: r.notes, post_to_chat: r.post_to_chat })));
+            toast('Ensayo guardado.' + (r.post_to_chat ? ' Resumen publicado en el chat.' : ''), 'success');
+        } catch (e) { toast('No se pudo guardar el ensayo.', 'error'); }
+    }
+    BT.rehearsalMode = rehearsalMode;
 
     // ══ Dossier (EPK) de la banda (T-V6-98) ═══════════════════════════════════
     BT.epk = async function (bandId, ctx) {

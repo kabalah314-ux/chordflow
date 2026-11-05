@@ -98,6 +98,9 @@ class Song(Base):
     # Duración real en segundos (T-V6-88, setlist inteligente). Opcional: si falta, el cliente la
     # estima con compases × BPM.
     duration_sec = Column(Integer, nullable=True)
+    # Modo práctica (T-V6-87): segundo del vídeo de referencia en que empieza cada sección,
+    # por ÍNDICE de sección ({"0": 0, "1": 32.5, …}) — sobrevive a re-guardar la letra.
+    practice_refs = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime, nullable=True, index=True)
@@ -1167,3 +1170,82 @@ class Report(Base):
     reason = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     resolved_at = Column(DateTime, nullable=True)
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# V6-F9 (3/3) — Gastos recurrentes, adjuntos y modo ensayo
+# ══════════════════════════════════════════════════════════════════════════════
+ATTACHMENT_KINDS = ("audio", "pdf", "image", "link")
+
+
+class RecurringExpense(Base):
+    """Gasto recurrente de la banda (T-V6-95): el local de ensayo cada mes, etc. Plantilla que se
+    "registra" con un clic (crea el movimiento con el reparto por defecto). Soft-delete."""
+
+    __tablename__ = "recurring_expenses"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    description = Column(String(255), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    category = Column(String(64), nullable=True)
+    paid_by = Column(String(36), nullable=True)
+    paid_by_fund = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    day_of_month = Column(Integer, nullable=False, default=1, server_default=text("1"))
+    last_logged_month = Column(String(7), nullable=True)  # "2026-11"
+    created_by = Column(String(36), nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+
+class Attachment(Base):
+    """Adjunto (T-V6-85): PDF de partitura, audio (grabación de ensayo), imagen o enlace, colgado
+    de una canción o de un evento de la banda (o personal si band_id es NULL)."""
+
+    __tablename__ = "attachments"
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN (" + ", ".join(f"'{k}'" for k in ATTACHMENT_KINDS) + ")",
+            name="ck_attachments_kind",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    owner_id = Column(String(36), nullable=False, index=True)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    song_id = Column(
+        String(36), ForeignKey("songs.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    event_id = Column(
+        String(36), ForeignKey("events.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    kind = Column(String(16), nullable=False)
+    url = Column(String(1024), nullable=False)
+    title = Column(String(255), nullable=False)
+    duration_sec = Column(Integer, nullable=True)
+    size_bytes = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+
+class RehearsalSession(Base):
+    """Modo ensayo (T-V6-84): qué se tocó, cuánto rato y qué apuntes salieron. Al terminar se
+    publica un resumen en el chat de la banda."""
+
+    __tablename__ = "rehearsal_sessions"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    event_id = Column(String(36), ForeignKey("events.id", ondelete="SET NULL"), nullable=True)
+    started_by = Column(String(36), nullable=False)
+    started_at = Column(DateTime, default=_utcnow)
+    ended_at = Column(DateTime, nullable=True)
+    items = Column(JSON, nullable=True)  # [{"song_id", "title", "seconds"}]
+    notes = Column(Text, nullable=True)

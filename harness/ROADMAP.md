@@ -838,16 +838,16 @@
 - [ ] **T-V6-89** Recordatorios 24 h con respuesta por enlace
 - [x] **T-V6-81** Vista por miembro: mi tono / mi cejilla / mi vista / tamaño
 - [x] **T-V6-88** Setlist inteligente + duración
-- [ ] **T-V6-85** Adjuntos (PDF de partitura, audio, imagen) + grabadora
+- [x] **T-V6-85** Adjuntos (PDF de partitura, audio, imagen) + grabadora
 - [x] **T-V6-83** Semáforo del repertorio (`SongStatus`) + "te faltan N"
 - [x] **T-V6-92** Pizarra de banda (`BandNote`)
-- [ ] **T-V6-84** Modo ensayo
+- [x] **T-V6-84** Modo ensayo
 - [x] **T-V6-86** Hoja del bolo (campos + checklist + página pública imprimible)
-- [ ] **T-V6-87** Modo práctica (referencia por sección, bucle, tempo %)
+- [x] **T-V6-87** Modo práctica (referencia por sección, bucle, tempo %)
 - [ ] **T-V6-91** Importar desde texto de WhatsApp / PDF; modo solo letra
-- [ ] **T-V6-93** Resumen de temporada
+- [x] **T-V6-93** Resumen de temporada
 - [x] **T-V6-94** Feedback in-app + eventos de producto (`product_events`)
-- [ ] **T-V6-95** Gastos recurrentes con reparto por defecto
+- [x] **T-V6-95** Gastos recurrentes con reparto por defecto
 - [x] **T-V6-96** Red profesional (§9.9): perfiles de sala y profesional + fichas públicas + Explorar > Salas / Profesionales
 - [x] **T-V6-97** Convocatorias de bolos y candidaturas (I-20) → evento en la agenda
 - [x] **T-V6-98** EPK de banda + página pública ampliada + "Proponernos" (I-21)
