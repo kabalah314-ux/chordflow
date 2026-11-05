@@ -1101,7 +1101,7 @@ async function loadRepertoire(bandId, canEdit) {
     ensureRepertoireSearch();
     elRep.innerHTML = songs.map(s => `
         <li class="setlist-song" data-id="${escapeHtml(s.id)}">
-            <span class="sl-title">${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}</small></span>
+            <span class="sl-title">${escapeHtml(s.title)} <small>${escapeHtml(s.artist || '')}${[s.key_root ? s.key_root + (/^m/.test(s.key_mode || '') ? 'm' : '') : '', s.bpm ? s.bpm + ' bpm' : '', s.capo ? 'cejilla ' + s.capo : '', s.duration_sec ? bfDuration(s.duration_sec, { short: true }) : ''].filter(Boolean).map(x => ' · ' + escapeHtml(String(x))).join('')}</small></span>
             <button class="setlist-item-btn" data-act="play" aria-label="Reproducir" title="Reproducir">${bfIcon('play')}</button>
             ${canEdit ? `<button class="setlist-item-btn" data-act="rm" aria-label="Quitar del repertorio" title="Quitar">${bfIcon('x')}</button>` : ''}
         </li>`).join('');

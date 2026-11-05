@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Sin conexión en el reproductor + manifest (T-V6-57) · repertorio con tono/BPM/cejilla/duración (parte de T-V6-42d) · giras editables (T-V6-42g)
+- **Qué:** el reproductor guarda la última versión de cada canción abierta en el dispositivo y, si no hay red (local de ensayo, escenario), la toca desde ahí avisando. Junto al Wake Lock, el móvil aguanta un bolo sin cobertura con las canciones ya abiertas. `manifest.json`: descripción actual, accesos directos (Agenda, Canciones, Bolos) y categorías. Repertorio: cada canción muestra tono, BPM, cejilla y duración. Giras: editar (nombre, estado, fechas, notas) y borrar.
+
 ### V6 — Tipografía única IBM Plex sin @import (parte de T-V6-31)
 - **Qué:** se retira Inter/Roboto (se descargaban y no se usaban) y los dos `@import` de Google Fonts en CSS (bloqueaban el pintado y estaban duplicados): cada página carga IBM Plex Sans/Mono con un `<link>` + `preconnect`. El editor usa la fuente mono del sistema de diseño. Autoalojar las fuentes queda pendiente (la red de esta sesión no permite descargarlas).
 

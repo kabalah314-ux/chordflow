@@ -814,7 +814,7 @@
 - [x] **T-V6-52** Explorar provisional (tarjetas, abort/debounce, paginación) + evento público (cover, .ics, compartir)
 - [ ] **T-V6-55** Reproductor: toolbar compacta (popovers BPM/tono en móvil, menú ⋯), tamaño de letra A−/A+, sección actual + navegación, cuenta atrás etiquetada, tempo por usuario (D-V6-9)
 - [x] **T-V6-56** Modo setlist in-page ("Siguiente: …", prefetch) + parada al final con test. **Únicas excepciones al motor**, con plan en TASKS
-- [ ] **T-V6-57** `wakeLock`, offline de última canción/setlist (IndexedDB), `manifest.json` actualizado, icono coral
+- [x] **T-V6-57** `wakeLock`, offline de última canción/setlist (IndexedDB), `manifest.json` actualizado, icono coral
 - [ ] **T-V6-58** Pasada móvil: test de overflow horizontal en las 16 páginas a 390 px, hojas inferiores, topbar con título, pestañas con desvanecido
 - [ ] **T-V6-59** Accesibilidad: tarjetas/filas por teclado, `aria-*` en pestañas y menús, labels reales, `axe` por página en e2e
 - [ ] **T-V6-60** Email transaccional (Edge Function + proveedor D-V6-7): invitación aceptada, evento nuevo/cambiado, recordatorio 24 h, movimiento que te afecta; preferencias por tipo

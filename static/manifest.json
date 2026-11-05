@@ -1,7 +1,7 @@
 {
   "name": "BandFlow",
   "short_name": "BandFlow",
-  "description": "Teleprompter de acordes: reproduce partituras resaltando el acorde activo según el BPM.",
+  "description": "Tu banda organizada: agenda, votación de fechas, setlists, acordes que avanzan solos, cuentas y bolos que buscan banda.",
   "lang": "es",
   "start_url": "/static/app.html",
   "scope": "/static/",
@@ -22,5 +22,26 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Agenda",
+      "short_name": "Agenda",
+      "url": "/static/agenda.html"
+    },
+    {
+      "name": "Biblioteca",
+      "short_name": "Canciones",
+      "url": "/static/library.html"
+    },
+    {
+      "name": "Bolos abiertos",
+      "short_name": "Bolos",
+      "url": "/static/red.html#bolos"
+    }
+  ],
+  "categories": [
+    "music",
+    "productivity"
   ]
 }

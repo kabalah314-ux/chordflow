@@ -454,10 +454,19 @@ async function fetchAndRenderSong() {
         let song = null;
 
         if (songId) {
-            const res = await apiFetch(`/songs/${songId}`);
-            if (res.status === 404) throw new Error("NOT_FOUND");
-            if (!res.ok) throw new Error("Error fetching specific song");
-            song = await res.json();
+            // T-V6-57: sin conexión (sótano del local, escenario sin cobertura) → última copia guardada
+            let res = null;
+            try { res = await apiFetch(`/songs/${songId}`); } catch (netErr) { res = null; }
+            if (res && res.status === 404) throw new Error("NOT_FOUND");
+            if (res && res.ok) {
+                song = await res.json();
+                try { localStorage.setItem('bf-song:' + songId, JSON.stringify(song)); } catch (e) { /* lleno */ }
+            } else {
+                const cached = (() => { try { return JSON.parse(localStorage.getItem('bf-song:' + songId) || 'null'); } catch (e) { return null; } })();
+                if (!cached) throw new Error("Error fetching specific song");
+                song = cached;
+                toast('Sin conexión: tocas la última versión guardada en este dispositivo.', 'info');
+            }
         } else {
             const res = await apiFetch("/songs/");
             if (!res.ok) throw new Error("Error fetching songs");
