@@ -52,7 +52,9 @@ def test_join_sin_codigo_ofrece_salida(page, live_server, api):
     # y un enlace explícito de salida hacia "Mis bandas" (coherencia de navegación).
     page.goto(live_server + "/static/join.html", wait_until="networkidle")
     page.wait_for_selector('#join-box a[href="bands.html"]', timeout=8000)
-    assert "Enlace inválido" in page.inner_text("#join-box")
+    # T-V6-44: sin código, pide pegar el enlace o el código (y sigue ofreciendo salida)
+    assert "Únete a una banda" in page.inner_text("#join-box")
+    assert page.locator("#join-code").count() == 1
     assert "Ir a mis bandas" in page.inner_text("#join-box")
 
 

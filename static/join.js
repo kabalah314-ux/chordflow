@@ -19,7 +19,7 @@ function stateView(icon, title, text) {
 
 async function init() {
     const code = getCode();
-    if (!code) { stateView('link', 'Enlace inválido', 'Falta el código de invitación.'); return; }
+    if (!code) { askCode(); return; }
 
     let prev, session = null;
     try { session = await getSession(); } catch (e) { session = null; }
@@ -55,6 +55,26 @@ async function init() {
     document.getElementById('join-accept').addEventListener('click', () => {
         if (!session) { bfSaveNext(); location.href = 'login.html'; return; }
         accept(code);
+    });
+}
+
+// T-V6-44: sin código en el enlace → pedirlo (pegar el enlace entero o solo el código).
+function askCode() {
+    elBox.innerHTML = `<div class="empty-icon">${bfIco('link', 40)}</div>
+        <h1 class="bf-h2">Únete a una banda</h1>
+        <p>Pega el enlace de invitación que te han mandado (o solo el código).</p>
+        <form id="join-code-form" class="bf-row bf-wrap" style="gap:.5rem;justify-content:center;margin-top:.6rem;">
+            <input class="bf-input" id="join-code" placeholder="https://…/join.html?code=… o el código" aria-label="Enlace o código" style="min-width:16rem;flex:1;max-width:28rem;">
+            <button class="bf-btn bf-btn--primary" type="submit">Continuar</button>
+        </form>${BACK_LINK}`;
+    document.getElementById('join-code-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const raw = document.getElementById('join-code').value.trim();
+        if (!raw) return;
+        let c = raw;
+        try { c = new URL(raw).searchParams.get('code') || raw; } catch (err) { /* no era una URL */ }
+        c = c.replace(/[^A-Za-z0-9_-]/g, '');
+        if (c) location.href = `join.html?code=${encodeURIComponent(c)}`;
     });
 }
 
