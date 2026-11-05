@@ -125,3 +125,23 @@ def test_admin_revoca_invitacion(client):
     with acting_as(JOINER):
         assert client.post(f"/invites/{inv['code']}/accept").status_code == 400
     assert client.delete(f"/bands/{bid}/invites/no-existe").status_code == 404
+
+
+def test_invitacion_es_un_escaparate_sin_datos_privados(client):
+    """T-V6-80: la previsualización muestra miembros, canciones y el próximo evento PÚBLICO (nunca
+    uno privado), sin caché ni contactos."""
+    bid = _new_band(client)
+    client.post(f"/bands/{bid}/songs/", json={"title": "Tema 1"})
+    priv = client.post(f"/bands/{bid}/events/", json={
+        "type": "concert", "title": "Bolo privado", "starts_at": "2099-01-01T21:00:00",
+        "fee": "999.00", "contact_phone": "600000000"}).json()
+    pub = client.post(f"/bands/{bid}/events/", json={
+        "type": "concert", "title": "Bolo abierto", "starts_at": "2099-02-01T21:00:00"}).json()
+    client.patch(f"/bands/{bid}/events/{pub['id']}", json={"visibility": "public"})
+    code = client.post(f"/bands/{bid}/invites", json={"role_to_grant": "member"}).json()["code"]
+    with acting_as(STRANGER):
+        prev = client.get(f"/invites/{code}").json()
+    assert prev["member_count"] == 1 and prev["song_count"] == 1
+    assert prev["next_public_event"]["title"] == "Bolo abierto"
+    body = str(prev)
+    assert priv["id"] not in body and "999" not in body and "600000000" not in body

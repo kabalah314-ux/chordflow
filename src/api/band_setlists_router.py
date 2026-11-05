@@ -22,7 +22,7 @@ from ..services.band_auth import require_band_member
 from ..services.db import get_db
 from ..services.models import BandMembership, Setlist, SetlistItem, Song, _utcnow
 from ..services.schemas import SetlistCreate, SetlistResponse, SetlistSummary, SetlistUpdate
-from .setlists_router import _to_response
+from .setlists_router import _to_response, total_duration
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,8 @@ def list_band_setlists(
                 .filter(Setlist.band_id == band_id, Setlist.deleted_at.is_(None))
                 .order_by(Setlist.updated_at.desc()).all())
     return [SetlistSummary(id=s.id, name=s.name, band_id=s.band_id,
-                           updated_at=s.updated_at, song_count=len(s.items)) for s in setlists]
+                           updated_at=s.updated_at, song_count=len(s.items),
+                           duration_sec=total_duration(s)) for s in setlists]
 
 
 @router.post("/", response_model=SetlistResponse, status_code=status.HTTP_201_CREATED)

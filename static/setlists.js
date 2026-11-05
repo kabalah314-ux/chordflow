@@ -32,7 +32,7 @@ async function loadSetlists() {
                 </div>
                 <div class="card-main" data-act="open" style="cursor:pointer;">
                     <h3 class="card-title">${escapeHtml(sl.name)}</h3>
-                    <p class="card-artist">${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}</p>
+                    <p class="card-artist">${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}${sl.duration_sec ? ' · ' + bfDuration(sl.duration_sec) : ''}</p>
                 </div>
             </div>`).join('');
         elGrid.querySelectorAll('.song-card').forEach(card => {
@@ -219,7 +219,7 @@ async function openSetlist(id) {
     const rows = sl.items.map((it, i) => `
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}" data-pos="${i}">
             <span class="sl-num">${i + 1}</span>
-            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}</small>${it.note ? `<br><small class="sl-note-view">${bfIcon('note', { size: 14 })} ${escapeHtml(it.note)}</small>` : ''}</span>
+            <span class="sl-title">${escapeHtml(it.title)} <small>${escapeHtml(it.artist || '')}${it.duration_sec ? ' · ' + bfDuration(it.duration_sec, { short: true }) : ''}</small>${it.note ? `<br><small class="sl-note-view">${bfIcon('note', { size: 14 })} ${escapeHtml(it.note)}</small>` : ''}</span>
             <button class="setlist-item-btn" data-act="play" aria-label="Reproducir" title="Reproducir">${bfIcon('play')}</button>
             <button class="setlist-item-btn" data-act="rm" aria-label="Quitar del setlist" title="Quitar">${bfIcon('x')}</button>
         </li>`).join('') || '<li><small>Este setlist está vacío. Edítalo para añadir canciones.</small></li>';
@@ -231,6 +231,7 @@ async function openSetlist(id) {
                 <h3>${escapeHtml(sl.name)}</h3>
                 ${sl.items.length ? `<button id="sl-playall" class="primary-btn">${bfIcon('play')} Reproducir todo</button>` : ''}
             </div>
+            ${bfSetlistInsightsHtml(sl.items)}
             <ul class="setlist-list">${rows}</ul>
         </div>`;
     document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); loadSetlists(); });

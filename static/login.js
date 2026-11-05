@@ -18,7 +18,7 @@ function showMsg(text, isError = true) {
 (async () => {
     try {
         const s = await getSession();
-        if (s) window.location.href = 'app.html';
+        if (s) window.location.href = bfTakeNext();
     } catch (e) { /* sin conexión a Supabase: dejar el formulario */ }
 })();
 
@@ -29,7 +29,7 @@ elForm.addEventListener('submit', async (e) => {
     try {
         const { error } = await signInEmail(elEmail.value, elPass.value);
         if (error) return showMsg(error.message);
-        window.location.href = 'app.html';
+        window.location.href = bfTakeNext();
     } catch (err) {
         showMsg('No se pudo conectar con el servidor de cuentas.');
     }
@@ -44,7 +44,7 @@ elBtnRegister.addEventListener('click', async () => {
         if (error) return showMsg(error.message);
         // Si el proyecto exige confirmación por email, no habrá sesión todavía
         if (data.session) {
-            window.location.href = 'app.html';
+            window.location.href = bfTakeNext();
         } else {
             showMsg('Cuenta creada. Revisa tu email para confirmarla y luego entra.', false);
         }

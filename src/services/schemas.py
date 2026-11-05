@@ -221,6 +221,9 @@ class SetlistItemOut(BaseModel):
     artist: Optional[str] = None
     bpm: Optional[int] = None
     note: Optional[str] = None  # apunte por canción (Fase 9): "aquí hablo al público"…
+    key_root: Optional[str] = None  # T-V6-88: setlist inteligente (avisos de tono)
+    key_mode: Optional[str] = None
+    duration_sec: Optional[int] = None  # real o estimada (pulsos × BPM)
 
 
 class SetlistResponse(BaseModel):
@@ -240,6 +243,7 @@ class SetlistSummary(BaseModel):
     name: str
     band_id: Optional[str] = None
     song_count: int = 0
+    duration_sec: Optional[int] = None  # T-V6-88: total (real o estimado); None si no se sabe
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -420,6 +424,14 @@ class InvitePreview(BaseModel):
     role_to_grant: Literal["admin", "member", "guest"]
     valid: bool
     reason: Optional[str] = None  # si no es válida: "expirada" | "agotada" | "banda no disponible"
+    # T-V6-80: escaparate de la invitación (sin datos sensibles): logo, miembros, canciones y el
+    # próximo evento PÚBLICO/unlisted (nunca uno privado).
+    avatar_url: Optional[str] = None
+    cover_url: Optional[str] = None
+    member_count: int = 0
+    song_count: int = 0
+    member_names: List[str] = []
+    next_public_event: Optional[dict] = None
 
 
 # ── Agenda: eventos + asistencia (Fase 10) ────────────────────────────────────

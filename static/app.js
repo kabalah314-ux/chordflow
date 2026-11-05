@@ -480,6 +480,7 @@ async function fetchAndRenderSong() {
         engine.loadSong(song);
         sectionRanges = computeSectionRanges(song);
         setupReference(song);
+        loadMyKey(song.id);   // T-V6-81: "Mi tono" (solo para mí; no toca la canción compartida)
 
     } catch (err) {
         // Antes el fallo de carga era casi silencioso (mensaje técnico solo en el título y la
@@ -491,7 +492,7 @@ async function fetchAndRenderSong() {
         elSongArtist.textContent = "";
         elScoreContent.innerHTML = `
             <div class="empty-state">
-                <div class="empty-icon">${notFound ? "🔍" : "⚠️"}</div>
+                <div class="empty-icon">${typeof bfIcon === 'function' ? bfIcon(notFound ? 'search' : 'alert-circle', { size: 40 }) : ''}</div>
                 <h3>${notFound ? "No encontramos esta canción" : "No se pudo cargar la canción"}</h3>
                 <p>${notFound ? "Quizá fue borrada." : "Revisa tu conexión e inténtalo de nuevo."}</p>
                 <a href="library.html" class="primary-btn" style="text-decoration:none; margin-top:1rem;">← Volver a la biblioteca</a>
@@ -507,6 +508,37 @@ const elKeySave = document.getElementById('btn-key-save');
 function changeTranspose(delta) {
     transposeOffset = Math.max(-11, Math.min(11, transposeOffset + delta));
     applyTranspose();
+    saveMyKeySoon();
+}
+
+// ── T-V6-81: "Mi tono" por músico ─────────────────────────────────────────────
+// Cada músico guarda SU transposición de cada canción (p. ej. la cantante la baja 2 semitonos) sin
+// cambiar la canción de la banda. Se aplica al abrirla. "Guardar tono" (abajo) sigue cambiando la
+// canción para todos y deja mi preferencia en 0. Solo toca la VISTA (transposeChord): el motor
+// trabaja con ids de acorde, así que la sincronización no cambia.
+let myKeyTimer = null;
+async function loadMyKey(songId) {
+    try {
+        const res = await apiFetch(`/songs/${encodeURIComponent(songId)}/my-prefs`);
+        if (!res.ok) return;
+        const p = await res.json();
+        if (currentSong && currentSong.id === songId && p.transpose) {
+            transposeOffset = Math.max(-11, Math.min(11, p.transpose));
+            applyTranspose();
+            toast(`Tu tono para esta canción: ${p.transpose > 0 ? '+' : ''}${p.transpose} (solo lo ves tú).`, 'info');
+        }
+    } catch (e) { /* sin red: tono original */ }
+}
+function saveMyKeySoon() {
+    if (!currentSong) return;
+    const songId = currentSong.id, value = transposeOffset;
+    clearTimeout(myKeyTimer);
+    myKeyTimer = setTimeout(() => {
+        apiFetch(`/songs/${encodeURIComponent(songId)}/my-prefs`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transpose: value }),
+        }).catch(() => {});
+    }, 800);
 }
 
 if (elKeyUp) elKeyUp.addEventListener('click', () => changeTranspose(1));
@@ -539,6 +571,7 @@ if (elKeySave) elKeySave.addEventListener('click', async () => {
         const data = await res.json();
         currentSong = data;
         transposeOffset = 0;
+        saveMyKeySoon();   // el tono ya es el de la canción: mi preferencia vuelve a 0
         renderScoreInto(elScoreContent, data, transposeOffset);
         applyTranspose();
         engine.loadSong(data);

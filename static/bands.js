@@ -906,7 +906,7 @@ async function loadBandSetlists(bandId, canEdit) {
     }
     el.innerHTML = setlists.map(sl => `
         <li class="setlist-song" data-id="${escapeHtml(sl.id)}">
-            <span class="sl-title">${escapeHtml(sl.name)} <small>${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}</small></span>
+            <span class="sl-title">${escapeHtml(sl.name)} <small>${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}${sl.duration_sec ? ' · ' + bfDuration(sl.duration_sec) : ''}</small></span>
             <button class="setlist-item-btn" data-act="play" aria-label="Reproducir en orden" title="Reproducir en orden">${bfIcon('play')}</button>
             ${canEdit ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar setlist" title="Editar">${bfIcon('edit')}</button>
             <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">${bfIcon('trash')}</button>` : ''}

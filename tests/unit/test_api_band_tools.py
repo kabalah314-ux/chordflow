@@ -221,3 +221,18 @@ def test_feedback_y_eventos_de_producto(client):
     assert client.post("/feedback", json={"body": ""}).status_code == 422
     assert client.post("/me/product-events", json={"kind": "player.open"}).status_code == 204
     assert client.post("/me/product-events", json={"kind": "MAL ESPACIO"}).status_code == 422
+
+
+# ── Setlist inteligente (T-V6-88) ─────────────────────────────────────────────
+def test_setlist_lleva_duracion_total_real_o_estimada(client):
+    a = client.post("/songs/", json={"title": "Real", "bpm": 120, "duration_sec": 200,
+                                     "key_root": "E", "sections": []}).json()
+    b = client.post("/songs/", json={"title": "Estimada", "bpm": 120, "duration_beats": 400,
+                                     "sections": []}).json()
+    sl = client.post("/setlists/", json={"name": "Bolo", "song_ids": [a["id"], b["id"]]})
+    assert sl.status_code == 201, sl.text
+    det = sl.json()
+    assert [i["duration_sec"] for i in det["items"]] == [200, 200]  # 400 pulsos a 120 = 200 s
+    assert det["items"][0]["key_root"] == "E"
+    summ = next(s for s in client.get("/setlists/").json() if s["id"] == det["id"])
+    assert summ["duration_sec"] == 400

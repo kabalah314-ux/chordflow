@@ -419,3 +419,44 @@ function bfLocalInput(iso) {
 // Valor de un datetime-local → lo que espera la API (o null). Hoy el contrato es "hora de pared"
 // sin zona (igual que la Agenda); cuando llegue T-V6-18 (UTC de punta a punta) solo cambia aquí.
 function bfFromLocalInput(v) { return v ? v : null; }
+
+// ── T-V6-88: setlist inteligente ──────────────────────────────────────────────
+// Duración "1 h 05 min" / "48 min" / "3:35".
+function bfDuration(sec, { short = false } = {}) {
+    if (!sec && sec !== 0) return '';
+    const s = Math.round(sec);
+    if (short) return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
+    return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`;
+}
+// Avisos útiles para el orden de un setlist (sin IA, reglas sencillas que un músico agradece):
+// mismo tono 3 veces seguidas, dos baladas lentas seguidas al final, canciones sin duración.
+function bfSetlistInsights(items) {
+    const known = items.filter(i => i.duration_sec);
+    const total = known.reduce((a, i) => a + i.duration_sec, 0);
+    const warnings = [];
+    for (let i = 2; i < items.length; i++) {
+        const k = (x) => x.key_root ? `${x.key_root}${x.key_mode === 'minor' || x.key_mode === 'm' ? 'm' : ''}` : null;
+        if (k(items[i]) && k(items[i]) === k(items[i - 1]) && k(items[i]) === k(items[i - 2])) {
+            warnings.push(`Tres canciones seguidas en ${k(items[i])} (${i - 1}–${i + 1}): quizá conviene alternar.`);
+        }
+    }
+    for (let i = 1; i < items.length; i++) {
+        if (items[i].bpm && items[i - 1].bpm && items[i].bpm < 80 && items[i - 1].bpm < 80) {
+            warnings.push(`Dos temas lentos seguidos (${i}–${i + 1}): el público puede bajar.`);
+            break;
+        }
+    }
+    if (items.length && items[items.length - 1].bpm && items[items.length - 1].bpm < 85) {
+        warnings.push('Cerráis con un tema lento: suele funcionar mejor terminar arriba.');
+    }
+    return { total, missing: items.length - known.length, warnings: warnings.slice(0, 3) };
+}
+function bfSetlistInsightsHtml(items) {
+    if (!items || !items.length) return '';
+    const r = bfSetlistInsights(items);
+    return `<div class="bf-sl-insights">
+        <span>${bfIco('clock', 14)} ${r.total ? `<strong>${bfDuration(r.total)}</strong>` : 'Duración desconocida'}${r.missing && r.total ? ` <span class="bf-faint">(${r.missing} sin duración)</span>` : ''}</span>
+        ${r.warnings.map(w => `<span class="bf-sl-insights__warn">${bfIco('alert-circle', 13)} ${escapeHtml(w)}</span>`).join('')}
+    </div>`;
+}

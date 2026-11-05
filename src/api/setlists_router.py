@@ -60,6 +60,24 @@ def _set_items(db: Session, setlist: Setlist, pairs: list, user_id: str) -> None
         pos += 1
 
 
+def _duration(song):
+    """Duración en segundos (T-V6-88): la real si existe; si no, estimada con pulsos × BPM.
+    Devuelve el número (o None); `duration_estimated` lo marca el schema."""
+    if song.duration_sec:
+        return song.duration_sec
+    if song.duration_beats and song.bpm:
+        return int(round(song.duration_beats * 60.0 / song.bpm))
+    return None
+
+
+def total_duration(setlist: Setlist):
+    """Suma de duraciones de las canciones vivas del setlist (None si ninguna se conoce)."""
+    vals = [_duration(it.song) for it in setlist.items
+            if it.song is not None and it.song.deleted_at is None]
+    known = [v for v in vals if v]
+    return sum(known) if known else None
+
+
 def _to_response(setlist: Setlist) -> SetlistResponse:
     """Construye la respuesta con las canciones en orden, omitiendo las borradas."""
     items = []
@@ -69,7 +87,8 @@ def _to_response(setlist: Setlist) -> SetlistResponse:
             continue
         items.append(SetlistItemOut(song_id=song.id, position=it.position,
                                     title=song.title, artist=song.artist, bpm=song.bpm,
-                                    note=it.note))
+                                    note=it.note, key_root=song.key_root, key_mode=song.key_mode,
+                                    duration_sec=_duration(song)))
     return SetlistResponse(id=setlist.id, name=setlist.name, owner_id=setlist.owner_id,
                            band_id=setlist.band_id, created_at=setlist.created_at,
                            updated_at=setlist.updated_at, items=items)
@@ -85,7 +104,8 @@ def list_setlists(db: Session = Depends(get_db), user_id: str = Depends(get_curr
                             Setlist.band_id.is_(None))
                     .order_by(Setlist.updated_at.desc()).all())
         return [SetlistSummary(id=s.id, name=s.name, updated_at=s.updated_at,
-                               song_count=len(s.items)) for s in setlists]
+                               song_count=len(s.items), duration_sec=total_duration(s))
+                for s in setlists]
     except SQLAlchemyError as e:
         logger.error(f"Error listando setlists: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error interno de base de datos")

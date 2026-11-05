@@ -52,12 +52,37 @@ async function getUser() {
     return s ? s.user : null;
 }
 
-// Si no hay sesión, redirige al login. Devuelve la sesión si la hay.
+// ─── T-V6-40/41: volver a donde ibas tras entrar ─────────────────────────────────
+// Antes, abrir un enlace (invitación, evento, banda…) sin sesión mandaba al login y luego a Inicio:
+// el enlace se perdía. Guardamos la página (solo rutas propias `x.html?…`, nunca URLs externas).
+function bfSaveNext() {
+    try {
+        const p = location.pathname.split('/').pop() + location.search + location.hash;
+        if (p && !/^login\.html/i.test(p)) sessionStorage.setItem('bf-next', p);
+    } catch (e) { /* sin storage */ }
+}
+function bfTakeNext(fallback = 'app.html') {
+    try {
+        const n = sessionStorage.getItem('bf-next');
+        sessionStorage.removeItem('bf-next');
+        if (n && /^[a-z0-9_-]+\.html([?#][^\s]*)?$/i.test(n)) return n;
+    } catch (e) { /* sin storage */ }
+    return fallback;
+}
+
+// Si no hay sesión, redirige al login (recordando adónde ibas). Devuelve la sesión si la hay.
 async function requireAuth() {
     const s = await getSession();
     if (!s) {
+        bfSaveNext();
         window.location.href = 'login.html';
         return null;
+    }
+    // Tras el login con Google se vuelve a app.html: si había un destino pendiente, ir allí.
+    if (/\/app\.html$/.test(location.pathname)) {
+        let pending = null;
+        try { pending = sessionStorage.getItem('bf-next'); } catch (e) { /* sin storage */ }
+        if (pending) { location.replace(bfTakeNext()); return null; }
     }
     return s;
 }
@@ -104,6 +129,7 @@ async function apiFetch(url, opts = {}) {
     // Token expirado o inválido: volver al login automáticamente (T-006).
     // En una página que ya es el login, no redirigimos para evitar bucles.
     if (res.status === 401 && !window.location.pathname.endsWith('login.html')) {
+        bfSaveNext();
         window.location.href = 'login.html';
     }
     return res;

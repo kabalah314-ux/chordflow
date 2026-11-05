@@ -367,6 +367,8 @@ async function initEditor() {
         const sigEl = document.getElementById('time-signature');   // T-V5-07: compás de la canción
         if (sigEl) sigEl.value = `${song.time_signature_num || 4}/${song.time_signature_den || 4}`;
         document.getElementById('reference-url').value = song.reference_url || '';
+        const durEl = document.getElementById('duration');   // T-V6-88
+        if (durEl) durEl.value = song.duration_sec ? `${Math.floor(song.duration_sec / 60)}:${String(song.duration_sec % 60).padStart(2, '0')}` : '';
         document.getElementById('raw-text').value = songToRawText(song);
         updatePreview();
         updateReferencePreview();   // carátula si la canción ya trae enlace de referencia
@@ -580,6 +582,13 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
         return;
     }
     if (referenceUrl) payload.reference_url = referenceUrl;
+    // T-V6-88: duración "m:ss" → segundos (vacío = sin duración; el setlist la estima con el BPM).
+    const durRaw = ((document.getElementById('duration') || {}).value || '').trim();
+    if (durRaw) {
+        const m = durRaw.match(/^(\d{1,2}):([0-5]\d)$/);
+        if (!m) { toast('La duración va en minutos:segundos, p. ej. 3:45', 'error'); return; }
+        payload.duration_sec = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    }
 
     // PUT si estamos editando, POST si es nueva
     const isEditing = !!editingSongId;

@@ -18,7 +18,15 @@ from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
 from ..services.db import get_db
-from ..services.models import Band, BandInvite, BandMembership, _utcnow
+from ..services.models import (
+    Band,
+    BandInvite,
+    BandMembership,
+    Event,
+    MusicianProfile,
+    Song,
+    _utcnow,
+)
 from ..services.schemas import BandMembershipResponse, InvitePreview
 
 logger = logging.getLogger(__name__)
@@ -62,12 +70,36 @@ def preview_invite(code: str, db: Session = Depends(get_db)):
     invite = _get_invite(db, code)
     band = db.query(Band).filter(Band.id == invite.band_id).first()
     reason = _invalid_reason(db, invite)
+    extra = {}
+    if reason is None and band is not None:
+        # T-V6-80: escaparate (solo si la invitación es válida; nada sensible).
+        members = (db.query(BandMembership.user_id)
+                   .filter(BandMembership.band_id == band.id, BandMembership.status == "active")
+                   .all())
+        ids = [m for (m,) in members]
+        names = [n for (n,) in db.query(MusicianProfile.display_name)
+                 .filter(MusicianProfile.id.in_(ids or [""])).all() if n][:6]
+        now = _utcnow().replace(tzinfo=None)
+        ev = (db.query(Event)
+              .filter(Event.band_id == band.id, Event.deleted_at.is_(None),
+                      Event.visibility.in_(("public", "unlisted")), Event.starts_at >= now,
+                      Event.status != "cancelled")
+              .order_by(Event.starts_at).first())
+        extra = dict(
+            avatar_url=band.avatar_url, cover_url=band.cover_url, member_count=len(ids),
+            member_names=names,
+            song_count=db.query(Song).filter(Song.band_id == band.id,
+                                             Song.deleted_at.is_(None)).count(),
+            next_public_event={"id": ev.id, "title": ev.title, "starts_at": ev.starts_at.isoformat(),
+                               "type": ev.type} if ev else None,
+        )
     return InvitePreview(
         band_id=invite.band_id,
         band_name=band.name if band else "(banda no disponible)",
         role_to_grant=invite.role_to_grant,
         valid=reason is None,
         reason=reason,
+        **extra,
     )
 
 
