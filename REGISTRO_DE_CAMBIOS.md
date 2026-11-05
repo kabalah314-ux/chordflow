@@ -46,6 +46,11 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Búsqueda global Ctrl+K (T-V6-67) · Portada pública y 404 (T-V6-68) · X-Request-ID (parte de T-V6-29) · bug del micrófono
+- **Qué:** `GET /me/search` (canciones mías y de mis bandas, setlists, eventos, bandas; solo lo que puedo ver) + paleta en el lateral ("Buscar", Ctrl/Cmd+K) con flechas/Enter y accesos a páginas. `/` abre `bienvenida.html` (portada para quien no tiene cuenta; con sesión salta a la app). 404 con marca para navegadores (la API sigue en JSON). Cabecera `X-Request-ID` en todas las respuestas.
+- **Bug corregido:** `Permissions-Policy: microphone=()` bloqueaba el micrófono **también para la propia app** (afinador mudo en producción). Ahora `microphone=(self), camera=(self)`.
+- **Verificación:** `test_busqueda_global_solo_lo_mio`, `test_404_con_marca_para_navegador_y_json_para_la_api`.
+
 ### V6 — Importar desde PDF y "solo letra" (T-V6-91) · tamaño de letra por músico (parte de T-V6-55)
 - **Qué:** editor: "Sacar el texto de un PDF" (pdf.js bajo demanda; reconstruye líneas y columnas para que los acordes queden sobre la sílaba; hasta 20 páginas). Pegar texto de WhatsApp ya lo cubría el parser. Reproductor ("P"): vista **Solo letra** para cantantes y **tamaño de letra** (también Ctrl/Cmd + / −), guardados por músico en `my-prefs`.
 - **Verificación:** `node --check`; la persistencia de `view_mode`/`font_scale` la cubre `test_mis_preferencias_por_cancion`.

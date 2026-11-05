@@ -65,6 +65,9 @@
                 <span class="bf-brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
                 <span class="bf-brand-name">BandFlow</span>
             </a>
+            <button class="bf-nav-item bf-notif-btn" id="bf-search-btn" type="button" aria-label="Buscar (Ctrl K)">
+                <span class="bf-nav-icon">${bfIcon('search')}</span><span>Buscar</span><kbd class="bf-kbd">Ctrl K</kbd>
+            </button>
             <button class="bf-nav-item bf-notif-btn" id="bf-notif-btn" type="button" aria-label="Avisos">
                 <span class="bf-nav-icon">${bfIcon('inbox')}</span><span>Avisos</span>
                 <span class="bf-nav-badge" id="bf-notif-badge" hidden>0</span>
@@ -174,6 +177,72 @@
         loadProfile();
         loadBandsNav();
         wireNotifications();
+        wireSearch();
+    }
+
+    // ── T-V6-67: búsqueda global (Ctrl/Cmd + K) ─────────────────────────────────
+    const PAGES = [
+        { title: 'Inicio', href: 'app.html' }, { title: 'Agenda', href: 'agenda.html' },
+        { title: 'Finanzas', href: 'finanzas.html' }, { title: 'Chat', href: 'chat.html' },
+        { title: 'Mis bandas', href: 'bands.html' }, { title: 'Biblioteca', href: 'library.html' },
+        { title: 'Setlists', href: 'setlists.html' }, { title: 'Explorar: bolos abiertos', href: 'red.html#bolos' },
+        { title: 'Explorar: salas', href: 'red.html#salas' }, { title: 'Explorar: profesionales', href: 'red.html#pros' },
+        { title: 'Mensajes de Explorar', href: 'red.html#mensajes' }, { title: 'Nueva canción', href: 'editor.html' },
+        { title: 'Afinador y metrónomo', href: 'afinador.html' }, { title: 'Mi perfil', href: 'profile.html' },
+    ];
+    const KIND_ICON = { band: 'users', song: 'music', setlist: 'list-music', event: 'calendar', page: 'arrow-up-right' };
+    const KIND_TXT = { band: 'Banda', song: 'Canción', setlist: 'Setlist', event: 'Evento', page: 'Ir a' };
+    let paletteOpen = false;
+    async function openPalette() {
+        if (paletteOpen) return;
+        paletteOpen = true;
+        let ctrl = null, results = [], sel = 0;
+        await bfDialog({
+            title: 'Buscar',
+            body: `<input class="bf-input" id="bf-pal-q" placeholder="Canciones, setlists, eventos, bandas… o una página" autocomplete="off" autofocus aria-label="Buscar" aria-controls="bf-pal-list">
+                   <ul class="bf-pal" id="bf-pal-list" role="listbox"></ul>`,
+            actions: [],
+            onMount: (root, close) => {
+                const q = root.querySelector('#bf-pal-q'), ul = root.querySelector('#bf-pal-list');
+                const paint = () => {
+                    ul.innerHTML = results.map((r, i) => `<li role="option" aria-selected="${i === sel}"><a href="${escapeHtml(r.href)}" class="${i === sel ? 'is-sel' : ''}">
+                        <span class="bf-pal__icon">${bfIcon(KIND_ICON[r.kind] || 'search', { size: 16 })}</span>
+                        <span class="bf-pal__text"><strong>${escapeHtml(r.title)}</strong><span class="bf-faint">${escapeHtml(r.subtitle || KIND_TXT[r.kind] || '')}</span></span></a></li>`).join('')
+                        || (q.value.trim() ? '<li class="bf-muted" style="padding:.6rem;">Sin resultados.</li>' : '');
+                };
+                const run = async () => {
+                    const term = q.value.trim().toLowerCase();
+                    const pages = PAGES.filter(p => !term || p.title.toLowerCase().includes(term)).slice(0, term ? 4 : 8)
+                        .map(p => ({ kind: 'page', title: p.title, href: p.href }));
+                    results = pages; sel = 0; paint();
+                    if (term.length < 2) return;
+                    if (ctrl) ctrl.abort();
+                    ctrl = new AbortController();
+                    const sig = ctrl.signal;
+                    try {
+                        const res = await apiFetch('/me/search?q=' + encodeURIComponent(term), { signal: sig });
+                        if (!res.ok || sig.aborted) return;
+                        results = (await res.json()).concat(pages); sel = 0; paint();
+                    } catch (e) { /* abortado o sin red */ }
+                };
+                let t;
+                q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(run, 180); });
+                q.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(results.length - 1, sel + 1); paint(); }
+                    if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); paint(); }
+                    if (e.key === 'Enter' && results[sel]) { e.preventDefault(); close(null); location.href = results[sel].href; }
+                });
+                run();
+            },
+        });
+        paletteOpen = false;
+    }
+    function wireSearch() {
+        const btn = document.getElementById('bf-search-btn');
+        if (btn) btn.addEventListener('click', openPalette);
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); openPalette(); }
+        });
     }
 
     // ── T-V6-61: centro de avisos (campana con contador) ─────────────────────────

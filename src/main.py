@@ -1,10 +1,12 @@
 import logging
+import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .api.band_collections_router import router as band_collections_router
 from .api.band_setlists_router import router as band_setlists_router
@@ -23,6 +25,7 @@ from .api.network_router import router as network_router
 from .api.notifications_router import router as notifications_router
 from .api.profile_router import router as profile_router
 from .api.public_router import router as public_router
+from .api.search_router import router as search_router
 from .api.setlists_router import router as setlists_router
 from .api.songs_router import router as songs_router
 from .api.tours_router import router as tours_router
@@ -89,8 +92,19 @@ async def add_security_headers(request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    # Micrófono permitido SOLO a este origen: el afinador y la grabadora de ensayo lo necesitan
+    # (antes `microphone=()` lo bloqueaba también para la propia app → afinador mudo).
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self), camera=(self)"
+    response.headers["X-Request-ID"] = getattr(request.state, "request_id", "-")
     return response
+
+
+# T-V6-29: id de petición para cruzar un error del usuario con el log (cabecera X-Request-ID).
+@app.middleware("http")
+async def request_id_mw(request, call_next):
+    rid = request.headers.get("x-request-id") or uuid.uuid4().hex[:16]
+    request.state.request_id = rid[:64]
+    return await call_next(request)
 
 # Montar carpeta de archivos estáticos (Frontend). Ruta ABSOLUTA (relativa a la raíz del repo,
 # = padre de src/) para que funcione tanto en local como en serverless (Vercel), donde el CWD
@@ -120,11 +134,24 @@ app.include_router(public_router)
 app.include_router(band_tools_router)
 app.include_router(network_router)
 app.include_router(notifications_router)
+app.include_router(search_router)
 
 @app.get("/")
 def read_root():
-    # El inicio (app shell de BandFlow) es la pantalla de entrada (T-074).
-    return RedirectResponse(url="/static/app.html")
+    # T-V6-68: portada pública (bienvenida.html). Si ya hay sesión, ella misma salta a la app.
+    return RedirectResponse(url="/static/bienvenida.html")
+
+
+# T-V6-68: 404 con marca para quien navega (HTML); la API sigue devolviendo JSON.
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    wants_html = "text/html" in (request.headers.get("accept") or "")
+    if exc.status_code == 404 and wants_html and request.method == "GET":
+        page = _STATIC_DIR / "404.html"
+        if page.exists():
+            return HTMLResponse(page.read_text(encoding="utf-8"), status_code=404)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail},
+                        headers=getattr(exc, "headers", None))
 
 
 @app.get("/health")

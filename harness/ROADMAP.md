@@ -824,8 +824,8 @@
 - [ ] **T-V6-64** Onboarding: sin banda (dos caminos + canción demo), asistente de banda de 3 pasos, tour de 4 puntos
 - [ ] **T-V6-65** Borrar cuenta (con transferencia de admin) + exportar mis datos; verificación de email; emails de auth con marca
 - [ ] **T-V6-66** Moderación del catálogo (ocultar/retirar, borrar comentario), reportar, aviso de derechos
-- [ ] **T-V6-67** Búsqueda global Ctrl+K y hoja de atajos `?`
-- [ ] **T-V6-68** Landing pública en `/` y páginas 404/500 con marca (D-V6-11)
+- [x] **T-V6-67** Búsqueda global Ctrl+K y hoja de atajos `?`
+- [x] **T-V6-68** Landing pública en `/` y páginas 404/500 con marca (D-V6-11)
 - [ ] **T-V6-70** Staging (Supabase + env de preview en Vercel) + smoke post-deploy
 - [ ] **T-V6-71** Migración automática en el pipeline de deploy (contra el pooler de sesión, antes de promover)
 - [ ] **T-V6-72** Backups `pg_dump` diarios + restauración probada + runbook de rollback

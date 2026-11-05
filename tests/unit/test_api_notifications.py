@@ -104,3 +104,17 @@ def test_recordatorio_24h_a_quien_no_ha_respondido(client, monkeypatch):
     # Idempotente
     r2 = client.get("/internal/cron/reminders", headers={"Authorization": "Bearer s3cr3t-cron"})
     assert r2.json()["sent"] == 0
+
+
+def test_busqueda_global_solo_lo_mio(client):
+    bid = _band(client)
+    client.post(f"/bands/{bid}/songs/", json={"title": "Zarabanda Buscable"})
+    client.post("/songs/", json={"title": "Zarabanda Personal", "sections": []})
+    res = client.get("/me/search?q=zarabanda").json()
+    titles = {r["title"] for r in res}
+    assert {"Zarabanda Buscable", "Zarabanda Personal"} <= titles
+    with acting_as(STRANGER):
+        assert all("Zarabanda" not in r["title"] for r in client.get("/me/search?q=zarabanda").json())
+    with acting_as(MEMBER):  # miembro: ve la de la banda, no la personal del otro
+        t = {r["title"] for r in client.get("/me/search?q=zarabanda").json()}
+        assert "Zarabanda Buscable" in t and "Zarabanda Personal" not in t

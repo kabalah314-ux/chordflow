@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="theme.js?v=5283f341"></script>
+    <meta name="theme-color" content="#0d0d10">
+    <title>BandFlow — Tu banda, organizada</title>
+    <meta name="description" content="Ensayos, bolos, setlists, partituras que se mueven solas, gastos compartidos y bolos que buscan banda. Gratis para bandas.">
+    <link rel="stylesheet" href="design-system.css?v=97c7ef16">
+    <link rel="stylesheet" href="style.css?v=0ef3289e">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body class="lp">
+    <!-- T-V6-68: portada pública. Con sesión salta directo a la app (lp.js). -->
+    <header class="lp-top">
+        <a class="lp-brand" href="bienvenida.html"><span class="bf-brand-mark" aria-hidden="true"><span></span><span></span><span></span></span> BandFlow</a>
+        <nav class="lp-nav"><a href="red.html">Explorar bolos</a><a class="bf-btn bf-btn--sm" href="login.html">Entrar</a></nav>
+    </header>
+    <main>
+        <section class="lp-hero">
+            <h1>Tu banda, organizada.<br><span>Y en el escenario, solo música.</span></h1>
+            <p class="lp-lead">Agenda con «¿vas?», votación de fechas por WhatsApp, setlists con duración, acordes que avanzan solos al tempo, gastos repartidos y bolos que buscan banda. Gratis para músicos.</p>
+            <div class="lp-cta"><a class="bf-btn bf-btn--primary bf-btn--lg" href="login.html">Crear mi banda gratis</a>
+                <a class="bf-btn bf-btn--lg" href="red.html#bolos">Ver bolos abiertos</a></div>
+        </section>
+        <section class="lp-grid" aria-label="Qué hace BandFlow">
+            <article><h2>Ensayos sin perseguir a nadie</h2><p>Propón fechas, cada uno vota desde el enlace (sin cuenta) y la elegida entra en la agenda con las asistencias ya puestas. Recordatorio el día antes.</p></article>
+            <article><h2>Repertorio que se aprende</h2><p>Cada músico marca cómo lleva cada canción, su tono y su vista (solo letra para quien canta). Modo práctica con tempo lento y repetir sección.</p></article>
+            <article><h2>El bolo, en una hoja</h2><p>Horarios de carga y prueba, dirección, backline, checklist y setlist imprimible. Un enlace de solo lectura para el técnico y la sala.</p></article>
+            <article><h2>Cuentas claras</h2><p>Cachés, gastos y el local de ensayo repartidos a partes iguales. Cada uno sabe lo que debe y lo que le deben.</p></article>
+            <article><h2>Bolos que buscan banda</h2><p>Salas y bookers publican fechas; tu banda se postula con su dossier. Si os eligen, el concierto aparece solo en vuestra agenda.</p></article>
+            <article><h2>Y todo lo demás</h2><p>Fotógrafos, técnicos, estudios, locales de ensayo… en tu zona, con valoraciones de músicos que ya han trabajado con ellos.</p></article>
+        </section>
+        <section class="lp-pro">
+            <h2>¿Tienes una sala o das servicios a músicos?</h2>
+            <p>Crea tu ficha gratis y publica fechas: las bandas de tu zona se postulan con su dossier.</p>
+            <a class="bf-btn bf-btn--primary" href="red.html#mios">Crear mi ficha</a>
+        </section>
+    </main>
+    <footer class="lp-foot"><span>BandFlow · hecho para músicos</span><a href="red.html">Explorar</a><a href="login.html">Entrar</a></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.js"
+            integrity="sha384-EjUdIVmzWliPzdzhxZ9ZoO0etXLKWuUPUftAGxP6qH6Lm4oLwoLaJR0Ba4pIDiDL"
+            crossorigin="anonymous"></script>
+    <script src="auth.js?v=f39b3653"></script>
+    <script src="lp.js?v=f928ce36"></script>
+</body>
+</html>

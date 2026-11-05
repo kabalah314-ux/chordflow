@@ -26,3 +26,14 @@ def test_tema_se_aplica_en_head(page):
 def test_reproductor_no_carga_theme_js():
     html = (STATIC / "index.html").read_text(encoding="utf-8")
     assert '<script src="theme.js' not in html
+
+
+def test_404_con_marca_para_navegador_y_json_para_la_api(client):
+    """T-V6-68: quien navega a una ruta que no existe ve la página 404 de BandFlow; la API sigue
+    respondiendo JSON. T-V6-29: toda respuesta lleva X-Request-ID."""
+    r = client.get("/no-existe-esto", headers={"Accept": "text/html"})
+    assert r.status_code == 404 and "BandFlow" in r.text and "<html" in r.text
+    r = client.get("/no-existe-esto", headers={"Accept": "application/json"})
+    assert r.status_code == 404 and r.json()["detail"]
+    assert r.headers.get("X-Request-ID")
+    assert "microphone=(self)" in r.headers.get("Permissions-Policy", "")

@@ -685,3 +685,14 @@ a.rd-pro:hover { border-color: var(--bf-primary); }
   .bf-cal__cell { min-height: 54px; }
   .bf-cal__ev span { display: none; }
 }
+
+/* T-V6-67 — paleta de búsqueda (Ctrl K) */
+.bf-kbd { margin-left: auto; font: 500 .65rem/1 var(--bf-font-mono, monospace); padding: .2rem .35rem; border-radius: 4px;
+  border: 1px solid var(--bf-border, #333); color: var(--bf-text-muted, inherit); }
+@media (max-width: 768px) { .bf-kbd { display: none; } }
+.bf-pal { list-style: none; padding: 0; margin: .6rem 0 0; max-height: 55vh; overflow-y: auto; }
+.bf-pal a { display: flex; gap: .6rem; align-items: center; padding: .55rem .5rem; border-radius: 8px; color: inherit; text-decoration: none; }
+.bf-pal a:hover, .bf-pal a.is-sel { background: color-mix(in srgb, var(--bf-primary) 12%, transparent); }
+.bf-pal__icon { color: var(--bf-text-muted, inherit); }
+.bf-pal__text { display: flex; flex-direction: column; min-width: 0; }
+.bf-pal__text .bf-faint { font-size: var(--bf-fs-xs, .75rem); }
