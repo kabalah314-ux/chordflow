@@ -116,3 +116,20 @@ def test_aislamiento_chat(client):
         assert client.get(f"/bands/{bid}/messages/").status_code == 404
         assert client.post(f"/bands/{bid}/messages/", json={"body": "x"}).status_code == 404
         assert client.delete(f"/bands/{bid}/messages/{mid}").status_code == 404
+
+
+def test_chat_paginado_y_after(client):
+    """T-V6-10: sin `after` → fijados + los últimos `limit`; con `after` → solo los posteriores."""
+    bid = client.post("/bands/", json={"name": "Chat paginado"}).json()["id"]
+    ids = []
+    for i in range(12):
+        ids.append(client.post(f"/bands/{bid}/messages/", json={"body": f"m{i}"}).json()["id"])
+    client.patch(f"/bands/{bid}/messages/{ids[0]}/pin", json={"is_pinned": True})
+
+    page = client.get(f"/bands/{bid}/messages/?limit=5").json()
+    assert page[0]["id"] == ids[0] and page[0]["is_pinned"]          # fijado primero
+    assert [m["body"] for m in page[1:]] == ["m7", "m8", "m9", "m10", "m11"]
+
+    after = client.get(f"/bands/{bid}/messages/?after={ids[9]}").json()
+    assert [m["body"] for m in after] == ["m10", "m11"]
+    assert client.get(f"/bands/{bid}/messages/?after={ids[11]}").json() == []

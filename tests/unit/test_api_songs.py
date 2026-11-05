@@ -225,3 +225,18 @@ def test_reference_url_solo_http(client, bad):
     assert client.patch(f"/songs/{sid}", json={"reference_url": bad}).status_code == 422
     ok = "https://www.youtube.com/watch?v=abcdefghijk"
     assert client.patch(f"/songs/{sid}", json={"reference_url": ok}).status_code == 200
+
+
+
+def test_listado_orden_estable_y_total(client):
+    """T-V6-11 (B-06): /songs/ ordena por última edición y expone X-Total-Count para paginar."""
+    from tests.conftest import sample_song_payload
+
+    ids = [client.post("/songs/", json=sample_song_payload(title=f"S{i}")).json()["id"] for i in range(3)]
+    client.patch(f"/songs/{ids[0]}", json={"bpm": 99})          # S0 pasa a ser la más reciente
+    r = client.get("/songs/?limit=2")
+    assert r.headers["X-Total-Count"] == "3"
+    assert [s["id"] for s in r.json()][0] == ids[0]
+    assert len(r.json()) == 2
+    resto = client.get("/songs/?skip=2&limit=2").json()
+    assert len(resto) == 1

@@ -3,11 +3,12 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.auth import get_current_user
+from ..services.band_auth import active_membership
 from ..services.db import get_db
-from ..services.models import BandMembership, Setlist, SetlistItem, Song, _utcnow
+from ..services.models import Setlist, SetlistItem, Song, _utcnow
 from ..services.schemas import (
     SetlistCreate,
     SetlistItemOut,
@@ -22,16 +23,8 @@ router = APIRouter(prefix="/setlists", tags=["setlists"])
 
 
 def _is_active_member(db: Session, band_id: str, user_id: str) -> bool:
-    return (
-        db.query(BandMembership)
-        .filter(
-            BandMembership.band_id == band_id,
-            BandMembership.user_id == user_id,
-            BandMembership.status == "active",
-        )
-        .first()
-        is not None
-    )
+    """T-V6-19 (B-22): miembro activo de una banda NO borrada (helper único)."""
+    return active_membership(db, band_id, user_id) is not None
 
 
 def _valid_song_ids(db: Session, user_id: str, song_ids: List[str]) -> List[str]:
@@ -87,7 +80,7 @@ def list_setlists(db: Session = Depends(get_db), user_id: str = Depends(get_curr
     """Lista los repertorios PERSONALES del usuario (band_id IS NULL), no borrados. Los de banda
     se listan en /bands/{id}/setlists."""
     try:
-        setlists = (db.query(Setlist)
+        setlists = (db.query(Setlist).options(selectinload(Setlist.items))
                     .filter(Setlist.owner_id == user_id, Setlist.deleted_at.is_(None),
                             Setlist.band_id.is_(None))
                     .order_by(Setlist.updated_at.desc()).all())

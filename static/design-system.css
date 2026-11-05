@@ -499,3 +499,16 @@
 .bf-pop   { animation: bf-pop 220ms ease; }
 .bf-flash { animation: bf-flash 600ms ease; }
 @media (prefers-reduced-motion: reduce) { .bf-pop, .bf-flash { animation: none; } }
+
+/* ── T-V6-15: botón en carga y estado de error ─────────────────────────────── */
+.bf-btn.is-loading { position: relative; color: transparent !important; pointer-events: none; }
+.bf-btn.is-loading::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 1em; height: 1em;
+  border: 2px solid var(--bf-text-muted); border-top-color: transparent; border-radius: 50%;
+  animation: bf-spin 0.7s linear infinite;
+}
+.bf-btn--primary.is-loading::after { border-color: var(--bf-on-primary); border-top-color: transparent; }
+@keyframes bf-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .bf-btn.is-loading::after { animation-duration: 2s; } }
+.bf-empty--error .bf-empty__icon { color: var(--bf-danger); }
+.bf-empty--error .bf-btn { margin-top: var(--bf-space-3); }

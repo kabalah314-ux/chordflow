@@ -274,7 +274,10 @@ setupSetlistNav();
 document.addEventListener('keydown', (e) => {
     if (e.code !== 'Space' && e.key !== ' ') return;
     const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+    // T-V6-17 (F-12): con el foco en un botón (p. ej. +/− del BPM), Espacio activa ESE botón;
+    // no debe además alternar play/pausa.
+    if ((tag === 'button' || tag === 'a') && e.target.id !== 'btn-play-pause') return;
     e.preventDefault();  // evita el scroll por defecto de la barra espaciadora
     handlePlayPause();
 });

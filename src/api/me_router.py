@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.auth import get_current_user
 from ..services.balances import compute_balances
@@ -201,6 +201,7 @@ def list_my_balances(
                    .filter(BandMembership.band_id == bid,
                            BandMembership.status == "active").all()]
         txs = (db.query(Transaction)
+           .options(selectinload(Transaction.splits))  # T-V6-12: sin N+1 de repartos
                .filter(Transaction.band_id == bid, Transaction.deleted_at.is_(None)).all())
         settles = (db.query(Settlement)
                    .filter(Settlement.band_id == bid, Settlement.deleted_at.is_(None)).all())

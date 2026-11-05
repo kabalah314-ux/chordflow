@@ -12,14 +12,16 @@
  */
 
 // Clic corto por oscilador. Distinto tono/volumen por nivel para que "suene distinto el 1".
-function bfMetronomeClick(audioCtx, level) {
+// `when` (opcional, T-V6-17): instante del AudioContext en el que debe sonar (programación con
+// antelación del metrónomo standalone). Sin `when` suena ya (lo que usa el reproductor).
+function bfMetronomeClick(audioCtx, level, when) {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.frequency.value = level >= 2 ? 1500 : level === 1 ? 1200 : 900;
-    const now = audioCtx.currentTime;
+    const now = (typeof when === 'number' && when > audioCtx.currentTime) ? when : audioCtx.currentTime;
     const vol = level >= 2 ? 0.5 : level === 1 ? 0.4 : 0.3;
     gain.gain.setValueAtTime(vol, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
@@ -72,20 +74,33 @@ class BfMetronome {
         if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 
+    // T-V6-17 (F-11): programación con antelación ("lookahead") sobre el reloj de audio. Antes cada
+    // clic se lanzaba con setTimeout → deriva acumulada y, con la pestaña en segundo plano, el
+    // navegador lo frenaba a 1 clic/s. Ahora un temporizador corto programa los clics de los
+    // próximos 120 ms en el instante exacto del AudioContext.
     start() {
         if (this.running) return;
         this._ensureCtx();
+        if (this.audioCtx.state === 'suspended' && this.audioCtx.resume) this.audioCtx.resume();
         this.running = true;
         this._beat = 0;
-        const step = () => {
+        this._nextTime = this.audioCtx.currentTime + 0.05;
+        const LOOKAHEAD = 0.12;   // segundos programados por adelantado
+        const INTERVAL = 25;      // ms entre revisiones del planificador
+        const tick = () => {
             if (!this.running) return;
-            const level = bfBeatAccent(this._beat, this.num, this.den);
-            bfMetronomeClick(this.audioCtx, level);
-            if (this.onTick) this.onTick(this._beat % this.num, level);
-            this._beat++;
-            this._timer = setTimeout(step, 60000 / this.bpm);
+            while (this._nextTime < this.audioCtx.currentTime + LOOKAHEAD) {
+                const level = bfBeatAccent(this._beat, this.num, this.den);
+                bfMetronomeClick(this.audioCtx, level, this._nextTime);
+                const beatIdx = this._beat % this.num;
+                const delay = Math.max(0, (this._nextTime - this.audioCtx.currentTime) * 1000);
+                if (this.onTick) setTimeout(() => { if (this.running) this.onTick(beatIdx, level); }, delay);
+                this._beat++;
+                this._nextTime += 60 / this.bpm;
+            }
+            this._timer = setTimeout(tick, INTERVAL);
         };
-        step();
+        tick();
     }
 
     stop() {
@@ -116,7 +131,9 @@ function bfHoldRepeat(btn, fire) {
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
     btn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); }
+        // stopPropagation (T-V6-17, F-12): el atajo global Espacio = play/pausa no debe dispararse
+        // a la vez que el paso de BPM cuando el foco está en este botón.
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); fire(); }
     });
 }
 

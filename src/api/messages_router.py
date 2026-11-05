@@ -15,7 +15,7 @@ el tiempo real (Supabase Realtime) se añade después sin tocar el modelo. Aisla
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from ..services.band_auth import require_band_member
@@ -48,15 +48,31 @@ def _to_out(msg: Message, user_id: str, name: Optional[str]) -> MessageOut:
 def list_messages(
     band_id: str,
     event_id: Optional[str] = None,
+    after: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=200),
     db: Session = Depends(get_db),
     membership: BandMembership = Depends(require_band_member),
 ):
-    """Chat general (event_id omitido) o hilo de un evento. Fijados primero, luego cronológico."""
+    """Chat general (event_id omitido) o hilo de un evento. Fijados primero, luego cronológico.
+
+    T-V6-10 (paginación): sin `after` devuelve los fijados + los ÚLTIMOS `limit` mensajes (antes:
+    todo el historial en cada refresco de 6 s). Con `after=<id>` devuelve SOLO los posteriores a
+    ese mensaje, en orden cronológico, para que el cliente los añada sin repintar la lista."""
     q = (db.query(Message, MusicianProfile.display_name)
          .outerjoin(MusicianProfile, MusicianProfile.id == Message.author_id)
          .filter(Message.band_id == band_id, Message.deleted_at.is_(None)))
     q = q.filter(Message.event_id == event_id) if event_id else q.filter(Message.event_id.is_(None))
-    rows = q.order_by(Message.is_pinned.desc(), Message.created_at.asc()).all()
+    if after:
+        ref = (db.query(Message.created_at)
+               .filter(Message.id == after, Message.band_id == band_id).scalar())
+        if ref is not None:
+            rows = (q.filter(Message.created_at > ref)
+                    .order_by(Message.created_at.asc()).limit(limit).all())
+            return [_to_out(m, membership.user_id, name) for m, name in rows]
+    pinned = q.filter(Message.is_pinned.is_(True)).order_by(Message.created_at.asc()).all()
+    recent = (q.filter(Message.is_pinned.is_(False))
+              .order_by(Message.created_at.desc()).limit(limit).all())
+    rows = pinned + list(reversed(recent))
     return [_to_out(m, membership.user_id, name) for m, name in rows]
 
 

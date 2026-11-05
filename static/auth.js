@@ -109,6 +109,56 @@ async function apiFetch(url, opts = {}) {
     return res;
 }
 
+// ─── T-V6-15: llamadas a la API con errores normalizados ────────────────────────
+// `apiJson(url, opts)` = apiFetch + JSON + errores en castellano. Lanza `ApiError` con
+// `.status` y un `.message` apto para el usuario (nunca "[object Object]" ni texto técnico).
+class ApiError extends Error {
+    constructor(status, message, detail) { super(message); this.status = status; this.detail = detail; }
+}
+const API_MESSAGES = {
+    0: 'Sin conexión. Revisa tu red e inténtalo de nuevo.',
+    400: 'La petición no es válida.',
+    401: 'Tu sesión ha caducado. Vuelve a entrar.',
+    403: 'No tienes permiso para hacer esto.',
+    404: 'No lo encontramos (quizá se borró).',
+    409: 'Ya existe o está en conflicto.',
+    410: 'Este enlace ya no es válido.',
+    413: 'Es demasiado grande.',
+    422: 'Revisa los datos del formulario.',
+    429: 'Demasiadas peticiones seguidas. Espera un momento.',
+    502: 'El servicio externo no respondió. Inténtalo de nuevo o prueba otra fuente.',
+};
+// Traduce el `detail` de FastAPI: texto propio del backend (ya en castellano) o lista de errores
+// de validación de Pydantic (422) → frase legible.
+function apiErrorMessage(status, detail) {
+    if (typeof detail === 'string' && detail && status < 500) return detail;
+    if (typeof detail === 'string' && detail && status === 502) return detail;
+    if (Array.isArray(detail) && detail.length && detail[0] && detail[0].msg) {
+        const campo = (detail[0].loc || []).filter(x => x !== 'body').join('.');
+        return 'Revisa los datos' + (campo ? ` (${campo})` : '') + ': ' + detail[0].msg;
+    }
+    return API_MESSAGES[status] || (status >= 500 ? 'Error en el servidor. Inténtalo de nuevo en un momento.'
+                                                 : 'Algo ha fallado. Inténtalo de nuevo.');
+}
+async function apiJson(url, opts = {}) {
+    const o = Object.assign({}, opts);
+    if (o.body !== undefined && typeof o.body !== 'string' && !(o.body instanceof FormData)) {
+        o.body = JSON.stringify(o.body);
+        o.headers = Object.assign({ 'Content-Type': 'application/json' }, o.headers);
+    }
+    let res;
+    try { res = await apiFetch(url, o); }
+    catch (e) { throw new ApiError(0, API_MESSAGES[0], null); }
+    if (res.status === 204) return null;
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new ApiError(res.status, apiErrorMessage(res.status, data && data.detail), data && data.detail);
+    return data;
+}
+// Mensaje para el usuario de cualquier error (ApiError o Error genérico).
+function errorMessage(err, fallback = 'Algo ha fallado. Inténtalo de nuevo.') {
+    return (err && err instanceof ApiError && err.message) ? err.message : fallback;
+}
+
 // ─── PWA: registrar el service worker (instalable + carga offline del shell) ──
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

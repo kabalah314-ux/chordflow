@@ -14,14 +14,29 @@ let currentFilter = 'all';  // 'all' | 'personal' | <bandId>
 let collections = [];        // mis colecciones personales (resúmenes: id/name/song_count)
 let currentCollection = null; // colección activa { id, name, songIds } o null (manda sobre el filtro)
 
+// T-V6-11: /songs/ pagina (orden estable + X-Total-Count). La biblioteca trae TODAS las páginas
+// (antes se cortaba en 100 sin orden y "desaparecían" canciones al azar).
+async function fetchAllPersonalSongs() {
+    const PAGE = 500;
+    let out = [];
+    for (let skip = 0; ; skip += PAGE) {
+        const r = await apiFetch(`/songs/?skip=${skip}&limit=${PAGE}`);
+        if (!r.ok) throw new Error('songs ' + r.status);
+        const page = await r.json();
+        out = out.concat(page);
+        const total = parseInt(r.headers.get('X-Total-Count') || '0', 10);
+        if (page.length < PAGE || out.length >= total) return out;
+    }
+}
+
 // --- Carga inicial: personal + repertorios de banda en paralelo ---
 async function fetchSongs() {
     elGrid.innerHTML = bfSkeletonList(8);   // skeleton mientras llega el repertorio (T-135)
     try {
         const [personal, bands, cols] = await Promise.all([
-            apiFetch('/songs/').then(r => (r.ok ? r.json() : [])),
-            apiFetch('/bands/').then(r => (r.ok ? r.json() : [])),
-            apiFetch('/collections/').then(r => (r.ok ? r.json() : [])),
+            fetchAllPersonalSongs(),
+            apiJson('/bands/'),
+            apiJson('/collections/'),
         ]);
         collections = cols;
         const personalTagged = personal.map(s =>
@@ -39,7 +54,8 @@ async function fetchSongs() {
         applyView();
     } catch (err) {
         console.error(err);
-        elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudo conectar con el servidor.</p>`;
+        // T-V6-15 (F-07): un fallo NO se disfraza de "aún no tienes partituras".
+        bfShowError(elGrid, 'No se pudo conectar con el servidor. Revisa tu conexión.', fetchSongs);
     }
 }
 

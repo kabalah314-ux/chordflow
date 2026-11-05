@@ -219,8 +219,12 @@ def search(
     term = _norm(q)
     if term:
         like = f"%{term}%"
-        query = query.filter(
-            func.lower(PublicScore.title).like(like) | func.lower(PublicScore.artist).like(like))
+        # T-V6-19 (B-09): buscar en las columnas NORMALIZADAS de la obra (sin acentos) → "cancion"
+        # encuentra "Canción". Se mantiene el lower() del título/artista como respaldo.
+        query = (query.join(MusicalWork, MusicalWork.id == PublicScore.work_id)
+                 .filter(MusicalWork.norm_title.like(like) | MusicalWork.norm_artist.like(like)
+                         | func.lower(PublicScore.title).like(like)
+                         | func.lower(PublicScore.artist).like(like)))
     scores = query.order_by(PublicScore.import_count.desc(),
                             PublicScore.created_at.desc()).limit(limit).all()
     if not scores:

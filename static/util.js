@@ -241,3 +241,32 @@ function bfYoutubeThumb(url) {
     const id = bfYoutubeId(url);
     return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
+
+
+// ─── T-V6-15: estado de error (≠ estado vacío) y botones con carga ───────────────
+// `bfErrorState(msg)` devuelve HTML; el llamante engancha el reintento en [data-act="retry"].
+function bfErrorState(msg = 'No se pudo cargar.') {
+    return `<div class="bf-empty bf-empty--error" role="alert">
+        <div class="bf-empty__icon">${typeof bfIcon === 'function' ? bfIcon('alert-circle', { size: 40 }) : ''}</div>
+        <p class="bf-empty__title">No se pudo cargar</p>
+        <p class="bf-empty__text">${escapeHtml(msg)}</p>
+        <button class="bf-btn bf-btn--sm" data-act="retry" type="button">Reintentar</button>
+    </div>`;
+}
+// Pinta el estado de error en `el` y cablea "Reintentar" → `retry()`.
+function bfShowError(el, msg, retry) {
+    if (!el) return;
+    el.innerHTML = bfErrorState(msg);
+    const b = el.querySelector('[data-act="retry"]');
+    if (b && retry) b.addEventListener('click', () => retry());
+}
+// Ejecuta `fn` con el botón deshabilitado y en estado de carga (evita el doble envío).
+async function bfBusy(btn, fn) {
+    if (!btn) return fn();
+    if (btn.disabled) return undefined;
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    btn.setAttribute('aria-busy', 'true');
+    try { return await fn(); }
+    finally { btn.disabled = false; btn.classList.remove('is-loading'); btn.removeAttribute('aria-busy'); }
+}

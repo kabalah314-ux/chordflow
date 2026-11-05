@@ -79,11 +79,26 @@ async function createBand() {
     } catch (e) { toast('No se pudo crear la banda.', 'error'); }
 }
 
-// ─── Chat de banda (Fase 12) ──────────────────────────────────────────────────
+// ─── Chat de banda (Fase 12; incremental en T-V6-10) ─────────────────────────────
+// Antes: cada 6 s se pedía TODO el historial y se reemplazaba la lista → el scroll saltaba al
+// principio y lo nuevo quedaba oculto abajo. Ahora: carga inicial completa (últimos 100 + fijados)
+// y luego solo `?after=<último id>`, añadiendo al final; auto-scroll solo si estabas abajo; sin
+// sondeo con la pestaña oculta o fuera del panel de chat.
 let chatTimer = null;
+let chatState = { bandId: null, lastId: null };
+
+function stopChat() { if (chatTimer) { clearInterval(chatTimer); chatTimer = null; } }
+
+function chatVisible() {
+    const el = document.getElementById('b-chat');
+    if (!el || document.hidden) return false;
+    const panel = el.closest('[data-panel]');
+    return !(panel && panel.hidden);
+}
 
 function initChat(bandId, iAmAdmin) {
-    if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
+    stopChat();
+    chatState = { bandId, lastId: null };
     const input = document.getElementById('chat-input');
     const send = document.getElementById('chat-send');
     const doSend = async () => {
@@ -96,17 +111,60 @@ function initChat(bandId, iAmAdmin) {
                 body: JSON.stringify({ body })
             });
             if (!res.ok) throw new Error('http');
-            loadChat(bandId, iAmAdmin);
+            await pollChat(bandId, iAmAdmin, { forceScroll: true });
         } catch (e) { toast('No se pudo enviar el mensaje.', 'error'); input.value = body; }
     };
     if (send) send.addEventListener('click', doSend);
     if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSend(); });
     loadChat(bandId, iAmAdmin);
-    // Refresco periódico simple (tiempo real más adelante). Se detiene si salimos de la ficha.
     chatTimer = setInterval(() => {
-        if (!document.getElementById('b-chat')) { clearInterval(chatTimer); chatTimer = null; return; }
-        loadChat(bandId, iAmAdmin);
+        if (!document.getElementById('b-chat')) { stopChat(); return; }
+        if (chatVisible()) pollChat(bandId, iAmAdmin);
     }, 6000);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && chatState.bandId && document.getElementById('b-chat')) {
+        pollChat(chatState.bandId, document.getElementById('b-chat').dataset.admin === '1');
+    }
+});
+
+function messageItemHtml(m, iAmAdmin) {
+    return `
+        <li class="setlist-song ${m.is_pinned ? 'msg-pinned' : ''}" data-id="${escapeHtml(m.id)}">
+            <span class="sl-title">${m.is_pinned ? `<span class="msg-pin-mark" aria-label="Fijado">${bfIcon('pin', { size: 14 })}</span> ` : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: ${escapeHtml(m.body)}
+                ${m.edited_at ? '<small>(editado)</small>' : ''}</span>
+            <span class="msg-actions">
+                ${iAmAdmin ? `<button class="setlist-item-btn" data-act="pin" aria-label="${m.is_pinned ? 'Desfijar nota' : 'Fijar como nota'}" title="${m.is_pinned ? 'Desfijar' : 'Fijar como nota'}">${bfIcon('pin', { size: 16 })}</button>` : ''}
+                ${(m.is_mine || iAmAdmin) ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar" title="Borrar">${bfIcon('trash')}</button>` : ''}
+            </span>
+        </li>`;
+}
+
+function wireMessageItem(li, bandId, reload) {
+    const mid = li.dataset.id;
+    const pin = li.querySelector('[data-act="pin"]');
+    if (pin) pin.addEventListener('click', async () => {
+        const isPinned = li.classList.contains('msg-pinned');
+        try {
+            const res = await apiFetch(`/bands/${bandId}/messages/${mid}/pin`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_pinned: !isPinned })
+            });
+            if (!res.ok) throw new Error('http');
+            reload();
+        } catch (e) { toast('No se pudo fijar el mensaje.', 'error'); }
+    });
+    const del = li.querySelector('[data-act="del"]');
+    if (del) del.addEventListener('click', async () => {
+        const ok = await confirmModal('¿Borrar este mensaje?', { okText: 'Borrar' });
+        if (!ok) return;
+        try {
+            const res = await apiFetch(`/bands/${bandId}/messages/${mid}`, { method: 'DELETE' });
+            if (!res.ok && res.status !== 204) throw new Error('http');
+            reload();
+        } catch (e) { toast('No se pudo borrar el mensaje.', 'error'); }
+    });
 }
 
 // Renderiza una lista de mensajes (chat general O hilo de evento) en `el` y cablea fijar/borrar.
@@ -114,53 +172,49 @@ function initChat(bandId, iAmAdmin) {
 // el chat general y los hilos por evento (mismo criterio que la consolidación de escapeHtml, T-039).
 function renderMessageList(el, msgs, bandId, iAmAdmin, reload) {
     if (!msgs.length) { el.innerHTML = '<p class="loading-text">Aún no hay mensajes. ¡Rompe el hielo!</p>'; return; }
-    el.innerHTML = `<ul class="setlist-list">${msgs.map(m => `
-        <li class="setlist-song ${m.is_pinned ? 'msg-pinned' : ''}" data-id="${escapeHtml(m.id)}">
-            <span class="sl-title">${m.is_pinned ? '📌 ' : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: ${escapeHtml(m.body)}
-                ${m.edited_at ? '<small>(editado)</small>' : ''}</span>
-            <span class="msg-actions">
-                ${iAmAdmin ? `<button class="setlist-item-btn" data-act="pin" aria-label="${m.is_pinned ? 'Desfijar nota' : 'Fijar como nota'}" title="${m.is_pinned ? 'Desfijar' : 'Fijar como nota'}">${m.is_pinned ? '📌' : '📍'}</button>` : ''}
-                ${(m.is_mine || iAmAdmin) ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar" title="Borrar">${bfIcon('trash')}</button>` : ''}
-            </span>
-        </li>`).join('')}</ul>`;
-
-    el.querySelectorAll('.setlist-song').forEach(li => {
-        const mid = li.dataset.id;
-        const pin = li.querySelector('[data-act="pin"]');
-        if (pin) pin.addEventListener('click', async () => {
-            const isPinned = li.classList.contains('msg-pinned');
-            try {
-                const res = await apiFetch(`/bands/${bandId}/messages/${mid}/pin`, {
-                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ is_pinned: !isPinned })
-                });
-                if (!res.ok) throw new Error('http');
-                reload();
-            } catch (e) { toast('No se pudo fijar el mensaje.', 'error'); }
-        });
-        const del = li.querySelector('[data-act="del"]');
-        if (del) del.addEventListener('click', async () => {
-            const ok = await confirmModal('¿Borrar este mensaje?', { okText: 'Borrar' });
-            if (!ok) return;
-            try {
-                const res = await apiFetch(`/bands/${bandId}/messages/${mid}`, { method: 'DELETE' });
-                if (!res.ok && res.status !== 204) throw new Error('http');
-                reload();
-            } catch (e) { toast('No se pudo borrar el mensaje.', 'error'); }
-        });
-    });
+    el.innerHTML = `<ul class="setlist-list">${msgs.map(m => messageItemHtml(m, iAmAdmin)).join('')}</ul>`;
+    el.querySelectorAll('.setlist-song').forEach(li => wireMessageItem(li, bandId, reload));
+    const ul = el.querySelector('.setlist-list');
+    if (ul) ul.scrollTop = ul.scrollHeight;   // abre por lo último
 }
 
 async function loadChat(bandId, iAmAdmin) {
     const el = document.getElementById('b-chat');
     if (!el) return;
+    el.dataset.admin = iAmAdmin ? '1' : '0';
     let msgs;
     try {
         const res = await apiFetch(`/bands/${bandId}/messages/`);
         if (!res.ok) throw new Error('http');
         msgs = await res.json();
-    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar el chat.</p>'; return; }
+    } catch (e) { el.innerHTML = `<p class="loading-text">No se pudo cargar el chat.</p>`; return; }
+    const normal = msgs.filter(m => !m.is_pinned);
+    chatState.lastId = (normal.length ? normal[normal.length - 1] : msgs[msgs.length - 1] || {}).id || null;
     renderMessageList(el, msgs, bandId, iAmAdmin, () => loadChat(bandId, iAmAdmin));
+}
+
+// Solo lo nuevo desde el último mensaje conocido; se añade al final sin repintar.
+async function pollChat(bandId, iAmAdmin, { forceScroll = false } = {}) {
+    const el = document.getElementById('b-chat');
+    if (!el) return;
+    if (!chatState.lastId || !el.querySelector('.setlist-list')) return loadChat(bandId, iAmAdmin);
+    let nuevos;
+    try {
+        const res = await apiFetch(`/bands/${bandId}/messages/?after=${encodeURIComponent(chatState.lastId)}`);
+        if (!res.ok) return;
+        nuevos = await res.json();
+    } catch (e) { return; }
+    if (!nuevos.length) return;
+    const ul = el.querySelector('.setlist-list');
+    const abajo = ul.scrollTop + ul.clientHeight >= ul.scrollHeight - 24;
+    const reload = () => loadChat(bandId, iAmAdmin);
+    nuevos.forEach(m => {
+        if (ul.querySelector(`[data-id="${CSS.escape(m.id)}"]`)) return;
+        ul.insertAdjacentHTML('beforeend', messageItemHtml(m, iAmAdmin));
+        wireMessageItem(ul.lastElementChild, bandId, reload);
+    });
+    chatState.lastId = nuevos[nuevos.length - 1].id;
+    if (abajo || forceScroll || nuevos.some(m => m.is_mine)) ul.scrollTop = ul.scrollHeight;
 }
 
 // Hilo de discusión de un evento: mensajes con `event_id`. Modal autocontenido que reusa

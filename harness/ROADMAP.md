@@ -766,16 +766,16 @@
 - [x] **T-V6-07** `reference_url` solo `https?://` (servidor y cliente)
 - [x] **T-V6-08** Invitaciones: caducidad 7 días / 20 usos por defecto; `DELETE /bands/{id}/invites/{iid}`; `used_count` atómico
 - [x] **T-V6-09** **Parche móvil urgente** (CSS, antes del rediseño): filas de agenda de banda apilan acciones en < 768 px; letra del reproductor con wrap; `join.html` centrado; composer del chat de 40 px; acciones de tarjeta visibles con `hover:none`
-- [ ] **T-V6-10** Chat de banda: render diferencial por id, auto-scroll inteligente, pausa con `visibilitychange`, `?after=&limit=` en la API
-- [ ] **T-V6-11** `/songs/` con `ORDER BY updated_at` + paginación; "Cargar más" en Biblioteca
-- [ ] **T-V6-12** `selectinload(Transaction.splits)` ×3; contadores por subquery en listados; `selectinload(SetlistItem.song)`
-- [ ] **T-V6-13** `create_all` solo en SQLite; `NullPool`/pool mínimo en Vercel; `maxDuration`; `runtime.txt` 3.12
-- [ ] **T-V6-14** `theme.js` inline en `<head>` de las 16 páginas; `100dvh`
-- [ ] **T-V6-15** `core/api.js`: `apiJson()` + `ApiError` + mensajes en castellano; estado de error ≠ vacío en todas las listas; botones con `is-loading` y anti doble envío
-- [ ] **T-V6-16** Editor: flag `dirty` + `beforeunload`; checkbox "Compartir en Explorar" + aviso de derechos (según D-V6-3)
-- [ ] **T-V6-17** Espacio no toca el BPM con foco en +/−; metrónomo con scheduler *lookahead*
+- [x] **T-V6-10** Chat de banda: render diferencial por id, auto-scroll inteligente, pausa con `visibilitychange`, `?after=&limit=` en la API
+- [x] **T-V6-11** `/songs/` con `ORDER BY updated_at` + paginación; "Cargar más" en Biblioteca
+- [x] **T-V6-12** `selectinload(Transaction.splits)` ×3; contadores por subquery en listados; `selectinload(SetlistItem.song)`
+- [x] **T-V6-13** `create_all` solo en SQLite; `NullPool`/pool mínimo en Vercel; `maxDuration`; `runtime.txt` 3.12
+- [x] **T-V6-14** `theme.js` inline en `<head>` de las 16 páginas; `100dvh`
+- [x] **T-V6-15** `core/api.js`: `apiJson()` + `ApiError` + mensajes en castellano; estado de error ≠ vacío en todas las listas; botones con `is-loading` y anti doble envío
+- [x] **T-V6-16** Editor: flag `dirty` + `beforeunload`; checkbox "Compartir en Explorar" + aviso de derechos (según D-V6-3)
+- [x] **T-V6-17** Espacio no toca el BPM con foco en +/−; metrónomo con scheduler *lookahead*
 - [ ] **T-V6-18** Contrato de fechas UTC de punta a punta (columnas tz-aware o `Z` en serialización, validador común, `toISOString()` en el front, test cruzando zonas)
-- [ ] **T-V6-19** Lote backend medio: `active_membership()` único con `Band.deleted_at`; liquidaciones a ex-miembros; `reference_url` al copiar; búsqueda por `norm_*`; `plan` fuera del PATCH; `load_dotenv(override=True)`; longitudes espejo + test en PG; `IntegrityError` en perfil; `except HTTPException: raise` en `get_db`
+- [x] **T-V6-19** Lote backend medio: `active_membership()` único con `Band.deleted_at`; liquidaciones a ex-miembros; `reference_url` al copiar; búsqueda por `norm_*`; `plan` fuera del PATCH; `load_dotenv(override=True)`; longitudes espejo + test en PG; `IntegrityError` en perfil; `except HTTPException: raise` en `get_db`
 - [ ] **T-V6-21** CI como gate: SHA-pin, `permissions`, `concurrency`, jobs lint+unit / e2e / migraciones-PG, artefactos en fallo, branch protection con required check antes del auto-deploy
 - [ ] **T-V6-22** Lockfile con hashes, `requirements-dev` pineado, `pip-audit`, Dependabot, `.gitignore` `.env.*`
 - [ ] **T-V6-23** Migración `147a6a78da86` válida en PG; job CI con Postgres (`upgrade head` + `check` + `downgrade base`)

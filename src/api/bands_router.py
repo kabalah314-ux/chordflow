@@ -13,7 +13,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.auth import get_current_user
 from ..services.balances import compute_balances
@@ -209,6 +209,7 @@ def get_band_summary(
                .filter(BandMembership.band_id == band_id,
                        BandMembership.status == "active").all()]
     txs = (db.query(Transaction)
+           .options(selectinload(Transaction.splits))  # T-V6-12: sin N+1 de repartos
            .filter(Transaction.band_id == band_id, Transaction.deleted_at.is_(None)).all())
     settles = (db.query(Settlement)
                .filter(Settlement.band_id == band_id, Settlement.deleted_at.is_(None)).all())

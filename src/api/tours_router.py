@@ -24,7 +24,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.band_auth import require_band_admin, require_band_member
 from ..services.db import get_db
@@ -91,7 +91,7 @@ def list_tours(
     membership: BandMembership = Depends(require_band_member),
 ):
     """Giras de la banda (más recientes primero por fecha de inicio)."""
-    tours = (db.query(Tour)
+    tours = (db.query(Tour).options(selectinload(Tour.stops))
              .filter(Tour.band_id == band_id, Tour.deleted_at.is_(None))
              .order_by(Tour.start_date.desc().nullslast(), Tour.created_at.desc()).all())
     # Caché por gira (Σ del fee de los conciertos ligados) en UNA query agregada (sin N+1).

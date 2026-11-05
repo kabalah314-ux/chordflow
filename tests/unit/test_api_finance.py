@@ -143,3 +143,19 @@ def test_aislamiento_finanzas(client):
             "type": "expense", "amount": "1.00", "paid_by": STRANGER}).status_code == 404
         assert client.delete(f"/bands/{bid}/transactions/{tx['id']}").status_code == 404
         assert client.get(f"/bands/{bid}/settlements").status_code == 404
+
+
+def test_liquidar_deuda_de_un_ex_miembro(client):
+    """T-V6-19 (B-07): quien se dio de baja con deuda puede liquidarla y la banda cuadra a cero."""
+    bid = _band(client)
+    client.post(f"/bands/{bid}/transactions", json={
+        "type": "expense", "description": "Local", "amount": "100.00", "paid_by": ADMIN})
+    assert client.delete(f"/bands/{bid}/members/{MEMBER}").status_code == 200   # baja blanda
+    r = client.post(f"/bands/{bid}/settlements", json={
+        "from_user_id": MEMBER, "to_user_id": ADMIN, "amount": "50.00"})
+    assert r.status_code == 201, r.text
+    bal = _bal(client, bid)
+    assert bal[ADMIN] == 0.0 and bal.get(MEMBER, 0.0) == 0.0
+    # Un desconocido sigue sin poder aparecer en una liquidación.
+    assert client.post(f"/bands/{bid}/settlements", json={
+        "from_user_id": STRANGER, "to_user_id": ADMIN, "amount": "1.00"}).status_code == 400

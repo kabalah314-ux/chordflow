@@ -17,7 +17,7 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.auth import get_current_user
 from ..services.db import get_db
@@ -88,7 +88,7 @@ def _get_collection(db: Session, user_id: str, collection_id: str) -> SongCollec
 @router.get("/", response_model=List[CollectionSummary])
 def list_collections(db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
     """Mis colecciones personales (band_id NULL), no borradas, más recientes primero."""
-    cols = (db.query(SongCollection)
+    cols = (db.query(SongCollection).options(selectinload(SongCollection.items))
             .filter(SongCollection.owner_id == user_id, SongCollection.band_id.is_(None),
                     SongCollection.deleted_at.is_(None))
             .order_by(SongCollection.updated_at.desc()).all())

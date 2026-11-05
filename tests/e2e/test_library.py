@@ -2,6 +2,8 @@
 E2E de la biblioteca: estado vacío (L1), aparición de canción (L2), búsqueda (L3).
 """
 
+import re
+
 import pytest
 
 from tests.conftest import sample_song_payload, wipe_songs
@@ -134,3 +136,14 @@ def test_setlists_accesible_desde_la_biblioteca(page, live_server, api):
     assert page.locator(".bf-shell").count() == 1
     page.wait_for_selector(".bf-nav-item", timeout=8000)
     assert page.locator(".bf-nav-item").count() >= 1
+
+
+def test_error_del_servidor_no_parece_biblioteca_vacia(page, live_server):
+    """T-V6-15 (F-07): un 500 al cargar se muestra como error con "Reintentar", no como el
+    onboarding de "aún no tienes partituras"."""
+    page.route(re.compile(r".*/songs/\?skip=.*"), lambda r: r.fulfill(status=500, body="{}",
+                                                  content_type="application/json"))
+    page.goto(live_server + "/static/library.html", wait_until="networkidle")
+    page.wait_for_selector(".bf-empty--error", timeout=8000)
+    assert page.locator('.bf-empty--error [data-act="retry"]').count() == 1
+    assert page.locator(".empty-state").count() == 0

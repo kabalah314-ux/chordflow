@@ -44,3 +44,15 @@ def test_mantener_pulsado_acelera_el_bpm(page, live_server, api):
     assert bpm >= inicial + 3, f"el mantener pulsado no repitió/aceleró el BPM ({inicial} → {bpm})"
     # …y el motor acota: nunca por encima del máximo.
     assert bpm <= 240, f"el BPM se pasó del máximo (bpm={bpm})"
+
+
+def test_espacio_con_foco_en_bpm_no_arranca_la_reproduccion(page, live_server, api):
+    """T-V6-17 (F-12): con el foco en +/−, Espacio sube 1 BPM y NO alterna play/pausa."""
+    _abrir(page, live_server, api)
+    inicial = int(page.inner_text("#bpm-value"))
+    page.focus("#btn-bpm-up")
+    page.keyboard.press("Space")
+    assert int(page.inner_text("#bpm-value")) == inicial + 1
+    page.wait_for_timeout(300)
+    assert float(page.get_attribute("#current-beat-display", "data-beat")) == 0.0
+    assert page.locator("#countin-overlay").is_hidden()   # tampoco arrancó la cuenta atrás

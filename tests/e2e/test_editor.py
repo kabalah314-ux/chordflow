@@ -165,3 +165,24 @@ def test_guardar_redirige_al_reproductor(page, live_server, api):
     # Y la canción quedó guardada
     titulos = [s["title"] for s in api.get("/songs/").json()]
     assert "Cancion Editor E2E" in titulos
+
+
+def test_guardia_de_cambios_y_compartir_opcional(page, live_server):
+    """T-V6-16: escribir marca cambios sin guardar (❌ pide confirmación) y la casilla
+    "Compartir en Explorar" decide si se publica en el catálogo al guardar."""
+    page.goto(live_server + "/static/editor.html", wait_until="networkidle")
+    assert page.evaluate("window.__bfEditorDirty()") is False
+    page.fill("#title", "Guardia")
+    page.fill("#raw-text", SAMPLE_RAW)
+    assert page.evaluate("window.__bfEditorDirty()") is True
+    page.click("#btn-close")
+    page.wait_for_selector(".modal-card")          # pide confirmación en vez de salir
+    page.click('.modal-card [data-act="cancel"]')
+    assert "/static/editor.html" in page.url
+
+    publicado = []
+    page.route("**/catalog/publish", lambda r: (publicado.append(1), r.fulfill(status=201, body="{}")))
+    page.uncheck("#share-catalog")
+    page.click("#btn-save")
+    page.wait_for_url("**/static/index.html?songId=*", timeout=10000)
+    assert publicado == []

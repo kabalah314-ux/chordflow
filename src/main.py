@@ -37,8 +37,12 @@ logger = logging.getLogger(__name__)
 # Inicializar el esquema (idempotente: solo crea lo que falte). En serverless el esquema ya
 # existe (creado/migrado aparte), así que envolvemos en try/except: un parpadeo de la BD al
 # importar NO debe tumbar toda la función; los errores reales se verán por petición.
+# T-V6-13 (B-12): solo en SQLite (local/tests). En Postgres el esquema lo gestionan las migraciones
+# de Alembic: create_all en cada arranque en frío reflejaba ~26 tablas y podía crear tablas fuera
+# de la cadena de migraciones (drift silencioso).
 try:
-    Base.metadata.create_all(bind=engine)
+    if settings.database_url.startswith("sqlite"):
+        Base.metadata.create_all(bind=engine)
 except Exception as e:  # noqa: BLE001
     logger.warning(f"create_all al arrancar no se pudo completar (¿BD no disponible?): {e}")
 

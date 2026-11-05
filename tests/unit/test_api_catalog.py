@@ -174,3 +174,10 @@ def test_guest_no_importa_al_repertorio_de_banda(client):
         assert r.status_code == 403
         # A su espacio personal sí puede.
         assert client.post(f"/catalog/scores/{scid}/import", json={}).status_code == 201
+
+
+def test_buscar_sin_acentos_encuentra_con_acentos(client):
+    """T-V6-19 (B-09): la búsqueda usa las columnas normalizadas: "cancion" encuentra "Canción"."""
+    _sid, scid = _publish_song(client, title="Canción del Mariachi", artist="Los Lobos")
+    assert any(s["id"] == scid for s in client.get("/catalog/search", params={"q": "cancion"}).json())
+    assert any(s["id"] == scid for s in client.get("/catalog/search", params={"q": "CANCIÓN"}).json())

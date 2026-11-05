@@ -16,7 +16,7 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.band_auth import require_band_member
 from ..services.db import get_db
@@ -93,7 +93,7 @@ def list_collections(
     db: Session = Depends(get_db),
     membership: BandMembership = Depends(require_band_member),
 ):
-    cols = (db.query(SongCollection)
+    cols = (db.query(SongCollection).options(selectinload(SongCollection.items))
             .filter(SongCollection.band_id == band_id, SongCollection.deleted_at.is_(None))
             .order_by(SongCollection.updated_at.desc()).all())
     return [CollectionSummary(id=c.id, name=c.name, band_id=c.band_id,

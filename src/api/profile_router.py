@@ -11,6 +11,7 @@ lista de miembros, finanzas, asistencia… en vez del UUID.
 import logging
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
@@ -28,7 +29,13 @@ def _get_or_create(db: Session, user_id: str) -> MusicianProfile:
     if profile is None:
         profile = MusicianProfile(id=user_id)
         db.add(profile)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            # T-V6-19 (B-27): dos peticiones simultáneas en el primer login crean el mismo perfil;
+            # la segunda pierde la carrera → se usa el que ya existe (antes: 500).
+            db.rollback()
+            return db.query(MusicianProfile).filter(MusicianProfile.id == user_id).first()
         db.refresh(profile)
     return profile
 

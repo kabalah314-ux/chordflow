@@ -63,6 +63,7 @@ _SONG_SCALAR_FIELDS = (
     "time_signature_num", "time_signature_den", "key_root", "key_mode",
     "tuning", "capo", "instrument", "format_version", "is_public",
     "source_type", "source_file_path", "tags", "duration_beats",
+    "reference_url",   # T-V6-19 (B-08): copiar a la banda conservaba todo menos el vídeo de referencia
 )
 
 
@@ -102,6 +103,7 @@ def list_band_songs(
     songs = (
         db.query(Song)
         .filter(Song.band_id == band_id, Song.deleted_at.is_(None))
+        .order_by(func.lower(Song.title).asc(), Song.id.asc())   # T-V6-11: repertorio alfabético, estable
         .all()
     )
     if not songs:

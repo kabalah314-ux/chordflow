@@ -1,15 +1,15 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
+from ..services.band_auth import active_membership
 from ..services.db import get_db
 from ..services.models import (
-    BandMembership,
     ChordMarker,
     Line,
     Section,
@@ -28,16 +28,9 @@ router = APIRouter(
 
 
 def _active_membership(db: Session, band_id: str, user_id: str):
-    """Pertenencia ACTIVA del usuario en la banda (o None)."""
-    return (
-        db.query(BandMembership)
-        .filter(
-            BandMembership.band_id == band_id,
-            BandMembership.user_id == user_id,
-            BandMembership.status == "active",
-        )
-        .first()
-    )
+    """Pertenencia ACTIVA del usuario en una banda NO borrada (o None). T-V6-19 (B-22): delega en
+    el helper único, que también excluye bandas con soft-delete."""
+    return active_membership(db, band_id, user_id)
 
 
 def _get_song_authorized(db: Session, song_id: str, user_id: str, *, write: bool) -> Song:
@@ -87,7 +80,7 @@ def _append_sections(db_song: Song, sections) -> None:
                 db_line.tab_strings.append(TabLine(**tab_data.model_dump()))
 
 @router.get("/", response_model=List[SongSummary])
-def get_songs(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500),
+def get_songs(response: Response, skip: int = Query(0, ge=0), limit: int = Query(200, ge=1, le=500),
               db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
     """Lista (ligera) de las canciones del usuario, paginada. Devuelve `SongSummary`
     (metadatos + section_count, SIN la estructura anidada) para evitar el N+1 de
@@ -95,9 +88,13 @@ def get_songs(skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500),
     try:
         # Solo canciones PERSONALES (band_id IS NULL). Las del repertorio de banda se listan en
         # /bands/{id}/songs; aquí no deben aparecer aunque su owner_id sea el usuario (decisión §7).
-        songs = (db.query(Song)
-                 .filter(Song.deleted_at.is_(None), Song.owner_id == user_id,
-                         Song.band_id.is_(None))
+        base = (db.query(Song)
+                .filter(Song.deleted_at.is_(None), Song.owner_id == user_id,
+                        Song.band_id.is_(None)))
+        # T-V6-11 (B-06): orden ESTABLE (sin ORDER BY, Postgres devuelve filas en cualquier orden y
+        # con >limit canciones "desaparecían" al azar) + total en cabecera para paginar.
+        response.headers["X-Total-Count"] = str(base.count())
+        songs = (base.order_by(Song.updated_at.desc(), Song.id.asc())
                  .offset(skip).limit(limit).all())
         if not songs:
             return []

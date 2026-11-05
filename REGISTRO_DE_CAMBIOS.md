@@ -46,6 +46,18 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6-F1 · Bugs altos y deuda que bloquea (2026-11-05)
+- **T-V6-10:** chat de banda incremental: API `?after=<id>&limit=` (sin `after`: fijados + últimos 100), cliente añade solo lo nuevo, auto-scroll si estabas abajo, sin sondeo con la pestaña oculta o fuera del panel. Tests `test_api_messages.py::test_chat_paginado_y_after`.
+- **T-V6-11:** `/songs/` con orden estable (`updated_at desc`), `X-Total-Count` y límite 200; la biblioteca recorre todas las páginas. Repertorio de banda alfabético.
+- **T-V6-12:** `selectinload` de repartos en los 3 cálculos de saldos y de ítems/paradas en listados (fin del N+1).
+- **T-V6-13:** `create_all` solo en SQLite; `NullPool` en Vercel. `maxDuration`/runtime en `vercel.json` aplazados (el formato `builds` actual no admite `functions`; se hace al migrar la config en T-V6-24).
+- **T-V6-14:** `theme.js` en `<head>` de todas las páginas salvo el reproductor (sin destello oscuro→claro); `100dvh`. Test estático `test_reglas_v6.py`.
+- **T-V6-15:** `apiJson()` + `ApiError` + mensajes en castellano (adiós "[object Object]"), `bfErrorState/bfShowError/bfBusy`; la biblioteca distingue error de vacío (e2e). Migración del resto de páginas a `apiJson` → continúa en F3/F4.
+- **T-V6-16:** editor con guardia de cambios (❌ y recarga avisan) y casilla "Compartir en Explorar" (D-V6-3: marcada por defecto, visible). Copy en *sentence case*.
+- **T-V6-17:** Espacio con foco en un botón ya no alterna play; metrónomo standalone con planificación *lookahead* sobre el reloj de audio.
+- **T-V6-18 (aplazada):** el contrato UTC exige migrar las horas ya guardadas (están en hora local de Madrid sin zona); se deja como decisión D-V6-30 para no alterar datos de producción sin el visto bueno de Oscar.
+- **T-V6-19:** `active_membership()` único (excluye bandas borradas) en canciones/setlists/catálogo; liquidaciones a ex-miembros; copiar a banda conserva `reference_url`; búsqueda del catálogo sin acentos; `.env.local` manda también en `os.environ`; `get_db` no registra 4xx como error; perfil sin 500 por carrera. `plan` sigue editable por admin (andamiaje V3 D8, sin cobro). Límites espejo de longitudes → T-V6-75.
+
 ### V6-F0 · Emergencia de seguridad y bugs críticos (2026-11-05)
 - **T-V6-01 (parcial):** `.gitignore` cubre `.env.*` + `.env.example` sin valores. La purga de credenciales del historial y `gitleaks` quedan **aplazadas por decisión de Oscar** (rotará las claves más adelante; el repo pasa a privado).
 - **T-V6-02:** cerrojo en `Settings` (modo test solo con SQLite y fuera de Vercel) + `conftest` fuerza su SQLite y aserta el driver + `seed_demo.py` rechaza bases no-SQLite. Tests en `test_config.py`.

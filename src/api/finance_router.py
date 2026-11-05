@@ -18,7 +18,7 @@ import logging
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.balances import FUND_KEY, compute_balances, equal_split_amounts, q
 from ..services.band_auth import require_band_admin, require_band_member
@@ -50,6 +50,12 @@ router = APIRouter(prefix="/bands/{band_id}", tags=["finance"])
 def _active_member_ids(db: Session, band_id: str) -> List[str]:
     rows = (db.query(BandMembership.user_id)
             .filter(BandMembership.band_id == band_id, BandMembership.status == "active").all())
+    return [r[0] for r in rows]
+
+
+def _member_ids_any_status(db: Session, band_id: str) -> List[str]:
+    """Miembros activos y dados de baja (para liquidar deudas de quien ya se fue)."""
+    rows = db.query(BandMembership.user_id).filter(BandMembership.band_id == band_id).all()
     return [r[0] for r in rows]
 
 
@@ -193,6 +199,7 @@ def get_balances(
     """Saldo neto por miembro + fondo (servicio único de balances)."""
     members = _active_member_ids(db, band_id)
     txs = (db.query(Transaction)
+           .options(selectinload(Transaction.splits))  # T-V6-12: sin N+1 de repartos
            .filter(Transaction.band_id == band_id, Transaction.deleted_at.is_(None)).all())
     settles = (db.query(Settlement)
                .filter(Settlement.band_id == band_id, Settlement.deleted_at.is_(None)).all())
@@ -221,13 +228,17 @@ def create_settlement(
     db: Session = Depends(get_db),
     membership: BandMembership = Depends(require_band_admin),
 ):
-    """Registra una liquidación ("A paga a B"/al fondo). Solo admin."""
-    members = set(_active_member_ids(db, band_id))
+    """Registra una liquidación ("A paga a B"/al fondo). Solo admin.
+
+    T-V6-19 (B-07): se admite a ex-miembros (`status='left'`). Sus saldos siguen contando en
+    `compute_balances`; si solo se aceptaran activos, una baja con deuda dejaba la banda sin
+    poder cuadrar nunca."""
+    members = set(_member_ids_any_status(db, band_id))
     if payload.from_user_id not in members:
-        raise HTTPException(status_code=400, detail="El pagador no es miembro activo")
+        raise HTTPException(status_code=400, detail="El pagador no es (ni fue) miembro de la banda")
     if not payload.to_fund:
         if not payload.to_user_id or payload.to_user_id not in members:
-            raise HTTPException(status_code=400, detail="El receptor no es miembro activo")
+            raise HTTPException(status_code=400, detail="El receptor no es (ni fue) miembro de la banda")
         if payload.to_user_id == payload.from_user_id:
             raise HTTPException(status_code=400, detail="El pagador y el receptor no pueden coincidir")
     st = Settlement(

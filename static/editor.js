@@ -372,7 +372,7 @@ async function initEditor() {
         updateReferencePreview();   // carátula si la canción ya trae enlace de referencia
 
         // Ajustar textos de la UI a "edición"
-        document.querySelector('.song-info h1').textContent = 'Editar Partitura';
+        document.querySelector('.song-info h1').textContent = 'Editar canción';
         document.querySelector('.song-info h2').textContent = song.title;
         document.getElementById('btn-save').innerHTML = bfIcon('save') + ' Guardar cambios';
     } catch (err) {
@@ -476,7 +476,7 @@ if (elBtnImportSearch) elBtnImportSearch.addEventListener('click', async () => {
         const res = await apiFetch('/import/search?q=' + encodeURIComponent(q));
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            toast(data.detail || 'No se pudo buscar.', 'error');
+            toast(apiErrorMessage(res.status, data.detail) || 'No se pudo buscar.', 'error');
             return;
         }
         renderSearchResults(data.results || []);
@@ -509,7 +509,7 @@ if (elBtnImport) elBtnImport.addEventListener('click', async () => {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            toast(data.detail || 'No se pudo importar el enlace.', 'error');
+            toast(apiErrorMessage(res.status, data.detail) || 'No se pudo importar el enlace.', 'error');
             return;
         }
         elRawText.value = data.raw_text || '';
@@ -544,7 +544,7 @@ if (elImportPhoto) elImportPhoto.addEventListener('change', async () => {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            toast(data.detail || 'No se pudo leer la foto.', 'error');
+            toast(apiErrorMessage(res.status, data.detail) || 'No se pudo leer la foto.', 'error');
             return;
         }
         elRawText.value = data.raw_text || '';
@@ -601,13 +601,14 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.detail || 'Error al guardar la canción');
+            throw new ApiError(res.status, apiErrorMessage(res.status, errData.detail), errData.detail);
         }
 
         const data = await res.json();
         // D9: al AÑADIR una canción nueva se sube al catálogo global por defecto ("ponla aquí").
         // Best-effort: si el catálogo falla (o ya está publicada), no bloquea el guardado.
-        if (!isEditing) {
+        const shareEl = document.getElementById('share-catalog');
+        if (!isEditing && (!shareEl || shareEl.checked)) {
             try {
                 await apiFetch('/catalog/publish', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -615,12 +616,37 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
                 });
             } catch (e) { /* el catálogo es opcional para el guardado */ }
         }
+        editorDirty = false;   // T-V6-16: guardado → ya no hay cambios pendientes
         window.location.href = `index.html?songId=${data.id}`;
 
     } catch (err) {
-        toast('Ocurrió un error: ' + err.message, 'error');
+        toast(errorMessage(err, 'No se pudo guardar la canción. Revisa la conexión y vuelve a intentarlo.'), 'error');
         btnSave.disabled = false;
         btnSave.innerHTML = originalLabel;
+    }
+});
+
+// ─── T-V6-16 (F-06): guardia de cambios sin guardar ──────────────────────────────
+// Pegar/importar una canción y pulsar ❌ (o recargar) la perdía sin avisar.
+let editorDirty = false;
+window.__bfEditorDirty = () => editorDirty;   // para los tests
+['title', 'artist', 'bpm', 'raw-text', 'reference-url', 'time-signature'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) ['input', 'change'].forEach((ev) => el.addEventListener(ev, () => { editorDirty = true; }));
+});
+window.addEventListener('beforeunload', (e) => {
+    if (!editorDirty) return;
+    e.preventDefault();
+    e.returnValue = '';
+});
+const elBtnClose = document.getElementById('btn-close');
+if (elBtnClose) elBtnClose.addEventListener('click', async (e) => {
+    if (!editorDirty) return;
+    e.preventDefault();
+    const href = elBtnClose.getAttribute('href');
+    if (await confirmModal('Tienes cambios sin guardar. ¿Salir sin guardar?', { okText: 'Salir sin guardar', cancelText: 'Seguir editando' })) {
+        editorDirty = false;
+        window.location.href = href;
     }
 });
 

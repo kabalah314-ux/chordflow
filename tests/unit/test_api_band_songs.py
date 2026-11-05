@@ -116,3 +116,13 @@ def test_aislamiento_repertorio_un_ajeno_no_ve_ni_toca(client):
         assert client.post(f"/bands/{bid}/songs/", json=sample_song_payload()).status_code == 404
         assert client.post(f"/bands/{bid}/songs/copy", json={"song_id": sid}).status_code == 404
         assert client.delete(f"/bands/{bid}/songs/{sid}").status_code == 404
+
+
+def test_copiar_a_banda_conserva_reference_url(client):
+    """T-V6-19 (B-08): la copia a la banda mantiene el vídeo de referencia."""
+    bid = _band(client)
+    payload = sample_song_payload(title="Con video")
+    payload["reference_url"] = "https://www.youtube.com/watch?v=abcdefghijk"
+    personal_id = client.post("/songs/", json=payload).json()["id"]
+    copia = client.post(f"/bands/{bid}/songs/copy", json={"song_id": personal_id}).json()
+    assert copia["reference_url"] == "https://www.youtube.com/watch?v=abcdefghijk"

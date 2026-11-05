@@ -1,5 +1,7 @@
 import logging
+import os
 
+from fastapi import HTTPException
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -21,6 +23,14 @@ engine_kwargs = {"connect_args": engine_args}
 if not _is_sqlite:
     engine_kwargs["pool_pre_ping"] = True
 
+# T-V6-13 (B-12): en serverless (Vercel) cada instancia mantenía su propio QueuePool hacia el pooler
+# de Supabase (modo transacción, 6543). Con NullPool cada petición abre/cierra y el pooler hace el
+# pool real: menos conexiones colgadas entre invocaciones.
+if not _is_sqlite and os.getenv("VERCEL"):
+    from sqlalchemy.pool import NullPool
+
+    engine_kwargs["poolclass"] = NullPool
+
 engine = create_engine(DATABASE_URL, **engine_kwargs)
 
 # SQLite no fuerza las foreign keys por defecto: hay que activarlo por conexión.
@@ -40,6 +50,9 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except HTTPException:
+        # T-V6-19 (B-23): un 404/403 normal no es un error de BD (antes llenaba el log de trazas).
+        raise
     except Exception as e:
         logger.error(f"Error en sesión de base de datos: {e}", exc_info=True)
         raise

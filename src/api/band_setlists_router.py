@@ -16,7 +16,7 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..services.band_auth import require_band_member
 from ..services.db import get_db
@@ -80,7 +80,7 @@ def list_band_setlists(
     db: Session = Depends(get_db),
     membership: BandMembership = Depends(require_band_member),
 ):
-    setlists = (db.query(Setlist)
+    setlists = (db.query(Setlist).options(selectinload(Setlist.items))
                 .filter(Setlist.band_id == band_id, Setlist.deleted_at.is_(None))
                 .order_by(Setlist.updated_at.desc()).all())
     return [SetlistSummary(id=s.id, name=s.name, band_id=s.band_id,
