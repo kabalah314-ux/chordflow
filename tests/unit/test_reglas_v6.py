@@ -37,3 +37,11 @@ def test_404_con_marca_para_navegador_y_json_para_la_api(client):
     assert r.status_code == 404 and r.json()["detail"]
     assert r.headers.get("X-Request-ID")
     assert "microphone=(self)" in r.headers.get("Permissions-Policy", "")
+
+
+def test_cache_de_estaticos_versionados_e_html(client):
+    """T-V6-24: estáticos con ?v= → inmutables un año; HTML → siempre revalidar."""
+    r = client.get("/static/util.js?v=abc123")
+    assert r.status_code == 200 and "immutable" in r.headers.get("cache-control", "")
+    r = client.get("/static/app.html")
+    assert r.headers.get("cache-control") == "no-cache"

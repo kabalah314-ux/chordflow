@@ -100,6 +100,20 @@ async def add_security_headers(request, call_next):
     return response
 
 
+# T-V6-24: caché del navegador/CDN. Los estáticos versionados (`?v=<hash>`, ver cachebust.py) no
+# cambian nunca → un año e `immutable`; el HTML siempre se revalida (así un deploy se ve al instante).
+@app.middleware("http")
+async def static_cache_mw(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/static/") and response.status_code == 200:
+        if request.query_params.get("v") and not path.endswith(".html"):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        elif path.endswith(".html") or path.endswith("sw.js") or path.endswith("manifest.json"):
+            response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 # T-V6-29: id de petición para cruzar un error del usuario con el log (cabecera X-Request-ID).
 @app.middleware("http")
 async def request_id_mw(request, call_next):
