@@ -102,7 +102,7 @@ def test_gastos_fijos_y_modo_ensayo(page, live_server, api):
     page.click('.bf-dialog [data-bfd-act="1"]')
     page.wait_for_selector(".bf-dialog", state="detached", timeout=8000)
     page.wait_for_timeout(500)
-    msgs = api.get(f"/bands/{bid}/messages").json()
+    msgs = api.get(f"/bands/{bid}/messages/").json()
     assert any("Resumen del ensayo" in m["body"] for m in msgs)
 
     # Gastos fijos en Finanzas: "Registrar" crea el movimiento

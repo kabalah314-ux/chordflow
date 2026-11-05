@@ -574,6 +574,7 @@ async function loadAgenda(bandId, iAmAdmin) {
 
     if (!events.length) {
         el.innerHTML = '<p class="loading-text">Sin eventos. ' + (iAmAdmin ? 'Crea un ensayo o concierto.' : 'Un admin puede crear eventos.') + '</p>';
+        document.dispatchEvent(new CustomEvent('bf:agenda', { detail: { bandId, iAmAdmin } }));   // V6-F9: votaciones aunque no haya eventos
         return;
     }
     const now = Date.now();

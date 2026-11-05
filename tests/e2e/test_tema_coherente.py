@@ -105,7 +105,8 @@ def test_modal_y_toast_legibles_en_tema_claro(page, live_server):
     toast se apila por encima del overlay del modal."""
     page.add_init_script("try{localStorage.setItem('bf-theme','light')}catch(e){}")
     page.goto(live_server + "/static/library.html", wait_until="networkidle")
-    page.evaluate("window.confirmModal('¿Seguro?')")
+    # Sin devolver la promesa: evaluate esperaría a que se cerrara el modal (y colgaba la CI).
+    page.evaluate("() => { window.confirmModal('¿Seguro?'); }")
     page.wait_for_selector(".modal-card")
     card_bg = page.eval_on_selector(".modal-card", "el => getComputedStyle(el).backgroundColor")
     msg_color = page.eval_on_selector(".modal-msg", "el => getComputedStyle(el).color")
