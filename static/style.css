@@ -1705,3 +1705,7 @@ body.lp { min-height: 100vh; display: flex; flex-direction: column; }
   .modal-overlay .modal-actions { flex-direction: column-reverse; }
   .modal-overlay .modal-actions button { width: 100%; min-height: 44px; }
 }
+/* T-V6-42c: chat de banda con hora y mensajes propios a la derecha */
+#b-chat .msg-item { align-items: flex-start; }
+#b-chat .msg-mine .sl-title { background: color-mix(in srgb, var(--accent-color) 14%, transparent); border-radius: 12px; padding: .35rem .6rem; margin-left: auto; }
+#b-chat .msg-time { display: block; font-size: .7rem; color: var(--text-secondary); margin-top: .1rem; }

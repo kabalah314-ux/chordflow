@@ -130,11 +130,15 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function messageItemHtml(m, iAmAdmin) {
+    // T-V6-42c: burbuja con hora, los míos a la derecha y "editar" para los propios.
+    const when = m.created_at ? new Date(m.created_at) : null;
+    const hora = when && !isNaN(when) ? when.toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     return `
-        <li class="setlist-song ${m.is_pinned ? 'msg-pinned' : ''}" data-id="${escapeHtml(m.id)}">
-            <span class="sl-title">${m.is_pinned ? `<span class="msg-pin-mark" aria-label="Fijado">${bfIcon('pin', { size: 14 })}</span> ` : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: ${escapeHtml(m.body)}
-                ${m.edited_at ? '<small>(editado)</small>' : ''}</span>
+        <li class="setlist-song msg-item ${m.is_pinned ? 'msg-pinned' : ''}${m.is_mine ? ' msg-mine' : ''}" data-id="${escapeHtml(m.id)}">
+            <span class="sl-title">${m.is_pinned ? `<span class="msg-pin-mark" aria-label="Fijado">${bfIcon('pin', { size: 14 })}</span> ` : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: <span class="msg-body">${escapeHtml(m.body)}</span>
+                ${m.edited_at ? '<small>(editado)</small>' : ''}${hora ? ` <time class="msg-time" datetime="${escapeHtml(m.created_at)}">${escapeHtml(hora)}</time>` : ''}</span>
             <span class="msg-actions">
+                ${m.is_mine ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar mi mensaje" title="Editar">${bfIcon('edit', { size: 15 })}</button>` : ''}
                 ${iAmAdmin ? `<button class="setlist-item-btn" data-act="pin" aria-label="${m.is_pinned ? 'Desfijar nota' : 'Fijar como nota'}" title="${m.is_pinned ? 'Desfijar' : 'Fijar como nota'}">${bfIcon('pin', { size: 16 })}</button>` : ''}
                 ${(m.is_mine || iAmAdmin) ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar" title="Borrar">${bfIcon('trash')}</button>` : ''}
             </span>
@@ -154,6 +158,18 @@ function wireMessageItem(li, bandId, reload) {
             if (!res.ok) throw new Error('http');
             reload();
         } catch (e) { toast('No se pudo fijar el mensaje.', 'error'); }
+    });
+    const ed = li.querySelector('[data-act="edit"]');
+    if (ed) ed.addEventListener('click', async () => {
+        const cur = (li.querySelector('.msg-body') || {}).textContent || '';
+        const body = await promptModal('Editar mensaje', { okText: 'Guardar', value: cur });
+        if (!body || body === cur) return;
+        try {
+            const res = await apiFetch(`/bands/${bandId}/messages/${mid}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body }) });
+            if (!res.ok) throw new Error('http');
+            reload();
+        } catch (e) { toast('No se pudo editar el mensaje.', 'error'); }
     });
     const del = li.querySelector('[data-act="del"]');
     if (del) del.addEventListener('click', async () => {
