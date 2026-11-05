@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Finanzas TÚ con resumen global y últimos movimientos (T-V6-48) · Chat TÚ en dos columnas (T-V6-49)
+- **Qué:** Finanzas: tarjetas "Te deben / Debes / Neto" de todas tus bandas, últimos movimientos (con banda) y cada banda enlaza directo a su pestaña de Finanzas para liquidar. Chat: en pantallas anchas la conversación de cada banda se lee y se escribe al lado de la lista (refresco cada 6 s con la pestaña visible); acceso a "Mensajes de Explorar".
+
 ### V6 — Inicio con "Para ti" (T-V6-43)
 - **Qué:** `GET /me/todo` reúne lo que espera algo de ti en todas tus bandas: eventos de los próximos 7 días sin tu respuesta, votaciones de fechas sin tu voto y pendientes de la pizarra asignados a ti. El Inicio lo muestra bajo el próximo bolo, con enlace directo a la pestaña de la banda.
 - **Verificación:** `test_para_ti_reune_lo_pendiente`.
