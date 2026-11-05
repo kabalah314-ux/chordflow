@@ -21,7 +21,7 @@ def test_tarjeta_banda_avatar_y_song_count(page, live_server, api):
     card = page.locator('.song-card:has-text("Banda Tarjeta")')
 
     # Avatar de color con inicial y el contador de canciones.
-    assert card.locator(".bf-avatar").count() == 1
+    assert card.locator(".band-card__head .bf-avatar").count() == 1   # (los miembros apilados van aparte, T-V6-44)
     assert "1 canción" in card.inner_text()
 
     # Sigue abriéndose (selector intacto).
