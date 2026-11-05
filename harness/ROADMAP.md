@@ -828,7 +828,7 @@
 - [x] **T-V6-68** Landing pública en `/` y páginas 404/500 con marca (D-V6-11)
 - [ ] **T-V6-70** Staging (Supabase + env de preview en Vercel) + smoke post-deploy
 - [ ] **T-V6-71** Migración automática en el pipeline de deploy (contra el pooler de sesión, antes de promover)
-- [ ] **T-V6-72** Backups `pg_dump` diarios + restauración probada + runbook de rollback
+- [x] **T-V6-72** Backups `pg_dump` diarios + restauración probada + runbook de rollback
 - [ ] **T-V6-73** Dominio propio + HSTS + CSP con nonce (sin `onclick` inline)
 - [x] **T-V6-74** Rate limiting completo (`/invites`, `/public`, `/catalog`) + cuota diaria de IA por usuario
 - [x] **T-V6-75** Índices compuestos reales + migración de limpieza de columnas muertas

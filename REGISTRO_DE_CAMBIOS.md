@@ -46,6 +46,11 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Runbook, copias de seguridad y cabeceras (T-V6-72, partes de T-V6-24/70/71/73)
+- **Qué:** `docs/RUNBOOK.md` (desplegar con migraciones, copia, restaurar, volver atrás, variables, staging a coste 0), `harness/backup_db.py` (pg_dump sin imprimir la contraseña) y workflow **Backup diario** que no hace nada hasta que exista el secreto `BACKUP_DATABASE_URL`. Cabeceras: `Cache-Control` inmutable para estáticos con `?v=` y `no-cache` para HTML; HSTS cuando se sirve por HTTPS; CSP en modo **solo-informe** (no bloquea; muestra qué faltaría para activarla con nonce).
+- **Pendiente de Oscar:** crear el secreto `BACKUP_DATABASE_URL` si quiere copias automáticas (el `pg_dump` del runner debe ser de la misma versión mayor que el Postgres de Supabase).
+- **Verificación:** `test_cache_de_estaticos_versionados_e_html`.
+
 ### V6 — Sin conexión en el reproductor + manifest (T-V6-57) · repertorio con tono/BPM/cejilla/duración (parte de T-V6-42d) · giras editables (T-V6-42g)
 - **Qué:** el reproductor guarda la última versión de cada canción abierta en el dispositivo y, si no hay red (local de ensayo, escenario), la toca desde ahí avisando. Junto al Wake Lock, el móvil aguanta un bolo sin cobertura con las canciones ya abiertas. `manifest.json`: descripción actual, accesos directos (Agenda, Canciones, Bolos) y categorías. Repertorio: cada canción muestra tono, BPM, cejilla y duración. Giras: editar (nombre, estado, fechas, notas) y borrar.
 
