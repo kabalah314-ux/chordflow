@@ -33,7 +33,7 @@ function render(p, bands) {
 
     const bandChips = bands.length ? bands.map(b => `
         <a class="pf-band-chip" href="band.html?id=${encodeURIComponent(b.id)}" title="${escapeHtml(b.name)}">
-            <span class="bf-avatar bf-avatar--sm" style="background:${bandColor(b.id)};color:#fff;">${escapeHtml(initialsFrom(b.name) || '🎸')}</span>
+            <span class="bf-avatar bf-avatar--sm" style="background:${bandColor(b.id)};color:#fff;">${escapeHtml(initialsFrom(b.name) || 'B')}</span>
             <span class="pf-band-chip__name">${escapeHtml(b.name)}</span>
             <span class="bf-badge bf-badge--${b.role}">${ROLE_LABEL[b.role] || escapeHtml(b.role)}</span>
         </a>`).join('')
@@ -64,9 +64,51 @@ function render(p, bands) {
         <input type="text" id="pf-name" class="search-box" placeholder="Cómo te ven tus compañeros" value="${escapeHtml(name)}">
         <label class="field-label" for="pf-inst">Instrumentos <small>(separados por comas)</small></label>
         <input type="text" id="pf-inst" class="search-box" placeholder="guitarra, voz, teclado" value="${escapeHtml(instruments.join(', '))}">
-        <div class="form-actions"><button id="pf-save" class="primary-btn">${bfIcon('save')} Guardar perfil</button></div>`;
+        <div class="form-actions"><button id="pf-save" class="primary-btn">${bfIcon('save')} Guardar perfil</button></div>
+
+        <h3 class="pf-section-title">En la red</h3>
+        <p class="bf-muted">¿Tienes una sala o das servicios a músicos (foto, sonido, estudio…)? Crea tu ficha y aparece en Explorar.</p>
+        <div class="bf-row bf-wrap" style="gap:.5rem;"><a class="bf-btn" href="red.html#mios">${bfIcon('map-pin', { size: 15 })} Mis perfiles en la red</a></div>
+
+        <h3 class="pf-section-title">Cuenta</h3>
+        <div class="bf-row bf-wrap" style="gap:.5rem;">
+            <button type="button" class="bf-btn" id="pf-cal">${bfIcon('calendar', { size: 15 })} Ver mis eventos en mi calendario</button>
+            <button type="button" class="bf-btn" id="pf-export">${bfIcon('download', { size: 15 })} Descargar mis datos</button>
+            <button type="button" class="bf-btn bf-btn--danger" id="pf-delete">${bfIcon('trash', { size: 15 })} Borrar mi cuenta</button>
+        </div>`;
 
     document.getElementById('pf-save').addEventListener('click', () => save(p, bands));
+    // T-V6-62 / T-V6-65: calendario, exportar y borrar cuenta
+    document.getElementById('pf-cal').addEventListener('click', () => bfSubscribeCalendar());
+    document.getElementById('pf-export').addEventListener('click', async () => {
+        try {
+            const res = await apiFetch('/me/export');
+            if (!res.ok) throw new Error('http');
+            const blob = new Blob([JSON.stringify(await res.json(), null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `bandflow-mis-datos-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        } catch (e) { toast('No se pudieron exportar tus datos.', 'error'); }
+    });
+    document.getElementById('pf-delete').addEventListener('click', async () => {
+        const v = await bfDialog({
+            title: 'Borrar mi cuenta',
+            body: `<div class="bf-stack"><p>Se borran tus canciones y setlists personales, tus fichas de la red y tu nombre. Sales de tus bandas: si eras el único admin, el admin pasa al miembro más antiguo (y si estabas solo, la banda se archiva).</p>
+                <p class="bf-muted">Lo que compartiste con tus bandas (canciones del repertorio, mensajes, movimientos) se queda en la banda. Descarga antes tus datos si los quieres.</p>
+                <label class="bf-label" for="pf-del-confirm">Escribe BORRAR para confirmar</label><input class="bf-input" id="pf-del-confirm" autocomplete="off"></div>`,
+            actions: [{ label: 'Cancelar', value: null }, { label: 'Borrar mi cuenta', danger: true,
+                onClick: (root) => root.querySelector('#pf-del-confirm').value.trim().toUpperCase() === 'BORRAR' ? 'ok' : (toast('Escribe BORRAR.', 'error'), false) }],
+        });
+        if (v !== 'ok') return;
+        try {
+            const res = await apiFetch('/me/delete-account', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: 'BORRAR' }) });
+            if (!res.ok) throw new Error('http');
+            toast('Tu cuenta se ha borrado. ¡Hasta pronto!', 'success');
+            setTimeout(() => signOut(), 1200);
+        } catch (e) { toast('No se pudo borrar la cuenta.', 'error'); }
+    });
 
     // Foto de perfil (T-V5-06): subir a Storage y guardar solo avatar_url (parche parcial).
     document.getElementById('pf-photo').addEventListener('click', () =>

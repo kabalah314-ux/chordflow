@@ -46,6 +46,11 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Cuenta: exportar datos, borrar cuenta, salir de la banda (T-V6-65, T-V6-42e)
+- **Qué:** `account_router.py`: `GET /me/export` (JSON con perfil, canciones y setlists personales, bandas y fichas de la red), `POST /me/delete-account` (confirmación "BORRAR": borra lo personal, anonimiza el perfil, sale de las bandas traspasando el admin al miembro más antiguo o archivando la banda si estaba solo) y `POST /bands/{id}/leave` (si eres el único admin hay que elegir heredero). Perfil: "Ver mis eventos en mi calendario", "Descargar mis datos", "Borrar mi cuenta" y acceso a "Mis perfiles en la red". Miembros: "Salir de la banda".
+- **Pendiente de Oscar:** borrar el usuario en Supabase Auth cuando alguien borre su cuenta (la API no tiene la service key, a propósito); los logs dejan constancia.
+- **Verificación:** `tests/unit/test_api_account.py`.
+
 ### V6 — Búsqueda global Ctrl+K (T-V6-67) · Portada pública y 404 (T-V6-68) · X-Request-ID (parte de T-V6-29) · bug del micrófono
 - **Qué:** `GET /me/search` (canciones mías y de mis bandas, setlists, eventos, bandas; solo lo que puedo ver) + paleta en el lateral ("Buscar", Ctrl/Cmd+K) con flechas/Enter y accesos a páginas. `/` abre `bienvenida.html` (portada para quien no tiene cuenta; con sesión salta a la app). 404 con marca para navegadores (la API sigue en JSON). Cabecera `X-Request-ID` en todas las respuestas.
 - **Bug corregido:** `Permissions-Policy: microphone=()` bloqueaba el micrófono **también para la propia app** (afinador mudo en producción). Ahora `microphone=(self), camera=(self)`.

@@ -799,7 +799,7 @@
 - [ ] **T-V6-42b** Agenda de banda: filas 56 px + segmented + ⋯ + panel de detalle (`bf-drawer`); Salas a Ajustes
 - [ ] **T-V6-42c** Chat de banda: agrupación, avatar, hora, fijados colapsables, composer, editar propio
 - [ ] **T-V6-42d** Repertorio + Setlists de banda: "Añadir canción" con menú, meta tono/BPM/capo, ⋯, orden, tarjetas de setlist con duración
-- [ ] **T-V6-42e** Miembros + Invitaciones (lista, revocar, copiar) + Salir de la banda + transferir admin
+- [x] **T-V6-42e** Miembros + Invitaciones (lista, revocar, copiar) + Salir de la banda + transferir admin
 - [ ] **T-V6-42f** Finanzas de banda: `Intl`, quién pagó, filtros, liquidaciones listadas/borrables, gráfico por mes
 - [ ] **T-V6-42g** Giras: tarjeta + timeline + editar/borrar
 - [ ] **T-V6-43** Inicio: KPIs, "Esta semana" con asistencia in-page, actividad, "Para hoy", vacío sin banda
@@ -822,7 +822,7 @@
 - [x] **T-V6-62** `bf-calendar` (mensual + semanal, contrato V5 §7) en Agenda TÚ, banda y Resumen; `.ics` por evento y suscripción por banda
 - [x] **T-V6-63** Exportar/imprimir setlist (PDF orden + notas; pack con canciones) y compartir setlist por enlace de solo lectura
 - [ ] **T-V6-64** Onboarding: sin banda (dos caminos + canción demo), asistente de banda de 3 pasos, tour de 4 puntos
-- [ ] **T-V6-65** Borrar cuenta (con transferencia de admin) + exportar mis datos; verificación de email; emails de auth con marca
+- [x] **T-V6-65** Borrar cuenta (con transferencia de admin) + exportar mis datos; verificación de email; emails de auth con marca
 - [ ] **T-V6-66** Moderación del catálogo (ocultar/retirar, borrar comentario), reportar, aviso de derechos
 - [x] **T-V6-67** Búsqueda global Ctrl+K y hoja de atajos `?`
 - [x] **T-V6-68** Landing pública en `/` y páginas 404/500 con marca (D-V6-11)

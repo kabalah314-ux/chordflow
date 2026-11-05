@@ -76,6 +76,8 @@
         renderShell(band, active, ctx);
         renderMembers(active);
         wire(band, active, ctx);
+        const lv = document.getElementById('bs-leave');   // T-V6-42e
+        if (lv && window.BandTools) lv.addEventListener('click', () => window.BandTools.leave(bandId, band, active, ctx));
         loadSummary(bandId, ctx);   // Resumen = pestaña activa por defecto (T-130)
         maybeShowTour();            // aviso de bienvenida la 1ª vez (T-148)
     }
@@ -129,6 +131,7 @@
 
                 <div class="bs-panel" data-panel="miembros" hidden>
                     <ul class="setlist-list" id="b-members"></ul>
+                    <div style="margin-top:1rem;"><button class="bf-btn bf-btn--sm bf-btn--ghost" id="bs-leave">${bfIcon('logout', { size: 15 })} Salir de la banda</button></div>
                 </div>
 
                 <div class="bs-panel" data-panel="repertorio" hidden>

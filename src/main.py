@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .api.account_router import router as account_router
 from .api.band_collections_router import router as band_collections_router
 from .api.band_setlists_router import router as band_setlists_router
 from .api.band_songs_router import router as band_songs_router
@@ -135,6 +136,7 @@ app.include_router(band_tools_router)
 app.include_router(network_router)
 app.include_router(notifications_router)
 app.include_router(search_router)
+app.include_router(account_router)
 
 @app.get("/")
 def read_root():

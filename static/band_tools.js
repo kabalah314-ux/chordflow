@@ -829,6 +829,32 @@
     }
     BT.rehearsalMode = rehearsalMode;
 
+    // ══ Salir de la banda (T-V6-42e) ═════════════════════════════════════════
+    BT.leave = async function (bandId, band, active, ctx) {
+        const me = active.find(m => m.is_me);
+        const others = active.filter(m => !m.is_me);
+        const lastAdmin = ctx.iAmAdmin && !others.some(m => m.role === 'admin');
+        if (lastAdmin && !others.length) {
+            toast('Eres el único miembro: si quieres cerrar la banda, bórrala desde Ajustes.', 'info');
+            return;
+        }
+        const r = await bfDialog({
+            title: `Salir de ${band.name}`,
+            body: `<div class="bf-stack"><p>Dejarás de ver la agenda, el repertorio y el chat de la banda. Lo que aportaste se queda en la banda.</p>
+                ${lastAdmin ? `<div><label class="bf-label" for="bt-heir">Eres el único admin: ¿a quién pasas el admin?</label>
+                  <select class="bf-input" id="bt-heir">${others.map(m => `<option value="${escapeHtml(m.user_id)}">${escapeHtml(m.display_name || 'Miembro')}</option>`).join('')}</select></div>` : ''}</div>`,
+            actions: [{ label: 'Cancelar', value: null }, { label: 'Salir de la banda', danger: true,
+                onClick: (root) => ({ transfer_to: lastAdmin ? root.querySelector('#bt-heir').value : null }) }],
+        });
+        if (!r) return;
+        try {
+            await jsonOrThrow(await apiFetch(`/bands/${bandId}/leave`, J('POST', r)));
+            toast('Has salido de la banda.', 'success');
+            location.href = 'bands.html';
+        } catch (e) { toast(e.message && e.message !== 'http' ? e.message : 'No se pudo salir.', 'error'); }
+        void me;
+    };
+
     // ══ Dossier (EPK) de la banda (T-V6-98) ═══════════════════════════════════
     BT.epk = async function (bandId, ctx) {
         const box = document.getElementById('bt-epk');
