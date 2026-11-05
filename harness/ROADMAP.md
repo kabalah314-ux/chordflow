@@ -808,7 +808,7 @@
 - [ ] **T-V6-46** Editor: metadatos completos, diálogo "Importar" con 3 pestañas, barra inferior fija, Ctrl+S, preview alineada
 - [x] **T-V6-47** Agenda TÚ: lista agrupada por semana, crear evento eligiendo banda, filtros (calendario en F6)
 - [ ] **T-V6-48** Finanzas TÚ: resumen global + movimientos + liquidar
-- [ ] **T-V6-49** Chat TÚ: dos columnas + no-leídos en lateral (`.bf-nav-badge`)
+- [x] **T-V6-49** Chat TÚ: dos columnas + no-leídos en lateral (`.bf-nav-badge`)
 - [x] **T-V6-50** Perfil + Cuenta (chips de instrumentos, cambiar email/contraseña, cerrar sesiones, tema, idioma)
 - [ ] **T-V6-51** Afinador/Metrónomo: centrado, nota en reposo, presets
 - [x] **T-V6-52** Explorar provisional (tarjetas, abort/debounce, paginación) + evento público (cover, .ics, compartir)

@@ -713,3 +713,15 @@ a.rd-pro:hover { border-color: var(--bf-primary); }
 .bt-bars__label { font-size: var(--bf-fs-xs, .75rem); color: var(--bf-text-muted, inherit); text-transform: capitalize; }
 .agenda-week + .agenda-week { margin-top: .8rem; }
 .agenda-week__title { font-size: var(--bf-fs-xs, .75rem); text-transform: uppercase; letter-spacing: .06em; color: var(--bf-text-muted, inherit); margin: .2rem 0 .3rem; }
+/* T-V6-49: chat TÚ en dos columnas */
+.chat-two { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 1rem; align-items: start; }
+.chat-two__pane { display: flex; flex-direction: column; min-height: 420px; }
+.chat-two__head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding-bottom: .5rem; border-bottom: 1px solid var(--bf-border, #333); }
+.chat-two__msgs { list-style: none; margin: 0; padding: .8rem 0; flex: 1; max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: .45rem; }
+.chat-two__msg { max-width: 80%; align-self: flex-start; background: var(--bf-surface-2, rgba(255,255,255,.06)); border-radius: 12px; padding: .45rem .65rem; display: flex; flex-direction: column; }
+.chat-two__msg.is-mine { align-self: flex-end; background: color-mix(in srgb, var(--bf-primary) 18%, transparent); }
+.chat-two__who { font-size: var(--bf-fs-xs, .75rem); font-weight: 600; }
+.chat-two__body { overflow-wrap: anywhere; }
+.chat-two__when { font-size: .68rem; color: var(--bf-text-muted, inherit); align-self: flex-end; }
+#chat-list a.is-active { background: color-mix(in srgb, var(--bf-primary) 10%, transparent); }
+@media (max-width: 899px) { .chat-two { grid-template-columns: 1fr; } .chat-two__pane { display: none; } }
