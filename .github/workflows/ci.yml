@@ -43,6 +43,13 @@ jobs:
       - name: Cache-busting al día
         run: python harness/cachebust.py --check
 
+      # T-V6-25: ESLint del frontend (variables no definidas, código muerto…). Informativo al principio.
+      - name: ESLint (frontend)
+        continue-on-error: true
+        run: |
+          npm install --no-audit --no-fund --silent
+          npx eslint static
+
       - name: Tests unitarios (API + lógica)
         run: python -m pytest tests/unit -m unit -q
 

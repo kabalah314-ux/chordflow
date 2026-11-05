@@ -34,3 +34,4 @@ logs/
 BandFlow.html
 test-results/
 backups/
+node_modules/
