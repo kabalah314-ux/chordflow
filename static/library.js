@@ -211,10 +211,19 @@ function applyView() {
                 : allSongs.filter(s => s._bandId === currentFilter);
     }
     const q = (elSearch.value || '').trim().toLowerCase();
-    const list = q
+    let list = q
         ? base.filter(s => (s.title || '').toLowerCase().includes(q)
             || (s.artist || '').toLowerCase().includes(q))
         : base;
+    // T-V6-45: orden elegible (dentro de una colección se respeta su orden propio)
+    const sortSel = document.getElementById('lib-sort');
+    const mode = sortSel ? sortSel.value : 'recent';
+    if (!currentCollection && mode !== 'recent') {
+        const coll = new Intl.Collator('es', { sensitivity: 'base' });
+        list = list.slice().sort(mode === 'title' ? (a, b) => coll.compare(a.title || '', b.title || '')
+            : mode === 'artist' ? (a, b) => coll.compare(a.artist || '', b.artist || '') || coll.compare(a.title || '', b.title || '')
+            : (a, b) => (a.bpm || 0) - (b.bpm || 0));
+    }
     renderGrid(list, q);
 }
 
@@ -370,4 +379,19 @@ if (elBtnLogout) elBtnLogout.addEventListener('click', () => signOut());
     const user = session.user;
     if (elUserEmail && user) elUserEmail.textContent = user.email || '';
     fetchSongs();
+})();
+
+
+// T-V6-45: selector de orden junto al buscador (se recuerda en el dispositivo)
+(function () {
+    const search = document.getElementById('search-input');
+    if (!search || document.getElementById('lib-sort')) return;
+    const sel = document.createElement('select');
+    sel.id = 'lib-sort';
+    sel.className = 'bf-input lib-sort';
+    sel.setAttribute('aria-label', 'Ordenar canciones');
+    sel.innerHTML = '<option value="recent">Recientes</option><option value="title">Título (A–Z)</option><option value="artist">Artista</option><option value="bpm">Tempo (BPM)</option>';
+    try { sel.value = localStorage.getItem('bf-lib-sort') || 'recent'; } catch (e) { /* sin storage */ }
+    sel.addEventListener('change', () => { try { localStorage.setItem('bf-lib-sort', sel.value); } catch (e) { /* */ } applyView(); });
+    search.insertAdjacentElement('afterend', sel);
 })();

@@ -1724,3 +1724,5 @@ body.lp { min-height: 100vh; display: flex; flex-direction: column; }
 .band-card__people .bf-avatar:first-child { margin-left: 0; }
 .band-card__people .bf-faint { margin-left: .4rem; font-size: .8rem; }
 .card-main[role="link"]:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+.lib-sort { max-width: 12rem; margin-left: .5rem; }
+@media (max-width: 640px) { .lib-sort { max-width: none; margin: .5rem 0 0; width: 100%; } }

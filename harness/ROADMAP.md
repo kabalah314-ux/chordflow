@@ -804,7 +804,7 @@
 - [x] **T-V6-42g** Giras: tarjeta + timeline + editar/borrar
 - [x] **T-V6-43** Inicio: KPIs, "Esta semana" con asistencia in-page, actividad, "Para hoy", vacío sin banda
 - [x] **T-V6-44** Mis bandas: tarjetas con cover y miembros apilados; "Unirme con código"; vacío ilustrado
-- [ ] **T-V6-45** Biblioteca + Setlists personales: chips, grid/lista, meta, ⋯ visible en móvil, orden, cargar más
+- [x] **T-V6-45** Biblioteca + Setlists personales: chips, grid/lista, meta, ⋯ visible en móvil, orden, cargar más
 - [x] **T-V6-46** Editor: metadatos completos, diálogo "Importar" con 3 pestañas, barra inferior fija, Ctrl+S, preview alineada
 - [x] **T-V6-47** Agenda TÚ: lista agrupada por semana, crear evento eligiendo banda, filtros (calendario en F6)
 - [x] **T-V6-48** Finanzas TÚ: resumen global + movimientos + liquidar
