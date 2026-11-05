@@ -447,3 +447,59 @@ def test_import_from_url_sin_adaptador_va_directo_a_ia(monkeypatch):
 
     text = importer.import_from_url("https://tabs.ultimate-guitar.com/x")
     assert text == "resultado IA"
+
+
+
+# ─── T-V6-06: importador seguro ───────────────────────────────────────────────
+@pytest.mark.parametrize("url", [
+    "http://127.0.0.1/x", "http://localhost:8000/health", "http://169.254.169.254/latest/meta-data",
+    "http://10.0.0.5/", "ftp://www.cifraclub.com/x", "file:///etc/passwd",
+])
+def test_validate_public_url_rechaza_destinos_internos(url, monkeypatch):
+    from src.services import importer
+
+    monkeypatch.setattr(importer.socket, "getaddrinfo",
+                        lambda host, *a, **k: [(0, 0, 0, "", ("127.0.0.1" if "localhost" in host
+                                                               else host, 0))])
+    with pytest.raises(importer.ImportError_):
+        importer.validate_public_url(url)
+
+
+def test_validate_public_url_acepta_web_publica(monkeypatch):
+    from src.services import importer
+
+    monkeypatch.setattr(importer.socket, "getaddrinfo",
+                        lambda *a, **k: [(0, 0, 0, "", ("93.184.216.34", 0))])
+    assert importer.validate_public_url("https://www.cifraclub.com/oasis/wonderwall/")
+
+
+def test_validate_public_url_respeta_la_allowlist(monkeypatch):
+    from src.services import importer
+
+    monkeypatch.setattr(importer.socket, "getaddrinfo",
+                        lambda *a, **k: [(0, 0, 0, "", ("93.184.216.34", 0))])
+    monkeypatch.setattr(importer.settings, "chordflow_import_allowed_hosts", "cifraclub.com")
+    assert importer.validate_public_url("https://www.cifraclub.com/a/")
+    with pytest.raises(importer.ImportError_):
+        importer.validate_public_url("https://otra-web.com/a/")
+
+
+def test_read_capped_corta_respuestas_enormes(monkeypatch):
+    import io
+
+    from src.services import importer
+
+    monkeypatch.setattr(importer.settings, "chordflow_import_max_bytes", 10)
+    assert importer._read_capped(io.BytesIO(b"0123456789")) == b"0123456789"
+    with pytest.raises(importer.ImportError_):
+        importer._read_capped(io.BytesIO(b"0123456789X"))
+
+
+def test_import_tiene_cuota_por_usuario(client, monkeypatch):
+    from src.api import import_router
+
+    monkeypatch.setattr(import_router, "import_from_url", lambda url: "Am C G")
+    monkeypatch.setattr(import_router.settings, "chordflow_import_per_minute", 3)
+    for _ in range(3):
+        assert client.post("/import/", json={"url": "https://www.lacuerda.net/a"}).status_code == 200
+    assert client.post("/import/", json={"url": "https://www.lacuerda.net/a"}).status_code == 429

@@ -85,6 +85,12 @@ async function signOut() {
         const sb = await getSupabase();
         await sb.auth.signOut();
     }
+    try {   // T-V6-03: nada del usuario anterior queda en la caché del service worker
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+    } catch (e) { /* sin Cache API: seguimos */ }
     window.location.href = 'login.html';
 }
 

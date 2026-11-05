@@ -187,9 +187,9 @@
 
                 <div class="bs-panel" data-panel="chat" hidden>
                     <div id="b-chat"></div>
-                    <div style="display:flex; gap:.5rem; margin-top:.6rem;">
-                        <input type="text" id="chat-input" class="search-box" placeholder="Escribe un mensaje…" maxlength="4000">
-                        <button id="chat-send" class="primary-btn">Enviar</button>
+                    <div class="bf-composer">
+                        <input type="text" id="chat-input" class="bf-input" placeholder="Escribe un mensaje…" maxlength="4000" aria-label="Mensaje">
+                        <button id="chat-send" class="bf-btn bf-btn--primary">${bfIcon('send', { size: 16 })} Enviar</button>
                     </div>
                 </div>
 

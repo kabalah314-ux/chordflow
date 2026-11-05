@@ -209,3 +209,19 @@ def test_aislamiento_por_dueno(client):
     titles = [s["title"] for s in client.get("/songs/").json()]
     assert "Mia" in titles
     assert "Ajena" not in titles  # el filtro por owner_id funciona
+
+
+
+@pytest.mark.parametrize("bad", ["javascript:alert(1)//youtube.com/watch?v=abcdefghijk",
+                                 "data:text/html,<b>x</b>", "youtube.com/watch?v=x"])
+def test_reference_url_solo_http(client, bad):
+    """T-V6-07 (S-06): el enlace de referencia solo admite http(s)."""
+    from tests.conftest import sample_song_payload
+
+    payload = sample_song_payload()
+    payload["reference_url"] = bad
+    assert client.post("/songs/", json=payload).status_code == 422
+    sid = client.post("/songs/", json=sample_song_payload()).json()["id"]
+    assert client.patch(f"/songs/{sid}", json={"reference_url": bad}).status_code == 422
+    ok = "https://www.youtube.com/watch?v=abcdefghijk"
+    assert client.patch(f"/songs/{sid}", json={"reference_url": ok}).status_code == 200

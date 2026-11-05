@@ -575,6 +575,10 @@ document.getElementById('song-form').addEventListener('submit', async (e) => {
     const sections = parseRawText(rawText);
 
     const payload = { title, artist, bpm, time_signature_num: tsNum, time_signature_den: tsDen, sections };
+    if (referenceUrl && !/^https?:\/\//i.test(referenceUrl)) {   // T-V6-07: solo http(s)
+        toast('El enlace de referencia debe empezar por https://', 'error');
+        return;
+    }
     if (referenceUrl) payload.reference_url = referenceUrl;
 
     // PUT si estamos editando, POST si es nueva

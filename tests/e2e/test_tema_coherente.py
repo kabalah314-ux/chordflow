@@ -98,3 +98,21 @@ def test_ev_status_usa_tokens_semanticos(page, live_server):
     page.evaluate("document.documentElement.dataset.theme = 'light'")
     light = color()
     assert dark != light, f"el color de ev-status no adapta al tema (sigue hardcodeado: {dark})"
+
+
+def test_modal_y_toast_legibles_en_tema_claro(page, live_server):
+    """T-V6-04 (F-02/F-04): modal y toast usan tokens de superficie/texto → legibles en claro, y el
+    toast se apila por encima del overlay del modal."""
+    page.add_init_script("try{localStorage.setItem('bf-theme','light')}catch(e){}")
+    page.goto(live_server + "/static/library.html", wait_until="networkidle")
+    page.evaluate("window.confirmModal('¿Seguro?')")
+    page.wait_for_selector(".modal-card")
+    card_bg = page.eval_on_selector(".modal-card", "el => getComputedStyle(el).backgroundColor")
+    msg_color = page.eval_on_selector(".modal-msg", "el => getComputedStyle(el).color")
+    assert card_bg in ("rgb(255, 255, 255)", "rgb(250, 250, 248)"), card_bg
+    assert msg_color == "rgb(26, 26, 32)", msg_color
+    page.evaluate("toast('Hola', 'error')")
+    page.wait_for_selector(".toast")
+    z_toast = int(page.eval_on_selector("#toast-container", "el => getComputedStyle(el).zIndex"))
+    z_modal = int(page.eval_on_selector(".modal-overlay", "el => getComputedStyle(el).zIndex"))
+    assert z_toast > z_modal

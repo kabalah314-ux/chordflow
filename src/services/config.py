@@ -9,12 +9,15 @@ solo sitio, leídos UNA vez al arrancar. Importar el singleton `settings`.
 que lee `DATABASE_URL` fresco en cada invocación de migración.
 """
 
+import os
+
 from dotenv import load_dotenv
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Poblar os.environ desde .env y .env.local (este último tiene prioridad: credenciales).
 load_dotenv()
-load_dotenv(".env.local")
+load_dotenv(".env.local", override=True)  # T-V6-19 (B-19): .env.local manda, igual que en Settings
 
 
 class Settings(BaseSettings):
@@ -73,6 +76,31 @@ class Settings(BaseSettings):
     jina_api_key: str | None = None
     # Tope de caracteres de la página enviados a la IA (acota tokens/coste/latencia).
     chordflow_import_max_chars: int = 16000
+
+    # ── Importador seguro (T-V6-06) ─────────────────────────────────────────
+    # Vacío = cualquier web PÚBLICA (se bloquean IP privadas/locales). Con valores (coma-separados)
+    # = solo esos dominios y sus subdominios.
+    chordflow_import_allowed_hosts: str = ""
+    chordflow_import_max_bytes: int = 3_000_000
+    # Cuotas por usuario de las rutas /import/* (gastan IA y red externa).
+    chordflow_import_per_minute: int = 10
+    chordflow_import_per_day: int = 60
+
+    @property
+    def import_allowed_hosts(self) -> list[str]:
+        return [h.strip().lower() for h in self.chordflow_import_allowed_hosts.split(",")
+                if h.strip()]
+
+    @model_validator(mode="after")
+    def _test_mode_solo_en_local(self):
+        """Cerrojo (T-V6-02): el modo test solo es válido con SQLite y fuera de Vercel.
+        Un CHORDFLOW_TEST_MODE=1 puesto por error en producción abriría la app a cualquiera."""
+        if self.chordflow_test_mode:
+            if os.getenv("VERCEL") or not self.database_url.startswith("sqlite"):
+                raise ValueError(
+                    "CHORDFLOW_TEST_MODE=1 solo se permite en local con SQLite (nunca en producción)"
+                )
+        return self
 
     @property
     def allowed_origins_list(self) -> list[str]:

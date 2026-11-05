@@ -751,3 +751,105 @@
       MATERIAL para V5-F5c. ✅ Migración `37fb00af7e5c` aplicada a Postgres prod (2026-07-03).
       Fix post-revisión adversarial: PNG/WebP/GIF con transparencia se exportan como PNG (no JPEG)
       para no aplastar el alfa a NEGRO en logos de banda.
+
+
+## 🛠️ V6 — Profesionalización (guía: `GUIA_MAESTRA_V6.md` + `GUIA_MAESTRA_V6_MANUAL.md`, 2026-11-05)
+
+> Rama de trabajo `v6`. Cada tarea: commit propio + tests; verificación en CI de GitHub.
+
+- [ ] **T-V6-01** Borrar credenciales de `REGISTRO`, `TASKS`, `PENDIENTES`; `git filter-repo`; `gitleaks` en CI + pre-commit. *Requiere que Oscar haya rotado antes (§2.1)*
+- [x] **T-V6-02** Cerrojo de `TEST_MODE` fuera de SQLite/CI; `conftest.py` fuerza `DATABASE_URL` sqlite y aborta si no
+- [x] **T-V6-03** `sw.js`: cache-first solo `/static/*?v=`; purga de hashes viejos; `caches.delete` en logout; test e2e de colección creada → visible tras recarga
+- [x] **T-V6-04** Modales y toasts con tokens (`--bf-surface`, texto, borde); escala de z-index; errores de validación inline en el modal
+- [x] **T-V6-05** `/catalog/publish` e `/import` con `require_band_member` + `_deny_guests`; tests `guest → 403`
+- [x] **T-V6-06** Importador seguro: allowlist de hosts, bloqueo de IP privadas, tope de bytes, sin redirect cross-host, presupuesto de tiempo; rate limit básico en `/import/*`
+- [x] **T-V6-07** `reference_url` solo `https?://` (servidor y cliente)
+- [x] **T-V6-08** Invitaciones: caducidad 7 días / 20 usos por defecto; `DELETE /bands/{id}/invites/{iid}`; `used_count` atómico
+- [x] **T-V6-09** **Parche móvil urgente** (CSS, antes del rediseño): filas de agenda de banda apilan acciones en < 768 px; letra del reproductor con wrap; `join.html` centrado; composer del chat de 40 px; acciones de tarjeta visibles con `hover:none`
+- [ ] **T-V6-10** Chat de banda: render diferencial por id, auto-scroll inteligente, pausa con `visibilitychange`, `?after=&limit=` en la API
+- [ ] **T-V6-11** `/songs/` con `ORDER BY updated_at` + paginación; "Cargar más" en Biblioteca
+- [ ] **T-V6-12** `selectinload(Transaction.splits)` ×3; contadores por subquery en listados; `selectinload(SetlistItem.song)`
+- [ ] **T-V6-13** `create_all` solo en SQLite; `NullPool`/pool mínimo en Vercel; `maxDuration`; `runtime.txt` 3.12
+- [ ] **T-V6-14** `theme.js` inline en `<head>` de las 16 páginas; `100dvh`
+- [ ] **T-V6-15** `core/api.js`: `apiJson()` + `ApiError` + mensajes en castellano; estado de error ≠ vacío en todas las listas; botones con `is-loading` y anti doble envío
+- [ ] **T-V6-16** Editor: flag `dirty` + `beforeunload`; checkbox "Compartir en Explorar" + aviso de derechos (según D-V6-3)
+- [ ] **T-V6-17** Espacio no toca el BPM con foco en +/−; metrónomo con scheduler *lookahead*
+- [ ] **T-V6-18** Contrato de fechas UTC de punta a punta (columnas tz-aware o `Z` en serialización, validador común, `toISOString()` en el front, test cruzando zonas)
+- [ ] **T-V6-19** Lote backend medio: `active_membership()` único con `Band.deleted_at`; liquidaciones a ex-miembros; `reference_url` al copiar; búsqueda por `norm_*`; `plan` fuera del PATCH; `load_dotenv(override=True)`; longitudes espejo + test en PG; `IntegrityError` en perfil; `except HTTPException: raise` en `get_db`
+- [ ] **T-V6-21** CI como gate: SHA-pin, `permissions`, `concurrency`, jobs lint+unit / e2e / migraciones-PG, artefactos en fallo, branch protection con required check antes del auto-deploy
+- [ ] **T-V6-22** Lockfile con hashes, `requirements-dev` pineado, `pip-audit`, Dependabot, `.gitignore` `.env.*`
+- [ ] **T-V6-23** Migración `147a6a78da86` válida en PG; job CI con Postgres (`upgrade head` + `check` + `downgrade base`)
+- [ ] **T-V6-24** Estáticos servidos por Vercel con `Cache-Control: immutable`; la función solo para la API; medir cold start antes/después
+- [ ] **T-V6-25** Tooling JS: `package.json`, ESLint, `tsc --checkJs` + JSDoc, Vitest para módulos puros; integrado en `run_checks.py`; `test_js_logic.py` deja de usar Chromium
+- [ ] **T-V6-26** ESM `core/` y `ui/` con doble export (`window.*` shim): `api`, `session`, `dialog`, `toast`, `menu`, `format`, `labels`; import map generado por `cachebust.py` (D-V6-2)
+- [ ] **T-V6-27** Gate de aislamiento derivado de `app.routes` (+ dueño no-404) y gate de rol `guest`; `acting_as` fixture; SQLite en memoria; `pytest-randomly`; e2e herméticos (`page.route` CDN)
+- [ ] **T-V6-28** JWT local con JWKS (`exp`, `aud`), gracia solo ante error de red; Supabase remoto como fallback
+- [ ] **T-V6-29** `X-Request-ID`, logs JSON a stdout, Sentry back+front (DSN de Oscar), UptimeRobot a `/health`, silenciar 4xx en `get_db`
+- [ ] **T-V6-30** README, SECURITY, CHANGELOG; `docs/archive/` para V1–V4 y `directives/`; limpiar emails/refs de docs y test; corregir contradicciones de §13.D; `CLAUDE.md` apunta a V6+V5
+- [ ] **T-V6-31** Tokens nuevos (§6.2), fuentes autoalojadas, escala tipográfica cerrada, quitar Inter/Roboto y los `@import` duplicados
+- [ ] **T-V6-32** Componentes canónicos (§6.3): botón unificado (legacy → `bf-btn`), icon-btn, segmented, menú ⋯, fila, tarjeta, campo/input/select/textarea, buscador, pestañas, badge, chip, avatar con color estable, toast, empty/error, cabecera de página, topbar móvil con título, KPI, importe, fecha. Página de muestra `static/_components.html` (fuera de nav) para revisarlos en los dos temas
+- [ ] **T-V6-33** `bfDialog()` único (focus trap, Escape, foco de vuelta, hoja inferior en móvil) y migración de los 9 modales; `confirm()` con foco en Cancelar; "Deshacer" en quitar de setlist
+- [ ] **T-V6-34** Barrido emoji → `bfIcon` completo (§13.A) + test "cero emoji en `<button>`, nav, `h1-h3`, placeholders"
+- [ ] **T-V6-35** Tema claro completo: eliminar `#hex`/`rgba` fuera de `:root` (54 + 110 en `style.css`, 6 en JS), tokens inexistentes, `.bf-badge` sin `capitalize`; check automático en CI
+- [ ] **T-V6-36** `format.js` (`Intl` dinero/fechas) y `labels.js` únicos aplicados en todas las páginas
+- [ ] **T-V6-37** Retirar `style.css` por partes → `components.css` + `player.css` + `editor.css`; cero `style=""` inline en plantillas (utilidades `.bf-stack--*`)
+- [ ] **T-V6-40** Login (dos columnas, pestañas Entrar/Crear, Google oficial, mostrar contraseña) + `reset.html` + Términos/Privacidad
+- [ ] **T-V6-41** Join (tarjeta centrada, estados inválida/caducada, login conservando código)
+- [ ] **T-V6-42a** Espacio de banda: cabecera con cover, pestañas con contador + hash, onboarding una sola vez (persistido en perfil)
+- [ ] **T-V6-42b** Agenda de banda: filas 56 px + segmented + ⋯ + panel de detalle (`bf-drawer`); Salas a Ajustes
+- [ ] **T-V6-42c** Chat de banda: agrupación, avatar, hora, fijados colapsables, composer, editar propio
+- [ ] **T-V6-42d** Repertorio + Setlists de banda: "Añadir canción" con menú, meta tono/BPM/capo, ⋯, orden, tarjetas de setlist con duración
+- [ ] **T-V6-42e** Miembros + Invitaciones (lista, revocar, copiar) + Salir de la banda + transferir admin
+- [ ] **T-V6-42f** Finanzas de banda: `Intl`, quién pagó, filtros, liquidaciones listadas/borrables, gráfico por mes
+- [ ] **T-V6-42g** Giras: tarjeta + timeline + editar/borrar
+- [ ] **T-V6-43** Inicio: KPIs, "Esta semana" con asistencia in-page, actividad, "Para hoy", vacío sin banda
+- [ ] **T-V6-44** Mis bandas: tarjetas con cover y miembros apilados; "Unirme con código"; vacío ilustrado
+- [ ] **T-V6-45** Biblioteca + Setlists personales: chips, grid/lista, meta, ⋯ visible en móvil, orden, cargar más
+- [ ] **T-V6-46** Editor: metadatos completos, diálogo "Importar" con 3 pestañas, barra inferior fija, Ctrl+S, preview alineada
+- [ ] **T-V6-47** Agenda TÚ: lista agrupada por semana, crear evento eligiendo banda, filtros (calendario en F6)
+- [ ] **T-V6-48** Finanzas TÚ: resumen global + movimientos + liquidar
+- [ ] **T-V6-49** Chat TÚ: dos columnas + no-leídos en lateral (`.bf-nav-badge`)
+- [ ] **T-V6-50** Perfil + Cuenta (chips de instrumentos, cambiar email/contraseña, cerrar sesiones, tema, idioma)
+- [ ] **T-V6-51** Afinador/Metrónomo: centrado, nota en reposo, presets
+- [ ] **T-V6-52** Explorar provisional (tarjetas, abort/debounce, paginación) + evento público (cover, .ics, compartir)
+- [ ] **T-V6-55** Reproductor: toolbar compacta (popovers BPM/tono en móvil, menú ⋯), tamaño de letra A−/A+, sección actual + navegación, cuenta atrás etiquetada, tempo por usuario (D-V6-9)
+- [ ] **T-V6-56** Modo setlist in-page ("Siguiente: …", prefetch) + parada al final con test. **Únicas excepciones al motor**, con plan en TASKS
+- [ ] **T-V6-57** `wakeLock`, offline de última canción/setlist (IndexedDB), `manifest.json` actualizado, icono coral
+- [ ] **T-V6-58** Pasada móvil: test de overflow horizontal en las 16 páginas a 390 px, hojas inferiores, topbar con título, pestañas con desvanecido
+- [ ] **T-V6-59** Accesibilidad: tarjetas/filas por teclado, `aria-*` en pestañas y menús, labels reales, `axe` por página en e2e
+- [ ] **T-V6-60** Email transaccional (Edge Function + proveedor D-V6-7): invitación aceptada, evento nuevo/cambiado, recordatorio 24 h, movimiento que te afecta; preferencias por tipo
+- [ ] **T-V6-61** Centro de notificaciones in-app (tabla + campana) y no-leídos de chat
+- [ ] **T-V6-62** `bf-calendar` (mensual + semanal, contrato V5 §7) en Agenda TÚ, banda y Resumen; `.ics` por evento y suscripción por banda
+- [ ] **T-V6-63** Exportar/imprimir setlist (PDF orden + notas; pack con canciones) y compartir setlist por enlace de solo lectura
+- [ ] **T-V6-64** Onboarding: sin banda (dos caminos + canción demo), asistente de banda de 3 pasos, tour de 4 puntos
+- [ ] **T-V6-65** Borrar cuenta (con transferencia de admin) + exportar mis datos; verificación de email; emails de auth con marca
+- [ ] **T-V6-66** Moderación del catálogo (ocultar/retirar, borrar comentario), reportar, aviso de derechos
+- [ ] **T-V6-67** Búsqueda global Ctrl+K y hoja de atajos `?`
+- [ ] **T-V6-68** Landing pública en `/` y páginas 404/500 con marca (D-V6-11)
+- [ ] **T-V6-70** Staging (Supabase + env de preview en Vercel) + smoke post-deploy
+- [ ] **T-V6-71** Migración automática en el pipeline de deploy (contra el pooler de sesión, antes de promover)
+- [ ] **T-V6-72** Backups `pg_dump` diarios + restauración probada + runbook de rollback
+- [ ] **T-V6-73** Dominio propio + HSTS + CSP con nonce (sin `onclick` inline)
+- [ ] **T-V6-74** Rate limiting completo (`/invites`, `/public`, `/catalog`) + cuota diaria de IA por usuario
+- [ ] **T-V6-75** Índices compuestos reales + migración de limpieza de columnas muertas
+- [ ] **T-V6-90** Una banda = inicio en la banda; 7 pestañas; Giras → agrupación; Explorar tras bandera
+- [ ] **T-V6-80** Invitación con preview público + `bfShare` (WhatsApp) en invitación/evento/setlist/hoja/votación
+- [ ] **T-V6-82** Votación de fechas sin cuenta (`date_polls`) → evento
+- [ ] **T-V6-89** Recordatorios 24 h con respuesta por enlace
+- [ ] **T-V6-81** Vista por miembro: mi tono / mi cejilla / mi vista / tamaño
+- [ ] **T-V6-88** Setlist inteligente + duración
+- [ ] **T-V6-85** Adjuntos (PDF de partitura, audio, imagen) + grabadora
+- [ ] **T-V6-83** Semáforo del repertorio (`SongStatus`) + "te faltan N"
+- [ ] **T-V6-92** Pizarra de banda (`BandNote`)
+- [ ] **T-V6-84** Modo ensayo
+- [ ] **T-V6-86** Hoja del bolo (campos + checklist + página pública imprimible)
+- [ ] **T-V6-87** Modo práctica (referencia por sección, bucle, tempo %)
+- [ ] **T-V6-91** Importar desde texto de WhatsApp / PDF; modo solo letra
+- [ ] **T-V6-93** Resumen de temporada
+- [ ] **T-V6-94** Feedback in-app + eventos de producto (`product_events`)
+- [ ] **T-V6-95** Gastos recurrentes con reparto por defecto
+- [ ] **T-V6-96** Red profesional (§9.9): perfiles de sala y profesional + fichas públicas + Explorar > Salas / Profesionales
+- [ ] **T-V6-97** Convocatorias de bolos y candidaturas (I-20) → evento en la agenda
+- [ ] **T-V6-98** EPK de banda + página pública ampliada + "Proponernos" (I-21)
+- [ ] **T-V6-99** Valoraciones mutuas, reportar, verificación, anti-spam (I-22)
+- [ ] **T-V6-100** Calendario de sala (I-23)

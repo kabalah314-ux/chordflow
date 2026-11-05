@@ -103,3 +103,25 @@ def test_codigo_inexistente_da_404(client):
     assert client.get("/invites/no-existe").status_code == 404
     with acting_as(JOINER):
         assert client.post("/invites/no-existe/accept").status_code == 404
+
+
+def test_invitacion_por_defecto_caduca_y_tiene_cupo(client):
+    """T-V6-08 (S-07): sin parámetros, la invitación caduca a los 7 días y admite 20 usos."""
+    bid = _new_band(client)
+    inv = client.post(f"/bands/{bid}/invites", json={}).json()
+    assert inv["max_uses"] == 20
+    assert inv["expires_at"] is not None
+
+
+def test_admin_revoca_invitacion(client):
+    """T-V6-08: una invitación revocada deja de valer y el ajeno no puede revocar."""
+    bid = _new_band(client)
+    inv = client.post(f"/bands/{bid}/invites", json={}).json()
+    with acting_as(STRANGER):
+        assert client.delete(f"/bands/{bid}/invites/{inv['id']}").status_code == 404
+    assert client.delete(f"/bands/{bid}/invites/{inv['id']}").status_code == 204
+    prev = client.get(f"/invites/{inv['code']}").json()
+    assert prev["valid"] is False and prev["reason"] == "revocada"
+    with acting_as(JOINER):
+        assert client.post(f"/invites/{inv['code']}/accept").status_code == 400
+    assert client.delete(f"/bands/{bid}/invites/no-existe").status_code == 404

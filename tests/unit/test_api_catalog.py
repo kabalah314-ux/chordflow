@@ -142,3 +142,35 @@ def test_comentar(client):
     assert r.status_code == 201 and r.json()["body"] == "Falta el puente del solo"
     d = client.get(f"/catalog/scores/{scid}").json()
     assert any(c["body"] == "Falta el puente del solo" for c in d["comments"])
+
+
+GUEST = "77777777-7777-7777-7777-777777777777"
+
+
+def _banda_con_guest(client):
+    bid = client.post("/bands/", json={"name": "Banda con invitado"}).json()["id"]
+    code = client.post(f"/bands/{bid}/invites", json={"role_to_grant": "guest"}).json()["code"]
+    with acting_as(GUEST):
+        assert client.post(f"/invites/{code}/accept").status_code == 201
+    return bid
+
+
+def test_guest_no_publica_cancion_de_banda(client):
+    """T-V6-05 (B-01): un invitado no publica en el catálogo los arreglos privados de la banda."""
+    bid = _banda_con_guest(client)
+    song = client.post(f"/bands/{bid}/songs/", json=sample_song_payload()).json()
+    with acting_as(GUEST):
+        assert client.post("/catalog/publish", json={"song_id": song["id"]}).status_code == 403
+    # Un miembro normal (el dueño, admin) sí puede.
+    assert client.post("/catalog/publish", json={"song_id": song["id"]}).status_code == 201
+
+
+def test_guest_no_importa_al_repertorio_de_banda(client):
+    """T-V6-05 (B-01): importar del catálogo a la banda respeta `_deny_guests`."""
+    bid = _banda_con_guest(client)
+    _sid, scid = _publish_song(client)
+    with acting_as(GUEST):
+        r = client.post(f"/catalog/scores/{scid}/import", json={"band_id": bid})
+        assert r.status_code == 403
+        # A su espacio personal sí puede.
+        assert client.post(f"/catalog/scores/{scid}/import", json={}).status_code == 201

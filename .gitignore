@@ -8,6 +8,8 @@ venv/
 env/
 .env
 .env.local
+.env.*
+!.env.example
 
 # Directorios de datos y logs
 .tmp/

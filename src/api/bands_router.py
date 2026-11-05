@@ -8,7 +8,7 @@ Crear banda (el creador entra como `admin`), listar "mis bandas", ver, editar y 
 
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -385,12 +385,17 @@ def create_invite(
 ):
     """Genera una invitación con código único (solo admin). El enlace se comparte por fuera
     (WhatsApp, etc.); no depende del envío de emails."""
+    expires_at = payload.expires_at
+    if expires_at is None:
+        expires_at = (_utcnow() + timedelta(days=payload.expires_in_days)).replace(tzinfo=None)
+    elif expires_at.tzinfo is not None:  # la BD guarda naive-UTC
+        expires_at = expires_at.astimezone(timezone.utc).replace(tzinfo=None)
     invite = BandInvite(
         band_id=band_id,
         code=secrets.token_urlsafe(16),
         created_by=membership.user_id,
         role_to_grant=payload.role_to_grant,
-        expires_at=payload.expires_at,
+        expires_at=expires_at,
         max_uses=payload.max_uses,
     )
     db.add(invite)
@@ -412,3 +417,23 @@ def list_invites(
         .order_by(BandInvite.created_at.desc())
         .all()
     )
+
+
+@router.delete("/{band_id}/invites/{invite_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_invite(
+    band_id: str,
+    invite_id: str,
+    db: Session = Depends(get_db),
+    membership: BandMembership = Depends(require_band_admin),
+):
+    """Revoca (anula) una invitación de la banda (solo admin, T-V6-08). Queda en el histórico."""
+    invite = (
+        db.query(BandInvite)
+        .filter(BandInvite.id == invite_id, BandInvite.band_id == band_id)
+        .first()
+    )
+    if invite is None:
+        raise HTTPException(status_code=404, detail="Invitación no encontrada")
+    if invite.revoked_at is None:
+        invite.revoked_at = _utcnow().replace(tzinfo=None)
+        db.commit()

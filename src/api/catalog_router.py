@@ -28,10 +28,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
+from ..services.band_auth import active_membership
 from ..services.db import get_db
 from ..services.models import (
-    Band,
-    BandMembership,
     MusicalWork,
     MusicianProfile,
     PublicScore,
@@ -151,12 +150,12 @@ def publish(
         if song.owner_id != user_id:
             raise HTTPException(status_code=403, detail="No es tu canción")
     else:
-        member = (db.query(BandMembership.id)
-                  .filter(BandMembership.band_id == song.band_id,
-                          BandMembership.user_id == user_id,
-                          BandMembership.status == "active").first())
+        member = active_membership(db, song.band_id, user_id)
         if not member:
             raise HTTPException(status_code=403, detail="No perteneces a esa banda")
+        if member.role == "guest":   # T-V6-05: la matriz de roles también aplica al catálogo
+            raise HTTPException(status_code=403,
+                                detail="Un invitado no puede publicar canciones de la banda")
 
     # D9: una canción → una publicación. Evita duplicados al re-pulsar "publicar".
     dup = (db.query(PublicScore.id)
@@ -269,14 +268,12 @@ def import_score(
     sc = _get_score(db, score_id)
     if payload.band_id is not None:
         # La banda destino debe existir (no borrada) y yo ser miembro activo.
-        member = (db.query(BandMembership.id)
-                  .join(Band, Band.id == BandMembership.band_id)
-                  .filter(BandMembership.band_id == payload.band_id,
-                          BandMembership.user_id == user_id,
-                          BandMembership.status == "active",
-                          Band.deleted_at.is_(None)).first())
+        member = active_membership(db, payload.band_id, user_id)
         if not member:
             raise HTTPException(status_code=403, detail="No perteneces a esa banda")
+        if member.role == "guest":   # T-V6-05: un invitado no edita el repertorio
+            raise HTTPException(status_code=403,
+                                detail="Un invitado no puede añadir canciones a la banda")
 
     try:
         new_song = Song(title=sc.title, artist=sc.artist, bpm=sc.bpm or 120,

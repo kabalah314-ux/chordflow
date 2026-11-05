@@ -42,6 +42,24 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 ---
 
+## 🛠️ V6 — Registro (rama `v6`, 2026-11-05)
+
+<!-- V6-ENTRADAS -->
+
+### V6-F0 · Emergencia de seguridad y bugs críticos (2026-11-05)
+- **T-V6-01 (parcial):** `.gitignore` cubre `.env.*` + `.env.example` sin valores. La purga de credenciales del historial y `gitleaks` quedan **aplazadas por decisión de Oscar** (rotará las claves más adelante; el repo pasa a privado).
+- **T-V6-02:** cerrojo en `Settings` (modo test solo con SQLite y fuera de Vercel) + `conftest` fuerza su SQLite y aserta el driver + `seed_demo.py` rechaza bases no-SQLite. Tests en `test_config.py`.
+- **T-V6-03:** `sw.js` pasa a lista BLANCA (cache-first solo `/static/*?v=`; purga de versiones viejas); `signOut` vacía la Cache API. e2e `test_sw_api_no_cache.py`.
+- **T-V6-04:** modales y toasts con tokens (`--bf-surface/--bf-text`), escala `--bf-z-*` (toast > overlay). e2e en `test_tema_coherente.py`.
+- **T-V6-05:** `/catalog/publish` e import a banda respetan el rol (guest → 403) vía `active_membership()` (nuevo helper único en `band_auth.py`, también lo usa `require_band_member`). Tests en `test_api_catalog.py`.
+- **T-V6-06:** importador anti-SSRF (`validate_public_url`: http(s), IP públicas, allowlist opcional), redirecciones solo al mismo host, lectura acotada (`_read_capped`), timeouts más cortos, cuota por usuario (`ratelimit.py`). Tests en `test_import.py`.
+- **T-V6-07:** `reference_url` solo http(s) en `SongCreate/SongUpdate` + aviso en el editor. Tests en `test_api_songs.py`.
+- **T-V6-08:** invitaciones con caducidad 7 días / 20 usos por defecto, `DELETE /bands/{id}/invites/{iid}` (revocar, `revoked_at` + migración `a1b2c3d4e5f6`), consumo de uso atómico. Tests en `test_api_invites.py`.
+- **T-V6-09:** parche móvil: letra del reproductor envuelve (acordes siguen a su sílaba), filas de agenda/chat apilan acciones, acciones de tarjeta visibles en táctil, join centrado, composer del chat con altura normal, iconos SVG nuevos (`send`, `check`, `map-pin`…).
+- **Verificación:** CI de GitHub en la rama `v6` (en este entorno no hay fastapi/sqlalchemy para correr la suite).
+
+---
+
 ## 🎸 V5-F3 · T-V5-14 — Afinador 2.0 (2026-07-05) ✅
 
 **Qué:** el afinador de la sección sube de nivel (guía §4):

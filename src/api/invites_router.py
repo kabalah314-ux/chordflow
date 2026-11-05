@@ -13,6 +13,7 @@ Validez de una invitación: la banda existe (no borrada), no está caducada (`ex
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from ..services.auth import get_current_user
@@ -41,6 +42,8 @@ def _invalid_reason(db: Session, invite: BandInvite) -> str | None:
     )
     if band is None:
         return "banda no disponible"
+    if getattr(invite, "revoked_at", None) is not None:
+        return "revocada"
     if invite.expires_at is not None:
         now = _utcnow()
         exp = invite.expires_at
@@ -93,6 +96,16 @@ def accept_invite(
     if existing is not None and existing.status == "active":
         raise HTTPException(status_code=409, detail="Ya eres miembro de esta banda")
 
+    # T-V6-08 (B-16): consumir el uso de forma ATÓMICA. Con `used_count += 1` dos aceptaciones
+    # simultáneas podían superar `max_uses`; el UPDATE condicional solo afecta si queda cupo.
+    cond = BandInvite.id == invite.id
+    if invite.max_uses is not None:
+        cond = cond & (BandInvite.used_count < invite.max_uses)
+    res = db.execute(update(BandInvite).where(cond).values(used_count=BandInvite.used_count + 1))
+    if res.rowcount == 0:
+        db.rollback()
+        raise HTTPException(status_code=410, detail="Invitación agotada")
+
     if existing is not None:  # estaba de baja → reactivar con el rol de la invitación
         existing.status = "active"
         existing.left_at = None
@@ -107,7 +120,6 @@ def accept_invite(
         )
         db.add(membership)
 
-    invite.used_count += 1
     db.commit()
     db.refresh(membership)
     return membership

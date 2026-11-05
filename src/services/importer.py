@@ -23,9 +23,11 @@ La clave de OpenRouter es gratuita y va en `.env.local` (nunca al frontend).
 """
 
 import html
+import ipaddress
 import json
 import logging
 import re
+import socket
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -59,7 +61,7 @@ _SYSTEM_PROMPT = (
 )
 
 
-def _http_post_json(url: str, payload: dict, headers: dict, timeout: float = 45.0) -> dict:
+def _http_post_json(url: str, payload: dict, headers: dict, timeout: float = 20.0) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -98,30 +100,78 @@ def _html_to_text(html_doc: str) -> str:
     return text.strip()
 
 
+# ─── Descarga segura (T-V6-06, S-04): anti-SSRF + lectura acotada ─────────────────────────────
+def validate_public_url(url: str) -> str:
+    """Solo http(s) a dominios que resuelvan a IP PÚBLICAS (nada de localhost, red interna,
+    metadatos de la nube…). Si `chordflow_import_allowed_hosts` tiene valores, además exige que
+    el host esté en esa lista (o sea subdominio). Lanza ImportError_ con mensaje para el usuario."""
+    p = urllib.parse.urlparse(url)
+    if p.scheme not in ("http", "https") or not p.hostname:
+        raise ImportError_("Enlace no válido: debe empezar por http:// o https://")
+    host = p.hostname.lower()
+    allowed = settings.import_allowed_hosts
+    if allowed and not any(host == h or host.endswith("." + h) for h in allowed):
+        raise ImportError_("Solo se puede importar desde: " + ", ".join(allowed))
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except (socket.gaierror, UnicodeError):
+        raise ImportError_("No se pudo encontrar esa web (revisa el enlace)")
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+                or ip.is_multicast or ip.is_unspecified):
+            raise ImportError_("Ese enlace no está permitido")
+    return url
+
+
+class _SameHostRedirects(urllib.request.HTTPRedirectHandler):
+    """Sigue redirecciones solo dentro del mismo host (una redirección a otro dominio podría
+    apuntar a una IP interna y saltarse la validación)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if urllib.parse.urlparse(newurl).hostname != urllib.parse.urlparse(req.full_url).hostname:
+            raise ImportError_("La página redirige a otra web; pega el enlace final")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_safe_opener = urllib.request.build_opener(_SameHostRedirects())
+
+
+def _read_capped(resp) -> bytes:
+    """Lee como máximo `chordflow_import_max_bytes` (una respuesta enorme no agota la memoria)."""
+    limit = settings.chordflow_import_max_bytes
+    data = resp.read(limit + 1)
+    if len(data) > limit:
+        raise ImportError_("La página es demasiado grande para importarla")
+    return data
+
+
 def _fetch_via_jina(url: str) -> str:
     headers = {"User-Agent": "ChordFlow/1.0", "Accept": "text/plain"}
     if settings.jina_api_key:  # con key, fiable también desde datacenter (Vercel)
         headers["Authorization"] = f"Bearer {settings.jina_api_key}"
     req = urllib.request.Request(settings.chordflow_reader_url + url, headers=headers)
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read().decode("utf-8", "replace").strip()
+    with urllib.request.urlopen(req, timeout=12) as resp:
+        return _read_capped(resp).decode("utf-8", "replace").strip()
 
 
 def _fetch_direct(url: str) -> str:
     """Descarga directa de la página y limpieza de HTML a texto (fallback si Jina falla)."""
+    validate_public_url(url)
     req = urllib.request.Request(url, headers={"User-Agent": _UA})
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        raw = resp.read().decode("utf-8", "replace")
+    with _safe_opener.open(req, timeout=10) as resp:
+        raw = _read_capped(resp).decode("utf-8", "replace")
     return _html_to_text(raw)
 
 
-def _fetch_raw_html(url: str, timeout: float = 20.0) -> str:
+def _fetch_raw_html(url: str, timeout: float = 10.0) -> str:
     """Descarga directa SIN limpiar (para los parsers propios, que necesitan las etiquetas).
     CifraClub y LaCuerda no bloquean esta petición simple (verificado a mano); si algún día
     empiezan a bloquearla, los parsers de abajo devuelven None/[] y se cae al flujo con IA."""
+    validate_public_url(url)
     req = urllib.request.Request(url, headers={"User-Agent": _UA, "Referer": url})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return resp.read().decode("utf-8", "replace")
+    with _safe_opener.open(req, timeout=timeout) as resp:
+        return _read_capped(resp).decode("utf-8", "replace")
 
 
 def fetch_page_text(url: str) -> str:
@@ -256,7 +306,7 @@ def extract_chords_from_image(image_data_url: str) -> str:
     }
     try:
         body = _http_post_json(
-            settings.openrouter_base_url + "/chat/completions", payload, headers, timeout=60.0
+            settings.openrouter_base_url + "/chat/completions", payload, headers, timeout=25.0
         )
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", "replace")[:200]

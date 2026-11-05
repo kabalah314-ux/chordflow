@@ -4,16 +4,24 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, HttpUrl
 
 from ..services.auth import get_current_user
+from ..services.config import settings
 from ..services.importer import (
     ImportError_,
     extract_chords_from_image,
     import_from_url,
     search_song,
 )
+from ..services.ratelimit import check_rate
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/import", tags=["import"])
+
+
+def _cuota(user_id: str) -> None:
+    """Cuota por usuario de las importaciones (gastan IA y red externa; T-V6-06, S-05)."""
+    check_rate(f"import-min:{user_id}", settings.chordflow_import_per_minute, 60)
+    check_rate(f"import-day:{user_id}", settings.chordflow_import_per_day, 86400)
 
 
 class ImportRequest(BaseModel):
@@ -43,6 +51,7 @@ class SearchResponse(BaseModel):
 def import_song(req: ImportRequest, user_id: str = Depends(get_current_user)):
     """Importar una partitura desde una URL con IA (T-045). Requiere auth. Devuelve el texto
     en el formato del editor para que el usuario lo revise antes de guardar."""
+    _cuota(user_id)
     try:
         raw_text = import_from_url(str(req.url))
         return ImportResponse(raw_text=raw_text)
@@ -58,6 +67,7 @@ def import_song(req: ImportRequest, user_id: str = Depends(get_current_user)):
 def import_photo(req: PhotoRequest, user_id: str = Depends(get_current_user)):
     """Foto de una hoja → partitura (T-V5-11, beta). Un modelo de visión gratuito transcribe la
     imagen al formato del editor para revisarla antes de guardar. Requiere auth."""
+    _cuota(user_id)
     try:
         raw_text = extract_chords_from_image(req.image)
         return ImportResponse(raw_text=raw_text)
@@ -74,6 +84,7 @@ def search(
 ):
     """Buscar una canción por nombre en CifraClub/LaCuerda (T-162). Requiere auth. Devuelve una
     preselección de candidatos (título/artista/url/origen) para elegir antes de importar."""
+    _cuota(user_id)
     try:
         results = search_song(q)
         return SearchResponse(results=results)

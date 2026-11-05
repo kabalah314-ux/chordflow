@@ -38,3 +38,21 @@ def test_valor_invalido_falla_al_arrancar(monkeypatch):
     monkeypatch.setenv("CHORDFLOW_TOKEN_TTL", "no-soy-un-numero")
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_modo_test_rechaza_postgres_y_vercel(monkeypatch):
+    """T-V6-02: el cerrojo impide activar el modo test fuera de SQLite/local."""
+    monkeypatch.delenv("VERCEL", raising=False)
+    with pytest.raises(ValidationError):
+        Settings(chordflow_test_mode=True, database_url="postgresql://u:p@h:5432/db")
+    monkeypatch.setenv("VERCEL", "1")
+    with pytest.raises(ValidationError):
+        Settings(chordflow_test_mode=True, database_url="sqlite:///./x.db")
+    monkeypatch.delenv("VERCEL", raising=False)
+    assert Settings(chordflow_test_mode=True, database_url="sqlite:///./x.db").chordflow_test_mode
+
+
+def test_produccion_sin_modo_test_arranca_con_postgres(monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    s = Settings(chordflow_test_mode=False, database_url="postgresql://u:p@h:5432/db")
+    assert s.chordflow_test_mode is False

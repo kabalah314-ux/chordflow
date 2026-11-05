@@ -93,6 +93,13 @@
 
   /* Transiciones */
   --bf-transition: 160ms ease;
+
+  /* Escala de z-index (T-V6-04): un solo sitio para el apilamiento */
+  --bf-z-dropdown: 100;
+  --bf-z-sticky:   200;
+  --bf-z-overlay:  1000;
+  --bf-z-dialog:   1010;
+  --bf-z-toast:    1100;
 }
 
 /* Tema claro: solo redefine tokens, los componentes no cambian */

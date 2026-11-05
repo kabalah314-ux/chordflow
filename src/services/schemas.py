@@ -14,6 +14,19 @@ def _to_naive_utc(v: Optional[datetime]) -> Optional[datetime]:
     return v
 
 
+def _validate_http_url(v: Optional[str]) -> Optional[str]:
+    """Enlace de referencia (vídeo/audio) escrito por el usuario: solo http(s) (T-V6-07, S-06).
+    Un `javascript:…` se pintaba como href en el editor → XSS almacenado al hacer clic."""
+    if v is None:
+        return v
+    v = v.strip()
+    if not v:
+        return None
+    if not v.lower().startswith(("http://", "https://")) or any(c in v for c in ' "\'<>'):
+        raise ValueError("El enlace debe empezar por http:// o https://")
+    return v
+
+
 def _validate_image_url(v: Optional[str]) -> Optional[str]:
     """Valida una URL de imagen subida por el usuario (avatar/logo/fondo, T-V5-06): https y sin
     caracteres que permitan escapar de un atributo src o de un url("...") en CSS. `""` → None."""
@@ -120,6 +133,11 @@ class SongBase(BaseModel):
 class SongCreate(SongBase):
     sections: Optional[List[SectionCreate]] = []
 
+    @field_validator("reference_url")
+    @classmethod
+    def _ref_http(cls, v):
+        return _validate_http_url(v)
+
 
 class SongCopyToBand(BaseModel):
     """Copiar una de mis canciones personales al repertorio de una banda (decisión §7)."""
@@ -141,6 +159,11 @@ class SongUpdate(BaseModel):
     instrument: Optional[str] = None
     is_public: Optional[bool] = None
     reference_url: Optional[str] = Field(None, max_length=512)
+
+    @field_validator("reference_url")
+    @classmethod
+    def _ref_http(cls, v):
+        return _validate_http_url(v)
 
 class SongResponse(SongBase):
     id: str
@@ -364,9 +387,12 @@ class MembershipRoleUpdate(BaseModel):
 
 # Invitación por código
 class BandInviteCreate(BaseModel):
+    """T-V6-08: por defecto caduca a los 7 días y admite 20 usos (antes: eterna e ilimitada, un
+    enlace filtrado valía para siempre). `expires_at` explícito manda sobre `expires_in_days`."""
     role_to_grant: Literal["admin", "member", "guest"] = "member"
     expires_at: Optional[datetime] = None
-    max_uses: Optional[int] = Field(None, ge=1)
+    expires_in_days: int = Field(7, ge=1, le=90)
+    max_uses: Optional[int] = Field(20, ge=1, le=500)
 
 
 class BandInviteResponse(BaseModel):
@@ -378,6 +404,7 @@ class BandInviteResponse(BaseModel):
     max_uses: Optional[int] = None
     used_count: int
     created_at: datetime
+    revoked_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

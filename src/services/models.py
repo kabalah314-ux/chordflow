@@ -359,6 +359,7 @@ class BandInvite(Base):
     max_uses = Column(Integer, nullable=True)  # nº máximo de usos (null = ilimitado)
     used_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
     created_at = Column(DateTime, default=_utcnow)
+    revoked_at = Column(DateTime, nullable=True)  # T-V6-08: el admin puede anular el enlace
 
     band = relationship("Band", back_populates="invites")
 

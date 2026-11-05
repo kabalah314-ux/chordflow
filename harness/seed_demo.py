@@ -19,6 +19,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("CHORDFLOW_TEST_MODE", "1")
 os.environ.setdefault("DATABASE_URL", "sqlite:///./demo_bandflow.db")
+if not os.environ["DATABASE_URL"].startswith("sqlite"):
+    raise SystemExit("seed_demo.py solo siembra bases SQLite de demo (no producción) — T-V6-02")
 
 from src.services.db import Base, SessionLocal, engine  # noqa: E402
 from src.services.models import (  # noqa: E402

@@ -25,6 +25,25 @@ from .models import Band, BandMembership
 logger = logging.getLogger(__name__)
 
 
+def active_membership(db: Session, band_id: str, user_id: str) -> BandMembership | None:
+    """Membresía ACTIVA del usuario en una banda NO borrada, o None (T-V6-19, B-22).
+
+    Única fuente de verdad para comprobar pertenencia fuera de las dependencias (catálogo,
+    canciones/setlists por id…). Antes cada router repetía la consulta y varios olvidaban
+    `Band.deleted_at`, de modo que lo de una banda borrada seguía abierto por URL."""
+    return (
+        db.query(BandMembership)
+        .join(Band, Band.id == BandMembership.band_id)
+        .filter(
+            BandMembership.band_id == band_id,
+            BandMembership.user_id == user_id,
+            BandMembership.status == "active",
+            Band.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
 def require_band_member(
     band_id: str,
     db: Session = Depends(get_db),
@@ -36,17 +55,7 @@ def require_band_member(
     desmiente la existencia de la banda. Un miembro dado de baja (`status='left'`) tampoco
     pasa el filtro de `active` → pierde el acceso pero su fila permanece en el histórico.
     Una banda con soft-delete (`deleted_at`) se trata como inexistente."""
-    membership = (
-        db.query(BandMembership)
-        .join(Band, Band.id == BandMembership.band_id)
-        .filter(
-            BandMembership.band_id == band_id,
-            BandMembership.user_id == user_id,
-            BandMembership.status == "active",
-            Band.deleted_at.is_(None),
-        )
-        .first()
-    )
+    membership = active_membership(db, band_id, user_id)
     if membership is None:
         raise HTTPException(status_code=404, detail="Banda no encontrada")
     return membership

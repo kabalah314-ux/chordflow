@@ -25,7 +25,8 @@ sys.path.insert(0, str(ROOT))
 
 # ── Entorno de test: DEBE fijarse ANTES de importar la app ──────────────────
 os.environ["CHORDFLOW_TEST_MODE"] = "1"
-os.environ.setdefault("DATABASE_URL", "sqlite:///./test_unit.db")
+# T-V6-02: los tests SIEMPRE usan su propio SQLite, aunque la shell tenga DATABASE_URL de prod.
+os.environ["DATABASE_URL"] = "sqlite:///./test_unit.db"
 
 TEST_USER_ID = "00000000-0000-0000-0000-000000000000"
 
@@ -34,6 +35,17 @@ SAMPLE_RAW = """Verso 1:
 Am        C        G
 Hola mundo esto es una prueba
 """
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """El limitador vive en memoria (T-V6-06): se vacía entre tests para que no se contaminen."""
+    try:
+        from src.services import ratelimit
+        ratelimit.reset()
+    except Exception:  # noqa: BLE001 - antes de importar la app no hay nada que vaciar
+        pass
+    yield
 
 
 # ─────────────────────────── Tests de API (en proceso) ─────────────────────
@@ -46,6 +58,7 @@ def client():
     from src.services import models  # noqa: F401 - registra los modelos en Base
     from src.services.db import Base, engine
 
+    assert engine.url.drivername.startswith("sqlite"), "Los tests solo corren contra SQLite (T-V6-02)"
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     with TestClient(app) as c:
