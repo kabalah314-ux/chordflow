@@ -800,7 +800,7 @@
 - [x] **T-V6-42c** Chat de banda: agrupación, avatar, hora, fijados colapsables, composer, editar propio
 - [ ] **T-V6-42d** Repertorio + Setlists de banda: "Añadir canción" con menú, meta tono/BPM/capo, ⋯, orden, tarjetas de setlist con duración
 - [x] **T-V6-42e** Miembros + Invitaciones (lista, revocar, copiar) + Salir de la banda + transferir admin
-- [ ] **T-V6-42f** Finanzas de banda: `Intl`, quién pagó, filtros, liquidaciones listadas/borrables, gráfico por mes
+- [x] **T-V6-42f** Finanzas de banda: `Intl`, quién pagó, filtros, liquidaciones listadas/borrables, gráfico por mes
 - [ ] **T-V6-42g** Giras: tarjeta + timeline + editar/borrar
 - [ ] **T-V6-43** Inicio: KPIs, "Esta semana" con asistencia in-page, actividad, "Para hoy", vacío sin banda
 - [ ] **T-V6-44** Mis bandas: tarjetas con cover y miembros apilados; "Unirme con código"; vacío ilustrado

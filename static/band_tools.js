@@ -666,7 +666,46 @@
             });
         });
     }
-    document.addEventListener('bf:finance', (e) => renderRecurring(e.detail.bandId, BT.ctx || { iAmAdmin: !!e.detail.iAmAdmin }));
+    // ══ Gráfico por meses (T-V6-42f): ingresos y gastos de los últimos 6 meses ══
+    async function renderFinanceChart(bandId) {
+        const fin = document.getElementById('b-finance');
+        if (!fin) return;
+        let txs;
+        try { txs = await jsonOrThrow(await apiFetch(`/bands/${bandId}/transactions`)); } catch (e) { return; }
+        const now = new Date();
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            months.push({ k: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString(BF_LOCALE, { month: 'short' }), inc: 0, exp: 0 });
+        }
+        const byK = Object.fromEntries(months.map(m => [m.k, m]));
+        txs.forEach(t => {
+            const d = new Date(t.date || t.created_at);
+            if (isNaN(d)) return;
+            const m = byK[`${d.getFullYear()}-${d.getMonth()}`];
+            if (m) m[t.type === 'income' ? 'inc' : 'exp'] += Number(t.amount) || 0;
+        });
+        const max = Math.max(1, ...months.map(m => Math.max(m.inc, m.exp)));
+        let box = document.getElementById('bt-fin-chart');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'bt-fin-chart';
+            box.className = 'bf-card bf-stack bt-fin-chart';
+            fin.insertAdjacentElement('beforebegin', box);
+        }
+        if (!txs.length) { box.hidden = true; return; }
+        box.hidden = false;
+        box.innerHTML = `<div class="bf-row bf-row--between"><h3 class="bf-h3">Últimos 6 meses</h3>
+              <span class="bt-legend"><span><i class="bt-dot bt-st--mastered"></i>Ingresos</span><span><i class="bt-dot bt-st--pending"></i>Gastos</span></span></div>
+            <div class="bt-bars" role="img" aria-label="Ingresos y gastos por mes">${months.map(m => `<div class="bt-bars__col" title="${escapeHtml(m.label)}: +${bfMoney(m.inc)} / −${bfMoney(m.exp)}">
+                <div class="bt-bars__pair"><span class="bt-bars__bar bt-st--mastered" style="height:${Math.round(m.inc / max * 100)}%"></span>
+                <span class="bt-bars__bar bt-st--pending" style="height:${Math.round(m.exp / max * 100)}%"></span></div>
+                <span class="bt-bars__label">${escapeHtml(m.label)}</span></div>`).join('')}</div>`;
+    }
+    document.addEventListener('bf:finance', (e) => {
+        renderRecurring(e.detail.bandId, BT.ctx || { iAmAdmin: !!e.detail.iAmAdmin });
+        renderFinanceChart(e.detail.bandId);
+    });
 
     // ══ Temporada (T-V6-93) ═══════════════════════════════════════════════════
     async function renderSeason(bandId, el) {
