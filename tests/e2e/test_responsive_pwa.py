@@ -37,3 +37,19 @@ def test_paginas_enlazan_el_manifest(page, live_server):
     page.goto(live_server + "/static/library.html", wait_until="networkidle")
     assert page.locator('link[rel="manifest"]').count() == 1
     assert page.locator('meta[name="theme-color"]').count() == 1
+
+
+# T-V6-58: el resto de páginas del shell y las públicas, también sin scroll horizontal a 390 px.
+PAGINAS_V6 = ["/static/app.html", "/static/agenda.html", "/static/finanzas.html", "/static/chat.html",
+              "/static/bands.html", "/static/red.html", "/static/profile.html", "/static/afinador.html",
+              "/static/setlists.html", "/static/bienvenida.html?ver", "/static/legal.html"]
+
+
+@pytest.mark.parametrize("path", PAGINAS_V6)
+def test_sin_scroll_horizontal_en_movil_v6(page, live_server, path):
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.goto(live_server + path, wait_until="networkidle")
+    page.wait_for_timeout(300)
+    overflow = page.evaluate(
+        "() => document.documentElement.scrollWidth - document.documentElement.clientWidth")
+    assert overflow <= 2, f"{path} desborda horizontalmente en móvil ({overflow}px)"
