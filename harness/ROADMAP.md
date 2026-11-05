@@ -782,13 +782,13 @@
 - [ ] **T-V6-24** Estáticos servidos por Vercel con `Cache-Control: immutable`; la función solo para la API; medir cold start antes/después
 - [ ] **T-V6-25** Tooling JS: `package.json`, ESLint, `tsc --checkJs` + JSDoc, Vitest para módulos puros; integrado en `run_checks.py`; `test_js_logic.py` deja de usar Chromium
 - [ ] **T-V6-26** ESM `core/` y `ui/` con doble export (`window.*` shim): `api`, `session`, `dialog`, `toast`, `menu`, `format`, `labels`; import map generado por `cachebust.py` (D-V6-2)
-- [ ] **T-V6-27** Gate de aislamiento derivado de `app.routes` (+ dueño no-404) y gate de rol `guest`; `acting_as` fixture; SQLite en memoria; `pytest-randomly`; e2e herméticos (`page.route` CDN)
+- [x] **T-V6-27** Gate de aislamiento derivado de `app.routes` (+ dueño no-404) y gate de rol `guest`; `acting_as` fixture; SQLite en memoria; `pytest-randomly`; e2e herméticos (`page.route` CDN)
 - [ ] **T-V6-28** JWT local con JWKS (`exp`, `aud`), gracia solo ante error de red; Supabase remoto como fallback
 - [ ] **T-V6-29** `X-Request-ID`, logs JSON a stdout, Sentry back+front (DSN de Oscar), UptimeRobot a `/health`, silenciar 4xx en `get_db`
 - [ ] **T-V6-30** README, SECURITY, CHANGELOG; `docs/archive/` para V1–V4 y `directives/`; limpiar emails/refs de docs y test; corregir contradicciones de §13.D; `CLAUDE.md` apunta a V6+V5
 - [ ] **T-V6-31** Tokens nuevos (§6.2), fuentes autoalojadas, escala tipográfica cerrada, quitar Inter/Roboto y los `@import` duplicados
 - [ ] **T-V6-32** Componentes canónicos (§6.3): botón unificado (legacy → `bf-btn`), icon-btn, segmented, menú ⋯, fila, tarjeta, campo/input/select/textarea, buscador, pestañas, badge, chip, avatar con color estable, toast, empty/error, cabecera de página, topbar móvil con título, KPI, importe, fecha. Página de muestra `static/_components.html` (fuera de nav) para revisarlos en los dos temas
-- [ ] **T-V6-33** `bfDialog()` único (focus trap, Escape, foco de vuelta, hoja inferior en móvil) y migración de los 9 modales; `confirm()` con foco en Cancelar; "Deshacer" en quitar de setlist
+- [x] **T-V6-33** `bfDialog()` único (focus trap, Escape, foco de vuelta, hoja inferior en móvil) y migración de los 9 modales; `confirm()` con foco en Cancelar; "Deshacer" en quitar de setlist
 - [x] **T-V6-34** Barrido emoji → `bfIcon` completo (§13.A) + test "cero emoji en `<button>`, nav, `h1-h3`, placeholders"
 - [ ] **T-V6-35** Tema claro completo: eliminar `#hex`/`rgba` fuera de `:root` (54 + 110 en `style.css`, 6 en JS), tokens inexistentes, `.bf-badge` sin `capitalize`; check automático en CI
 - [x] **T-V6-36** `format.js` (`Intl` dinero/fechas) y `labels.js` únicos aplicados en todas las páginas
@@ -834,19 +834,19 @@
 - [ ] **T-V6-75** Índices compuestos reales + migración de limpieza de columnas muertas
 - [ ] **T-V6-90** Una banda = inicio en la banda; 7 pestañas; Giras → agrupación; Explorar tras bandera
 - [ ] **T-V6-80** Invitación con preview público + `bfShare` (WhatsApp) en invitación/evento/setlist/hoja/votación
-- [ ] **T-V6-82** Votación de fechas sin cuenta (`date_polls`) → evento
+- [x] **T-V6-82** Votación de fechas sin cuenta (`date_polls`) → evento
 - [ ] **T-V6-89** Recordatorios 24 h con respuesta por enlace
 - [ ] **T-V6-81** Vista por miembro: mi tono / mi cejilla / mi vista / tamaño
 - [ ] **T-V6-88** Setlist inteligente + duración
 - [ ] **T-V6-85** Adjuntos (PDF de partitura, audio, imagen) + grabadora
-- [ ] **T-V6-83** Semáforo del repertorio (`SongStatus`) + "te faltan N"
-- [ ] **T-V6-92** Pizarra de banda (`BandNote`)
+- [x] **T-V6-83** Semáforo del repertorio (`SongStatus`) + "te faltan N"
+- [x] **T-V6-92** Pizarra de banda (`BandNote`)
 - [ ] **T-V6-84** Modo ensayo
-- [ ] **T-V6-86** Hoja del bolo (campos + checklist + página pública imprimible)
+- [x] **T-V6-86** Hoja del bolo (campos + checklist + página pública imprimible)
 - [ ] **T-V6-87** Modo práctica (referencia por sección, bucle, tempo %)
 - [ ] **T-V6-91** Importar desde texto de WhatsApp / PDF; modo solo letra
 - [ ] **T-V6-93** Resumen de temporada
-- [ ] **T-V6-94** Feedback in-app + eventos de producto (`product_events`)
+- [x] **T-V6-94** Feedback in-app + eventos de producto (`product_events`)
 - [ ] **T-V6-95** Gastos recurrentes con reparto por defecto
 - [ ] **T-V6-96** Red profesional (§9.9): perfiles de sala y profesional + fichas públicas + Explorar > Salas / Profesionales
 - [ ] **T-V6-97** Convocatorias de bolos y candidaturas (I-20) → evento en la agenda

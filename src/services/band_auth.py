@@ -71,3 +71,13 @@ def require_band_admin(
     if membership.role != "admin":
         raise HTTPException(status_code=403, detail="Requiere rol de administrador")
     return membership
+
+
+def require_band_editor(
+    membership: BandMembership = Depends(require_band_member),
+) -> BandMembership:
+    """Miembro activo que NO es `guest` (T-V6-27): puede crear/editar contenido de la banda.
+    Ajeno → 404 (vía require_band_member); invitado → 403."""
+    if membership.role == "guest":
+        raise HTTPException(status_code=403, detail="Los invitados solo pueden ver")
+    return membership

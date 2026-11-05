@@ -64,3 +64,39 @@ def test_ruta_de_banda_aisla_al_ajeno(client, method, path):
         resp = client.request(method, url, json={})
     assert resp.status_code in (403, 404), \
         f"FUGA: {method} {path} respondió {resp.status_code} a un ajeno (esperado 403/404)"
+
+
+# ── T-V6-27: gate DERIVADO de `app.routes` ────────────────────────────────────
+# La lista manual de arriba se queda corta en cuanto alguien añade una ruta. Aquí se recorren TODAS
+# las rutas registradas que llevan `{band_id}` y se exige que un ajeno reciba 403/404. Los demás
+# parámetros de ruta se rellenan con un id inexistente (el guard de banda debe saltar antes).
+def _band_routes_from_app():
+    from fastapi.routing import APIRoute
+
+    out = []
+    for r in app.routes:
+        if isinstance(r, APIRoute) and "{band_id}" in r.path:
+            for m in sorted(r.methods - {"HEAD", "OPTIONS"}):
+                out.append((m, r.path))
+    return out
+
+
+DERIVED = _band_routes_from_app()
+
+
+def test_el_gate_derivado_cubre_rutas():
+    # Si esto baja de golpe, alguien ha cambiado el prefijo y el gate dejaría de vigilar.
+    assert len(DERIVED) >= 60, len(DERIVED)
+
+
+@pytest.mark.parametrize("method,path", DERIVED)
+def test_toda_ruta_de_banda_aisla_al_ajeno(client, method, path):
+    import re
+
+    bid = client.post("/bands/", json={"name": "Banda Gate"}).json()["id"]
+    url = re.sub(r"\{(\w+)\}", lambda m: bid if m.group(1) == "band_id"
+                 else "00000000-1111-2222-3333-444444444444", path)
+    with acting_as(STRANGER):
+        resp = client.request(method, url, json={})
+    assert resp.status_code in (403, 404), \
+        f"FUGA: {method} {path} respondió {resp.status_code} a un ajeno (esperado 403/404)"

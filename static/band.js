@@ -72,6 +72,7 @@
             accent: bandColor(bandId),
         };
 
+        if (window.BandTools) window.BandTools.ctx = ctx;   // V6-F9 (band_tools.js)
         renderShell(band, active, ctx);
         renderMembers(active);
         wire(band, active, ctx);
@@ -350,6 +351,7 @@
             </div>`;
 
         el.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => goTab(b.dataset.go)));
+        if (window.BandTools) window.BandTools.summary(bandId, ctx, el);   // pizarra + preparación (V6-F9)
         if (ev) el.querySelectorAll('#bs-att [data-att]').forEach(b => b.addEventListener('click', async () => {
             bfPop(b);   // microinteracción (T-137)
             try {

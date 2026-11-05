@@ -321,3 +321,101 @@ function bfAttendees(e) {
     if (maybe) bits.push(`<span class="ev-maybe" title="Quizás">${bfIco('help-circle', 13)} ${maybe}</span>`);
     return bits.join(' · ');
 }
+
+// ── T-V6-33: diálogo único accesible ──────────────────────────────────────────
+// bfDialog({ title, body, actions, onMount, wide }) → Promise<valor de la acción | null>.
+// `body` es HTML CONTROLADO por el llamante (escapar datos de usuario). Focus trap, Escape cierra,
+// el foco vuelve al elemento que lo abrió; en móvil se muestra como hoja inferior (CSS .bf-dialog).
+// `actions`: [{ label, value, primary?, danger?, close? (default true) }]. Una acción con
+// `onClick(root)` que devuelve false mantiene el diálogo abierto (validación).
+function bfDialog({ title = '', body = '', actions = [{ label: 'Cerrar', value: null }], onMount, wide = false } = {}) {
+    return new Promise((resolve) => {
+        const prev = document.activeElement;
+        const overlay = document.createElement('div');
+        overlay.className = 'bf-dialog-overlay';
+        const titleId = 'bfd-' + Math.random().toString(36).slice(2, 8);
+        overlay.innerHTML = `
+            <div class="bf-dialog${wide ? ' bf-dialog--wide' : ''}" role="dialog" aria-modal="true" ${title ? `aria-labelledby="${titleId}"` : ''}>
+                <div class="bf-dialog__head">
+                    ${title ? `<h2 class="bf-h3" id="${titleId}">${escapeHtml(title)}</h2>` : '<span></span>'}
+                    <button class="bf-icon-btn" data-bfd-close aria-label="Cerrar">${bfIco('x', 18)}</button>
+                </div>
+                <div class="bf-dialog__body">${body}</div>
+                ${actions.length ? `<div class="bf-dialog__actions">${actions.map((a, i) =>
+                    `<button class="bf-btn${a.primary ? ' bf-btn--primary' : ''}${a.danger ? ' bf-btn--danger' : ''}" data-bfd-act="${i}">${escapeHtml(a.label)}</button>`).join('')}</div>` : ''}
+            </div>`;
+        const root = overlay.querySelector('.bf-dialog');
+        const focusables = () => [...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+            .filter(el => !el.disabled && el.offsetParent !== null);
+        const close = (val) => {
+            document.removeEventListener('keydown', onKey, true);
+            overlay.remove();
+            document.body.classList.remove('bf-dialog-open');
+            if (prev && typeof prev.focus === 'function') prev.focus();
+            resolve(val);
+        };
+        const onKey = (e) => {
+            if (e.key === 'Escape') { e.stopPropagation(); close(null); }
+            if (e.key === 'Tab') {
+                const f = focusables();
+                if (!f.length) return;
+                const first = f[0], last = f[f.length - 1];
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+            }
+        };
+        overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(null); });
+        overlay.querySelector('[data-bfd-close]').addEventListener('click', () => close(null));
+        overlay.querySelectorAll('[data-bfd-act]').forEach(btn => btn.addEventListener('click', async () => {
+            const a = actions[Number(btn.dataset.bfdAct)];
+            if (a.onClick) {
+                const r = await a.onClick(root);
+                if (r === false) return;
+                if (r !== undefined && r !== true) return close(r);
+            }
+            if (a.close === false) return;
+            close(a.value === undefined ? a.label : a.value);
+        }));
+        document.addEventListener('keydown', onKey, true);
+        document.body.appendChild(overlay);
+        document.body.classList.add('bf-dialog-open');
+        if (onMount) onMount(root, close);
+        const f = focusables();
+        const auto = root.querySelector('[autofocus]') || f.find(el => !el.matches('[data-bfd-close]')) || f[0];
+        if (auto) auto.focus();
+    });
+}
+
+// ── T-V6-80: compartir (Web Share API → WhatsApp → copiar) ────────────────────
+async function bfShare({ title = 'BandFlow', text = '', url = '' } = {}) {
+    if (navigator.share) {
+        try { await navigator.share({ title, text, url }); return 'shared'; }
+        catch (e) { if (e && e.name === 'AbortError') return 'aborted'; }
+    }
+    const full = [text, url].filter(Boolean).join(' ');
+    const wa = 'https://wa.me/?text=' + encodeURIComponent(full);
+    let copied = false;
+    try { await navigator.clipboard.writeText(url || full); copied = true; } catch (e) { /* sin permiso */ }
+    await bfDialog({
+        title: 'Compartir',
+        body: `<p class="bf-muted" style="margin-bottom:.5rem;">${copied ? 'Enlace copiado. ' : ''}Envíalo por donde quieras:</p>
+               <code class="share-link" style="display:block;overflow-wrap:anywhere;">${escapeHtml(url || full)}</code>
+               <div class="bf-row bf-wrap" style="gap:.5rem;margin-top:.8rem;">
+                 <a class="bf-btn bf-btn--primary" href="${escapeHtml(wa)}" target="_blank" rel="noopener">${bfIco('send', 15)} WhatsApp</a>
+               </div>`,
+        actions: [{ label: 'Listo', value: null }],
+    });
+    return copied ? 'copied' : 'shown';
+}
+
+// Fecha corta para formularios <input type="datetime-local"> (hora local, sin zona).
+function bfLocalInput(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+// Valor de un datetime-local → lo que espera la API (o null). Hoy el contrato es "hora de pared"
+// sin zona (igual que la Agenda); cuando llegue T-V6-18 (UTC de punta a punta) solo cambia aquí.
+function bfFromLocalInput(v) { return v ? v : null; }

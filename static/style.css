@@ -1602,3 +1602,26 @@ kbd {
 .bf-check { display: inline-flex; align-items: flex-start; gap: 0.5rem; font-size: 0.9rem; color: var(--bf-text); cursor: pointer; }
 .bf-check input { margin-top: 0.2rem; accent-color: var(--bf-primary); }
 .form-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+
+/* V6-F9 — páginas públicas de votación (votar.html) y hoja del bolo (bolo.html) */
+.pub-card--wide { max-width: 640px; }
+.pub-notice { padding: .6rem .8rem; border-radius: 8px; background: var(--bf-surface-2, rgba(255,255,255,.06)); }
+.vt-options { display: flex; flex-direction: column; gap: .6rem; margin-top: 1rem; }
+.vt-opt { padding: .7rem .8rem; border: 1px solid var(--bf-border, #333); border-radius: 10px; }
+.vt-opt__date { font-weight: 600; text-transform: capitalize; }
+.vt-opt__counts { font-size: .85rem; color: var(--text-secondary); margin: .2rem 0 .5rem; }
+.vt-opt__btns { display: flex; gap: .4rem; }
+.vt-opt__btns .bf-btn { flex: 1; min-height: 44px; }
+.sheet-times { border-collapse: collapse; margin: .8rem 0; }
+.sheet-times th { text-align: left; padding: .3rem 1.2rem .3rem 0; font-weight: 500; color: var(--text-secondary); }
+.sheet-times td { font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sheet-h { font-size: 1rem; margin: 1.2rem 0 .3rem; }
+.sheet-setlist, .sheet-check { margin: 0; padding-left: 1.3rem; }
+.sheet-check { list-style: none; padding-left: 0; }
+.sheet-check .is-done { color: var(--text-secondary); text-decoration: line-through; }
+.sheet-actions { margin-top: 1.2rem; }
+@media print {
+  .no-print, .pub-brand { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .pub-card { box-shadow: none !important; border: 0 !important; background: #fff !important; color: #000 !important; }
+}

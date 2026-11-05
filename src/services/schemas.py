@@ -129,6 +129,7 @@ class SongBase(BaseModel):
     reference_url: Optional[str] = Field(None, max_length=512)
     tags: Optional[List[str]] = None
     duration_beats: Optional[float] = None
+    duration_sec: Optional[int] = Field(None, ge=0, le=7200)  # T-V6-88
 
 class SongCreate(SongBase):
     sections: Optional[List[SectionCreate]] = []
@@ -159,6 +160,7 @@ class SongUpdate(BaseModel):
     instrument: Optional[str] = None
     is_public: Optional[bool] = None
     reference_url: Optional[str] = Field(None, max_length=512)
+    duration_sec: Optional[int] = Field(None, ge=0, le=7200)  # T-V6-88
 
     @field_validator("reference_url")
     @classmethod
@@ -441,8 +443,17 @@ class EventCreate(BaseModel):
     contact_phone: Optional[str] = Field(None, max_length=64)
     fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
     venue_id: Optional[str] = None  # sala reutilizable (T-116), solo conciertos
+    # Hoja del bolo (T-V6-86)
+    load_in_at: Optional[datetime] = None
+    soundcheck_at: Optional[datetime] = None
+    doors_at: Optional[datetime] = None
+    set_at: Optional[datetime] = None
+    address: Optional[str] = Field(None, max_length=512)
+    parking_notes: Optional[str] = Field(None, max_length=4000)
+    backline_notes: Optional[str] = Field(None, max_length=4000)
 
-    _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
+    _norm_dates = field_validator("starts_at", "ends_at", "load_in_at", "soundcheck_at",
+                                  "doors_at", "set_at")(_to_naive_utc)
 
 
 class EventUpdate(BaseModel):
@@ -459,8 +470,17 @@ class EventUpdate(BaseModel):
     fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
     venue_id: Optional[str] = None
     visibility: Optional[Visibility] = None  # V3-F7: el admin comparte/oculta el evento
+    # Hoja del bolo (T-V6-86)
+    load_in_at: Optional[datetime] = None
+    soundcheck_at: Optional[datetime] = None
+    doors_at: Optional[datetime] = None
+    set_at: Optional[datetime] = None
+    address: Optional[str] = Field(None, max_length=512)
+    parking_notes: Optional[str] = Field(None, max_length=4000)
+    backline_notes: Optional[str] = Field(None, max_length=4000)
 
-    _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
+    _norm_dates = field_validator("starts_at", "ends_at", "load_in_at", "soundcheck_at",
+                                  "doors_at", "set_at")(_to_naive_utc)
 
 
 class AttendanceOut(BaseModel):
@@ -515,6 +535,14 @@ class EventResponse(BaseModel):
     venue_id: Optional[str] = None  # sala (T-116)
     venue_name: Optional[str] = None
     visibility: Visibility = "private"  # V3-F7: estado de compartición (para la UI de la banda)
+    load_in_at: Optional[datetime] = None  # hoja del bolo (T-V6-86)
+    soundcheck_at: Optional[datetime] = None
+    doors_at: Optional[datetime] = None
+    set_at: Optional[datetime] = None
+    address: Optional[str] = None
+    parking_notes: Optional[str] = None
+    backline_notes: Optional[str] = None
+    sheet_token: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -895,3 +923,199 @@ class ScoreRatingSet(BaseModel):
 
 class CatalogCommentCreate(BaseModel):
     body: str = Field(min_length=1, max_length=2000)
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# V6-F9 — Funciones de banda (semáforo, pizarra, hoja del bolo, votación, feedback)
+# ══════════════════════════════════════════════════════════════════════════════
+SongStatusValue = Literal["pending", "improving", "mastered"]
+
+
+class SongStatusSet(BaseModel):
+    status: SongStatusValue
+    shared: Optional[bool] = None
+
+
+class SongStatusOut(BaseModel):
+    song_id: str
+    status: SongStatusValue
+    shared: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SongStatusBoard(BaseModel):
+    """Semáforo de la banda: lo mío por canción + recuento de la banda (solo compartidos)."""
+    mine: List[SongStatusOut] = []
+    band: dict = {}          # song_id → {"pending": n, "improving": n, "mastered": n}
+    totals_mine: dict = {}   # status → n (sobre el repertorio entero; sin marcar = pending)
+    totals_band: dict = {}
+    songs_total: int = 0
+
+
+class SongPrefIn(BaseModel):
+    transpose: Optional[int] = Field(None, ge=-11, le=11)
+    capo: Optional[int] = Field(None, ge=0, le=12)
+    view_mode: Optional[Literal["full", "lyrics", "chords"]] = None
+    font_scale: Optional[float] = Field(None, ge=0.5, le=3.0)
+
+
+class SongPrefOut(BaseModel):
+    song_id: str
+    transpose: int = 0
+    capo: Optional[int] = None
+    view_mode: Optional[str] = None
+    font_scale: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BandNoteCreate(BaseModel):
+    body: str = Field(min_length=1, max_length=2000)
+    assignee_id: Optional[str] = Field(None, max_length=36)
+    is_pinned: bool = False
+    due_date: Optional[datetime] = None
+    song_id: Optional[str] = Field(None, max_length=36)
+    event_id: Optional[str] = Field(None, max_length=36)
+
+    _norm_dates = field_validator("due_date")(_to_naive_utc)
+
+
+class BandNoteUpdate(BaseModel):
+    body: Optional[str] = Field(None, min_length=1, max_length=2000)
+    assignee_id: Optional[str] = Field(None, max_length=36)
+    is_pinned: Optional[bool] = None
+    due_date: Optional[datetime] = None
+    done: Optional[bool] = None
+
+    _norm_dates = field_validator("due_date")(_to_naive_utc)
+
+
+class BandNoteOut(BaseModel):
+    id: str
+    band_id: str
+    author_id: str
+    author_name: Optional[str] = None
+    body: str
+    assignee_id: Optional[str] = None
+    assignee_name: Optional[str] = None
+    is_pinned: bool = False
+    due_date: Optional[datetime] = None
+    done_at: Optional[datetime] = None
+    song_id: Optional[str] = None
+    event_id: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChecklistItemIn(BaseModel):
+    text: str = Field(min_length=1, max_length=255)
+    assignee_id: Optional[str] = Field(None, max_length=36)
+
+
+class ChecklistItemPatch(BaseModel):
+    text: Optional[str] = Field(None, min_length=1, max_length=255)
+    assignee_id: Optional[str] = Field(None, max_length=36)
+    done: Optional[bool] = None
+
+
+class ChecklistItemOut(BaseModel):
+    id: str
+    event_id: str
+    text: str
+    assignee_id: Optional[str] = None
+    position: int = 0
+    done_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GigSheetPublic(BaseModel):
+    """Proyección SOLO-LECTURA de la hoja del bolo (bolo.html?t=). Sin caché, contacto ni notas
+    internas: lo que necesita un técnico o la sala."""
+    title: str
+    band_name: str
+    starts_at: Optional[datetime] = None
+    load_in_at: Optional[datetime] = None
+    soundcheck_at: Optional[datetime] = None
+    doors_at: Optional[datetime] = None
+    set_at: Optional[datetime] = None
+    venue_name: Optional[str] = None
+    address: Optional[str] = None
+    parking_notes: Optional[str] = None
+    backline_notes: Optional[str] = None
+    setlist: List[str] = []
+    checklist: List[ChecklistItemOut] = []
+
+
+class PollOptionIn(BaseModel):
+    starts_at: datetime
+    ends_at: Optional[datetime] = None
+
+    _norm_dates = field_validator("starts_at", "ends_at")(_to_naive_utc)
+
+
+class PollCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    type: EventType = "rehearsal"
+    location: Optional[str] = Field(None, max_length=255)
+    notes: Optional[str] = Field(None, max_length=2000)
+    options: List[PollOptionIn] = Field(min_length=1, max_length=20)
+
+
+class PollVoteIn(BaseModel):
+    option_id: str
+    status: AttendanceStatus
+
+
+class PollVotesIn(BaseModel):
+    votes: List[PollVoteIn] = Field(min_length=1, max_length=20)
+    user_id: Optional[str] = None  # solo en la ruta pública: qué miembro vota (elige su nombre)
+
+
+class PollOptionOut(BaseModel):
+    id: str
+    starts_at: datetime
+    ends_at: Optional[datetime] = None
+    yes: int = 0
+    maybe: int = 0
+    no: int = 0
+    votes: dict = {}  # user_id → status
+
+
+class PollMember(BaseModel):
+    user_id: str
+    display_name: str
+
+
+class PollOut(BaseModel):
+    id: str
+    band_id: Optional[str] = None
+    band_name: Optional[str] = None
+    title: str
+    type: str
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    token: Optional[str] = None
+    status: str
+    event_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    options: List[PollOptionOut] = []
+    members: List[PollMember] = []
+    pending: List[str] = []  # nombres de quienes aún no han votado
+
+
+class PollConfirm(BaseModel):
+    option_id: str
+
+
+class FeedbackIn(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+    page: Optional[str] = Field(None, max_length=255)
+
+
+class ProductEventIn(BaseModel):
+    kind: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9_.:-]+$")
+    band_id: Optional[str] = Field(None, max_length=36)

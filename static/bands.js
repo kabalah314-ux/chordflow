@@ -655,6 +655,8 @@ async function loadAgenda(bandId, iAmAdmin) {
         const unshare = li.querySelector('[data-act="unshare"]');
         if (unshare) unshare.addEventListener('click', () => setEventVisibility(bandId, eid, 'private', iAmAdmin));
     });
+    // V6-F9: band_tools.js añade votaciones y la hoja del bolo sobre la agenda ya pintada.
+    document.dispatchEvent(new CustomEvent('bf:agenda', { detail: { bandId, iAmAdmin } }));
 }
 
 // ── V3-F7: compartir un evento por enlace público (unlisted) ──────────────────
@@ -1091,6 +1093,8 @@ async function loadRepertoire(bandId, canEdit) {
             } catch (e) { toast('No se pudo quitar la canción.', 'error'); }
         });
     });
+    // V6-F9: band_tools.js añade el semáforo de preparación a cada canción.
+    document.dispatchEvent(new CustomEvent('bf:repertoire', { detail: { bandId, canEdit } }));
 }
 
 // ─── Repertorios: colecciones temáticas de la banda (T-114) ────────────────────

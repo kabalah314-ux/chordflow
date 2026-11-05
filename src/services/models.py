@@ -95,6 +95,9 @@ class Song(Base):
     reference_url = Column(String(512), nullable=True)
     tags = Column(JSON)
     duration_beats = Column(Float)
+    # Duración real en segundos (T-V6-88, setlist inteligente). Opcional: si falta, el cliente la
+    # estima con compases × BPM.
+    duration_sec = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime, nullable=True, index=True)
@@ -414,6 +417,16 @@ class Event(Base):
     # Sala reutilizable (T-116): un concierto puede apuntar a un Venue de la banda. SET NULL si se
     # borra la sala. El `location` libre sigue existiendo (para ensayos/otros sin sala formal).
     venue_id = Column(String(36), ForeignKey("venues.id", ondelete="SET NULL"), nullable=True)
+    # Hoja del bolo (T-V6-86): horarios de logística + notas. Todo opcional. `sheet_token` = enlace
+    # de SOLO LECTURA para compartir la hoja (bolo.html?t=) con técnicos/sala sin cuenta.
+    load_in_at = Column(DateTime, nullable=True)
+    soundcheck_at = Column(DateTime, nullable=True)
+    doors_at = Column(DateTime, nullable=True)
+    set_at = Column(DateTime, nullable=True)
+    address = Column(String(512), nullable=True)
+    parking_notes = Column(Text, nullable=True)
+    backline_notes = Column(Text, nullable=True)
+    sheet_token = Column(String(64), nullable=True, unique=True, index=True)
     created_by = Column(String(36), nullable=False)  # admin que lo creó
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -755,3 +768,187 @@ class ScoreComment(Base):
     deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete
 
     score = relationship("PublicScore", back_populates="comments")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# V6-F9 — Funciones de banda (GUIA_MAESTRA_V6 §9.6). Todas aditivas, aisladas por band_id.
+# ══════════════════════════════════════════════════════════════════════════════
+SONG_STATUSES = ("pending", "improving", "mastered")
+POLL_STATUSES = ("open", "closed")
+
+
+class SongStatus(Base):
+    """Semáforo del repertorio (T-V6-83, V5 §9.4): cómo lleva CADA miembro cada canción de banda.
+    Privado por defecto; `shared=True` lo suma al diagrama de la banda."""
+
+    __tablename__ = "song_statuses"
+    __table_args__ = (
+        UniqueConstraint("song_id", "user_id", name="uq_song_status_song_user"),
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in SONG_STATUSES) + ")",
+            name="ck_song_statuses_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    song_id = Column(
+        String(36), ForeignKey("songs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(String(36), nullable=False, index=True)
+    status = Column(String(16), nullable=False)
+    shared = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class SongMemberPref(Base):
+    """Vista por miembro (T-V6-81): mi tono / mi cejilla / mi vista / tamaño, sin tocar la canción
+    compartida. Una fila por (canción, usuario)."""
+
+    __tablename__ = "song_member_prefs"
+    __table_args__ = (UniqueConstraint("song_id", "user_id", name="uq_song_pref_song_user"),)
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    song_id = Column(
+        String(36), ForeignKey("songs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(String(36), nullable=False, index=True)
+    transpose = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    capo = Column(Integer, nullable=True)
+    view_mode = Column(String(16), nullable=True)  # full | lyrics | chords
+    font_scale = Column(Float, nullable=True)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class BandNote(Base):
+    """Pizarra de banda (T-V6-92, V5 §9.3): pendientes/apuntes compartidos, fijables, con fecha
+    opcional y responsable. Soft-delete."""
+
+    __tablename__ = "band_notes"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    author_id = Column(String(36), nullable=False)
+    body = Column(Text, nullable=False)
+    assignee_id = Column(String(36), nullable=True)
+    is_pinned = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    due_date = Column(DateTime, nullable=True)
+    done_at = Column(DateTime, nullable=True)
+    song_id = Column(String(36), ForeignKey("songs.id", ondelete="SET NULL"), nullable=True)
+    event_id = Column(String(36), ForeignKey("events.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+
+class EventChecklistItem(Base):
+    """Checklist de la hoja del bolo (T-V6-86): "llevar DI", "confirmar backline"…"""
+
+    __tablename__ = "event_checklist_items"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    event_id = Column(
+        String(36), ForeignKey("events.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    text = Column(String(255), nullable=False)
+    assignee_id = Column(String(36), nullable=True)
+    position = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    done_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+class DatePoll(Base):
+    """Votación de fechas (T-V6-82): varias opciones; los miembros votan (también sin cuenta, por
+    enlace `token` eligiendo su nombre). "Confirmar" convierte una opción en evento."""
+
+    __tablename__ = "date_polls"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in POLL_STATUSES) + ")",
+            name="ck_date_polls_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title = Column(String(255), nullable=False)
+    type = Column(String(16), nullable=False, default="rehearsal", server_default=text("'rehearsal'"))
+    location = Column(String(255), nullable=True)
+    notes = Column(Text, nullable=True)
+    token = Column(String(64), nullable=False, unique=True, index=True)
+    status = Column(String(16), nullable=False, default="open", server_default=text("'open'"))
+    event_id = Column(String(36), ForeignKey("events.id", ondelete="SET NULL"), nullable=True)
+    created_by = Column(String(36), nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+    options = relationship(
+        "DatePollOption", back_populates="poll", cascade="all, delete-orphan",
+        order_by="DatePollOption.position",
+    )
+
+
+class DatePollOption(Base):
+    __tablename__ = "date_poll_options"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    poll_id = Column(
+        String(36), ForeignKey("date_polls.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    starts_at = Column(DateTime, nullable=False)
+    ends_at = Column(DateTime, nullable=True)
+    position = Column(Integer, nullable=False, default=0, server_default=text("0"))
+
+    poll = relationship("DatePoll", back_populates="options")
+    votes = relationship("DatePollVote", cascade="all, delete-orphan")
+
+
+class DatePollVote(Base):
+    __tablename__ = "date_poll_votes"
+    __table_args__ = (
+        UniqueConstraint("option_id", "user_id", name="uq_poll_vote_option_user"),
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in ATTENDANCE_STATUSES) + ")",
+            name="ck_date_poll_votes_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    option_id = Column(
+        String(36), ForeignKey("date_poll_options.id", ondelete="CASCADE"), nullable=False,
+        index=True,
+    )
+    user_id = Column(String(36), nullable=False)
+    status = Column(String(8), nullable=False)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class Feedback(Base):
+    """"¿Algo falla?" (T-V6-94): texto + página + agente; lo lee Oscar."""
+
+    __tablename__ = "feedback"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    page = Column(String(255), nullable=True)
+    body = Column(Text, nullable=False)
+    user_agent = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+class ProductEvent(Base):
+    """Eventos de producto mínimos (T-V6-94, §9.8): activación/uso sin terceros."""
+
+    __tablename__ = "product_events"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    band_id = Column(String(36), nullable=True, index=True)
+    kind = Column(String(64), nullable=False, index=True)
+    created_at = Column(DateTime, default=_utcnow)

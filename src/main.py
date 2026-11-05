@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from .api.band_collections_router import router as band_collections_router
 from .api.band_setlists_router import router as band_setlists_router
 from .api.band_songs_router import router as band_songs_router
+from .api.band_tools_router import router as band_tools_router
 from .api.bands_router import router as bands_router
 from .api.catalog_router import router as catalog_router
 from .api.collections_router import router as collections_router
@@ -114,6 +115,7 @@ app.include_router(me_router)
 app.include_router(tours_router)
 app.include_router(catalog_router)
 app.include_router(public_router)
+app.include_router(band_tools_router)
 
 @app.get("/")
 def read_root():
