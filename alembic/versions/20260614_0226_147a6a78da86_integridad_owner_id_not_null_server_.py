@@ -39,8 +39,9 @@ def upgrade() -> None:
                server_default=sa.text('0'))
         batch_op.alter_column('format_version', existing_type=sa.VARCHAR(length=8),
                server_default=sa.text("'1.0'"))
+        # T-V6-23 (Q-02): 'false' vale en SQLite y Postgres; un '0' lo rechaza Postgres.
         batch_op.alter_column('is_public', existing_type=sa.BOOLEAN(),
-               server_default=sa.text('0'))
+               server_default=sa.text('false'))
 
     with op.batch_alter_table('sections', schema=None) as batch_op:
         batch_op.alter_column('repeat_count', existing_type=sa.INTEGER(),
