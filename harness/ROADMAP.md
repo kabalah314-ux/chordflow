@@ -776,7 +776,7 @@
 - [x] **T-V6-17** Espacio no toca el BPM con foco en +/−; metrónomo con scheduler *lookahead*
 - [ ] **T-V6-18** Contrato de fechas UTC de punta a punta (columnas tz-aware o `Z` en serialización, validador común, `toISOString()` en el front, test cruzando zonas)
 - [x] **T-V6-19** Lote backend medio: `active_membership()` único con `Band.deleted_at`; liquidaciones a ex-miembros; `reference_url` al copiar; búsqueda por `norm_*`; `plan` fuera del PATCH; `load_dotenv(override=True)`; longitudes espejo + test en PG; `IntegrityError` en perfil; `except HTTPException: raise` en `get_db`
-- [ ] **T-V6-21** CI como gate: SHA-pin, `permissions`, `concurrency`, jobs lint+unit / e2e / migraciones-PG, artefactos en fallo, branch protection con required check antes del auto-deploy
+- [x] **T-V6-21** CI como gate: SHA-pin, `permissions`, `concurrency`, jobs lint+unit / e2e / migraciones-PG, artefactos en fallo, branch protection con required check antes del auto-deploy
 - [ ] **T-V6-22** Lockfile con hashes, `requirements-dev` pineado, `pip-audit`, Dependabot, `.gitignore` `.env.*`
 - [ ] **T-V6-23** Migración `147a6a78da86` válida en PG; job CI con Postgres (`upgrade head` + `check` + `downgrade base`)
 - [ ] **T-V6-24** Estáticos servidos por Vercel con `Cache-Control: immutable`; la función solo para la API; medir cold start antes/después
@@ -789,9 +789,9 @@
 - [ ] **T-V6-31** Tokens nuevos (§6.2), fuentes autoalojadas, escala tipográfica cerrada, quitar Inter/Roboto y los `@import` duplicados
 - [ ] **T-V6-32** Componentes canónicos (§6.3): botón unificado (legacy → `bf-btn`), icon-btn, segmented, menú ⋯, fila, tarjeta, campo/input/select/textarea, buscador, pestañas, badge, chip, avatar con color estable, toast, empty/error, cabecera de página, topbar móvil con título, KPI, importe, fecha. Página de muestra `static/_components.html` (fuera de nav) para revisarlos en los dos temas
 - [ ] **T-V6-33** `bfDialog()` único (focus trap, Escape, foco de vuelta, hoja inferior en móvil) y migración de los 9 modales; `confirm()` con foco en Cancelar; "Deshacer" en quitar de setlist
-- [ ] **T-V6-34** Barrido emoji → `bfIcon` completo (§13.A) + test "cero emoji en `<button>`, nav, `h1-h3`, placeholders"
+- [x] **T-V6-34** Barrido emoji → `bfIcon` completo (§13.A) + test "cero emoji en `<button>`, nav, `h1-h3`, placeholders"
 - [ ] **T-V6-35** Tema claro completo: eliminar `#hex`/`rgba` fuera de `:root` (54 + 110 en `style.css`, 6 en JS), tokens inexistentes, `.bf-badge` sin `capitalize`; check automático en CI
-- [ ] **T-V6-36** `format.js` (`Intl` dinero/fechas) y `labels.js` únicos aplicados en todas las páginas
+- [x] **T-V6-36** `format.js` (`Intl` dinero/fechas) y `labels.js` únicos aplicados en todas las páginas
 - [ ] **T-V6-37** Retirar `style.css` por partes → `components.css` + `player.css` + `editor.css`; cero `style=""` inline en plantillas (utilidades `.bf-stack--*`)
 - [ ] **T-V6-40** Login (dos columnas, pestañas Entrar/Crear, Google oficial, mostrar contraseña) + `reset.html` + Términos/Privacidad
 - [ ] **T-V6-41** Join (tarjeta centrada, estados inválida/caducada, login conservando código)

@@ -9,15 +9,8 @@
     const el = document.getElementById('home');
     if (!el) return;
 
-    const EV_ICON = { rehearsal: '🎼', concert: '🎤', other: '📌' };
 
-    function fmtDate(iso) {
-        if (!iso) return '';
-        const d = new Date(iso);
-        if (isNaN(d)) return '';
-        return d.toLocaleString('es-ES',
-            { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    }
+    function fmtDate(iso) { return bfDate(iso); }   // T-V6-36
 
     // Cuenta atrás compacta hasta una fecha (cliente).
     function hCountdown(iso) {
@@ -30,8 +23,7 @@
         const m = Math.floor((ms % 3600000) / 60000);
         return h >= 1 ? `en ${h} h ${m} min` : `en ${m} min`;
     }
-    function hMoney(x) { return Number(x || 0).toFixed(2) + ' €'; }
-    const H_ATT = { yes: '✅ Voy', maybe: '🤔 Quizás', no: '❌ No voy' };
+    function hMoney(x) { return bfMoney(x); }   // T-V6-36
 
     // Fila de "acceso/paso" reutilizable (onboarding y accesos rápidos).
     // `icon` = nombre de icono de icons.js (T-V5-02; antes un emoji inline).
@@ -46,7 +38,7 @@
         return `<a class="bf-list-item" href="band.html?id=${encodeURIComponent(e.band_id)}"
                    style="text-decoration:none;color:inherit;">
             <span class="bf-badge">${escapeHtml(e.band_name)}</span>
-            <span class="bf-grow">${EV_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
+            <span class="bf-grow">${bfEventIcon(e.type)} ${escapeHtml(e.title)}
                 <span class="bf-faint">· ${escapeHtml(fmtDate(e.starts_at))}</span></span>
         </a>`;
     }
@@ -55,7 +47,7 @@
         return `<a class="bf-list-item" href="band.html?id=${encodeURIComponent(m.band_id)}"
                    style="text-decoration:none;color:inherit;">
             <span class="bf-badge">${escapeHtml(m.band_name)}</span>
-            <span class="bf-grow">${m.is_pinned ? '📌 ' : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: ${escapeHtml(m.body)}</span>
+            <span class="bf-grow">${m.is_pinned ? bfIco('pin', 13) + ' ' : ''}<strong>${escapeHtml(m.author_name || 'Alguien')}</strong>: ${escapeHtml(m.body)}</span>
         </a>`;
     }
 
@@ -89,7 +81,7 @@
             if (rb.ok) bands = await rb.json();
             if (rbal.ok) balances = await rbal.json();
         } catch (e) {
-            el.innerHTML = '<p class="bf-muted">⚠️ No se pudo cargar tu inicio. Inténtalo de nuevo.</p>';
+            el.innerHTML = '<p class="bf-muted">No se pudo cargar tu inicio. Inténtalo de nuevo.</p>';
             return;
         }
         const events = data.upcoming_events || [];
@@ -101,7 +93,7 @@
             el.innerHTML = `
                 <div class="bf-stack">
                     <div>
-                        <h1 class="bf-h1">¡Te damos la bienvenida${name ? ', ' + escapeHtml(name) : ''}! 👋</h1>
+                        <h1 class="bf-h1">¡Te damos la bienvenida${name ? ', ' + escapeHtml(name) : ''}!</h1>
                         <p class="bf-muted">BandFlow es tu cuartel general como músico. Empieza por aquí:</p>
                     </div>
                     <div class="bf-card"><div class="bf-list" id="home-onboarding">
@@ -121,19 +113,19 @@
         const hero = next ? `
             <div class="home-hero">
                 <div class="home-hero__when">${escapeHtml(hCountdown(next.starts_at))}</div>
-                <div class="home-hero__title">${EV_ICON[next.type] || '📌'} ${escapeHtml(next.title)}</div>
+                <div class="home-hero__title">${bfEventIcon(next.type, 22)} ${escapeHtml(next.title)}</div>
                 <div class="home-hero__meta">
                     <span class="bf-badge">${escapeHtml(next.band_name)}</span>
                     <span class="bf-faint">· ${escapeHtml(fmtDate(next.starts_at))}</span>
                 </div>
                 <div class="home-hero__att" id="home-att" data-band="${escapeHtml(next.band_id)}" data-ev="${escapeHtml(next.id)}">
                     <span class="bf-faint" style="font-size:.82rem;">¿Vas?</span>
-                    ${['yes', 'maybe', 'no'].map(s => `<button class="bf-btn bf-btn--sm${next.my_status === s ? ' bf-btn--primary' : ''}" data-att="${s}">${H_ATT[s]}</button>`).join('')}
+                    ${['yes', 'maybe', 'no'].map(s => `<button class="bf-btn bf-btn--sm${next.my_status === s ? ' bf-btn--primary' : ''}" data-att="${s}" aria-label="${attText(s)}">${attHtml(s)}</button>`).join('')}
                     <a class="bf-btn bf-btn--sm" href="band.html?id=${encodeURIComponent(next.band_id)}" style="text-decoration:none;margin-left:auto;">Abrir banda →</a>
                 </div>
             </div>` : `
             <div class="home-hero home-hero--empty">
-                <div class="home-hero__title">Sin bolos a la vista 🎸</div>
+                <div class="home-hero__title">Sin bolos a la vista</div>
                 <p class="bf-muted" style="margin-top:.3rem;">No tienes eventos próximos. <a href="bands.html">Crea uno en tu banda</a>.</p>
             </div>`;
 
@@ -167,7 +159,7 @@
         el.innerHTML = `
             <div class="bf-stack">
                 <div>
-                    <h1 class="bf-h1">Hola${name ? ', ' + escapeHtml(name) : ''} 👋</h1>
+                    <h1 class="bf-h1">Hola${name ? ', ' + escapeHtml(name) : ''}</h1>
                     <p class="bf-muted">Tu cuartel general.</p>
                 </div>
                 ${hero}

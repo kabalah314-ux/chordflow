@@ -50,7 +50,7 @@ async function loadBands() {
                             <p class="card-artist">${ROLE_LABEL[b.role] || escapeHtml(b.role)} · ${b.member_count} ${b.member_count === 1 ? 'miembro' : 'miembros'} · ${songs} ${songs === 1 ? 'canción' : 'canciones'}</p>
                         </div>
                     </div>
-                    ${ev ? `<p class="band-card__next">${EVENT_ICON[ev.type] || '📅'} ${escapeHtml(ev.title)} <small>${escapeHtml(fmtDate(ev.starts_at))}</small></p>` : ''}
+                    ${ev ? `<p class="band-card__next">${bfEventIcon(ev.type, 14)} ${escapeHtml(ev.title)} <small>${escapeHtml(fmtDate(ev.starts_at))}</small></p>` : ''}
                 </div>
             </div>`;
         }).join('');
@@ -59,7 +59,7 @@ async function loadBands() {
             card.querySelector('[data-act="open"]').addEventListener('click',
                 () => { window.location.href = `band.html?id=${encodeURIComponent(card.dataset.id)}`; }));
     } catch (e) {
-        elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudieron cargar las bandas.</p>`;
+        elGrid.innerHTML = `<p class="loading-text">No se pudieron cargar las bandas.</p>`;
     }
 }
 
@@ -224,7 +224,7 @@ async function openEventThread(bandId, event, iAmAdmin) {
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
         <div class="modal-card glass-panel" role="dialog" aria-modal="true">
-            <p class="modal-msg">💬 ${escapeHtml(event.title || 'Evento')} · discusión</p>
+            <p class="modal-msg">${bfIco('chat', 16)} ${escapeHtml(event.title || 'Evento')} · discusión</p>
             <div id="thread-list" class="thread-list"><p class="loading-text">Cargando…</p></div>
             <div class="import-row" style="margin-top:0.6rem;">
                 <input type="text" id="thread-input" class="search-box" placeholder="Escribe en el hilo del evento…" maxlength="4000">
@@ -240,7 +240,7 @@ async function openEventThread(bandId, event, iAmAdmin) {
             const res = await apiFetch(`/bands/${bandId}/messages/?event_id=${encodeURIComponent(event.id)}`);
             if (!res.ok) throw new Error('http');
             msgs = await res.json();
-        } catch (e) { listEl.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar el hilo.</p>'; return; }
+        } catch (e) { listEl.innerHTML = '<p class="loading-text">No se pudo cargar el hilo.</p>'; return; }
         renderMessageList(listEl, msgs, bandId, iAmAdmin, reload);
     };
     const send = async () => {
@@ -267,7 +267,7 @@ async function openEventThread(bandId, event, iAmAdmin) {
 }
 
 // ─── Finanzas ─────────────────────────────────────────────────────────────────
-function fmtMoney(x) { return `${Number(x).toFixed(2)} €`; }
+function fmtMoney(x) { return bfMoney(x); }   // T-V6-36: Intl es-ES
 
 // Exporta los movimientos a CSV en el cliente (sin backend). BOM (﻿) para que Excel respete
 // UTF-8; cada celda entre comillas con escape de comillas internas (seguro ante comas/saltos).
@@ -310,14 +310,14 @@ async function loadFinance(bandId, iAmAdmin) {
         balances = await rb.json();
         txs = await rt.json();
         if (rev.ok) evById = Object.fromEntries((await rev.json()).map(e => [e.id, e]));
-    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudieron cargar las finanzas.</p>'; return; }
+    } catch (e) { el.innerHTML = '<p class="loading-text">No se pudieron cargar las finanzas.</p>'; return; }
 
     const balRows = balances.map(b => {
         const v = Number(b.balance);
         const cls = v > 0 ? 'bal-pos' : (v < 0 ? 'bal-neg' : '');
         const label = v > 0 ? 'le deben' : (v < 0 ? 'debe' : 'al día');
         return `<li class="setlist-song">
-            <span class="sl-title">${b.is_fund ? '🏦 ' : ''}${escapeHtml(b.display_name || b.participant)}</span>
+            <span class="sl-title">${b.is_fund ? bfIco('landmark', 15) + ' ' : ''}${escapeHtml(b.display_name || b.participant)}</span>
             <span class="${cls}">${fmtMoney(v)} <small>${label}</small></span></li>`;
     }).join('') || '<li><small>Sin saldos.</small></li>';
 
@@ -326,15 +326,15 @@ async function loadFinance(bandId, iAmAdmin) {
     const seasonRows = seasons.map(s => {
         const cls = s.net > 0 ? 'bal-pos' : (s.net < 0 ? 'bal-neg' : '');
         return `<li class="setlist-song">
-            <span class="sl-title">📅 Temporada ${s.year}
+            <span class="sl-title">${bfIco('calendar', 15)} Temporada ${s.year}
                 <small>＋${fmtMoney(s.income)} · −${fmtMoney(s.expense)}</small></span>
             <span class="${cls}">${fmtMoney(s.net)} <small>neto</small></span></li>`;
     }).join('');
 
     const txRows = txs.map(t => `
         <li class="setlist-song" data-id="${escapeHtml(t.id)}">
-            <span class="sl-title">${t.type === 'income' ? '➕' : '➖'} ${escapeHtml(t.description || (t.type === 'income' ? 'Ingreso' : 'Gasto'))}
-                <small>${fmtMoney(t.amount)}${t.category ? ' · ' + escapeHtml(t.category) : ''}${t.event_id && evById[t.event_id] ? ' · 🎵 ' + escapeHtml(evById[t.event_id].title) : ''}</small></span>
+            <span class="sl-title"><span class="tx-kind tx-kind--${t.type}">${bfIco(t.type === 'income' ? 'arrow-up-right' : 'arrow-down-right', 15)}</span> ${escapeHtml(t.description || (t.type === 'income' ? 'Ingreso' : 'Gasto'))}
+                <small>${fmtMoney(t.amount)}${t.category ? ' · ' + escapeHtml(t.category) : ''}${t.event_id && evById[t.event_id] ? ' · ' + bfIco('music', 12) + ' ' + escapeHtml(evById[t.event_id].title) : ''}</small></span>
             ${iAmAdmin ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar movimiento" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`).join('') || '<li><small>Sin movimientos todavía.</small></li>';
 
@@ -364,7 +364,7 @@ async function loadFinance(bandId, iAmAdmin) {
 // Registrar movimiento (admin): tipo, descripción, importe, pagador. Reparto a partes iguales.
 async function newTransaction(bandId, members) {
     const payerOptions = members.map(m => `<option value="${escapeHtml(m.user_id)}">${escapeHtml(m.display_name || m.user_id)}</option>`).join('')
-        + '<option value="__fund__">🏦 Fondo común</option>';
+        + '<option value="__fund__">Fondo común</option>';
     // Filas del reparto personalizado: una por miembro activo (id estable en data-uid).
     const splitRows = members.map(m => `
         <div class="split-row">
@@ -384,8 +384,8 @@ async function newTransaction(bandId, members) {
         <div class="modal-card glass-panel" role="dialog" aria-modal="true">
             <p class="modal-msg">Nuevo movimiento</p>
             <select id="tx-type" class="search-box">
-                <option value="expense">➖ Gasto</option>
-                <option value="income">➕ Ingreso</option>
+                <option value="expense">Gasto</option>
+                <option value="income">Ingreso</option>
             </select>
             <input type="text" id="tx-desc" class="search-box" placeholder="Descripción (p. ej. Local de ensayo)">
             <input type="number" id="tx-amount" class="search-box" placeholder="Importe (€)" min="0.01" step="0.01">
@@ -492,7 +492,7 @@ async function newSettlement(bandId, members) {
             <label class="field-label">Paga</label>
             <select id="st-from" class="search-box">${memberOpts}</select>
             <label class="field-label">Recibe</label>
-            <select id="st-to" class="search-box">${memberOpts}<option value="__fund__">🏦 Fondo común</option></select>
+            <select id="st-to" class="search-box">${memberOpts}<option value="__fund__">Fondo común</option></select>
             <input type="number" id="st-amount" class="search-box" placeholder="Importe (€)" min="0.01" step="0.01">
             <div class="modal-actions">
                 <button class="secondary-btn" data-act="cancel">Cancelar</button>
@@ -525,7 +525,7 @@ async function newSettlement(bandId, members) {
 }
 
 // ─── Agenda (eventos) ─────────────────────────────────────────────────────────
-const EVENT_ICON = { rehearsal: '🎼', concert: '🎤', other: '📌' };
+const EVENT_ICON = BF_EVENT_ICON;   // T-V6-34: nombres de bfIcon (antes emojis)
 const EVENT_TYPE_LABEL = { rehearsal: 'Ensayo', concert: 'Concierto', other: 'Otro' };
 // Pipeline de booking (Fase 14, T-111): estados de un evento en orden del funnel.
 const EVENT_STATUS_ORDER = ['lead', 'contacted', 'negotiating', 'confirmed', 'done', 'cancelled'];
@@ -533,7 +533,7 @@ const EVENT_STATUS_LABEL = {
     lead: 'Lead', contacted: 'Contactado', negotiating: 'Negociando',
     confirmed: 'Confirmado', done: 'Hecho', cancelled: 'Cancelado',
 };
-const ATT_LABEL = { yes: '✅ Voy', maybe: '🤔 Quizás', no: '❌ No voy' };
+const ATT_LABEL = { yes: 'Voy', maybe: 'Quizás', no: 'No voy' };   // texto plano (title/aria)
 
 // Línea discreta de "quién ha confirmado" en cada evento (#4): nombres de los que van + cuántos
 // dicen "quizás". El backend ya devuelve `attendance` (lista de {status, display_name}). Escapamos
@@ -543,10 +543,7 @@ function attendeesLine(e) {
     const going = att.filter(a => a.status === 'yes').map(a => escapeHtml(a.display_name || 'Alguien'));
     const maybe = att.filter(a => a.status === 'maybe').length;
     if (!going.length && !maybe) return '';
-    const bits = [];
-    if (going.length) bits.push(`✅ ${going.join(', ')}`);
-    if (maybe) bits.push(`🤔 ${maybe}`);
-    return `<span class="ev-attendees">${bits.join(' · ')}</span>`;
+    return `<span class="ev-attendees">${bfAttendees(e)}</span>`;
 }
 
 // Línea discreta de booking en los conciertos (T-115): caché + contacto del promotor. Solo se
@@ -554,19 +551,14 @@ function attendeesLine(e) {
 function bookingLine(e) {
     if (e.type !== 'concert') return '';
     const bits = [];
-    if (e.venue_name) bits.push(`📍 ${escapeHtml(e.venue_name)}`);
-    if (e.fee != null && e.fee !== '') bits.push(`💶 ${escapeHtml(String(e.fee))}`);
-    if (e.contact_name) bits.push(`📇 ${escapeHtml(e.contact_name)}`);
+    if (e.venue_name) bits.push(`${bfIco('map-pin', 13)} ${escapeHtml(e.venue_name)}`);
+    if (e.fee != null && e.fee !== '') bits.push(`${bfIco('banknote', 13)} ${escapeHtml(bfMoney(e.fee))}`);
+    if (e.contact_name) bits.push(`${bfIco('phone', 13)} ${escapeHtml(e.contact_name)}`);
     if (!bits.length) return '';
     return `<span class="ev-booking">${bits.join(' · ')}</span>`;
 }
 
-function fmtDate(iso) {
-    if (!iso) return 'Sin fecha';
-    const d = new Date(iso);
-    if (isNaN(d)) return 'Sin fecha';
-    return d.toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-}
+function fmtDate(iso) { return bfDate(iso, 'Sin fecha'); }   // T-V6-36
 
 async function loadAgenda(bandId, iAmAdmin) {
     const el = document.getElementById('b-agenda');
@@ -576,7 +568,7 @@ async function loadAgenda(bandId, iAmAdmin) {
         const res = await apiFetch(`/bands/${bandId}/events/`);
         if (!res.ok) throw new Error('http');
         events = await res.json();
-    } catch (e) { el.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar la agenda.</p>'; return; }
+    } catch (e) { el.innerHTML = '<p class="loading-text">No se pudo cargar la agenda.</p>'; return; }
 
     if (!events.length) {
         el.innerHTML = '<p class="loading-text">Sin eventos. ' + (iAmAdmin ? 'Crea un ensayo o concierto.' : 'Un admin puede crear eventos.') + '</p>';
@@ -596,11 +588,11 @@ async function loadAgenda(bandId, iAmAdmin) {
 
     const row = (e) => `
         <li class="setlist-song" data-id="${escapeHtml(e.id)}">
-            <span class="sl-title">${EVENT_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
+            <span class="sl-title">${bfEventIcon(e.type)} ${escapeHtml(e.title)}
                 <small>${EVENT_TYPE_LABEL[e.type] || ''} · ${escapeHtml(fmtDate(e.starts_at))}</small>
-                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? '<span class="ev-soon">⏰ Pronto</span>' : ''}${e.visibility && e.visibility !== 'private' ? '<span class="ev-shared" title="Compartido por enlace">🔗 Enlace</span>' : ''}${attendeesLine(e)}${bookingLine(e)}</span>
+                <span class="ev-status ev-status--${escapeHtml(e.status)}">${escapeHtml(EVENT_STATUS_LABEL[e.status] || e.status)}</span>${isSoon(e) ? `<span class="ev-soon">${bfIco('clock', 12)} Pronto</span>` : ''}${e.visibility && e.visibility !== 'private' ? `<span class="ev-shared" title="Compartido por enlace">${bfIco('link', 12)} Enlace</span>` : ''}${attendeesLine(e)}${bookingLine(e)}</span>
             <span class="att-buttons">
-                ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}">${ATT_LABEL[s]}</button>`).join('')}
+                ${['yes', 'maybe', 'no'].map(s => `<button class="setlist-item-btn att-btn${e.my_status === s ? ' active' : ''}" data-att="${s}" title="${ATT_LABEL[s]}" aria-label="${ATT_LABEL[s]}">${attHtml(s)}</button>`).join('')}
                 <button class="setlist-item-btn" data-act="thread" aria-label="Discusión del evento" title="Discusión del evento">${bfIcon('chat')}</button>
                 ${iAmAdmin ? `<select class="ev-status-sel" data-ev="${escapeHtml(e.id)}" title="Estado de booking">${EVENT_STATUS_ORDER.map(s => `<option value="${s}" ${e.status === s ? 'selected' : ''}>${EVENT_STATUS_LABEL[s]}</option>`).join('')}</select>` : ''}
                 ${iAmAdmin ? `<span class="ev-more">
@@ -616,7 +608,7 @@ async function loadAgenda(bandId, iAmAdmin) {
             </span>
         </li>`;
     el.innerHTML = `
-        ${enBooking ? `<p class="agenda-booking-note">🔔 ${enBooking} ${enBooking === 1 ? 'evento' : 'eventos'} en booking sin confirmar</p>` : ''}
+        ${enBooking ? `<p class="agenda-booking-note">${bfIco('clock', 14)} ${enBooking} ${enBooking === 1 ? 'evento' : 'eventos'} en booking sin confirmar</p>` : ''}
         ${upcoming.length ? `<h5>Próximos</h5><ul class="setlist-list">${upcoming.map(row).join('')}</ul>` : ''}
         ${past.length ? `<h5>Pasados</h5><ul class="setlist-list">${past.map(row).join('')}</ul>` : ''}`;
 
@@ -726,9 +718,9 @@ async function newEvent(bandId) {
         <div class="modal-card glass-panel" role="dialog" aria-modal="true">
             <p class="modal-msg">Nuevo evento</p>
             <select id="ev-type" class="search-box">
-                <option value="rehearsal">🎼 Ensayo</option>
-                <option value="concert">🎤 Concierto</option>
-                <option value="other">📌 Otro</option>
+                <option value="rehearsal">Ensayo</option>
+                <option value="concert">Concierto</option>
+                <option value="other">Otro</option>
             </select>
             <input type="text" id="ev-title" class="search-box" placeholder="Título (p. ej. Ensayo jueves)">
             <input type="datetime-local" id="ev-date" class="search-box">
@@ -810,7 +802,7 @@ async function loadVenues(bandId, isAdmin) {
         const res = await apiFetch(`/bands/${bandId}/venues/`);
         if (!res.ok) throw new Error('http');
         venues = await res.json();
-    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar las salas.</small></li>'; return; }
+    } catch (e) { el.innerHTML = '<li><small>No se pudieron cargar las salas.</small></li>'; return; }
     if (!venues.length) {
         el.innerHTML = '<li><small>Sin salas.' + (isAdmin ? ' Crea una para reutilizarla en tus conciertos.' : '') + '</small></li>';
         return;
@@ -818,7 +810,7 @@ async function loadVenues(bandId, isAdmin) {
     el.innerHTML = venues.map(v => {
         const meta = [v.city, v.capacity ? v.capacity + ' pers.' : '', v.contact].filter(Boolean).map(escapeHtml).join(' · ');
         return `<li class="setlist-song" data-id="${escapeHtml(v.id)}">
-            <span class="sl-title">📍 ${escapeHtml(v.name)}${meta ? ` <small>${meta}</small>` : ''}</span>
+            <span class="sl-title">${bfIco('map-pin', 15)} ${escapeHtml(v.name)}${meta ? ` <small>${meta}</small>` : ''}</span>
             ${isAdmin ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar sala" title="Editar">${bfIcon('edit')}</button>
             <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar sala" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`;
@@ -904,7 +896,7 @@ async function loadBandSetlists(bandId, canEdit) {
         const res = await apiFetch(`/bands/${bandId}/setlists/`);
         if (!res.ok) throw new Error('http');
         setlists = await res.json();
-    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar los setlists.</small></li>'; return; }
+    } catch (e) { el.innerHTML = '<li><small>No se pudieron cargar los setlists.</small></li>'; return; }
 
     if (!setlists.length) {
         el.innerHTML = '<li><small>Sin setlists todavía. Crea uno con las canciones del repertorio.</small></li>';
@@ -1013,7 +1005,7 @@ async function newBandSetlist(bandId, opts = {}) {
                 <input type="text" class="search-box sl-note" data-note="${escapeHtml(id)}" maxlength="255"
                        placeholder="Apunte (capo 2, acústica…)" value="${escapeHtml(notes[id] || '')}">
                 <button class="setlist-item-btn" data-rm="${escapeHtml(id)}" aria-label="Quitar" title="Quitar">${bfIcon('x')}</button></li>`).join('')
-            || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
+            || '<li><small>Añade canciones desde la lista de la izquierda.</small></li>';
         elSel.querySelectorAll('.sl-note').forEach(inp =>
             inp.addEventListener('input', () => { notes[inp.dataset.note] = inp.value; }));
         elSel.querySelectorAll('button[data-rm]').forEach(b =>
@@ -1049,7 +1041,7 @@ function ensureRepertoireSearch() {
     search.id = 'b-rep-search';
     search.type = 'search';
     search.className = 'search-box';
-    search.placeholder = '🔍 Buscar en el repertorio…';
+    search.placeholder = 'Buscar en el repertorio…';
     search.style.marginBottom = '.5rem';
     elRep.parentNode.insertBefore(search, elRep);
     search.addEventListener('input', () => {
@@ -1070,7 +1062,7 @@ async function loadRepertoire(bandId, canEdit) {
         const res = await apiFetch(`/bands/${bandId}/songs/`);
         if (!res.ok) throw new Error('http');
         songs = await res.json();
-    } catch (e) { elRep.innerHTML = '<li><small>⚠️ No se pudo cargar el repertorio.</small></li>'; return; }
+    } catch (e) { elRep.innerHTML = '<li><small>No se pudo cargar el repertorio.</small></li>'; return; }
 
     if (!songs.length) {
         elRep.innerHTML = '<li><small>Repertorio vacío. Copia canciones de tus partituras.</small></li>';
@@ -1117,14 +1109,14 @@ async function loadCollections(bandId, canEdit) {
         const res = await apiFetch(`/bands/${bandId}/collections/`);
         if (!res.ok) throw new Error('http');
         cols = await res.json();
-    } catch (e) { el.innerHTML = '<li><small>⚠️ No se pudieron cargar las colecciones.</small></li>'; return; }
+    } catch (e) { el.innerHTML = '<li><small>No se pudieron cargar las colecciones.</small></li>'; return; }
     if (!cols.length) {
         el.innerHTML = '<li><small>Aún no hay colecciones.' + (canEdit ? ' Crea una para agrupar canciones por tema.' : '') + '</small></li>';
         return;
     }
     el.innerHTML = cols.map(c => `
         <li class="setlist-song" data-id="${escapeHtml(c.id)}">
-            <span class="sl-title">📁 ${escapeHtml(c.name)} <small>${c.song_count} ${c.song_count === 1 ? 'canción' : 'canciones'}</small></span>
+            <span class="sl-title">${bfIco('folder', 15)} ${escapeHtml(c.name)} <small>${c.song_count} ${c.song_count === 1 ? 'canción' : 'canciones'}</small></span>
             <button class="setlist-item-btn" data-act="open" title="Abrir">Abrir</button>
             ${canEdit ? `<button class="setlist-item-btn danger" data-act="del" aria-label="Borrar colección" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`).join('');
@@ -1179,7 +1171,7 @@ async function openCollection(bandId, collectionId, canEdit) {
         <div class="setlist-editor">
             <a href="#" id="col-back" class="back-link">← Volver a Colecciones</a>
             <div class="bf-row bf-row--between" style="align-items:baseline;gap:.6rem;flex-wrap:wrap;">
-                <h3>📁 ${escapeHtml(col.name)} <small class="bf-muted">· ${currentIds.length} ${currentIds.length === 1 ? 'canción' : 'canciones'}</small></h3>
+                <h3>${bfIco('folder', 18)} ${escapeHtml(col.name)} <small class="bf-muted">· ${currentIds.length} ${currentIds.length === 1 ? 'canción' : 'canciones'}</small></h3>
                 ${canEdit && currentIds.length ? `<button class="bf-btn bf-btn--sm" id="col-to-setlist" title="Crear un setlist (orden de bolo) con estas canciones">${bfIcon('music', { size: 15 })} Crear setlist con estas</button>` : ''}
             </div>
             <ul class="setlist-list" id="col-songs"></ul>

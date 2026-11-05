@@ -9,7 +9,7 @@
     const el = document.getElementById('finanzas');
     if (!el) return;
 
-    function fmtMoney(x) { return Number(x).toFixed(2) + ' €'; }
+    function fmtMoney(x) { return bfMoney(x); }   // T-V6-36
 
     function balanceRow(b) {
         const v = Number(b.balance);
@@ -17,7 +17,7 @@
         const label = v > 0 ? 'te deben' : (v < 0 ? 'debes' : 'al día');
         return `<a class="bf-list-item" href="band.html?id=${encodeURIComponent(b.band_id)}"
                    style="text-decoration:none;color:inherit;">
-            <span class="bf-grow">🎸 ${escapeHtml(b.band_name)}</span>
+            <span class="bf-grow">${escapeHtml(b.band_name)}</span>
             <span class="${cls}">${fmtMoney(Math.abs(v))} <span class="bf-faint">${label}</span></span>
         </a>`;
     }
@@ -31,7 +31,7 @@
             if (!r.ok) throw new Error('http');
             balances = await r.json();
         } catch (e) {
-            el.innerHTML = '<p class="bf-muted">⚠️ No se pudieron cargar tus finanzas. Inténtalo de nuevo.</p>';
+            el.innerHTML = '<p class="bf-muted">No se pudieron cargar tus finanzas. Inténtalo de nuevo.</p>';
             return;
         }
         el.innerHTML = `

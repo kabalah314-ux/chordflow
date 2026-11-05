@@ -18,7 +18,7 @@ async function loadSetlists() {
         if (!res.ok) throw new Error('http');
         const setlists = await res.json();
         if (!setlists.length) {
-            elGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🎼</div>
+            elGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">${bfIco('list-music', 40)}</div>
                 <h3>Aún no tienes setlists</h3>
                 <p>Crea uno para agrupar canciones y tocarlas en orden en tus bolos.</p></div>`;
             return;
@@ -53,7 +53,7 @@ async function loadSetlists() {
             });
         });
     } catch (e) {
-        elGrid.innerHTML = `<p class="loading-text">⚠️ No se pudieron cargar los setlists.</p>`;
+        elGrid.innerHTML = `<p class="loading-text">No se pudieron cargar los setlists.</p>`;
     }
 }
 
@@ -100,7 +100,7 @@ async function openEditor(setlistId = null) {
             if (!rSl.ok) throw new Error('http');
             existing = await rSl.json();
         }
-    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ Error cargando datos.</p>'; return; }
+    } catch (e) { elDetail.innerHTML = '<p class="loading-text">Error cargando datos.</p>'; return; }
 
     const selected = editing ? (existing.items || []).map(it => it.song_id) : []; // ids en orden
     const notes = {};   // song_id → apunte, persiste entre re-renders
@@ -145,7 +145,7 @@ async function openEditor(setlistId = null) {
                 <input type="text" class="search-box sl-note" data-note="${escapeHtml(id)}" maxlength="255"
                        placeholder="Apunte (capo 2, acústica…)" value="${escapeHtml(notes[id] || '')}">
                 <button class="setlist-item-btn" data-rm="${escapeHtml(id)}" aria-label="Quitar" title="Quitar">${bfIcon('x')}</button></li>`).join('')
-            || '<li><small>Pulsa ➕ para añadir canciones.</small></li>';
+            || '<li><small>Pulsa «+» para añadir canciones.</small></li>';
         elSel.querySelectorAll('.sl-note').forEach(inp =>
             inp.addEventListener('input', () => { notes[inp.dataset.note] = inp.value; }));
         elSel.querySelectorAll('button[data-rm]').forEach(b =>
@@ -214,7 +214,7 @@ async function openSetlist(id) {
         const res = await apiFetch(`/setlists/${id}`);
         if (!res.ok) throw new Error('http');
         sl = await res.json();
-    } catch (e) { elDetail.innerHTML = '<p class="loading-text">⚠️ No se pudo abrir el setlist.</p>'; return; }
+    } catch (e) { elDetail.innerHTML = '<p class="loading-text">No se pudo abrir el setlist.</p>'; return; }
 
     const rows = sl.items.map((it, i) => `
         <li class="setlist-song" data-id="${escapeHtml(it.song_id)}" data-pos="${i}">

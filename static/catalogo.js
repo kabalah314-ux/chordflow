@@ -24,7 +24,7 @@
         return `<li class="setlist-song" data-score="${escapeHtml(s.id)}" style="cursor:pointer;">
             <span class="sl-title">${escapeHtml(s.title)}
                 <small>${escapeHtml(s.artist || 'Artista desconocido')} · por ${escapeHtml(s.publisher_name || 'anónimo')}</small></span>
-            <span class="bf-faint" style="font-size:var(--bf-fs-xs);">${stars(s.rating_avg, s.rating_count)} · ⬇ ${s.import_count || 0}</span>
+            <span class="bf-faint" style="font-size:var(--bf-fs-xs);">${stars(s.rating_avg, s.rating_count)} · ${bfIco('download', 12)} ${s.import_count || 0}</span>
         </li>`;
     }
 
@@ -58,7 +58,7 @@
         } catch (e) { toast('No se pudo abrir la partitura.', 'error'); return; }
 
         const bandOpts = ['<option value="">Mis partituras (personal)</option>']
-            .concat(myBands.map(b => `<option value="${escapeHtml(b.id)}">🎸 ${escapeHtml(b.name)}</option>`)).join('');
+            .concat(myBands.map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`)).join('');
 
         root.innerHTML = `
             <button class="bf-btn bf-btn--sm bf-btn--ghost" id="cat-back" style="margin-bottom:.6rem;">← Explorar</button>
@@ -114,7 +114,7 @@
                     body: JSON.stringify({ band_id: bandId }) });
                 if (!res.ok) throw new Error('http');
                 const out = await res.json();
-                toast('Importada a tu espacio ✅', 'success');
+                toast('Importada a tu espacio', 'success');
                 if (out.song_id && !bandId) {
                     setTimeout(() => { window.location.href = `index.html?songId=${out.song_id}`; }, 700);
                 }
@@ -170,7 +170,7 @@
         root.innerHTML = `
             <div class="bf-stack">
                 <div>
-                    <h1 class="bf-h1">Explorar 🌍</h1>
+                    <h1 class="bf-h1">Explorar</h1>
                     <p class="bf-muted">El catálogo abierto de BandFlow: busca entre artistas y canciones que sube la comunidad.</p>
                 </div>
                 <div class="bf-row bf-wrap" style="gap:.5rem;">

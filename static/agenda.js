@@ -9,40 +9,27 @@
     const el = document.getElementById('agenda');
     if (!el) return;
 
-    const EV_ICON = { rehearsal: '🎼', concert: '🎤', other: '📌' };
-    const ATT = { yes: '✅ Voy', maybe: '🤔 Quizás', no: '❌ No voy' };
 
     let allEvents = [];
     let currentBand = 'all';
 
-    function fmtDate(iso) {
-        if (!iso) return 'Sin fecha';
-        const d = new Date(iso);
-        if (isNaN(d)) return 'Sin fecha';
-        return d.toLocaleString('es-ES',
-            { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    }
+    function fmtDate(iso) { return bfDate(iso, 'Sin fecha'); }   // T-V6-36
 
     // Resumen discreto de confirmados ("✅ Ana, Luis · 🤔 2"); '' si nadie respondió. Nombres escapados.
     function attendeesText(e) {
         const att = Array.isArray(e.attendance) ? e.attendance : [];
-        const going = att.filter(a => a.status === 'yes').map(a => escapeHtml(a.display_name || 'Alguien'));
-        const maybe = att.filter(a => a.status === 'maybe').length;
-        if (!going.length && !maybe) return '';
-        const bits = [];
-        if (going.length) bits.push(`✅ ${going.join(', ')}`);
-        if (maybe) bits.push(`🤔 ${maybe}`);
-        return `<span class="ev-attendees" style="display:block;">${bits.join(' · ')}</span>`;
+        const html = bfAttendees(e);   // T-V6-34: iconos SVG en vez de emojis
+        return html ? `<span class="ev-attendees" style="display:block;">${html}</span>` : '';
     }
 
     function eventRow(e) {
         return `<a class="bf-list-item" href="band.html?id=${encodeURIComponent(e.band_id)}"
                    style="text-decoration:none;color:inherit;">
             <span class="bf-badge">${escapeHtml(e.band_name)}</span>
-            <span class="bf-grow">${EV_ICON[e.type] || '📌'} ${escapeHtml(e.title)}
+            <span class="bf-grow">${bfEventIcon(e.type)} ${escapeHtml(e.title)}
                 <span class="bf-faint">· ${escapeHtml(fmtDate(e.starts_at))}</span>
                 ${attendeesText(e)}</span>
-            ${e.my_status ? `<span class="bf-badge">${ATT[e.my_status] || ''}</span>` : ''}
+            ${e.my_status ? `<span class="bf-badge bf-badge--att">${attHtml(e.my_status, 12)}</span>` : ''}
         </a>`;
     }
 
@@ -71,7 +58,7 @@
         const bands = [...new Map(allEvents.map(e => [e.band_id, e.band_name])).entries()];
         const chip = (key, label) =>
             `<button class="bf-btn bf-btn--sm${key === currentBand ? ' bf-btn--primary' : ''}" data-band="${escapeHtml(key)}">${escapeHtml(label)}</button>`;
-        const chips = chip('all', 'Todas') + bands.map(([id, name]) => chip(id, '🎸 ' + name)).join('');
+        const chips = chip('all', 'Todas') + bands.map(([id, name]) => chip(id, name)).join('');
 
         el.innerHTML = `
             <div class="bf-stack">
@@ -108,7 +95,7 @@
             if (!r.ok) throw new Error('http');
             allEvents = await r.json();
         } catch (e) {
-            el.innerHTML = '<p class="bf-muted">⚠️ No se pudo cargar la agenda. Inténtalo de nuevo.</p>';
+            el.innerHTML = '<p class="bf-muted">No se pudo cargar la agenda. Inténtalo de nuevo.</p>';
             return;
         }
         render();

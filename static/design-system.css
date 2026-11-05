@@ -512,3 +512,13 @@
 @media (prefers-reduced-motion: reduce) { .bf-btn.is-loading::after { animation-duration: 2s; } }
 .bf-empty--error .bf-empty__icon { color: var(--bf-danger); }
 .bf-empty--error .bf-btn { margin-top: var(--bf-space-3); }
+
+/* T-V6-34 — iconos SVG en línea (sustituyen a los emojis de evento/asistencia) */
+.bf-ev-icon, .ev-going svg, .ev-maybe svg, .att-btn svg, .bf-badge--att svg { display: inline-block; vertical-align: -0.15em; }
+.bf-ev-icon { color: var(--bf-primary, currentColor); margin-right: 0.15em; }
+.bf-ev-icon--concert { color: var(--bf-accent, var(--bf-primary, currentColor)); }
+.att-btn, .bf-badge--att { display: inline-flex; align-items: center; gap: 0.3em; }
+.ev-going { color: var(--bf-success, #3fb37f); }
+.ev-going, .ev-maybe { white-space: nowrap; }
+.ev-maybe { color: var(--bf-warning, #d9a441); }
+.empty-icon svg { opacity: 0.7; }

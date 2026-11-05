@@ -40,7 +40,7 @@
             if (!r.ok) throw new Error('http');
             convs = await r.json();
         } catch (e) {
-            el.innerHTML = '<p class="bf-muted">⚠️ No se pudieron cargar tus conversaciones. Inténtalo de nuevo.</p>';
+            el.innerHTML = '<p class="bf-muted">No se pudieron cargar tus conversaciones. Inténtalo de nuevo.</p>';
             return;
         }
         el.innerHTML = `

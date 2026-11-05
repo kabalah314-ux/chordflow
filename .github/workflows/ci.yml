@@ -1,22 +1,60 @@
 name: CI
 
-# Corre toda la verificación de calidad (doctor + ruff + unit + e2e) en cada push y PR.
-# Es la misma "definición de terminado" que en local: harness/run_checks.py.
+# T-V6-21: CI por jobs (lint+unit rápido · e2e con navegador), acciones fijadas por SHA, permisos
+# mínimos, cancelación de ejecuciones obsoletas y artefactos de diagnóstico si algo falla.
+# Misma "definición de terminado" que en local (harness/run_checks.py), partida en dos fases.
 on:
   push:
     branches: ["**"]
-  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  checks:
+  lint-unit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Configurar Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Crear .env dummy (CI no tiene secretos commiteados)
+        run: |
+          printf 'LOG_LEVEL=INFO\n' > .env
+          printf 'SUPABASE_URL=https://dummy.supabase.co\nSUPABASE_ANON_KEY=dummy-anon-key-for-ci\n' > .env.local
+
+      - name: Lint (ruff)
+        run: python -m ruff check .
+
+      - name: Cache-busting al día
+        run: python harness/cachebust.py --check
+
+      - name: Tests unitarios (API + lógica)
+        run: python -m pytest tests/unit -m unit -q
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: lint-unit
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
           cache: pip
@@ -30,12 +68,23 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Crear .env dummy (CI no tiene secretos commiteados)
-        # El doctor exige .env/.env.local con claves de Supabase presentes. En CI no hay
-        # secretos en el repo y los tests corren en modo test (no llaman a Supabase), así que
-        # bastan valores placeholder: el 401 sin token y el smoke no dependen del IdP real.
         run: |
           printf 'LOG_LEVEL=INFO\n' > .env
           printf 'SUPABASE_URL=https://dummy.supabase.co\nSUPABASE_ANON_KEY=dummy-anon-key-for-ci\n' > .env.local
 
-      - name: Verificación de calidad (doctor + ruff + unit + e2e)
-        run: python harness/run_checks.py
+      - name: Doctor (entorno + smoke)
+        run: python harness/doctor.py
+
+      - name: Tests e2e (navegador)
+        run: python -m pytest tests/e2e -m e2e -q --tracing=retain-on-failure --output=test-results
+
+      - name: Guardar diagnóstico si falla
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-diagnostico
+          path: |
+            test-results
+            test_e2e_server.log
+          if-no-files-found: ignore
+          retention-days: 7

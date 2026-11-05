@@ -46,6 +46,11 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6-F2/F3 (parcial) — CI en dos jobs + formatos Intl + iconos en vez de emojis (T-V6-20, 21, 34, 36)
+- **Qué:** CI separado en `lint-unit` y `e2e` (acciones fijadas por SHA, `permissions: read`, `concurrency`, `timeout-minutes`, `cachebust --check`, artefacto `e2e-diagnostico` con trazas y log del servidor). Helpers `bfMoney`/`bfDate`/`bfDateLong` (Intl es-ES) usados en todas las vistas. Emojis de interfaz sustituidos por iconos SVG (`bfEventIcon`, `attHtml`, `bfAttendees`, `bfIco`) en bandas, banda, inicio, agenda, biblioteca, catálogo, unirse, setlists, reproductor y páginas.
+- **Por qué:** aspecto profesional y consistente en todos los sistemas (los emojis se ven distintos en cada SO) y CI que diagnostica fallos.
+- **Verificación:** `node --check` de todos los JS, tests e2e de asistencia actualizados a `.ev-going`, cachebust al día; CI en rama `v6`.
+
 ### V6-F1 · Bugs altos y deuda que bloquea (2026-11-05)
 - **T-V6-10:** chat de banda incremental: API `?after=<id>&limit=` (sin `after`: fijados + últimos 100), cliente añade solo lo nuevo, auto-scroll si estabas abajo, sin sondeo con la pestaña oculta o fuera del panel. Tests `test_api_messages.py::test_chat_paginado_y_after`.
 - **T-V6-11:** `/songs/` con orden estable (`updated_at desc`), `X-Total-Count` y límite 200; la biblioteca recorre todas las páginas. Repertorio de banda alfabético.

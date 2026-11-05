@@ -15,7 +15,7 @@ async function init() {
         const res = await apiFetch('/profile/me');
         if (!res.ok) throw new Error('http');
         p = await res.json();
-    } catch (e) { elForm.innerHTML = '<p class="loading-text">⚠️ No se pudo cargar el perfil.</p>'; return; }
+    } catch (e) { elForm.innerHTML = '<p class="loading-text">No se pudo cargar el perfil.</p>'; return; }
 
     let bands = [];
     try {

@@ -270,3 +270,54 @@ async function bfBusy(btn, fn) {
     try { return await fn(); }
     finally { btn.disabled = false; btn.classList.remove('is-loading'); btn.removeAttribute('aria-busy'); }
 }
+
+
+// ─── T-V6-36: formatos únicos (antes había 4 copias de dinero y 4 de fechas) ────────
+const BF_LOCALE = 'es-ES';
+// Dinero con Intl: "−160,00 €" (antes "-160.00 €"). Moneda de la banda (EUR por defecto).
+function bfMoney(x, currency = 'EUR') {
+    const v = Number(x || 0);
+    try { return new Intl.NumberFormat(BF_LOCALE, { style: 'currency', currency }).format(v); }
+    catch (e) { return v.toFixed(2) + ' €'; }
+}
+// Fecha corta legible: "sáb, 14 nov, 20:30". `empty` = texto si no hay fecha.
+function bfDate(iso, empty = '') {
+    if (!iso) return empty;
+    const d = new Date(iso);
+    if (isNaN(d)) return empty;
+    return d.toLocaleString(BF_LOCALE, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+// Fecha larga para detalle: "sábado, 14 de noviembre, 20:30".
+function bfDateLong(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleString(BF_LOCALE, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+}
+
+
+// ─── T-V6-34: iconos de dominio (antes emojis repartidos por 4 ficheros) ────────────
+const BF_EVENT_ICON = { rehearsal: 'music', concert: 'mic', other: 'pin' };
+const BF_ATT = {
+    yes:   { icon: 'check', text: 'Voy' },
+    maybe: { icon: 'help-circle', text: 'Quizás' },
+    no:    { icon: 'x', text: 'No voy' },
+};
+function bfIco(name, size = 16) { return typeof bfIcon === 'function' ? bfIcon(name, { size }) : ''; }
+function bfEventIcon(type, size = 16) {
+    return `<span class="bf-ev-icon bf-ev-icon--${escapeHtml(type || 'other')}" aria-hidden="true">${bfIco(BF_EVENT_ICON[type] || 'pin', size)}</span>`;
+}
+// Etiqueta de asistencia con icono (para botones y badges). `attText` = solo texto (para title/aria).
+function attText(st) { return (BF_ATT[st] || {}).text || ''; }
+function attHtml(st, size = 14) { const a = BF_ATT[st]; return a ? `${bfIco(a.icon, size)}<span>${a.text}</span>` : ''; }
+// Resumen de asistentes: "✓ Ana, Luis · ? 2" con iconos y nombres escapados ('' si nadie respondió).
+function bfAttendees(e) {
+    const att = Array.isArray(e.attendance) ? e.attendance : [];
+    const going = att.filter(a => a.status === 'yes').map(a => escapeHtml(a.display_name || 'Alguien'));
+    const maybe = att.filter(a => a.status === 'maybe').length;
+    if (!going.length && !maybe) return '';
+    const bits = [];
+    if (going.length) bits.push(`<span class="ev-going" title="Van">${bfIco('check', 13)} ${going.join(', ')}</span>`);
+    if (maybe) bits.push(`<span class="ev-maybe" title="Quizás">${bfIco('help-circle', 13)} ${maybe}</span>`);
+    return bits.join(' · ');
+}

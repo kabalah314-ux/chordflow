@@ -37,7 +37,7 @@ def test_agenda_agrega_proximos_y_pasados_con_filtro(page, live_server, api):
 
 
 def test_agenda_agregada_muestra_confirmados(page, live_server, api):
-    """La agenda agregada muestra los confirmados de cada evento (✅ nombre), como la de banda."""
+    """La agenda agregada muestra los confirmados de cada evento (icono ✓ + nombre), como la de banda."""
     api.put("/profile/me", json={"display_name": "Ana E2E"})
     bid = api.post("/bands/", json={"name": "Banda Conf Agg"}).json()["id"]
     eid = api.post(f"/bands/{bid}/events/",
@@ -49,4 +49,4 @@ def test_agenda_agregada_muestra_confirmados(page, live_server, api):
     fila = '#agenda-upcoming a:has-text("Bolo Confirmado Agg")'
     page.wait_for_selector(fila + " .ev-attendees", timeout=8000)
     linea = page.inner_text(fila + " .ev-attendees")
-    assert "✅" in linea and "Ana E2E" in linea
+    assert page.locator(fila + " .ev-attendees .ev-going").count() == 1 and "Ana E2E" in linea

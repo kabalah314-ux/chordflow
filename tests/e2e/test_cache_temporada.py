@@ -40,8 +40,8 @@ def test_cache_por_temporada_separa_dos_temporadas(page, live_server, api):
     # Ordenadas de la más reciente a la más antigua.
     primera = rows.nth(0).inner_text()
     segunda = rows.nth(1).inner_text()
-    assert "Temporada 2025" in primera and "500.00" in primera   # neto 800−300
-    assert "Temporada 2024" in segunda and "500.00" in segunda   # neto 500−0
+    assert "Temporada 2025" in primera and "500,00" in primera   # neto 800−300 (Intl es-ES, T-V6-36)
+    assert "Temporada 2024" in segunda and "500,00" in segunda   # neto 500−0
 
 
 def test_aggregacion_pura_por_temporada(page, live_server, api):

@@ -259,8 +259,8 @@ async function setupSetlistNav() {
         const nextDis = pos >= ids.length - 1 ? 'disabled' : '';
         elNav.innerHTML = `
             <button id="sl-prev" class="secondary-btn" ${prevDis} aria-label="Canción anterior">◀</button>
-            <span class="sl-nav-label">🎼 ${escapeHtml(sl.name)} · ${pos + 1}/${ids.length}</span>
-            ${note ? `<span class="sl-nav-note" title="Apunte de la canción">📝 ${escapeHtml(note)}</span>` : ''}
+            <span class="sl-nav-label">${escapeHtml(sl.name)} · ${pos + 1}/${ids.length}</span>
+            ${note ? `<span class="sl-nav-note" title="Apunte de la canción">${escapeHtml(note)}</span>` : ''}
             <button id="sl-next" class="secondary-btn" ${nextDis} aria-label="Siguiente canción">▶</button>`;
         elNav.style.display = 'flex';
         const p = document.getElementById('sl-prev'); if (p && !prevDis) p.addEventListener('click', () => go(pos - 1));

@@ -165,7 +165,8 @@ def live_server():
     except subprocess.TimeoutExpired:
         proc.kill()
     log_fh.close()
-    for f in (e2e_db, log_path):
+    # En CI se conserva el log del servidor para subirlo como artefacto si algo falla (T-V6-21).
+    for f in ((e2e_db,) if os.getenv("CI") else (e2e_db, log_path)):
         if f.exists():
             try:
                 f.unlink()

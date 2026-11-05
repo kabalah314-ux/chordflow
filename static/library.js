@@ -40,12 +40,12 @@ async function fetchSongs() {
         ]);
         collections = cols;
         const personalTagged = personal.map(s =>
-            ({ ...s, _scope: 'personal', _label: 'Personal', _badge: '👤 Personal' }));
+            ({ ...s, _scope: 'personal', _label: 'Personal', _badge: 'Personal' }));
 
         const perBand = await Promise.all(bands.map(b =>
             apiFetch(`/bands/${b.id}/songs/`).then(r => (r.ok ? r.json() : []))
                 .then(list => list.map(s =>
-                    ({ ...s, _scope: 'band', _bandId: b.id, _label: b.name, _badge: '🎸 ' + b.name })))
+                    ({ ...s, _scope: 'band', _bandId: b.id, _label: b.name, _badge: b.name })))
         ));
 
         allSongs = personalTagged.concat(...perBand);
@@ -64,8 +64,8 @@ function buildFilters(bands) {
     if (!elFilters) return;
     const chips = [
         { key: 'all', label: 'Todas' },
-        { key: 'personal', label: '👤 Personales' },
-        ...bands.map(b => ({ key: b.id, label: '🎸 ' + b.name })),
+        { key: 'personal', label: 'Personales' },
+        ...bands.map(b => ({ key: b.id, label: b.name })),
     ];
     elFilters.innerHTML = chips.map(c =>
         `<button class="lib-filter${c.key === currentFilter ? ' active' : ''}" data-filter="${escapeHtml(c.key)}">${escapeHtml(c.label)}</button>`
@@ -226,12 +226,12 @@ function renderGrid(songs, query) {
         if (query) {
             elGrid.innerHTML = `<p class="loading-text">Sin resultados para «${escapeHtml(query)}».</p>`;
         } else if (currentCollection) {
-            elGrid.innerHTML = `<p class="loading-text">Esta colección está vacía. Pulsa «✏️ Editar» para añadir canciones.</p>`;
+            elGrid.innerHTML = `<p class="loading-text">Esta colección está vacía. Pulsa «Editar» para añadir canciones.</p>`;
         } else if (currentFilter === 'personal' || (currentFilter === 'all' && allSongs.length === 0)) {
             // Onboarding: no tengo partituras personales (o ninguna en absoluto).
             elGrid.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">🎸</div>
+                    <div class="empty-icon">${bfIco('guitar', 40)}</div>
                     <h3>Aún no tienes partituras</h3>
                     <p>Crea tu primera canción pegando acordes desde Ultimate Guitar o LaCuerda.</p>
                     <a href="editor.html" class="primary-btn" style="text-decoration:none; margin-top:1rem;">${bfIcon('plus', { size: 16 })} Crear mi primera partitura</a>

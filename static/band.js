@@ -32,7 +32,7 @@
     const TOUR_STATUS = {
         planning: 'En preparación', active: 'En gira', done: 'Terminada', cancelled: 'Cancelada',
     };
-    function money(x) { return Number(x || 0).toFixed(2) + ' €'; }
+    function money(x) { return bfMoney(x); }   // T-V6-36
     function fmtDay(iso) {
         if (!iso) return '';
         const d = new Date(iso);
@@ -87,7 +87,7 @@
         if (!tabs) return;
         const tip = document.createElement('div');
         tip.className = 'bf-tour-tip';
-        tip.innerHTML = `<span>👋 Todo lo de tu banda está en estas pestañas: <b>Resumen</b>, <b>Miembros</b>,
+        tip.innerHTML = `<span>Todo lo de tu banda está en estas pestañas: <b>Resumen</b>, <b>Miembros</b>,
             <b>Repertorio</b>, <b>Setlists</b>, <b>Agenda</b>, <b>Finanzas</b>, <b>Chat</b> y <b>Giras</b>.
             Empieza por el Resumen.</span>
             <button class="bf-btn bf-btn--sm bf-btn--primary" id="bf-tour-ok">Entendido</button>`;
@@ -288,7 +288,7 @@
             if (!res.ok) throw new Error('http');
             s = await res.json();
         } catch (e) {
-            el.innerHTML = '<div class="bf-card"><p class="bf-muted">⚠️ No se pudo cargar el resumen.</p></div>';
+            el.innerHTML = '<div class="bf-card"><p class="bf-muted">No se pudo cargar el resumen.</p></div>';
             return;
         }
         const ev = s.next_event, msg = s.last_message;
@@ -303,13 +303,13 @@
                     <span class="bf-badge">${escapeHtml(bsCountdown(ev.starts_at))}</span>
                 </div>
                 <div>
-                    <div style="font-size:var(--bf-fs-lg);font-weight:var(--bf-fw-semibold);">${EVENT_ICON[ev.type] || '📌'} ${escapeHtml(ev.title)}</div>
+                    <div style="font-size:var(--bf-fs-lg);font-weight:var(--bf-fw-semibold);">${bfEventIcon(ev.type, 18)} ${escapeHtml(ev.title)}</div>
                     <p class="bf-muted" style="margin:.2rem 0;">${escapeHtml(fmtDate(ev.starts_at))}</p>
                     ${bookingLine(ev)}${attendeesLine(ev)}
                 </div>
                 <div>
                     <p class="bf-faint" style="font-size:.78rem;margin-bottom:.3rem;">¿Vas?</p>
-                    <span class="att-buttons" id="bs-att">${['yes', 'maybe', 'no'].map(st => `<button class="setlist-item-btn att-btn${ev.my_status === st ? ' active' : ''}" data-att="${st}" title="${ATT_LABEL[st]}">${ATT_LABEL[st]}</button>`).join('')}</span>
+                    <span class="att-buttons" id="bs-att">${['yes', 'maybe', 'no'].map(st => `<button class="setlist-item-btn att-btn${ev.my_status === st ? ' active' : ''}" data-att="${st}" title="${ATT_LABEL[st]}" aria-label="${ATT_LABEL[st]}">${attHtml(st)}</button>`).join('')}</span>
                 </div>
             </div>` : `<div class="bf-card">${bfEmpty('calendar', 'Sin eventos próximos', ctx.iAmAdmin ? 'Crea un ensayo o concierto en la Agenda.' : 'Aún no hay nada en la agenda.')}</div>`;
 
@@ -389,7 +389,7 @@
             ? `<small>${fmtDay(t.start_date)}${t.end_date ? ' – ' + fmtDay(t.end_date) : ''}</small>` : '';
         return `<li class="setlist-song" data-tour="${escapeHtml(t.id)}" style="cursor:pointer;">
             <span class="sl-title">${escapeHtml(t.name)}
-                <small>${escapeHtml(TOUR_STATUS[t.status] || t.status)} · ${t.stop_count} ${t.stop_count === 1 ? 'parada' : 'paradas'} · ${money(t.total_budget)}${Number(t.total_fee) > 0 ? ' · 💶 ' + money(t.total_fee) + ' caché' : ''}</small></span>
+                <small>${escapeHtml(TOUR_STATUS[t.status] || t.status)} · ${t.stop_count} ${t.stop_count === 1 ? 'parada' : 'paradas'} · ${money(t.total_budget)}${Number(t.total_fee) > 0 ? ' · ' + bfIco('banknote', 12) + ' ' + money(t.total_fee) + ' caché' : ''}</small></span>
             ${dates}
         </li>`;
     }
@@ -421,7 +421,7 @@
         const stops = (tour.stops || []).map(s => `
             <li class="setlist-song">
                 <span class="sl-title">${escapeHtml(s.city || s.event_title || 'Parada')}
-                    <small>${s.event_title ? '🎤 ' + escapeHtml(s.event_title) : 'sin concierto ligado'}${s.event_starts_at ? ' · ' + fmtDay(s.event_starts_at) : ''}</small></span>
+                    <small>${s.event_title ? bfIco('mic', 12) + ' ' + escapeHtml(s.event_title) : 'sin concierto ligado'}${s.event_starts_at ? ' · ' + fmtDay(s.event_starts_at) : ''}</small></span>
                 ${isAdmin ? `<button class="bf-btn bf-btn--sm bf-btn--danger" data-del-stop="${escapeHtml(s.id)}">Quitar</button>` : ''}
             </li>`).join('') || '<li><small>Sin paradas todavía.</small></li>';
 

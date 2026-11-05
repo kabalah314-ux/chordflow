@@ -355,7 +355,7 @@ def test_crear_evento_y_marcar_asistencia_en_la_ui(page, live_server, api):
 
 def test_agenda_muestra_quien_ha_confirmado(page, live_server, api):
     """Cada evento muestra de forma discreta quién ha confirmado asistencia (#4): al marcar 'Voy'
-    aparece una línea `.ev-attendees` con el ✅ y mi nombre. El backend la surte en la lista de
+    aparece una línea `.ev-attendees` con el icono ✓ y mi nombre. El backend la surte en la lista de
     eventos (no solo en el detalle)."""
     api.post("/bands/", json={"name": "Banda Confirmados"})
 
@@ -376,10 +376,10 @@ def test_agenda_muestra_quien_ha_confirmado(page, live_server, api):
     page.wait_for_selector(song, timeout=8000)
     assert page.locator(song + " .ev-attendees").count() == 0
 
-    # Al marcar "Voy", aparece la línea discreta con el ✅.
+    # Al marcar "Voy", aparece la línea discreta con el icono ✓.
     page.click(song + ' button[data-att="yes"]')
     page.wait_for_selector(song + " .ev-attendees", timeout=8000)
-    assert "✅" in page.inner_text(song + " .ev-attendees")
+    assert page.locator(song + " .ev-attendees .ev-going").count() == 1
 
 
 def test_registrar_movimiento_y_ver_saldos_en_la_ui(page, live_server, api):
