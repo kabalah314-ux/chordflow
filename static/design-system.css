@@ -711,3 +711,5 @@ a.rd-pro:hover { border-color: var(--bf-primary); }
 .bt-bars__pair { flex: 1; width: 100%; display: flex; gap: 3px; align-items: flex-end; justify-content: center; }
 .bt-bars__bar { width: 40%; max-width: 18px; min-height: 2px; background: var(--bt-c); border-radius: 4px 4px 0 0; }
 .bt-bars__label { font-size: var(--bf-fs-xs, .75rem); color: var(--bf-text-muted, inherit); text-transform: capitalize; }
+.agenda-week + .agenda-week { margin-top: .8rem; }
+.agenda-week__title { font-size: var(--bf-fs-xs, .75rem); text-transform: uppercase; letter-spacing: .06em; color: var(--bf-text-muted, inherit); margin: .2rem 0 .3rem; }

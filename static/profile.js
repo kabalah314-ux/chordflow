@@ -75,9 +75,43 @@ function render(p, bands) {
             <button type="button" class="bf-btn" id="pf-cal">${bfIcon('calendar', { size: 15 })} Ver mis eventos en mi calendario</button>
             <button type="button" class="bf-btn" id="pf-export">${bfIcon('download', { size: 15 })} Descargar mis datos</button>
             <button type="button" class="bf-btn bf-btn--danger" id="pf-delete">${bfIcon('trash', { size: 15 })} Borrar mi cuenta</button>
+        </div>
+        <div class="bf-row bf-wrap" style="gap:.5rem;margin-top:.5rem;">
+            <button type="button" class="bf-btn bf-btn--sm" id="pf-pass">Cambiar contraseña</button>
+            <button type="button" class="bf-btn bf-btn--sm" id="pf-email">Cambiar email</button>
+            <button type="button" class="bf-btn bf-btn--sm bf-btn--ghost" id="pf-signout-all">Cerrar sesión en todos los dispositivos</button>
         </div>`;
 
     document.getElementById('pf-save').addEventListener('click', () => save(p, bands));
+    // T-V6-50: cuenta (Supabase Auth). En modo test no hay Supabase real.
+    const sbOrWarn = async () => {
+        if ((await getConfig()).test_mode) { toast('No disponible en modo test.', 'info'); return null; }
+        return getSupabase();
+    };
+    document.getElementById('pf-pass').addEventListener('click', async () => {
+        const v = await bfDialog({ title: 'Cambiar contraseña',
+            body: `<div class="bf-stack"><label class="bf-label" for="pf-np">Nueva contraseña (mínimo 6)</label><input class="bf-input" type="password" id="pf-np" autocomplete="new-password"></div>`,
+            actions: [{ label: 'Cancelar', value: null }, { label: 'Guardar', primary: true, onClick: (root) => {
+                const x = root.querySelector('#pf-np').value; if (x.length < 6) { toast('Mínimo 6 caracteres.', 'error'); return false; } return x; } }] });
+        if (!v) return;
+        const sb = await sbOrWarn(); if (!sb) return;
+        const { error } = await sb.auth.updateUser({ password: v });
+        toast(error ? (error.message || 'No se pudo cambiar.') : 'Contraseña cambiada.', error ? 'error' : 'success');
+    });
+    document.getElementById('pf-email').addEventListener('click', async () => {
+        const v = await promptModal('Nuevo email (te llegará un enlace para confirmarlo)', { okText: 'Cambiar' });
+        if (!v) return;
+        const sb = await sbOrWarn(); if (!sb) return;
+        const { error } = await sb.auth.updateUser({ email: v });
+        toast(error ? (error.message || 'No se pudo cambiar.') : 'Revisa tu bandeja para confirmar el email nuevo.', error ? 'error' : 'success');
+    });
+    document.getElementById('pf-signout-all').addEventListener('click', async () => {
+        if (!(await confirmModal('¿Cerrar la sesión en todos tus dispositivos (también en este)?', { okText: 'Cerrar sesiones' }))) return;
+        const sb = await sbOrWarn(); if (!sb) return;
+        try { await sb.auth.signOut({ scope: 'global' }); } catch (e) { /* sigue */ }
+        location.href = 'login.html';
+    });
+
     // T-V6-62 / T-V6-65: calendario, exportar y borrar cuenta
     document.getElementById('pf-cal').addEventListener('click', () => bfSubscribeCalendar());
     document.getElementById('pf-export').addEventListener('click', async () => {

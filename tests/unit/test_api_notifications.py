@@ -118,3 +118,15 @@ def test_busqueda_global_solo_lo_mio(client):
     with acting_as(MEMBER):  # miembro: ve la de la banda, no la personal del otro
         t = {r["title"] for r in client.get("/me/search?q=zarabanda").json()}
         assert "Zarabanda Buscable" in t and "Zarabanda Personal" not in t
+
+
+def test_ics_de_evento_publico_solo_si_esta_compartido(client):
+    bid = _band(client)
+    ev = client.post(f"/bands/{bid}/events/", json={"type": "concert", "title": "Bolo abierto ics",
+                                                    "starts_at": "2099-04-04T22:00:00",
+                                                    "address": "Dirección privada 1"}).json()
+    assert client.get(f"/public/events/{ev['id']}/ics").status_code == 404   # privado
+    client.patch(f"/bands/{bid}/events/{ev['id']}", json={"visibility": "unlisted"})
+    r = client.get(f"/public/events/{ev['id']}/ics")
+    assert r.status_code == 200 and "Bolo abierto ics" in r.text
+    assert "Dirección privada" not in r.text

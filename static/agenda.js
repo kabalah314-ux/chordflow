@@ -34,6 +34,50 @@
         </a>`;
     }
 
+    // T-V6-47: próximos agrupados por semana ("Esta semana", "La semana que viene", "Semana del 14 dic")
+    function weekStart(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
+    function groupByWeek(evs) {
+        const thisW = weekStart(new Date()).getTime();
+        const groups = [];
+        evs.slice().sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at)).forEach(e => {
+            const w = weekStart(e.starts_at).getTime();
+            let g = groups.find(x => x.w === w);
+            if (!g) { g = { w, items: [] }; groups.push(g); }
+            g.items.push(e);
+        });
+        const label = (w) => w === thisW ? 'Esta semana' : (w === thisW + 7 * 864e5 ? 'La semana que viene'
+            : 'Semana del ' + new Date(w).toLocaleDateString(BF_LOCALE, { day: 'numeric', month: 'short' }));
+        return groups.map(g => `<div class="agenda-week"><h3 class="agenda-week__title">${escapeHtml(label(g.w))}</h3>${g.items.map(eventRow).join('')}</div>`).join('');
+    }
+
+    // T-V6-47: crear un evento desde la agenda general eligiendo la banda (solo bandas donde soy admin)
+    async function newEventAnyBand() {
+        let bands = [];
+        try { bands = (await apiJson('/bands/')).filter(b => b.role === 'admin'); } catch (e) { bands = []; }
+        if (!bands.length) { toast('Solo un admin de la banda puede crear eventos.', 'info'); return; }
+        const r = await bfDialog({
+            title: 'Nuevo evento',
+            body: `<div class="bf-stack">
+                <div><label class="bf-label" for="ag-band">Banda</label><select class="bf-input" id="ag-band">${bands.map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('')}</select></div>
+                <div class="bf-form-grid">
+                  <div><label class="bf-label" for="ag-type">Tipo</label><select class="bf-input" id="ag-type"><option value="rehearsal">Ensayo</option><option value="concert">Concierto</option><option value="other">Otro</option></select></div>
+                  <div><label class="bf-label" for="ag-when">Fecha y hora</label><input class="bf-input" type="datetime-local" id="ag-when"></div>
+                </div>
+                <div><label class="bf-label" for="ag-title">Título</label><input class="bf-input" id="ag-title" maxlength="255" placeholder="Ensayo general" autofocus></div>
+                <div><label class="bf-label" for="ag-loc">Lugar</label><input class="bf-input" id="ag-loc" maxlength="255"></div>
+              </div>`,
+            actions: [{ label: 'Cancelar', value: null }, { label: 'Crear', primary: true, onClick: (root) => {
+                const title = root.querySelector('#ag-title').value.trim();
+                if (!title) { toast('Pon un título.', 'error'); return false; }
+                return { band: root.querySelector('#ag-band').value, body: { type: root.querySelector('#ag-type').value, title,
+                    starts_at: bfFromLocalInput(root.querySelector('#ag-when').value), location: root.querySelector('#ag-loc').value.trim() || null } };
+            } }],
+        });
+        if (!r) return;
+        try { await apiJson(`/bands/${encodeURIComponent(r.band)}/events/`, { method: 'POST', body: r.body }); toast('Evento creado. La banda recibirá un aviso.', 'success'); load(); }
+        catch (e) { toast(errorMessage(e, 'No se pudo crear el evento.'), 'error'); }
+    }
+
     function render() {
         if (!allEvents.length) {
             el.innerHTML = `
@@ -72,6 +116,7 @@
                             <button class="bf-btn bf-btn--sm${view === 'month' ? ' bf-btn--primary' : ''}" data-view="month" aria-pressed="${view === 'month'}">${bfIco('calendar', 14)} Mes</button>
                         </div>
                         <button class="bf-btn bf-btn--sm" id="agenda-subscribe">${bfIco('calendar', 14)} En mi calendario</button>
+                        <button class="bf-btn bf-btn--sm bf-btn--primary" id="agenda-new">${bfIco('plus', 14)} Nuevo evento</button>
                     </div>
                 </div>
                 <div class="bf-row bf-wrap" id="agenda-filters">${chips}</div>
@@ -79,7 +124,7 @@
                 <div class="bf-card"${view === 'month' ? ' hidden' : ''}>
                     <h2 class="bf-h3" style="margin-bottom:.75rem;">Próximos</h2>
                     ${upcoming.length
-                        ? `<div class="bf-list" id="agenda-upcoming">${upcoming.map(eventRow).join('')}</div>`
+                        ? `<div class="bf-list" id="agenda-upcoming">${groupByWeek(upcoming)}</div>`
                         : `<p class="bf-muted" id="agenda-upcoming">No hay eventos próximos.</p>`}
                 </div>
                 ${past.length
@@ -96,6 +141,7 @@
             btn.addEventListener('click', () => { currentBand = btn.dataset.band; render(); }));
         el.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { view = b.dataset.view; render(); }));
         el.querySelector('#agenda-subscribe').addEventListener('click', () => bfSubscribeCalendar());
+        el.querySelector('#agenda-new').addEventListener('click', newEventAnyBand);
         const month = el.querySelector('#agenda-month');
         if (month) bfCalendar(month, base.map(e => ({ ...e, href: `band.html?id=${encodeURIComponent(e.band_id)}` })));
     }

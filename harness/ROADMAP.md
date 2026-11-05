@@ -778,7 +778,7 @@
 - [x] **T-V6-19** Lote backend medio: `active_membership()` único con `Band.deleted_at`; liquidaciones a ex-miembros; `reference_url` al copiar; búsqueda por `norm_*`; `plan` fuera del PATCH; `load_dotenv(override=True)`; longitudes espejo + test en PG; `IntegrityError` en perfil; `except HTTPException: raise` en `get_db`
 - [x] **T-V6-21** CI como gate: SHA-pin, `permissions`, `concurrency`, jobs lint+unit / e2e / migraciones-PG, artefactos en fallo, branch protection con required check antes del auto-deploy
 - [x] **T-V6-22** Lockfile con hashes, `requirements-dev` pineado, `pip-audit`, Dependabot, `.gitignore` `.env.*`
-- [ ] **T-V6-23** Migración `147a6a78da86` válida en PG; job CI con Postgres (`upgrade head` + `check` + `downgrade base`)
+- [x] **T-V6-23** Migración `147a6a78da86` válida en PG; job CI con Postgres (`upgrade head` + `check` + `downgrade base`)
 - [ ] **T-V6-24** Estáticos servidos por Vercel con `Cache-Control: immutable`; la función solo para la API; medir cold start antes/después
 - [ ] **T-V6-25** Tooling JS: `package.json`, ESLint, `tsc --checkJs` + JSDoc, Vitest para módulos puros; integrado en `run_checks.py`; `test_js_logic.py` deja de usar Chromium
 - [ ] **T-V6-26** ESM `core/` y `ui/` con doble export (`window.*` shim): `api`, `session`, `dialog`, `toast`, `menu`, `format`, `labels`; import map generado por `cachebust.py` (D-V6-2)
@@ -806,12 +806,12 @@
 - [ ] **T-V6-44** Mis bandas: tarjetas con cover y miembros apilados; "Unirme con código"; vacío ilustrado
 - [ ] **T-V6-45** Biblioteca + Setlists personales: chips, grid/lista, meta, ⋯ visible en móvil, orden, cargar más
 - [ ] **T-V6-46** Editor: metadatos completos, diálogo "Importar" con 3 pestañas, barra inferior fija, Ctrl+S, preview alineada
-- [ ] **T-V6-47** Agenda TÚ: lista agrupada por semana, crear evento eligiendo banda, filtros (calendario en F6)
+- [x] **T-V6-47** Agenda TÚ: lista agrupada por semana, crear evento eligiendo banda, filtros (calendario en F6)
 - [ ] **T-V6-48** Finanzas TÚ: resumen global + movimientos + liquidar
 - [ ] **T-V6-49** Chat TÚ: dos columnas + no-leídos en lateral (`.bf-nav-badge`)
-- [ ] **T-V6-50** Perfil + Cuenta (chips de instrumentos, cambiar email/contraseña, cerrar sesiones, tema, idioma)
+- [x] **T-V6-50** Perfil + Cuenta (chips de instrumentos, cambiar email/contraseña, cerrar sesiones, tema, idioma)
 - [ ] **T-V6-51** Afinador/Metrónomo: centrado, nota en reposo, presets
-- [ ] **T-V6-52** Explorar provisional (tarjetas, abort/debounce, paginación) + evento público (cover, .ics, compartir)
+- [x] **T-V6-52** Explorar provisional (tarjetas, abort/debounce, paginación) + evento público (cover, .ics, compartir)
 - [ ] **T-V6-55** Reproductor: toolbar compacta (popovers BPM/tono en móvil, menú ⋯), tamaño de letra A−/A+, sección actual + navegación, cuenta atrás etiquetada, tempo por usuario (D-V6-9)
 - [x] **T-V6-56** Modo setlist in-page ("Siguiente: …", prefetch) + parada al final con test. **Únicas excepciones al motor**, con plan en TASKS
 - [ ] **T-V6-57** `wakeLock`, offline de última canción/setlist (IndexedDB), `manifest.json` actualizado, icono coral

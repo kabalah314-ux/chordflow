@@ -37,8 +37,20 @@
              <p class="pub-band">${esc(ev.band_name)}</p>
              ${ev.starts_at ? `<p class="pub-date">${esc(fmtDate(ev.starts_at))}</p>` : ''}
              ${place ? `<p class="pub-place">${esc(place)}</p>` : ''}
+             <div class="pub-actions">
+                ${ev.starts_at ? `<a class="bf-btn" href="/public/events/${encodeURIComponent(ev.id)}/ics">Añadir a mi calendario</a>` : ''}
+                <button class="bf-btn" id="pub-share" type="button">Compartir</button>
+             </div>
              ${CTA}`;
         document.title = `${ev.title} — BandFlow`;
+        // T-V6-52: compartir (Web Share → copiar)
+        const sh = document.getElementById('pub-share');
+        if (sh) sh.addEventListener('click', async () => {
+            const data = { title: ev.title, text: `${ev.title} · ${ev.band_name}`, url: location.href };
+            try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { return; }
+            try { await navigator.clipboard.writeText(location.href); sh.textContent = 'Enlace copiado'; }
+            catch (e) { window.open('https://wa.me/?text=' + encodeURIComponent(data.text + ' ' + data.url), '_blank', 'noopener'); }
+        });
     }
 
     function notFound() {

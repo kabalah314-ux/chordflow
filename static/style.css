@@ -1709,3 +1709,4 @@ body.lp { min-height: 100vh; display: flex; flex-direction: column; }
 #b-chat .msg-item { align-items: flex-start; }
 #b-chat .msg-mine .sl-title { background: color-mix(in srgb, var(--accent-color) 14%, transparent); border-radius: 12px; padding: .35rem .6rem; margin-left: auto; }
 #b-chat .msg-time { display: block; font-size: .7rem; color: var(--text-secondary); margin-top: .1rem; }
+.pub-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 .5rem; }

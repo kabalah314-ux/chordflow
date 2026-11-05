@@ -46,6 +46,10 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Agenda TÚ por semanas + crear evento eligiendo banda (T-V6-47) · Cuenta en Perfil (T-V6-50) · evento público con .ics y compartir (T-V6-52) · Finanzas de banda con gráfico (T-V6-42f) · chat con hora y editar (T-V6-42c)
+- **Qué:** Agenda: próximos agrupados por semana, "Nuevo evento" eligiendo banda (solo donde eres admin). Perfil: cambiar contraseña, cambiar email (confirmación por correo) y cerrar sesión en todos los dispositivos. `evento.html`: "Añadir a mi calendario" (`/public/events/{id}/ics`, misma proyección pública, sin la dirección privada de la hoja) y "Compartir". Finanzas de banda: barras de ingresos/gastos de los últimos 6 meses. Chat de banda: hora, mensajes propios destacados y "editar" en los míos.
+- **Verificación:** `test_ics_de_evento_publico_solo_si_esta_compartido`; e2e de agenda/chat existentes.
+
 ### V6 — Login profesional + recuperar contraseña + términos/privacidad (T-V6-40) · unirse con código (parte de T-V6-44)
 - **Qué:** login en dos columnas (qué es BandFlow / formulario), pestañas Entrar · Crear cuenta, "Ver" contraseña, errores de Supabase en castellano, "¿Has olvidado la contraseña?" (email de Supabase → `reset.html` para elegir una nueva), botón de Google con su logo oficial y aviso de términos/privacidad (`legal.html`, texto provisional pendiente de revisión legal). `join.html` sin código pide pegar el enlace o el código; "Unirme con un código" en Mis bandas.
 - **Pendiente de Oscar:** en Supabase › Auth › URL Configuration, añadir `https://chordflow-ecru.vercel.app/static/reset.html` a las Redirect URLs.
