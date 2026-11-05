@@ -3,12 +3,12 @@
 > Este archivo lo lee el agente (Claude Code) al empezar cada sesión.
 > Es la **fuente de verdad operativa**: cómo trabajar, cómo verificar y qué nunca romper.
 >
-> **Guía VIGENTE (única, léela primero — producto Y diseño): [GUIA_MAESTRA_V5.md](GUIA_MAESTRA_V5.md)**
-> (pulido integral 2026-07-03: estética profesional, reproductor por compases, Explorar como hub de
-> la red, pizarra de banda, propuestas de evento, wizard de conciertos… con el método sección-a-sección
-> acordado con Oscar y las decisiones abiertas de cada sección). Su §0.2 dice qué heredó de V3/V4.
+> **Guía VIGENTE (única, léela primero — producto Y diseño): [GUIA_MAESTRA_V6.md](GUIA_MAESTRA_V6.md)**
+> (repaso profesional 2026-11-05: seguridad, calidad, diseño, funciones que los músicos usan de verdad y
+> la red profesional de salas/profesionales/bolos) + el paso a paso [GUIA_MAESTRA_V6_MANUAL.md](GUIA_MAESTRA_V6_MANUAL.md).
+> Su sección final «Estado de implementación» dice qué está hecho (rama `v6`) y qué queda.
 >
-> Las demás son **historial cerrado** (implementado y en producción, o absorbido por la V5), solo
+> Las demás son **historial cerrado** (la V5 incluida; implementado y en producción, o absorbido por la guía siguiente), solo
 > para consultar el detalle de una decisión pasada: [GUIA_MAESTRA_V3.md](GUIA_MAESTRA_V3.md) (red
 > musical, D1–D9), [GUIA_MAESTRA_V4_UX.md](GUIA_MAESTRA_V4_UX.md) + [GUIA_MAESTRA_V4_IMPLEMENTACION.md](GUIA_MAESTRA_V4_IMPLEMENTACION.md)
 > (UX, T-120…T-155), [GUIA_MAESTRA_V2.md](GUIA_MAESTRA_V2.md) + [GUIA_MAESTRA_V2_FUNCIONAL.md](GUIA_MAESTRA_V2_FUNCIONAL.md)
@@ -16,8 +16,8 @@
 > "joya" que sigue intacta dentro del flujo actual).
 >
 > ⚠️ **Regla al añadir nueva dirección/decisiones:** se añaden como **sección nueva al final de
-> `GUIA_MAESTRA_V5.md`** (o rellenando su §13, registro de decisiones), NUNCA creando un archivo
-> `_V6.md`/`V5.1.md`/etc. para una mejora puntual. Solo se abre una guía numerada nueva si hay un
+> `GUIA_MAESTRA_V6.md`** (o en su registro de decisiones), NUNCA creando un archivo
+> `_V7.md`/`V6.1.md`/etc. para una mejora puntual. Solo se abre una guía numerada nueva si hay un
 > giro de la magnitud de V2→V3 o V4→V5 (redefinición de fondo), y en ese caso el archivo anterior
 > se marca al inicio como "HISTORIAL CERRADO — no es la guía vigente" con enlace a la nueva y una
 > tabla de qué pendientes absorbe. Así una sola guía activa concentra dónde estamos.

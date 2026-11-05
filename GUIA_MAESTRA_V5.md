@@ -1,5 +1,11 @@
 # 🎸 BandFlow — Guía Maestra V5 · Pulido integral: la app profesional del músico
 
+> ## ⚠️ HISTORIAL CERRADO — no es la guía vigente
+> Desde el 2026-11-05 la guía vigente es **[GUIA_MAESTRA_V6.md](GUIA_MAESTRA_V6.md)** (+ el paso a paso
+> [GUIA_MAESTRA_V6_MANUAL.md](GUIA_MAESTRA_V6_MANUAL.md)). La V6 absorbe los pendientes de esta guía
+> (ver su §0 y la tabla de tareas T-V6-*). Esta queda para consultar decisiones de la V5.
+
+
 > ## 📌 ESTA ES LA GUÍA VIGENTE (única, para los dos ejes: producto + diseño)
 > Creada el **2026-07-03** a partir del volcado de dirección de Oscar (WhatsApp 03/07 07:51, tres
 > mensajes — transcrito ÍNTEGRO en esta guía, nada se pierde) + el **repaso integral de diseño del

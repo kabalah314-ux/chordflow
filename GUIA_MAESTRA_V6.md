@@ -1636,5 +1636,73 @@ Oscar lo pide. Para reproducirlas: servir `static/` con un backend en modo test 
 
 ---
 
-*Fin de la Guía Maestra V6. Nada de lo descrito está implementado: es el plan. Primer paso: §2
-(Oscar) y después `T-V6-01`.*
+*Fin del plan de la Guía Maestra V6. El estado real está en la sección siguiente.*
+
+
+---
+
+## 16. Estado de implementación (2026-11-05, rama `v6`)
+
+> Implementado en la rama **`v6`** del repo (no en `main`: producción sigue intacta hasta que Oscar
+> la fusione). CI verde: lint, ~190 tests unitarios, ~200 e2e con navegador y la cadena de
+> migraciones probada contra **Postgres** (upgrade desde cero, `alembic check`, downgrade y vuelta).
+> Detalle de cada entrega en `REGISTRO_DE_CAMBIOS.md` › «V6 — Registro»; checklist en
+> `harness/ROADMAP.md` (bloque V6).
+
+### 16.1 Hecho
+
+| Bloque | Tareas | Qué ve el músico |
+|---|---|---|
+| F0 Seguridad | 02–09 | Modo test blindado, SW sin datos rancios, importador sin SSRF, invitaciones revocables, límites de uso |
+| F1 Bugs | 10–17, 19 | Chat incremental, metrónomo preciso, editor que no pierde cambios, errores en castellano |
+| F2 Calidad | 20–23, 27, 30, 22 | CI por jobs, gate de aislamiento que recorre `app.routes`, migraciones en Postgres, README/SECURITY, Dependabot, pip-audit |
+| F3 Diseño | 33, 34, 36 (+31/35 parcial) | `bfDialog` accesible, iconos SVG en vez de emojis, fechas y dinero con `Intl`, una sola tipografía sin @import |
+| F4 Páginas | 40–52 (42a–g parciales cerrados) | Login con recuperar contraseña y términos; invitación-escaparate; pestañas de banda enlazables; chat con hora/editar; finanzas con gráfico; giras editables; Inicio con «Para ti»; Mis bandas con fondo; biblioteca ordenable; editor con Ctrl+S; agenda por semanas y «Nuevo evento»; finanzas y chat TÚ; perfil con cuenta; metrónomo con tempos; evento público con .ics |
+| F5 Reproductor | 56, 57 (+55 parcial) | «Siguiente: …» y parada al final; pantalla encendida; canción sin conexión; «Mi tono», «Solo letra», tamaño de letra, modo práctica |
+| F6 Producto | 61–68 | Avisos con contador, calendario mensual y suscripción .ics, setlist imprimible y compartible, primeros pasos, borrar cuenta/exportar, moderación del catálogo, Ctrl+K, portada y 404 |
+| F7 Operación | 72, 74, 75 (+24/73 parcial) | Runbook, copias (script + workflow opcional), límites de uso, índices compuestos, caché de estáticos, HSTS, CSP en solo-informe |
+| F9 Funciones | 80–95 | Votación de fechas sin cuenta, recordatorios 24 h, semáforo, pizarra, hoja del bolo, modo ensayo, material y grabadora, práctica, setlist inteligente, PDF→editor, temporada, feedback, gastos fijos, una banda = menos clics |
+| F9b Red profesional | 96–100 | Fichas de sala y profesional, Explorar (bolos/salas/profesionales/mensajes/mis perfiles), candidaturas con dossier → **elegir crea el concierto en la agenda**, EPK y página pública de banda, valoraciones con trato previo, reportes, calendario de sala |
+
+### 16.2 Queda (y por qué)
+
+| Tarea | Estado | Motivo / siguiente paso |
+|---|---|---|
+| T-V6-01 | Pendiente | Oscar pidió dejar las contraseñas para más adelante: rotar claves, purgar historial (`git filter-repo`) y `gitleaks` |
+| T-V6-18 | Pendiente | Contrato UTC de punta a punta: cambia el significado de todas las fechas guardadas; hacerlo con una migración de datos y una tarde de pruebas en staging. Hoy todo es «hora de pared» coherente (punto único de cambio: `bfFromLocalInput`) |
+| T-V6-24 | Parcial | Caché inmutable hecha; servir estáticos directamente desde Vercel (sin pasar por Python) requiere tocar `vercel.json` y medir |
+| T-V6-25/26 | Parcial | ESLint en CI (informativo). Vitest y pasar el frontend a módulos ESM: refactor grande sin valor visible inmediato |
+| T-V6-28 | Pendiente | Validar el JWT en local con JWKS: hay caché TTL, el beneficio es de latencia; hacerlo con PyJWT y pruebas contra el Supabase real |
+| T-V6-29 | Parcial | `X-Request-ID` hecho; Sentry y UptimeRobot necesitan cuentas (DSN) de Oscar |
+| T-V6-31/32/35/37 | Parcial | Sistema de diseño: tipografía e iconos hechos; unificar botones legacy → `bf-btn`, quitar colores fijos de `style.css` y trocearlo es un refactor visual largo que conviene hacer revisando pantalla a pantalla |
+| T-V6-55 | Parcial | Falta la barra compacta con popovers en móvil (tamaño de letra y vistas ya están) |
+| T-V6-58/59 | Parcial | Test de desborde en 15 páginas y pestañas/modales accesibles hechos; falta `axe` automático (no instalable en esta sesión) |
+| T-V6-60 | Pendiente | Email transaccional: elegir proveedor (D-V6-7). El punto de enganche ya existe (`notify()` y `send_reminders()`) |
+| T-V6-70/71 | Documentado | Staging y migración automática: pasos en `docs/RUNBOOK.md`; requieren un proyecto Supabase de pruebas |
+| T-V6-73 | Parcial | CSP en solo-informe; activarla de verdad exige quitar los `onclick`/estilos inline |
+
+### 16.3 Para pasar a producción (Oscar)
+
+1. Revisar la rama `v6` en una *preview* de Vercel (cada push a una rama crea una URL).
+2. Copia de seguridad de la base de datos (`docs/RUNBOOK.md`).
+3. `python -m alembic upgrade head` contra el pooler de sesión (migraciones `a1b2c3d4e5f6` →
+   `f6a7b8c9d0e1`, todas aditivas).
+4. Variables en Vercel: `CRON_SECRET` (recordatorios). En Supabase › Auth › URL Configuration:
+   añadir `/static/reset.html`. Si se quieren PDFs/audios en el material: que el bucket `media`
+   admita `application/pdf` y `audio/*`.
+5. Fusionar `v6` → `main` (despliega solo). Smoke: entrar, banda, agenda, reproductor, Explorar.
+6. Poner el repositorio en **privado** (GitHub › Settings › Change visibility) si aún no lo está.
+
+### 16.4 Decisiones tomadas durante la implementación
+
+- **D-V6-31** — Los avisos (in-app) se crean en la misma transacción que la acción y nunca la
+  rompen; el email llegará por el mismo punto (`notify`).
+- **D-V6-32** — Votar fechas sin cuenta: el enlace es el secreto y se elige el nombre de la lista de
+  miembros (como un Doodle de confianza). Confirmar convierte los votos en asistencias.
+- **D-V6-33** — Red profesional: una cuenta puede tener varios perfiles; el teléfono nunca sale en
+  listados ni en la ficha pública; valorar exige trato previo; 3 reportes ocultan hasta revisión.
+- **D-V6-34** — «Una banda = Inicio en la banda» se resolvió sin redirecciones: con una sola banda
+  sus secciones van directas en el lateral (no rompe enlaces ni la vista TÚ).
+- **D-V6-35** — Explorar del lateral abre la red (`red.html`); Canciones (catálogo) queda como pestaña.
+- **D-V6-36** — Cuenta borrada: se borran los datos personales y se sale de las bandas traspasando
+  el admin; el usuario de Supabase Auth lo elimina Oscar (la API no usa la service key).
