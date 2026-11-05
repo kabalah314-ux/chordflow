@@ -1697,3 +1697,11 @@ body.lp { min-height: 100vh; display: flex; flex-direction: column; }
 }
 .legal h2 { font-size: 1.1rem; margin-top: 1.4rem; }
 .legal li { margin: .35rem 0; }
+/* T-V6-33: en móvil los modales clásicos salen como hoja inferior (como bfDialog) */
+@media (max-width: 640px) {
+  .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .modal-overlay .modal-card { width: 100% !important; max-width: none !important; border-radius: 16px 16px 0 0 !important;
+    padding-bottom: calc(1.2rem + env(safe-area-inset-bottom)) !important; }
+  .modal-overlay .modal-actions { flex-direction: column-reverse; }
+  .modal-overlay .modal-actions button { width: 100%; min-height: 44px; }
+}

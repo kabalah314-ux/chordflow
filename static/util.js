@@ -99,9 +99,31 @@ function toast(message, type = 'info') {
     }, 3500);
 }
 
+// T-V6-33 / T-V6-59: accesibilidad común de los modales clásicos (confirm/prompt/alert): el foco
+// no se escapa con Tab, vuelve al botón que abrió el modal al cerrarlo, y tiene etiqueta.
+function _bfModalA11y(overlay) {
+    const prev = document.activeElement;
+    const card = overlay.querySelector('[role="dialog"]');
+    const msg = overlay.querySelector('.modal-msg');
+    if (card && msg) {
+        msg.id = msg.id || 'bfm-' + Math.random().toString(36).slice(2, 8);
+        card.setAttribute('aria-labelledby', msg.id);
+    }
+    const trap = (e) => {
+        if (e.key !== 'Tab') return;
+        const f = [...overlay.querySelectorAll('button, [href], input, select, textarea')].filter(x => !x.disabled);
+        if (!f.length) return;
+        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    };
+    overlay.addEventListener('keydown', trap);
+    return () => { if (prev && typeof prev.focus === 'function' && document.contains(prev)) prev.focus(); };
+}
+
 // Modal de confirmación. Devuelve Promise<boolean> (true = aceptar). Reemplaza confirm().
 function confirmModal(message, { okText = 'Aceptar', cancelText = 'Cancelar' } = {}) {
     return new Promise((resolve) => {
+        let _restoreFocus = null;
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.innerHTML = `
@@ -115,6 +137,7 @@ function confirmModal(message, { okText = 'Aceptar', cancelText = 'Cancelar' } =
         const close = (val) => {
             document.removeEventListener('keydown', onKey);
             overlay.remove();
+            if (_restoreFocus) _restoreFocus();
             resolve(val);
         };
         const onKey = (e) => {
@@ -129,6 +152,7 @@ function confirmModal(message, { okText = 'Aceptar', cancelText = 'Cancelar' } =
         });
         document.addEventListener('keydown', onKey);
         document.body.appendChild(overlay);
+        _restoreFocus = _bfModalA11y(overlay);
         const okBtn = overlay.querySelector('[data-act="ok"]');
         if (okBtn) okBtn.focus();
     });
@@ -138,6 +162,7 @@ function confirmModal(message, { okText = 'Aceptar', cancelText = 'Cancelar' } =
 // Reemplaza prompt(). El texto del usuario se escapa; el valor devuelto va trim().
 function promptModal(message, { okText = 'Aceptar', cancelText = 'Cancelar', placeholder = '', value = '' } = {}) {
     return new Promise((resolve) => {
+        let _restoreFocus = null;
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.innerHTML = `
@@ -154,6 +179,7 @@ function promptModal(message, { okText = 'Aceptar', cancelText = 'Cancelar', pla
         const close = (val) => {
             document.removeEventListener('keydown', onKey);
             overlay.remove();
+            if (_restoreFocus) _restoreFocus();
             resolve(val);
         };
         const submit = () => { const v = input.value.trim(); close(v || null); };
@@ -169,6 +195,7 @@ function promptModal(message, { okText = 'Aceptar', cancelText = 'Cancelar', pla
         });
         document.addEventListener('keydown', onKey);
         document.body.appendChild(overlay);
+        _restoreFocus = _bfModalA11y(overlay);
         input.focus();
     });
 }
@@ -177,6 +204,7 @@ function promptModal(message, { okText = 'Aceptar', cancelText = 'Cancelar', pla
 // responsable de escapar cualquier dato de usuario que interpole. Devuelve Promise<void>.
 function alertModal(html, { okText = 'Aceptar' } = {}) {
     return new Promise((resolve) => {
+        let _restoreFocus = null;
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.innerHTML = `
@@ -189,6 +217,7 @@ function alertModal(html, { okText = 'Aceptar' } = {}) {
         const close = () => {
             document.removeEventListener('keydown', onKey);
             overlay.remove();
+            if (_restoreFocus) _restoreFocus();
             resolve();
         };
         const onKey = (e) => { if (e.key === 'Escape' || e.key === 'Enter') close(); };
@@ -197,6 +226,7 @@ function alertModal(html, { okText = 'Aceptar' } = {}) {
         });
         document.addEventListener('keydown', onKey);
         document.body.appendChild(overlay);
+        _restoreFocus = _bfModalA11y(overlay);
         const okBtn = overlay.querySelector('[data-act="ok"]');
         if (okBtn) okBtn.focus();
     });
