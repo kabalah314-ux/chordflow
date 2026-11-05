@@ -206,6 +206,37 @@ function bfHoldRepeat(btn, fire) {
         if (!m.running) renderPips();   // reposo: puntos apagados
     });
 
+    // T-V6-51: tempos rápidos + "mis tempos" guardados (p. ej. los BPM de las canciones del bolo).
+    const PRESET_KEY = 'bf-metro-presets';
+    const preWrap = document.createElement('div');
+    preWrap.className = 'metro-presets';
+    panel.appendChild(preWrap);
+    function myPresets() { try { return JSON.parse(localStorage.getItem(PRESET_KEY) || '[]').filter(n => Number.isInteger(n)).slice(0, 8); } catch (e) { return []; } }
+    function renderPresets() {
+        const mine = myPresets();
+        preWrap.innerHTML = `<div class="metro-presets__row" role="group" aria-label="Tempos rápidos">${[60, 80, 100, 120, 140, 160].map(b =>
+                `<button type="button" class="bf-btn bf-btn--sm${b === m.bpm ? ' bf-btn--primary' : ''}" data-bpm="${b}">${b}</button>`).join('')}</div>
+            <div class="metro-presets__row" role="group" aria-label="Mis tempos">${mine.map(b =>
+                `<button type="button" class="bf-btn bf-btn--sm bf-btn--ghost${b === m.bpm ? ' bf-btn--primary' : ''}" data-bpm="${b}" title="Pulsación larga o clic derecho para quitar">${b}</button>`).join('')}
+                <button type="button" class="bf-btn bf-btn--sm bf-btn--ghost" data-save title="Guardar el tempo actual">+ Guardar ${m.bpm}</button></div>`;
+        preWrap.querySelectorAll('[data-bpm]').forEach(b => {
+            b.addEventListener('click', () => { m.setTempo(Number(b.dataset.bpm)); renderBpm(); renderPresets(); });
+            b.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                localStorage.setItem(PRESET_KEY, JSON.stringify(myPresets().filter(x => x !== Number(b.dataset.bpm))));
+                renderPresets();
+            });
+        });
+        preWrap.querySelector('[data-save]').addEventListener('click', () => {
+            const list = myPresets().filter(x => x !== m.bpm);
+            list.push(m.bpm);
+            localStorage.setItem(PRESET_KEY, JSON.stringify(list.sort((a, b) => a - b).slice(-8)));
+            renderPresets();
+        });
+    }
+    const _renderBpm = renderBpm;
+    renderBpm = function () { _renderBpm(); if (preWrap.isConnected) renderPresets(); };   // eslint-disable-line no-func-assign
+
     renderBpm();
     renderPips();
 })();
