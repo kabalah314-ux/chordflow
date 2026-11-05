@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Metrónomo con tempos rápidos (T-V6-51) · Editor: Ctrl+S y barra de guardar fija (T-V6-46)
+- **Qué:** metrónomo: botones 60–160 y "mis tempos" guardados en el dispositivo (clic derecho para quitar). Editor: Ctrl/Cmd+S guarda, la barra "Guardar" queda fija abajo, campo Duración (m:ss) e importación desde PDF (ver arriba).
+
 ### V6 — Finanzas TÚ con resumen global y últimos movimientos (T-V6-48) · Chat TÚ en dos columnas (T-V6-49)
 - **Qué:** Finanzas: tarjetas "Te deben / Debes / Neto" de todas tus bandas, últimos movimientos (con banda) y cada banda enlaza directo a su pestaña de Finanzas para liquidar. Chat: en pantallas anchas la conversación de cada banda se lee y se escribe al lado de la lista (refresco cada 6 s con la pestaña visible); acceso a "Mensajes de Explorar".
 

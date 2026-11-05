@@ -805,12 +805,12 @@
 - [x] **T-V6-43** Inicio: KPIs, "Esta semana" con asistencia in-page, actividad, "Para hoy", vacío sin banda
 - [ ] **T-V6-44** Mis bandas: tarjetas con cover y miembros apilados; "Unirme con código"; vacío ilustrado
 - [ ] **T-V6-45** Biblioteca + Setlists personales: chips, grid/lista, meta, ⋯ visible en móvil, orden, cargar más
-- [ ] **T-V6-46** Editor: metadatos completos, diálogo "Importar" con 3 pestañas, barra inferior fija, Ctrl+S, preview alineada
+- [x] **T-V6-46** Editor: metadatos completos, diálogo "Importar" con 3 pestañas, barra inferior fija, Ctrl+S, preview alineada
 - [x] **T-V6-47** Agenda TÚ: lista agrupada por semana, crear evento eligiendo banda, filtros (calendario en F6)
 - [x] **T-V6-48** Finanzas TÚ: resumen global + movimientos + liquidar
 - [x] **T-V6-49** Chat TÚ: dos columnas + no-leídos en lateral (`.bf-nav-badge`)
 - [x] **T-V6-50** Perfil + Cuenta (chips de instrumentos, cambiar email/contraseña, cerrar sesiones, tema, idioma)
-- [ ] **T-V6-51** Afinador/Metrónomo: centrado, nota en reposo, presets
+- [x] **T-V6-51** Afinador/Metrónomo: centrado, nota en reposo, presets
 - [x] **T-V6-52** Explorar provisional (tarjetas, abort/debounce, paginación) + evento público (cover, .ics, compartir)
 - [ ] **T-V6-55** Reproductor: toolbar compacta (popovers BPM/tono en móvil, menú ⋯), tamaño de letra A−/A+, sección actual + navegación, cuenta atrás etiquetada, tempo por usuario (D-V6-9)
 - [x] **T-V6-56** Modo setlist in-page ("Siguiente: …", prefetch) + parada al final con test. **Únicas excepciones al motor**, con plan en TASKS

@@ -735,3 +735,13 @@ if (elImportPdf) elImportPdf.addEventListener('change', async () => {
         elImportPdf.value = '';
     }
 });
+
+// ─── T-V6-46: Ctrl/Cmd + S guarda (como en cualquier editor) ─────────────────
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        const form = document.getElementById('song-form');
+        if (form && typeof form.requestSubmit === 'function') form.requestSubmit();
+        else if (form) form.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+});

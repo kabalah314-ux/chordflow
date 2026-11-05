@@ -1713,3 +1713,6 @@ body.lp { min-height: 100vh; display: flex; flex-direction: column; }
 /* T-V6-51: tempos rápidos y guardados */
 .metro-presets { display: flex; flex-direction: column; gap: .4rem; margin-top: 1rem; }
 .metro-presets__row { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem; }
+/* T-V6-46: barra de acciones del editor fija abajo (no hay que bajar al final para guardar) */
+#song-form .form-actions { position: sticky; bottom: 0; z-index: 5; padding: .7rem 0; margin-top: 1rem;
+  background: linear-gradient(to top, var(--bg-color, var(--bf-bg, #0d0d10)) 75%, transparent); }
