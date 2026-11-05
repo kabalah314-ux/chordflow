@@ -97,7 +97,21 @@ async def add_security_headers(request, call_next):
     # (antes `microphone=()` lo bloqueaba también para la propia app → afinador mudo).
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self), camera=(self)"
     response.headers["X-Request-ID"] = getattr(request.state, "request_id", "-")
+    # T-V6-73: HSTS solo servido por HTTPS (Vercel); en local (http) no se envía.
+    if request.headers.get("x-forwarded-proto") == "https" or request.url.scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # CSP en modo SOLO-INFORME: no bloquea nada (la app aún tiene estilos/handlers inline); sirve
+    # para ver en la consola qué faltaría antes de activarla de verdad con nonce.
+    response.headers["Content-Security-Policy-Report-Only"] = _CSP
     return response
+
+
+_CSP = ("default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; "
+        "media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; "
+        "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com; "
+        "object-src 'none'; base-uri 'self'; frame-ancestors 'self'")
 
 
 # T-V6-24: caché del navegador/CDN. Los estáticos versionados (`?v=<hash>`, ver cachebust.py) no
