@@ -46,6 +46,9 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Modo setlist in-page: "Siguiente: …" y parada al final (T-V6-56) · Wake Lock sin reintentos
+- **Qué:** la barra del setlist del reproductor muestra "Siguiente: <título>". Al llegar al último pulso la reproducción se detiene (antes el reloj seguía contando) y, en un setlist, avisa de la siguiente y hace latir el botón ▶ (→/PageDown de la pedalera también pasa). Controlado desde fuera del motor; con "repetir sección" activo no se para. Wake Lock: una sola petición a la vez y sin reintentos si el navegador lo niega.
+
 ### V6 — README, SECURITY, Dependabot y pip-audit (T-V6-22, T-V6-30)
 - **Qué:** `README.md` (qué es, cómo arrancar, estructura, variables, despliegue con migraciones), `SECURITY.md` (cómo avisar de un fallo y reglas de aislamiento/plano público), `.github/dependabot.yml` (pip + Actions semanal) y paso `pip-audit` en CI (informativo). El `.gitignore` ya ignoraba `.env.*`. El lockfile con hashes queda para cuando se pueda instalar `pip-tools` (red de instalación cerrada en esta sesión).
 

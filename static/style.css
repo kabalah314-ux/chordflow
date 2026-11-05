@@ -1670,3 +1670,8 @@ body.lp { min-height: 100vh; display: flex; flex-direction: column; }
 .lp-pro h2 { margin-top: 0; }
 .lp-foot { margin-top: auto; display: flex; gap: 1.2rem; justify-content: center; padding: 1.2rem; color: var(--text-secondary); font-size: .9rem; }
 .lp-foot a { color: inherit; }
+/* T-V6-56: "Siguiente: …" en la barra del setlist y aviso al terminar */
+.sl-nav-next { font-size: .8rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+#sl-next.is-pulse { animation: bf-pulse 1s ease-in-out 3; background: var(--accent-color); color: #000; }
+@keyframes bf-pulse { 50% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { #sl-next.is-pulse { animation: none; } }

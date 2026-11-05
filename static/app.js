@@ -259,9 +259,12 @@ async function setupSetlistNav() {
             `index.html?songId=${encodeURIComponent(ids[p])}&setlist=${encodeURIComponent(setlistId)}&pos=${p}`; };
         const prevDis = pos <= 0 ? 'disabled' : '';
         const nextDis = pos >= ids.length - 1 ? 'disabled' : '';
+        const nextItem = sl.items[pos + 1];
+        window.__bfNextSong = nextItem ? nextItem.title : null;   // T-V6-56
         elNav.innerHTML = `
             <button id="sl-prev" class="secondary-btn" ${prevDis} aria-label="Canción anterior">◀</button>
             <span class="sl-nav-label">${escapeHtml(sl.name)} · ${pos + 1}/${ids.length}</span>
+            ${nextItem ? `<span class="sl-nav-next" title="Siguiente canción">Siguiente: ${escapeHtml(nextItem.title)}</span>` : ''}
             ${note ? `<span class="sl-nav-note" title="Apunte de la canción">${escapeHtml(note)}</span>` : ''}
             <button id="sl-next" class="secondary-btn" ${nextDis} aria-label="Siguiente canción">▶</button>`;
         elNav.style.display = 'flex';
@@ -755,19 +758,44 @@ document.addEventListener('keydown', (e) => {
 // ── T-V6-57: la pantalla no se apaga mientras suena (Screen Wake Lock) ──────────
 // En el escenario el móvil/tablet no debe bloquearse a mitad de canción. Se pide al reproducir y
 // se suelta al parar; si el navegador lo suelta (pestaña oculta), se vuelve a pedir al volver.
-let wakeLock = null;
+let wakeLock = null, wakePending = false, wakeUnsupported = !('wakeLock' in navigator);
 async function wantWake(on) {
+    // Se llama en cada tick del motor: sin peticiones en paralelo ni reintentos si falla.
+    if (wakeUnsupported || wakePending) return;
+    if (on === !!wakeLock) return;
+    wakePending = true;
     try {
-        if (on && !wakeLock && 'wakeLock' in navigator && document.visibilityState === 'visible') {
+        if (on && document.visibilityState === 'visible') {
             wakeLock = await navigator.wakeLock.request('screen');
             wakeLock.addEventListener('release', () => { wakeLock = null; });
         } else if (!on && wakeLock) {
             await wakeLock.release();
             wakeLock = null;
         }
-    } catch (e) { wakeLock = null; /* sin soporte o sin permiso: no pasa nada */ }
+    } catch (e) { wakeUnsupported = true; wakeLock = null; /* sin permiso: no insistir */ }
+    finally { wakePending = false; }
 }
 engine.subscribe((state) => { wantWake(state.status === 'playing'); });
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && engine.state.status === 'playing') wantWake(true);
+});
+
+
+// ── T-V6-56: al terminar la canción, parar (y en un setlist, anunciar la siguiente) ────────────
+// El motor no se detiene solo al llegar al último pulso; aquí se para desde fuera (sin tocar
+// sync_engine.js). Con "repetir sección" activo no se para (lo gestiona la práctica).
+let endHandled = false;
+engine.subscribe((state) => {
+    if (state.status !== 'playing') { if (state.status === 'idle') endHandled = false; return; }
+    if (practice.loop || endHandled || !state.totalBeats) return;
+    if (state.currentBeat >= state.totalBeats + 0.25) {
+        endHandled = true;
+        setTimeout(() => {
+            engine.stop();
+            const next = window.__bfNextSong;
+            toast(next ? `Fin. Siguiente: «${next}» — pulsa → o el botón ▶ de la barra.` : 'Fin de la canción.', 'info');
+            const n = document.getElementById('sl-next');
+            if (n && !n.disabled) n.classList.add('is-pulse');
+        }, 0);
+    }
 });
