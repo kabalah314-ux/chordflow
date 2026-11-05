@@ -46,6 +46,10 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Primeros pasos de una banda (T-V6-64) · pantalla encendida al tocar (parte de T-V6-57)
+- **Qué:** en el Resumen de una banda nueva (admin), tarjeta "Primeros pasos" con 3 pasos que se tachan solos: invitar (enlace), primer ensayo (votación de fechas) y añadir canciones; desaparece al completarlos. Reproductor: **Screen Wake Lock** mientras suena (el móvil no se bloquea a mitad de canción), recuperado al volver a la pestaña.
+- **Verificación:** `node --check`; e2e del Resumen existentes.
+
 ### V6 — Moderación del catálogo (T-V6-66)
 - **Qué:** `DELETE /catalog/scores/{id}` (quien publicó la retira: deja de listarse; las copias importadas se quedan), `DELETE /catalog/scores/{id}/comments/{cid}` (autor o quien publicó), reportes `score`/`comment` en `POST /reports` con ocultación automática a los 3 reporteros distintos. En la ficha del catálogo: "Retirar del catálogo" o "Reportar", borrar comentarios y aviso de derechos.
 - **Verificación:** `test_moderacion_del_catalogo`, `test_quien_publica_retira_su_partitura`.

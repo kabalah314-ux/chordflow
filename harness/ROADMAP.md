@@ -821,7 +821,7 @@
 - [x] **T-V6-61** Centro de notificaciones in-app (tabla + campana) y no-leídos de chat
 - [x] **T-V6-62** `bf-calendar` (mensual + semanal, contrato V5 §7) en Agenda TÚ, banda y Resumen; `.ics` por evento y suscripción por banda
 - [x] **T-V6-63** Exportar/imprimir setlist (PDF orden + notas; pack con canciones) y compartir setlist por enlace de solo lectura
-- [ ] **T-V6-64** Onboarding: sin banda (dos caminos + canción demo), asistente de banda de 3 pasos, tour de 4 puntos
+- [x] **T-V6-64** Onboarding: sin banda (dos caminos + canción demo), asistente de banda de 3 pasos, tour de 4 puntos
 - [x] **T-V6-65** Borrar cuenta (con transferencia de admin) + exportar mis datos; verificación de email; emails de auth con marca
 - [x] **T-V6-66** Moderación del catálogo (ocultar/retirar, borrar comentario), reportar, aviso de derechos
 - [x] **T-V6-67** Búsqueda global Ctrl+K y hoja de atajos `?`

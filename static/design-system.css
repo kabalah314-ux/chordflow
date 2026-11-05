@@ -696,3 +696,12 @@ a.rd-pro:hover { border-color: var(--bf-primary); }
 .bf-pal__icon { color: var(--bf-text-muted, inherit); }
 .bf-pal__text { display: flex; flex-direction: column; min-width: 0; }
 .bf-pal__text .bf-faint { font-size: var(--bf-fs-xs, .75rem); }
+/* T-V6-64 — primeros pasos de una banda */
+.bt-first { margin-bottom: 1rem; border-color: color-mix(in srgb, var(--bf-primary) 45%, var(--bf-border, #333)); }
+.bt-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .6rem; }
+.bt-steps li { display: flex; gap: .7rem; align-items: center; }
+.bt-steps__n { flex: none; width: 1.7rem; height: 1.7rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bf-primary); font-weight: 700; font-size: .85rem; }
+.bt-steps li.is-done .bt-steps__n { background: var(--bf-primary); color: var(--bf-on-primary, #fff); }
+.bt-steps li.is-done strong { text-decoration: line-through; color: var(--bf-text-muted, inherit); }
+.bt-steps__body { flex: 1; display: flex; flex-direction: column; min-width: 0; }

@@ -751,3 +751,23 @@ document.addEventListener('keydown', (e) => {
         saveViewPrefs();
     }
 });
+
+// ── T-V6-57: la pantalla no se apaga mientras suena (Screen Wake Lock) ──────────
+// En el escenario el móvil/tablet no debe bloquearse a mitad de canción. Se pide al reproducir y
+// se suelta al parar; si el navegador lo suelta (pestaña oculta), se vuelve a pedir al volver.
+let wakeLock = null;
+async function wantWake(on) {
+    try {
+        if (on && !wakeLock && 'wakeLock' in navigator && document.visibilityState === 'visible') {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => { wakeLock = null; });
+        } else if (!on && wakeLock) {
+            await wakeLock.release();
+            wakeLock = null;
+        }
+    } catch (e) { wakeLock = null; /* sin soporte o sin permiso: no pasa nada */ }
+}
+engine.subscribe((state) => { wantWake(state.status === 'playing'); });
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && engine.state.status === 'playing') wantWake(true);
+});

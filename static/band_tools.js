@@ -235,6 +235,7 @@
             el.appendChild(wrap);
         }
         renderBoard(bandId, ctx, wrap.querySelector('#bt-board'));
+        if (ctx.iAmAdmin) renderFirstSteps(bandId, ctx, el);   // T-V6-64
         const sr = wrap.querySelector('#bt-start-reh');
         if (sr) sr.addEventListener('click', () => rehearsalMode(bandId, ctx));
         renderSeason(bandId, wrap.querySelector('#bt-season'));
@@ -262,6 +263,40 @@
             }
         } catch (e) { /* opcional */ }
     };
+
+    // ══ Primeros pasos de una banda nueva (T-V6-64) ═══════════════════════════
+    async function renderFirstSteps(bandId, ctx, el) {
+        let songs = 0, events = 0, polls = 0;
+        const list = await members(bandId);
+        try {
+            const [rs, re, rp] = await Promise.all([apiFetch(`/bands/${bandId}/songs/`), apiFetch(`/bands/${bandId}/events/`), apiFetch(`/bands/${bandId}/polls`)]);
+            songs = rs.ok ? (await rs.json()).length : 0;
+            events = re.ok ? (await re.json()).length : 0;
+            polls = rp.ok ? (await rp.json()).length : 0;
+        } catch (e) { return; }
+        const steps = [
+            { done: list.length > 1, title: 'Invita a la banda', text: 'Mándales el enlace por WhatsApp: ven la banda antes de crear cuenta.', act: 'invite', label: 'Invitar' },
+            { done: events + polls > 0, title: 'Primer ensayo', text: 'Propón 2–3 fechas y que cada uno vote. La elegida entra en la agenda.', act: 'poll', label: 'Proponer fechas' },
+            { done: songs > 0, title: 'Vuestras canciones', text: 'Copia de tus partituras, importa con IA o desde un PDF.', act: 'songs', label: 'Añadir canciones' },
+        ];
+        if (steps.every(x => x.done)) return;
+        const doneN = steps.filter(x => x.done).length;
+        const card = document.createElement('div');
+        card.className = 'bf-card bf-stack bt-first';
+        card.innerHTML = `<div class="bf-row bf-row--between"><h3 class="bf-h3">Primeros pasos</h3><span class="bf-faint">${doneN}/3</span></div>
+            <ol class="bt-steps">${steps.map((x, i) => `<li class="${x.done ? 'is-done' : ''}">
+                <span class="bt-steps__n">${x.done ? bfIco('check', 14) : i + 1}</span>
+                <div class="bt-steps__body"><strong>${x.title}</strong><span class="bf-faint">${x.text}</span></div>
+                ${x.done ? '' : `<button class="bf-btn bf-btn--sm${i === doneN ? ' bf-btn--primary' : ''}" data-step="${x.act}">${x.label}</button>`}
+            </li>`).join('')}</ol>`;
+        el.insertBefore(card, el.firstChild);
+        card.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
+            const a = b.dataset.step;
+            if (a === 'invite' && typeof generateInvite === 'function') generateInvite(bandId);
+            if (a === 'poll') newPoll(bandId, ctx);
+            if (a === 'songs') { const t = document.querySelector('.bf-tab[data-tab="repertorio"]'); if (t) t.click(); }
+        }));
+    }
 
     // ══ Votación de fechas ════════════════════════════════════════════════════
     function pollUrl(p) { return `${location.origin}/static/votar.html?t=${encodeURIComponent(p.token)}`; }
