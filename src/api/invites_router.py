@@ -12,7 +12,7 @@ Validez de una invitación: la banda existe (no borrada), no está caducada (`ex
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
@@ -27,6 +27,7 @@ from ..services.models import (
     Song,
     _utcnow,
 )
+from ..services.ratelimit import check_rate
 from ..services.schemas import BandMembershipResponse, InvitePreview
 
 logger = logging.getLogger(__name__)
@@ -65,8 +66,10 @@ def _invalid_reason(db: Session, invite: BandInvite) -> str | None:
 
 
 @router.get("/{code}", response_model=InvitePreview)
-def preview_invite(code: str, db: Session = Depends(get_db)):
+def preview_invite(code: str, request: Request, db: Session = Depends(get_db)):
     """Previsualiza una invitación por su código (no consume usos)."""
+    # T-V6-74: límite por IP (la ruta es pública: evita barrer códigos a fuerza bruta)
+    check_rate(f"invite-preview:{request.client.host if request.client else '-'}", 60, 60)
     invite = _get_invite(db, code)
     band = db.query(Band).filter(Band.id == invite.band_id).first()
     reason = _invalid_reason(db, invite)

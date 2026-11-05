@@ -830,7 +830,7 @@
 - [ ] **T-V6-71** Migración automática en el pipeline de deploy (contra el pooler de sesión, antes de promover)
 - [ ] **T-V6-72** Backups `pg_dump` diarios + restauración probada + runbook de rollback
 - [ ] **T-V6-73** Dominio propio + HSTS + CSP con nonce (sin `onclick` inline)
-- [ ] **T-V6-74** Rate limiting completo (`/invites`, `/public`, `/catalog`) + cuota diaria de IA por usuario
+- [x] **T-V6-74** Rate limiting completo (`/invites`, `/public`, `/catalog`) + cuota diaria de IA por usuario
 - [x] **T-V6-75** Índices compuestos reales + migración de limpieza de columnas muertas
 - [ ] **T-V6-90** Una banda = inicio en la banda; 7 pestañas; Giras → agrupación; Explorar tras bandera
 - [x] **T-V6-80** Invitación con preview público + `bfShare` (WhatsApp) en invitación/evento/setlist/hoja/votación

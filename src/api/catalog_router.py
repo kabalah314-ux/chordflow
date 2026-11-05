@@ -39,6 +39,7 @@ from ..services.models import (
     Song,
     _utcnow,
 )
+from ..services.ratelimit import check_rate
 from ..services.schemas import (
     CatalogCommentCreate,
     CatalogImportRequest,
@@ -215,6 +216,7 @@ def search(
     limit: int = Query(50, ge=1, le=100),
 ):
     """Busca en el catálogo por título/artista. Sin `q`, devuelve lo más popular/reciente."""
+    check_rate(f"catalog-search:{user_id}", 120, 60)   # T-V6-74
     query = db.query(PublicScore).filter(
         PublicScore.deleted_at.is_(None), PublicScore.status == "published")
     term = _norm(q)
@@ -332,6 +334,7 @@ def add_comment(
     user_id: str = Depends(get_current_user),
 ):
     """Comentar una partitura del catálogo."""
+    check_rate(f"catalog-comment:{user_id}", 20, 3600)   # T-V6-74: anti-spam
     sc = _get_score(db, score_id)
     c = ScoreComment(public_score_id=sc.id, user_id=user_id, body=payload.body)
     db.add(c)
