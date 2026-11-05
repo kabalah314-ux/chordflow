@@ -65,7 +65,7 @@ def test_calendario_ics_con_token_y_evento_suelto(client):
         "location": "Sala X"}).json()
     r = client.get(f"/bands/{bid}/events/{ev['id']}/ics")
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/calendar")
-    assert "DTSTART:20990303T213000" in r.text and "Bolo\; con\\, comas" in r.text
+    assert "DTSTART:20990303T213000" in r.text and "Bolo\\; con\\, comas" in r.text
     with acting_as(STRANGER):
         assert client.get(f"/bands/{bid}/events/{ev['id']}/ics").status_code == 404
 
