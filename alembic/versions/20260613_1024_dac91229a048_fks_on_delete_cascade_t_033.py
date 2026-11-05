@@ -16,6 +16,7 @@ Create Date: 2026-06-13 10:24:49.969270
 from typing import Sequence, Union
 
 from alembic import op
+import sqlalchemy as sa
 
 # identificadores de revisión, usados por Alembic.
 revision: str = 'dac91229a048'
@@ -35,11 +36,24 @@ RELACIONES = [
 ]
 
 
+def _nombre_actual(tabla, col, padre):
+    """Nombre REAL de la FK. En SQLite no tiene nombre (lo da NAMING); en Postgres el baseline la
+    creó como `<tabla>_<col>_fkey` (T-V6-23: la cadena fallaba en PG por buscar el nombre de SQLite)."""
+    bind = op.get_bind()
+    if bind.dialect.name == "sqlite":
+        return f"fk_{tabla}_{col}_{padre}"
+    for fk in sa.inspect(bind).get_foreign_keys(tabla):
+        if fk.get("constrained_columns") == [col] and fk.get("name"):
+            return fk["name"]
+    return f"fk_{tabla}_{col}_{padre}"
+
+
 def _recrear_fks(ondelete):
     for tabla, col, padre in RELACIONES:
         nombre = f"fk_{tabla}_{col}_{padre}"
+        actual = _nombre_actual(tabla, col, padre)
         with op.batch_alter_table(tabla, schema=None, naming_convention=NAMING) as batch_op:
-            batch_op.drop_constraint(nombre, type_="foreignkey")
+            batch_op.drop_constraint(actual, type_="foreignkey")
             batch_op.create_foreign_key(nombre, padre, [col], ["id"], ondelete=ondelete)
 
 
