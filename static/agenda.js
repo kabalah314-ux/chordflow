@@ -12,6 +12,7 @@
 
     let allEvents = [];
     let currentBand = 'all';
+    let view = 'list';   // T-V6-62: 'list' | 'month' 
 
     function fmtDate(iso) { return bfDate(iso, 'Sin fecha'); }   // T-V6-36
 
@@ -62,12 +63,20 @@
 
         el.innerHTML = `
             <div class="bf-stack">
-                <div>
-                    <h1 class="bf-h1">Agenda</h1>
-                    <p class="bf-muted">Ensayos y conciertos de todas tus bandas.</p>
+                <div class="bf-row bf-row--between bf-wrap" style="gap:.5rem;">
+                    <div><h1 class="bf-h1">Agenda</h1>
+                    <p class="bf-muted">Ensayos y conciertos de todas tus bandas.</p></div>
+                    <div class="bf-row bf-wrap" style="gap:.4rem;">
+                        <div class="bf-segmented" role="group" aria-label="Vista">
+                            <button class="bf-btn bf-btn--sm${view === 'list' ? ' bf-btn--primary' : ''}" data-view="list" aria-pressed="${view === 'list'}">${bfIco('list', 14)} Lista</button>
+                            <button class="bf-btn bf-btn--sm${view === 'month' ? ' bf-btn--primary' : ''}" data-view="month" aria-pressed="${view === 'month'}">${bfIco('calendar', 14)} Mes</button>
+                        </div>
+                        <button class="bf-btn bf-btn--sm" id="agenda-subscribe">${bfIco('calendar', 14)} En mi calendario</button>
+                    </div>
                 </div>
                 <div class="bf-row bf-wrap" id="agenda-filters">${chips}</div>
-                <div class="bf-card">
+                ${view === 'month' ? '<div class="bf-card" id="agenda-month"></div>' : ''}
+                <div class="bf-card"${view === 'month' ? ' hidden' : ''}>
                     <h2 class="bf-h3" style="margin-bottom:.75rem;">Próximos</h2>
                     ${upcoming.length
                         ? `<div class="bf-list" id="agenda-upcoming">${upcoming.map(eventRow).join('')}</div>`
@@ -85,6 +94,10 @@
 
         el.querySelectorAll('#agenda-filters [data-band]').forEach(btn =>
             btn.addEventListener('click', () => { currentBand = btn.dataset.band; render(); }));
+        el.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { view = b.dataset.view; render(); }));
+        el.querySelector('#agenda-subscribe').addEventListener('click', () => bfSubscribeCalendar());
+        const month = el.querySelector('#agenda-month');
+        if (month) bfCalendar(month, base.map(e => ({ ...e, href: `band.html?id=${encodeURIComponent(e.band_id)}` })));
     }
 
     async function load() {

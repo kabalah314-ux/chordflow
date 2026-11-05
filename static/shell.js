@@ -65,6 +65,10 @@
                 <span class="bf-brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
                 <span class="bf-brand-name">BandFlow</span>
             </a>
+            <button class="bf-nav-item bf-notif-btn" id="bf-notif-btn" type="button" aria-label="Avisos">
+                <span class="bf-nav-icon">${bfIcon('inbox')}</span><span>Avisos</span>
+                <span class="bf-nav-badge" id="bf-notif-badge" hidden>0</span>
+            </button>
             <div class="bf-eyebrow">Tú</div>
             <nav class="bf-sidebar-nav" aria-label="Navegación principal">
                 ${NAV.map(n => navItemHtml(n, here) + (n.href === 'bands.html' ? '<div class="bf-subnav" id="bf-bands-subnav"></div>' : '')).join('')}
@@ -169,6 +173,47 @@
 
         loadProfile();
         loadBandsNav();
+        wireNotifications();
+    }
+
+    // ── T-V6-61: centro de avisos (campana con contador) ─────────────────────────
+    async function refreshBadge() {
+        try {
+            const res = await apiFetch('/me/notifications');
+            if (!res.ok) return null;
+            const data = await res.json();
+            const b = document.getElementById('bf-notif-badge');
+            if (b) { b.hidden = !data.unread; b.textContent = data.unread > 99 ? '99+' : String(data.unread); }
+            return data;
+        } catch (e) { return null; }
+    }
+    function wireNotifications() {
+        const btn = document.getElementById('bf-notif-btn');
+        if (!btn) return;
+        refreshBadge();
+        setInterval(() => { if (document.visibilityState === 'visible') refreshBadge(); }, 60000);
+        btn.addEventListener('click', async () => {
+            const data = await refreshBadge();
+            if (!data) { toast('No se pudieron cargar los avisos.', 'error'); return; }
+            const ICON = { event: 'calendar', poll: 'calendar', note: 'note', gig_application: 'mic',
+                           gig_chosen: 'check-circle', message: 'chat' };
+            const safeLink = (l) => (l && /^[a-z0-9_-]+\.html([?#][^\s"'<>]*)?$/i.test(l)) ? l : null;
+            await bfDialog({
+                title: 'Avisos',
+                body: data.items.length ? `<ul class="bf-notifs">${data.items.map(n => {
+                    const link = safeLink(n.link);
+                    const inner = `<span class="bf-notifs__icon">${bfIcon(ICON[n.kind] || 'inbox', { size: 16 })}</span>
+                        <span class="bf-notifs__text"><strong>${escapeHtml(n.title)}</strong>${n.body ? `<span>${escapeHtml(n.body)}</span>` : ''}
+                        <span class="bf-faint">${escapeHtml(bfDate(n.created_at))}</span></span>`;
+                    return `<li class="${n.read_at ? '' : 'is-unread'}">${link ? `<a href="${escapeHtml(link)}">${inner}</a>` : `<div>${inner}</div>`}</li>`;
+                }).join('')}</ul>` : bfEmpty('inbox', 'Nada nuevo', 'Aquí verás eventos nuevos, votaciones, candidaturas y mensajes.'),
+                actions: [{ label: 'Cerrar', value: null }],
+            });
+            if (data.unread) {
+                try { await apiFetch('/me/notifications/read-all', { method: 'POST' }); } catch (e) { /* luego */ }
+                refreshBadge();
+            }
+        });
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);

@@ -39,6 +39,7 @@ from ..services.models import (
     Venue,
     _utcnow,
 )
+from ..services.notify import band_member_ids, notify
 from ..services.ratelimit import check_rate
 from ..services.schemas import (
     ContactIn,
@@ -445,6 +446,16 @@ def _post(db: Session, t: ContactThread, author_id: str, body: str) -> ContactMe
     m = ContactMessage(thread_id=t.id, author_id=author_id, body=body.strip())
     db.add(m)
     t.last_message_at = _utcnow()
+    # Aviso a los demás participantes (T-V6-61)
+    others = {t.initiator_id}
+    if t.target_pro_id:
+        others.add(db.query(ProProfile.user_id).filter(ProProfile.id == t.target_pro_id).scalar())
+    for bid in (t.target_band_id, t.initiator_band_id):
+        if bid:
+            others.update(band_member_ids(db, bid))
+    others.discard(author_id)
+    notify(db, others, kind="message", title="Mensaje nuevo en Explorar", body=body.strip()[:200],
+           link=f"red.html#mensajes/{t.id}")
     return m
 
 
@@ -474,6 +485,9 @@ def apply_to_call(band_id: str, payload: GigApplyIn, db: Session = Depends(get_d
     _post(db, t, membership.user_id,
           f"Candidatura de «{band.name}» para «{call.title}»."
           + (f"\n\n{a.message}" if a.message else ""))
+    notify(db, [pro.user_id], kind="gig_application",
+           title=f"Nueva candidatura: {band.name}", body=f"Para «{call.title}».",
+           link="red.html#mios")
     db.commit()
     db.refresh(a)
     return _app_out(db, a, call, pro, band.name)
@@ -575,6 +589,9 @@ def choose_application(call_id: str, app_id: str, db: Session = Depends(get_db),
                     target_pro_id=pro.id, context_kind="gig_call", context_id=call.id)
     _post(db, t, user_id, f"¡Os hemos elegido para «{call.title}»! El concierto ya está en vuestra "
                           "agenda. Escribidnos por aquí para cerrar detalles.")
+    notify(db, band_member_ids(db, band.id), kind="gig_chosen",
+           title=f"¡{pro.name} os ha elegido!", body=f"«{call.title}» ya está en la agenda.",
+           link=f"band.html?id={band.id}", band_id=band.id)
     db.commit()
     db.refresh(a)
     return _app_out(db, a, call, pro, band.name)

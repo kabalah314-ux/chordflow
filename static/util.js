@@ -463,3 +463,72 @@ function bfSetlistInsightsHtml(items) {
         ${r.warnings.map(w => `<span class="bf-sl-insights__warn">${bfIco('alert-circle', 13)} ${escapeHtml(w)}</span>`).join('')}
     </div>`;
 }
+
+// ── T-V6-62: calendario mensual reutilizable ──────────────────────────────────
+// bfCalendar(el, events, { date, onPick }) pinta un mes (lunes primero) con los eventos de cada día
+// (icono + título). `events`: [{ id, title, starts_at, type, href? }]. Navegación ‹ › por meses.
+function bfCalendar(el, events, opts = {}) {
+    const state = { d: opts.date ? new Date(opts.date) : new Date() };
+    state.d.setDate(1);
+    const byDay = {};
+    events.forEach(e => {
+        if (!e.starts_at) return;
+        const d = new Date(e.starts_at);
+        if (isNaN(d)) return;
+        const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        (byDay[k] = byDay[k] || []).push(e);
+    });
+    const paint = () => {
+        const y = state.d.getFullYear(), m = state.d.getMonth();
+        const first = (new Date(y, m, 1).getDay() + 6) % 7;   // lunes = 0
+        const days = new Date(y, m + 1, 0).getDate();
+        const today = new Date();
+        const cells = [];
+        for (let i = 0; i < first; i++) cells.push('<div class="bf-cal__cell is-empty"></div>');
+        for (let day = 1; day <= days; day++) {
+            const evs = byDay[`${y}-${m}-${day}`] || [];
+            const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === day;
+            cells.push(`<div class="bf-cal__cell${isToday ? ' is-today' : ''}${evs.length ? ' has-events' : ''}">
+                <span class="bf-cal__num">${day}</span>
+                ${evs.slice(0, 3).map(e => `<a class="bf-cal__ev bf-cal__ev--${escapeHtml(e.type || 'other')}" href="${escapeHtml(e.href || '#')}" title="${escapeHtml(e.title)}">${bfIco(BF_EVENT_ICON[e.type] || 'pin', 11)}<span>${escapeHtml(e.title)}</span></a>`).join('')}
+                ${evs.length > 3 ? `<span class="bf-faint bf-cal__more">+${evs.length - 3}</span>` : ''}
+            </div>`);
+        }
+        const title = state.d.toLocaleDateString(BF_LOCALE, { month: 'long', year: 'numeric' });
+        el.innerHTML = `<div class="bf-cal">
+            <div class="bf-cal__head">
+                <button class="bf-icon-btn" data-cal="prev" aria-label="Mes anterior">‹</button>
+                <strong class="bf-cal__title">${escapeHtml(title)}</strong>
+                <button class="bf-icon-btn" data-cal="next" aria-label="Mes siguiente">›</button>
+            </div>
+            <div class="bf-cal__grid">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(x => `<div class="bf-cal__dow">${x}</div>`).join('')}${cells.join('')}</div>
+        </div>`;
+        el.querySelector('[data-cal="prev"]').addEventListener('click', () => { state.d.setMonth(state.d.getMonth() - 1); paint(); });
+        el.querySelector('[data-cal="next"]').addEventListener('click', () => { state.d.setMonth(state.d.getMonth() + 1); paint(); });
+    };
+    paint();
+}
+
+// Suscribir el calendario del móvil/Google a mis eventos (T-V6-62).
+async function bfSubscribeCalendar() {
+    try {
+        const res = await apiFetch('/me/calendar-token', { method: 'POST' });
+        if (!res.ok) throw new Error('http');
+        const t = await res.json();
+        const https = `${location.origin}${t.path}`;
+        const webcal = https.replace(/^https?:/, 'webcal:');
+        await bfDialog({
+            title: 'Tus ensayos y bolos en tu calendario',
+            body: `<div class="bf-stack">
+                <p>Añade este enlace a Google Calendar, Apple Calendar u Outlook y verás los eventos de todas tus bandas, siempre al día.</p>
+                <code class="share-link" style="display:block;overflow-wrap:anywhere;">${escapeHtml(https)}</code>
+                <div class="bf-row bf-wrap" style="gap:.5rem;">
+                    <a class="bf-btn bf-btn--primary" href="${escapeHtml(webcal)}">Abrir en mi calendario</a>
+                    <a class="bf-btn" href="https://calendar.google.com/calendar/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar</a>
+                </div>
+                <p class="bf-faint" style="font-size:.8rem;">En Google: «Otros calendarios › Desde URL» y pega el enlace. Es privado: no lo compartas. Si lo pierdes, genera otro aquí (el anterior deja de funcionar).</p>
+              </div>`,
+            actions: [{ label: 'Copiar enlace', value: 'copy' }, { label: 'Listo', value: null, primary: true }],
+        }).then(async (v) => { if (v === 'copy') { try { await navigator.clipboard.writeText(https); toast('Enlace copiado.', 'success'); } catch (e) { /* sin permiso */ } } });
+    } catch (e) { toast('No se pudo crear el enlace del calendario.', 'error'); }
+}

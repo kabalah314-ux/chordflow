@@ -427,7 +427,8 @@
                         <select class="bf-input" id="bt-s-newwho" aria-label="Responsable" style="max-width:12rem;">${memberOptions(list, null)}</select>
                         <button type="button" class="bf-btn bf-btn--sm" id="bt-s-additem">${bfIco('plus', 14)} Añadir</button></div>`}
                 </div>
-                <div><button type="button" class="bf-btn bf-btn--sm" id="bt-s-att">${bfIco('folder', 14)} Material del bolo (rider, cartel, planos…)</button></div>
+                <div class="bf-row bf-wrap" style="gap:.4rem;"><button type="button" class="bf-btn bf-btn--sm" id="bt-s-ics">${bfIco('calendar', 14)} Añadir a mi calendario</button>
+                <button type="button" class="bf-btn bf-btn--sm" id="bt-s-att">${bfIco('folder', 14)} Material del bolo (rider, cartel, planos…)</button></div>
                 ${ctx.iAmAdmin ? `<div class="bf-row bf-wrap" style="gap:.5rem;">
                     <button type="button" class="bf-btn bf-btn--sm" id="bt-s-share">${bfIco('share', 14)} Compartir hoja (solo lectura)</button>
                     ${ev.sheet_token ? `<button type="button" class="bf-btn bf-btn--sm bf-btn--ghost" id="bt-s-revoke">Desactivar enlace</button>` : ''}
@@ -471,6 +472,17 @@
                     add.addEventListener('click', addItem);
                     root.querySelector('#bt-s-newitem').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } });
                 }
+                root.querySelector('#bt-s-ics').addEventListener('click', async () => {
+                    try {
+                        const res = await apiFetch(`/bands/${bandId}/events/${eid}/ics`);
+                        if (!res.ok) throw new Error(res.status === 404 ? 'El evento no tiene fecha.' : 'http');
+                        const url = URL.createObjectURL(await res.blob());
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `${(ev.title || 'evento').replace(/[^\w\- ]+/g, '').slice(0, 40) || 'evento'}.ics`;
+                        document.body.appendChild(a); a.click(); a.remove();
+                        setTimeout(() => URL.revokeObjectURL(url), 2000);
+                    } catch (e) { toast(e.message && e.message !== 'http' ? e.message : 'No se pudo descargar.', 'error'); }
+                });
                 root.querySelector('#bt-s-att').addEventListener('click', () => attachmentsDialog({
                     listUrl: `/bands/${bandId}/events/${eid}/attachments`, postUrl: `/bands/${bandId}/events/${eid}/attachments`,
                     title: `Material · ${ev.title}`, canAdd: !ctx.iAmGuest }));

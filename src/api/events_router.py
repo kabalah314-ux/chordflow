@@ -29,6 +29,7 @@ from ..services.models import (
     Venue,
     _utcnow,
 )
+from ..services.notify import band_member_ids, notify
 from ..services.schemas import (
     AttendanceOut,
     AttendanceSet,
@@ -142,6 +143,10 @@ def create_event(
     ev = Event(band_id=band_id, created_by=membership.user_id,
                **payload.model_dump(exclude_none=True))
     db.add(ev)
+    kind = {"concert": "Concierto", "rehearsal": "Ensayo"}.get(payload.type, "Evento")
+    notify(db, band_member_ids(db, band_id, exclude=membership.user_id), kind="event",
+           title=f"{kind} nuevo: {payload.title}", body="¿Vas? Responde en la agenda.",
+           link=f"band.html?id={band_id}", band_id=band_id)   # T-V6-61
     db.commit()
     db.refresh(ev)
     return _to_event_response(db, ev, membership.user_id)

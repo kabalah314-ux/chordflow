@@ -274,6 +274,8 @@ class MusicianProfile(Base):
     display_name = Column(String(255))
     instruments = Column(JSON)  # ["guitarra", "voz", ...]
     avatar_url = Column(String(512))
+    # Suscripción de calendario (T-V6-62): token secreto para /public/calendar/{token}.ics
+    calendar_token = Column(String(64), nullable=True, unique=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -1249,3 +1251,20 @@ class RehearsalSession(Base):
     ended_at = Column(DateTime, nullable=True)
     items = Column(JSON, nullable=True)  # [{"song_id", "title", "seconds"}]
     notes = Column(Text, nullable=True)
+
+
+
+class Notification(Base):
+    """Centro de notificaciones in-app (T-V6-61): evento nuevo, votación, candidatura, mensaje…"""
+
+    __tablename__ = "notifications"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    band_id = Column(String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True)
+    kind = Column(String(32), nullable=False)
+    title = Column(String(255), nullable=False)
+    body = Column(String(500), nullable=True)
+    link = Column(String(512), nullable=True)  # ruta propia: "band.html?id=…#agenda"
+    created_at = Column(DateTime, default=_utcnow, index=True)
+    read_at = Column(DateTime, nullable=True)

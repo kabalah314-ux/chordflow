@@ -1552,3 +1552,22 @@ class SeasonOut(BaseModel):
     top_songs: List[dict] = []  # [{"title", "times"}]
     new_songs: int = 0
     currency: str = "EUR"
+
+
+# ── Notificaciones in-app (T-V6-61) ───────────────────────────────────────────
+class NotificationOut(BaseModel):
+    id: str
+    kind: str
+    title: str
+    body: Optional[str] = None
+    link: Optional[str] = None
+    band_id: Optional[str] = None
+    created_at: datetime
+    read_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationList(BaseModel):
+    unread: int = 0
+    items: List[NotificationOut] = []

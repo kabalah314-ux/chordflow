@@ -61,6 +61,7 @@ from ..services.models import (
     Venue,
     _utcnow,
 )
+from ..services.notify import band_member_ids, notify
 from ..services.ratelimit import check_rate
 from ..services.schemas import (
     AttachmentIn,
@@ -287,6 +288,9 @@ def create_note(
                  is_pinned=payload.is_pinned, due_date=payload.due_date,
                  song_id=payload.song_id, event_id=payload.event_id)
     db.add(n)
+    if payload.assignee_id and payload.assignee_id != membership.user_id:
+        notify(db, [payload.assignee_id], kind="note", title="Tienes un pendiente en la pizarra",
+               body=n.body[:200], link=f"band.html?id={band_id}", band_id=band_id)
     db.commit()
     db.refresh(n)
     return _note_out(n, _names(db, [n.author_id, n.assignee_id]))
@@ -550,6 +554,9 @@ def create_poll(
     for i, o in enumerate(sorted(payload.options, key=lambda x: x.starts_at)):
         poll.options.append(DatePollOption(starts_at=o.starts_at, ends_at=o.ends_at, position=i))
     db.add(poll)
+    notify(db, band_member_ids(db, band_id, exclude=membership.user_id), kind="poll",
+           title=f"Vota fechas: {poll.title}", body=f"{len(payload.options)} fechas propuestas.",
+           link=f"band.html?id={band_id}", band_id=band_id)
     db.commit()
     db.refresh(poll)
     return _poll_out(db, poll, with_token=True)
