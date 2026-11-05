@@ -793,7 +793,7 @@
 - [ ] **T-V6-35** Tema claro completo: eliminar `#hex`/`rgba` fuera de `:root` (54 + 110 en `style.css`, 6 en JS), tokens inexistentes, `.bf-badge` sin `capitalize`; check automático en CI
 - [x] **T-V6-36** `format.js` (`Intl` dinero/fechas) y `labels.js` únicos aplicados en todas las páginas
 - [ ] **T-V6-37** Retirar `style.css` por partes → `components.css` + `player.css` + `editor.css`; cero `style=""` inline en plantillas (utilidades `.bf-stack--*`)
-- [ ] **T-V6-40** Login (dos columnas, pestañas Entrar/Crear, Google oficial, mostrar contraseña) + `reset.html` + Términos/Privacidad
+- [x] **T-V6-40** Login (dos columnas, pestañas Entrar/Crear, Google oficial, mostrar contraseña) + `reset.html` + Términos/Privacidad
 - [x] **T-V6-41** Join (tarjeta centrada, estados inválida/caducada, login conservando código)
 - [x] **T-V6-42a** Espacio de banda: cabecera con cover, pestañas con contador + hash, onboarding una sola vez (persistido en perfil)
 - [ ] **T-V6-42b** Agenda de banda: filas 56 px + segmented + ⋯ + panel de detalle (`bf-drawer`); Salas a Ajustes

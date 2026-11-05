@@ -46,6 +46,10 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Login profesional + recuperar contraseña + términos/privacidad (T-V6-40) · unirse con código (parte de T-V6-44)
+- **Qué:** login en dos columnas (qué es BandFlow / formulario), pestañas Entrar · Crear cuenta, "Ver" contraseña, errores de Supabase en castellano, "¿Has olvidado la contraseña?" (email de Supabase → `reset.html` para elegir una nueva), botón de Google con su logo oficial y aviso de términos/privacidad (`legal.html`, texto provisional pendiente de revisión legal). `join.html` sin código pide pegar el enlace o el código; "Unirme con un código" en Mis bandas.
+- **Pendiente de Oscar:** en Supabase › Auth › URL Configuration, añadir `https://chordflow-ecru.vercel.app/static/reset.html` a las Redirect URLs.
+
 ### V6 — Navegación: pestañas de banda enlazables y "una banda = menos clics" (T-V6-90, T-V6-42a parcial)
 - **Qué:** las pestañas del espacio de banda viven en el hash (`band.html?id=…#agenda`): se pueden enlazar desde avisos, compartir y el botón atrás funciona; `#ev=<id>` abre la Agenda. Con **una sola banda**, el lateral muestra sus secciones (Agenda, Canciones, Setlists, Finanzas, Chat) directamente bajo la banda. Se descarta redirigir Inicio a la banda (rompería enlaces y tests) y se mantienen las 9 pestañas: la fusión a 7 queda en la guía como mejora visual.
 

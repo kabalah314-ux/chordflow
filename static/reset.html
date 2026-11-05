@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="theme.js?v=5283f341"></script>
+    <meta name="robots" content="noindex">
+    <title>BandFlow — Nueva contraseña</title>
+    <link rel="stylesheet" href="design-system.css?v=a419ae7c">
+    <link rel="stylesheet" href="style.css?v=3521bb06">
+</head>
+<body>
+    <main class="pub-wrap">
+        <div class="pub-card" id="reset-card">
+            <span class="pub-type">Tu cuenta</span>
+            <h1 class="pub-title">Elige una contraseña nueva</h1>
+            <form id="reset-form" class="bf-stack" novalidate>
+                <label class="bf-label" for="new-pass">Contraseña nueva (mínimo 6 caracteres)</label>
+                <input class="bf-input" type="password" id="new-pass" minlength="6" autocomplete="new-password" required>
+                <label class="bf-label" for="new-pass2">Repítela</label>
+                <input class="bf-input" type="password" id="new-pass2" minlength="6" autocomplete="new-password" required>
+                <p id="reset-msg" class="login-msg" role="status" aria-live="polite"></p>
+                <button class="bf-btn bf-btn--primary" type="submit">Guardar y entrar</button>
+            </form>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.js"
+            integrity="sha384-EjUdIVmzWliPzdzhxZ9ZoO0etXLKWuUPUftAGxP6qH6Lm4oLwoLaJR0Ba4pIDiDL"
+            crossorigin="anonymous"></script>
+    <script src="auth.js?v=f39b3653"></script>
+    <script src="reset.js?v=1a15ca47"></script>
+</body>
+</html>
