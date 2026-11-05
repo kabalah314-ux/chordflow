@@ -531,4 +531,58 @@
         });
     });
     BT.loadPolls = loadPolls;
+
+    // ══ Dossier (EPK) de la banda (T-V6-98) ═══════════════════════════════════
+    BT.epk = async function (bandId, ctx) {
+        const box = document.getElementById('bt-epk');
+        if (!box) return;
+        let e, apps = [];
+        try {
+            [e, apps] = await Promise.all([jsonOrThrow(await apiFetch(`/bands/${bandId}/epk`)),
+                jsonOrThrow(await apiFetch(`/bands/${bandId}/gig-applications`)).catch(() => [])]);
+        } catch (err) { box.innerHTML = '<p class="bf-muted">No se pudo cargar el dossier.</p>'; return; }
+        const ro = !ctx.iAmAdmin;
+        const linkTxt = (e.links || []).map(l => `${l.label} | ${l.url}`).join('\n');
+        const APP = { sent: 'Enviada', seen: 'Vista', shortlisted: 'Preseleccionada', chosen: 'Elegida', declined: 'Esta vez no' };
+        box.innerHTML = `
+            <div class="bf-row bf-row--between bf-wrap"><h3 class="bf-h3">Dossier de la banda (EPK)</h3>
+                <a class="bf-btn bf-btn--sm" href="red.html#bolos">${bfIco('mic', 14)} Buscar bolos</a></div>
+            <p class="bf-muted" style="font-size:.85rem;">Lo que ven las salas cuando os postuláis a un bolo y, si lo hacéis público, cualquiera en vuestra página.</p>
+            <div><label class="bf-label" for="epk-bio">Presentación</label><textarea class="bf-textarea" id="epk-bio" rows="3" maxlength="4000" ${ro ? 'disabled' : ''}>${escapeHtml(e.bio || '')}</textarea></div>
+            <div class="bf-form-grid">
+                <div><label class="bf-label" for="epk-styles">Estilos (comas)</label><input class="bf-input" id="epk-styles" value="${escapeHtml((e.styles || []).join(', '))}" ${ro ? 'disabled' : ''}></div>
+                <div><label class="bf-label" for="epk-form">Formación</label><input class="bf-input" id="epk-form" maxlength="64" placeholder="Trío, banda de 5…" value="${escapeHtml(e.formation || '')}" ${ro ? 'disabled' : ''}></div>
+                <div><label class="bf-label" for="epk-zone">Zona</label><input class="bf-input" id="epk-zone" maxlength="255" value="${escapeHtml(e.zone || '')}" ${ro ? 'disabled' : ''}></div>
+                <div><label class="bf-label" for="epk-fee">Caché orientativo</label><input class="bf-input" id="epk-fee" maxlength="255" placeholder="Desde 300 €" value="${escapeHtml(e.fee_hint || '')}" ${ro ? 'disabled' : ''}></div>
+            </div>
+            <div><label class="bf-label" for="epk-links">Enlaces (uno por línea: «YouTube | https://…»)</label><textarea class="bf-textarea" id="epk-links" rows="2" ${ro ? 'disabled' : ''}>${escapeHtml(linkTxt)}</textarea></div>
+            <div><label class="bf-label" for="epk-rider">Rider básico (solo lo ven las salas a las que os postuláis)</label><textarea class="bf-textarea" id="epk-rider" rows="2" maxlength="4000" ${ro ? 'disabled' : ''}>${escapeHtml(e.rider_notes || '')}</textarea></div>
+            <label><input type="checkbox" id="epk-public" ${e.is_public ? 'checked' : ''} ${ro ? 'disabled' : ''}> Página pública de la banda (la pueden ver salas y profesionales)</label>
+            <div class="bf-row bf-wrap" style="gap:.5rem;">
+                ${ro ? '' : `<button class="bf-btn bf-btn--primary" id="epk-save">Guardar dossier</button>`}
+                ${e.is_public ? `<a class="bf-btn bf-btn--ghost" href="ficha.html?banda=${encodeURIComponent(bandId)}" target="_blank" rel="noopener">Ver página pública</a>` : ''}
+            </div>
+            ${apps.length ? `<h3 class="bf-h3" style="margin-top:.8rem;">Candidaturas</h3><ul class="setlist-list">${apps.map(a => `<li class="setlist-song"><span class="sl-title">${escapeHtml(a.call_title || '')}
+                <small>${escapeHtml(a.venue_name || '')}${a.starts_at ? ' · ' + escapeHtml(bfDate(a.starts_at)) : ''}</small></span><span class="bf-badge">${escapeHtml(APP[a.status] || a.status)}</span></li>`).join('')}</ul>` : ''}`;
+        const save = box.querySelector('#epk-save');
+        if (save) save.addEventListener('click', async () => {
+            const csv = (v) => v.split(',').map(x => x.trim()).filter(Boolean);
+            const body = {
+                bio: box.querySelector('#epk-bio').value.trim() || null,
+                styles: csv(box.querySelector('#epk-styles').value),
+                formation: box.querySelector('#epk-form').value.trim() || null,
+                zone: box.querySelector('#epk-zone').value.trim() || null,
+                fee_hint: box.querySelector('#epk-fee').value.trim() || null,
+                rider_notes: box.querySelector('#epk-rider').value.trim() || null,
+                links: box.querySelector('#epk-links').value.split('\n').map(l => l.split('|').map(x => x.trim()))
+                    .filter(x => x[0] && x[1]).map(([label, url]) => ({ label, url })),
+                is_public: box.querySelector('#epk-public').checked,
+            };
+            try {
+                await jsonOrThrow(await apiFetch(`/bands/${bandId}/epk`, J('PUT', body)));
+                toast('Dossier guardado.', 'success');
+                BT.epk(bandId, ctx);
+            } catch (err) { toast(err.message && err.message !== 'http' ? 'Revisa los enlaces: deben empezar por https://' : 'No se pudo guardar.', 'error'); }
+        });
+    };
 })();

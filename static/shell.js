@@ -32,7 +32,8 @@
     const NAV = [
         { label: 'Inicio',     icon: 'home',     href: 'app.html' },
         { label: 'Afinador / Metrónomo', icon: 'mic', href: 'afinador.html' },   // T-V5-13
-        { label: 'Explorar',   icon: 'globe',    href: 'biblioteca-global.html' },
+        // V6-F9b: Explorar = hub de la red (bolos, salas, profesionales); Canciones = biblioteca global.
+        { label: 'Explorar',   icon: 'globe',    href: 'red.html', also: ['biblioteca-global.html', 'ficha.html'] },
         { label: 'Biblioteca', icon: 'library',  href: 'library.html' },
         { label: 'Agenda',     icon: 'calendar', href: 'agenda.html' },
         { label: 'Finanzas',   icon: 'wallet',   href: 'finanzas.html' },
@@ -51,7 +52,7 @@
             return `<button class="bf-nav-item" data-soon data-label="${escapeHtml(n.label)}">
                 ${inner}<span class="bf-nav-soon">Pronto</span></button>`;
         }
-        const active = n.href === here ? ' aria-current="page"' : '';
+        const active = (n.href === here || (n.also || []).includes(here)) ? ' aria-current="page"' : '';
         return `<a class="bf-nav-item" href="${n.href}"${active}>${inner}</a>`;
     }
 

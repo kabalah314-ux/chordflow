@@ -75,7 +75,8 @@ def _band_routes_from_app():
 
     out = []
     for r in app.routes:
-        if isinstance(r, APIRoute) and "{band_id}" in r.path:
+        # Las rutas /public/* son otro plano (sin sesión, proyección segura): tienen sus tests.
+        if isinstance(r, APIRoute) and "{band_id}" in r.path and not r.path.startswith("/public/"):
             for m in sorted(r.methods - {"HEAD", "OPTIONS"}):
                 out.append((m, r.path))
     return out

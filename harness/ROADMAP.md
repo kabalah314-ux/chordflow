@@ -848,8 +848,8 @@
 - [ ] **T-V6-93** Resumen de temporada
 - [x] **T-V6-94** Feedback in-app + eventos de producto (`product_events`)
 - [ ] **T-V6-95** Gastos recurrentes con reparto por defecto
-- [ ] **T-V6-96** Red profesional (§9.9): perfiles de sala y profesional + fichas públicas + Explorar > Salas / Profesionales
-- [ ] **T-V6-97** Convocatorias de bolos y candidaturas (I-20) → evento en la agenda
-- [ ] **T-V6-98** EPK de banda + página pública ampliada + "Proponernos" (I-21)
-- [ ] **T-V6-99** Valoraciones mutuas, reportar, verificación, anti-spam (I-22)
-- [ ] **T-V6-100** Calendario de sala (I-23)
+- [x] **T-V6-96** Red profesional (§9.9): perfiles de sala y profesional + fichas públicas + Explorar > Salas / Profesionales
+- [x] **T-V6-97** Convocatorias de bolos y candidaturas (I-20) → evento en la agenda
+- [x] **T-V6-98** EPK de banda + página pública ampliada + "Proponernos" (I-21)
+- [x] **T-V6-99** Valoraciones mutuas, reportar, verificación, anti-spam (I-22)
+- [x] **T-V6-100** Calendario de sala (I-23)

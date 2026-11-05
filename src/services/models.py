@@ -952,3 +952,217 @@ class ProductEvent(Base):
     band_id = Column(String(36), nullable=True, index=True)
     kind = Column(String(64), nullable=False, index=True)
     created_at = Column(DateTime, default=_utcnow)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# V6-F9b — Red profesional (GUIA_MAESTRA_V6 §9.9): salas, bookers, profesionales, convocatorias,
+# candidaturas, EPK de banda, mensajes de contacto, valoraciones y reportes. Todo aditivo.
+# Un usuario puede tener VARIOS perfiles (una sala y un técnico, p. ej.). Los listados públicos
+# usan proyecciones seguras: el teléfono jamás aparece en un listado.
+# ══════════════════════════════════════════════════════════════════════════════
+PRO_KINDS = (
+    "venue", "booker", "photographer", "video", "sound_tech", "light_tech", "studio",
+    "rehearsal_room", "luthier", "design", "press", "teacher", "other",
+)
+GIG_CALL_STATUSES = ("open", "closed", "filled")
+GIG_APPLICATION_STATUSES = ("sent", "seen", "shortlisted", "chosen", "declined")
+DEAL_TYPES = ("fee", "door", "percent", "free", "other")
+
+
+class ProProfile(Base):
+    """Perfil profesional o de sala (T-V6-96). `kind='venue'` usa además los campos de sala."""
+
+    __tablename__ = "pro_profiles"
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN (" + ", ".join(f"'{k}'" for k in PRO_KINDS) + ")",
+            name="ck_pro_profiles_kind",
+        ),
+        CheckConstraint(
+            "visibility IN (" + ", ".join(f"'{v}'" for v in VISIBILITY_LEVELS) + ")",
+            name="ck_pro_profiles_visibility",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    kind = Column(String(24), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    bio = Column(Text, nullable=True)
+    zone = Column(String(255), nullable=True, index=True)  # texto libre: ciudad / comarca
+    services = Column(JSON, nullable=True)  # ["Fotografía de directo", "Sesión de estudio"]
+    price_hint = Column(String(255), nullable=True)  # "desde 150 € / bolo"
+    links = Column(JSON, nullable=True)  # [{"label": "Instagram", "url": "https://…"}]
+    photos = Column(JSON, nullable=True)  # urls https
+    avatar_url = Column(String(512), nullable=True)
+    phone = Column(String(64), nullable=True)
+    show_phone = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    # Campos de sala (kind='venue')
+    capacity = Column(Integer, nullable=True)
+    styles = Column(JSON, nullable=True)  # ["rock", "versiones"]
+    deal_types = Column(JSON, nullable=True)  # ["fee", "door"]
+    backline = Column(Text, nullable=True)
+    address = Column(String(512), nullable=True)
+    visibility = Column(
+        String(16), nullable=False, default="public", server_default=text("'public'")
+    )
+    plan = Column(String(16), nullable=False, default="free", server_default=text("'free'"))
+    verified_at = Column(DateTime, nullable=True)
+    hidden_at = Column(DateTime, nullable=True)  # moderación (oculto por reportes / Oscar)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+
+class GigCall(Base):
+    """Convocatoria de bolo publicada por una sala o booker (T-V6-97, I-20)."""
+
+    __tablename__ = "gig_calls"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in GIG_CALL_STATUSES) + ")",
+            name="ck_gig_calls_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    pro_profile_id = Column(
+        String(36), ForeignKey("pro_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    flexible_dates = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    styles = Column(JSON, nullable=True)
+    format = Column(String(255), nullable=True)  # "2 pases de 45 min", "trío acústico"
+    deal_type = Column(String(16), nullable=True)
+    fee = Column(Numeric(10, 2), nullable=True)
+    conditions = Column(Text, nullable=True)  # "cena + 2 consumiciones"
+    zone = Column(String(255), nullable=True, index=True)
+    deadline_at = Column(DateTime, nullable=True)
+    status = Column(String(16), nullable=False, default="open", server_default=text("'open'"))
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+
+class GigApplication(Base):
+    """Candidatura de una banda a una convocatoria. Única por (convocatoria, banda)."""
+
+    __tablename__ = "gig_applications"
+    __table_args__ = (
+        UniqueConstraint("gig_call_id", "band_id", name="uq_gig_application_call_band"),
+        CheckConstraint(
+            "status IN (" + ", ".join(f"'{s}'" for s in GIG_APPLICATION_STATUSES) + ")",
+            name="ck_gig_applications_status",
+        ),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    gig_call_id = Column(
+        String(36), ForeignKey("gig_calls.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    applied_by = Column(String(36), nullable=False)
+    message = Column(Text, nullable=True)
+    epk_snapshot = Column(JSON, nullable=True)
+    status = Column(String(16), nullable=False, default="sent", server_default=text("'sent'"))
+    event_id = Column(String(36), ForeignKey("events.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class BandEpk(Base):
+    """EPK (dossier) de la banda (T-V6-98): lo que ven salas y profesionales."""
+
+    __tablename__ = "band_epks"
+
+    band_id = Column(String(36), ForeignKey("bands.id", ondelete="CASCADE"), primary_key=True)
+    bio = Column(Text, nullable=True)
+    styles = Column(JSON, nullable=True)
+    formation = Column(String(64), nullable=True)  # dúo, trío, banda de 5…
+    zone = Column(String(255), nullable=True, index=True)
+    links = Column(JSON, nullable=True)
+    photos = Column(JSON, nullable=True)
+    fee_hint = Column(String(255), nullable=True)
+    rider_notes = Column(Text, nullable=True)
+    is_public = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class ContactThread(Base):
+    """Conversación de contacto de la red (I-3/I-21/I-22): un usuario (opcionalmente en nombre de
+    su banda) escribe a un perfil profesional o a una banda. Participan el iniciador y el dueño del
+    perfil (o los miembros activos de la banda destino)."""
+
+    __tablename__ = "contact_threads"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    initiator_id = Column(String(36), nullable=False, index=True)
+    initiator_band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="SET NULL"), nullable=True
+    )
+    target_pro_id = Column(
+        String(36), ForeignKey("pro_profiles.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    target_band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    context_kind = Column(String(16), nullable=True)  # venue | pro | gig_call | band
+    context_id = Column(String(36), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    last_message_at = Column(DateTime, default=_utcnow, index=True)
+
+
+class ContactMessage(Base):
+    __tablename__ = "contact_messages"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    thread_id = Column(
+        String(36), ForeignKey("contact_threads.id", ondelete="CASCADE"), nullable=False,
+        index=True,
+    )
+    author_id = Column(String(36), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+class Review(Base):
+    """Valoración mutua (T-V6-99, I-22): solo con relación previa (conversación respondida o bolo
+    elegido). Una por autor y destino."""
+
+    __tablename__ = "reviews"
+    __table_args__ = (
+        UniqueConstraint("from_user_id", "to_pro_id", "to_band_id", name="uq_review_author_target"),
+        CheckConstraint("stars BETWEEN 1 AND 5", name="ck_reviews_stars"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    from_user_id = Column(String(36), nullable=False, index=True)
+    to_pro_id = Column(
+        String(36), ForeignKey("pro_profiles.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    to_band_id = Column(
+        String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    stars = Column(Integer, nullable=False)
+    body = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    hidden_at = Column(DateTime, nullable=True)
+
+
+class Report(Base):
+    """Reporte de contenido de la red (T-V6-99): lo revisa Oscar."""
+
+    __tablename__ = "reports"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    reporter_id = Column(String(36), nullable=False, index=True)
+    target_kind = Column(String(16), nullable=False)  # pro | gig_call | band | review
+    target_id = Column(String(36), nullable=False, index=True)
+    reason = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+    resolved_at = Column(DateTime, nullable=True)

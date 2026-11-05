@@ -19,6 +19,7 @@ from .api.import_router import router as import_router
 from .api.invites_router import router as invites_router
 from .api.me_router import router as me_router
 from .api.messages_router import router as messages_router
+from .api.network_router import router as network_router
 from .api.profile_router import router as profile_router
 from .api.public_router import router as public_router
 from .api.setlists_router import router as setlists_router
@@ -116,6 +117,7 @@ app.include_router(tours_router)
 app.include_router(catalog_router)
 app.include_router(public_router)
 app.include_router(band_tools_router)
+app.include_router(network_router)
 
 @app.get("/")
 def read_root():

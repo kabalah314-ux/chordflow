@@ -1625,3 +1625,10 @@ kbd {
   body { background: #fff !important; color: #000 !important; }
   .pub-card { box-shadow: none !important; border: 0 !important; background: #fff !important; color: #000 !important; }
 }
+
+/* V6-F9b — fichas públicas (ficha.html) */
+.fc-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .5rem; margin: .8rem 0; }
+.fc-photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; }
+.fc-reviews, .fc-calls { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .6rem; }
+.fc-calls li { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.fc-reviews p { margin: .2rem 0 0; }

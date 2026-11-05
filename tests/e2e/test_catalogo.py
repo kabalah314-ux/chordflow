@@ -41,9 +41,12 @@ def test_explorar_busca_y_abre_detalle(page, live_server, api):
 
 
 def test_explorar_en_el_lateral(page, live_server, api):
-    # "Explorar" es un item del lateral del shell y navega a la biblioteca global.
+    # "Explorar" es un item del lateral: abre el hub de la red (V6-F9b) y desde ahí "Canciones"
+    # lleva a la biblioteca global de siempre.
     page.goto(live_server + "/static/app.html", wait_until="networkidle")
     page.wait_for_selector(".bf-sidebar", timeout=8000)
     page.click('.bf-sidebar a.bf-nav-item:has-text("Explorar")')
+    page.wait_for_url("**/red.html*", timeout=8000)
+    page.click('#red a[href="biblioteca-global.html"]')
     page.wait_for_url("**/biblioteca-global.html", timeout=8000)
     assert page.url.endswith("biblioteca-global.html")

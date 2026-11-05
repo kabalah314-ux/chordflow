@@ -1119,3 +1119,298 @@ class FeedbackIn(BaseModel):
 class ProductEventIn(BaseModel):
     kind: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9_.:-]+$")
     band_id: Optional[str] = Field(None, max_length=36)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# V6-F9b — Red profesional (salas, profesionales, convocatorias, EPK, contacto, valoraciones)
+# ══════════════════════════════════════════════════════════════════════════════
+ProKind = Literal["venue", "booker", "photographer", "video", "sound_tech", "light_tech", "studio",
+                  "rehearsal_room", "luthier", "design", "press", "teacher", "other"]
+DealType = Literal["fee", "door", "percent", "free", "other"]
+
+
+class LinkIn(BaseModel):
+    label: str = Field(min_length=1, max_length=60)
+    url: str = Field(max_length=512)
+
+    @field_validator("url")
+    @classmethod
+    def _http(cls, v):
+        v = _validate_http_url(v)
+        if not v:
+            raise ValueError("Falta el enlace")
+        return v
+
+
+def _clean_tags(v: Optional[List[str]]) -> Optional[List[str]]:
+    if v is None:
+        return v
+    out = []
+    for t in v:
+        t = (t or "").strip()[:40]
+        if t and t.lower() not in [o.lower() for o in out]:
+            out.append(t)
+    return out[:12]
+
+
+def _clean_photos(v: Optional[List[str]]) -> Optional[List[str]]:
+    if v is None:
+        return v
+    return [u for u in (_validate_image_url(x) for x in v[:8]) if u]
+
+
+class ProProfileIn(BaseModel):
+    kind: ProKind
+    name: str = Field(min_length=1, max_length=255)
+    bio: Optional[str] = Field(None, max_length=4000)
+    zone: Optional[str] = Field(None, max_length=255)
+    services: Optional[List[str]] = None
+    price_hint: Optional[str] = Field(None, max_length=255)
+    links: Optional[List[LinkIn]] = Field(None, max_length=8)
+    photos: Optional[List[str]] = None
+    avatar_url: Optional[str] = Field(None, max_length=512)
+    phone: Optional[str] = Field(None, max_length=64)
+    show_phone: bool = False
+    capacity: Optional[int] = Field(None, ge=0, le=1_000_000)
+    styles: Optional[List[str]] = None
+    deal_types: Optional[List[DealType]] = None
+    backline: Optional[str] = Field(None, max_length=4000)
+    address: Optional[str] = Field(None, max_length=512)
+    visibility: Visibility = "public"
+
+    _tags = field_validator("services", "styles")(_clean_tags)
+    _photos = field_validator("photos")(_clean_photos)
+    _avatar = field_validator("avatar_url")(_validate_image_url)
+
+
+class ProProfileUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    bio: Optional[str] = Field(None, max_length=4000)
+    zone: Optional[str] = Field(None, max_length=255)
+    services: Optional[List[str]] = None
+    price_hint: Optional[str] = Field(None, max_length=255)
+    links: Optional[List[LinkIn]] = Field(None, max_length=8)
+    photos: Optional[List[str]] = None
+    avatar_url: Optional[str] = Field(None, max_length=512)
+    phone: Optional[str] = Field(None, max_length=64)
+    show_phone: Optional[bool] = None
+    capacity: Optional[int] = Field(None, ge=0, le=1_000_000)
+    styles: Optional[List[str]] = None
+    deal_types: Optional[List[DealType]] = None
+    backline: Optional[str] = Field(None, max_length=4000)
+    address: Optional[str] = Field(None, max_length=512)
+    visibility: Optional[Visibility] = None
+
+    _tags = field_validator("services", "styles")(_clean_tags)
+    _photos = field_validator("photos")(_clean_photos)
+    _avatar = field_validator("avatar_url")(_validate_image_url)
+
+
+class ProProfileCard(BaseModel):
+    """Proyección PÚBLICA de listado: nunca teléfono ni user_id."""
+    id: str
+    kind: str
+    name: str
+    zone: Optional[str] = None
+    bio: Optional[str] = None
+    services: Optional[List[str]] = None
+    styles: Optional[List[str]] = None
+    price_hint: Optional[str] = None
+    capacity: Optional[int] = None
+    avatar_url: Optional[str] = None
+    verified: bool = False
+    rating_avg: Optional[float] = None
+    rating_count: int = 0
+    open_calls: int = 0
+
+
+class ReviewOut(BaseModel):
+    id: str
+    author_name: Optional[str] = None
+    stars: int
+    body: Optional[str] = None
+    created_at: datetime
+
+
+class ProProfilePublic(ProProfileCard):
+    links: Optional[List[dict]] = None
+    photos: Optional[List[str]] = None
+    deal_types: Optional[List[str]] = None
+    backline: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None  # solo si el dueño lo permite Y quien mira ha iniciado sesión
+    reviews: List[ReviewOut] = []
+    is_mine: bool = False
+
+
+class ProProfileOwn(ProProfilePublic):
+    """Lo que ve el dueño de su perfil (todo)."""
+    show_phone: bool = False
+    visibility: str = "public"
+    created_at: Optional[datetime] = None
+
+
+class GigCallIn(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = Field(None, max_length=4000)
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    flexible_dates: bool = False
+    styles: Optional[List[str]] = None
+    format: Optional[str] = Field(None, max_length=255)
+    deal_type: Optional[DealType] = None
+    fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
+    conditions: Optional[str] = Field(None, max_length=2000)
+    zone: Optional[str] = Field(None, max_length=255)
+    deadline_at: Optional[datetime] = None
+
+    _norm_dates = field_validator("starts_at", "ends_at", "deadline_at")(_to_naive_utc)
+    _tags = field_validator("styles")(_clean_tags)
+
+
+class GigCallUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = Field(None, max_length=4000)
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    flexible_dates: Optional[bool] = None
+    styles: Optional[List[str]] = None
+    format: Optional[str] = Field(None, max_length=255)
+    deal_type: Optional[DealType] = None
+    fee: Optional[Decimal] = Field(None, ge=0, max_digits=10, decimal_places=2)
+    conditions: Optional[str] = Field(None, max_length=2000)
+    zone: Optional[str] = Field(None, max_length=255)
+    deadline_at: Optional[datetime] = None
+    status: Optional[Literal["open", "closed"]] = None
+
+    _norm_dates = field_validator("starts_at", "ends_at", "deadline_at")(_to_naive_utc)
+    _tags = field_validator("styles")(_clean_tags)
+
+
+class GigCallOut(BaseModel):
+    id: str
+    pro_profile_id: str
+    venue_name: Optional[str] = None
+    venue_kind: Optional[str] = None
+    venue_verified: bool = False
+    title: str
+    description: Optional[str] = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    flexible_dates: bool = False
+    styles: Optional[List[str]] = None
+    format: Optional[str] = None
+    deal_type: Optional[str] = None
+    fee: Optional[Decimal] = None
+    conditions: Optional[str] = None
+    zone: Optional[str] = None
+    deadline_at: Optional[datetime] = None
+    status: str
+    created_at: Optional[datetime] = None
+    applications: Optional[int] = None  # solo para el dueño
+    my_applications: List[dict] = []  # bandas mías que ya se postularon {band_id, status}
+
+
+class GigApplyIn(BaseModel):
+    gig_call_id: str
+    message: Optional[str] = Field(None, max_length=2000)
+
+
+class GigApplicationOut(BaseModel):
+    id: str
+    gig_call_id: str
+    call_title: Optional[str] = None
+    venue_name: Optional[str] = None
+    starts_at: Optional[datetime] = None
+    band_id: str
+    band_name: Optional[str] = None
+    message: Optional[str] = None
+    epk: Optional[dict] = None
+    status: str
+    event_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class GigApplicationPatch(BaseModel):
+    status: Literal["seen", "shortlisted", "declined"]
+
+
+class EpkIn(BaseModel):
+    bio: Optional[str] = Field(None, max_length=4000)
+    styles: Optional[List[str]] = None
+    formation: Optional[str] = Field(None, max_length=64)
+    zone: Optional[str] = Field(None, max_length=255)
+    links: Optional[List[LinkIn]] = Field(None, max_length=8)
+    photos: Optional[List[str]] = None
+    fee_hint: Optional[str] = Field(None, max_length=255)
+    rider_notes: Optional[str] = Field(None, max_length=4000)
+    is_public: Optional[bool] = None
+
+    _tags = field_validator("styles")(_clean_tags)
+    _photos = field_validator("photos")(_clean_photos)
+
+
+class EpkOut(BaseModel):
+    band_id: str
+    bio: Optional[str] = None
+    styles: Optional[List[str]] = None
+    formation: Optional[str] = None
+    zone: Optional[str] = None
+    links: Optional[List[dict]] = None
+    photos: Optional[List[str]] = None
+    fee_hint: Optional[str] = None
+    rider_notes: Optional[str] = None
+    is_public: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicBandOut(BaseModel):
+    id: str
+    name: str
+    avatar_url: Optional[str] = None
+    cover_url: Optional[str] = None
+    epk: Optional[EpkOut] = None
+    upcoming: List[dict] = []
+    rating_avg: Optional[float] = None
+    rating_count: int = 0
+    reviews: List[ReviewOut] = []
+
+
+class ContactIn(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+    as_band_id: Optional[str] = None
+    gig_call_id: Optional[str] = None
+
+
+class ContactMessageOut(BaseModel):
+    id: str
+    author_id: str
+    author_name: Optional[str] = None
+    mine: bool = False
+    body: str
+    created_at: datetime
+
+
+class ContactThreadOut(BaseModel):
+    id: str
+    title: str  # con quién hablo (nombre del perfil/banda del otro lado)
+    subtitle: Optional[str] = None
+    context_kind: Optional[str] = None
+    context_id: Optional[str] = None
+    last_message: Optional[str] = None
+    last_message_at: Optional[datetime] = None
+    messages: List[ContactMessageOut] = []
+    can_review: bool = False
+    review_target: Optional[dict] = None  # {"kind": "pro"|"band", "id": …}
+
+
+class ReviewIn(BaseModel):
+    stars: int = Field(ge=1, le=5)
+    body: Optional[str] = Field(None, max_length=500)
+
+
+class ReportIn(BaseModel):
+    target_kind: Literal["pro", "gig_call", "band", "review"]
+    target_id: str = Field(max_length=36)
+    reason: str = Field(min_length=3, max_length=2000)

@@ -231,6 +231,7 @@
                             <div><button class="bf-btn bf-btn--danger" id="set-delete">${bfIcon('trash', { size: 15 })} Borrar banda</button></div>
                         </div>`
                         : `<div class="bf-card"><p class="bf-muted">Solo un admin puede editar la banda.</p></div>`}
+                    <div class="bf-card bf-stack" id="bt-epk" style="margin-top:1rem;"><p class="bf-muted">Cargando dossier…</p></div>
                 </div>
             </div>`;
     }
@@ -250,10 +251,11 @@
 
     // Carga perezosa: las pestañas con datos remotos se cargan la primera vez que se abren.
     // miembros/ajustes ya se pintan en renderShell; resumen se carga en init y al reabrir la pestaña.
-    const loaded = new Set(['miembros', 'ajustes']);
+    const loaded = new Set(['miembros']);
     function loadTab(key, ctx) {
         if (loaded.has(key)) return;
         loaded.add(key);
+        if (key === 'ajustes') { if (window.BandTools) window.BandTools.epk(bandId, ctx); return; }   // dossier (V6-F9b)
         if (key === 'resumen') loadSummary(bandId, ctx);
         else if (key === 'repertorio') { loadRepertoire(bandId, !ctx.iAmGuest); loadCollections(bandId, !ctx.iAmGuest); }
         else if (key === 'setlists') loadBandSetlists(bandId, !ctx.iAmGuest);
