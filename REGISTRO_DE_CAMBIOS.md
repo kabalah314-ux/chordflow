@@ -46,6 +46,10 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Setlist compartible e imprimible (T-V6-63) · Índices compuestos (T-V6-75)
+- **Qué:** migración `f6a7b8c9d0e1`: `setlists.share_token` + índices `events(band_id, starts_at)`, `transactions(band_id, date)`, `messages(band_id, created_at)`, `notifications(user_id, read_at)` (las consultas más frecuentes: agenda, finanzas, chat, avisos). Setlist: "Imprimir" (versión grande para el suelo del escenario) y "Compartir" (enlace de solo lectura `setlist.html?t=`, sin notas internas, revocable) en setlists personales y de banda.
+- **Verificación:** `test_setlist_compartido_sin_notas_y_revocable`; `test_migraciones_en_sync_con_los_modelos`.
+
 ### V6-F6 (parcial) — Centro de avisos y calendario (T-V6-61, T-V6-62)
 - **Qué:** migración `e5f6a7b8c9d0` (`notifications`, `musician_profiles.calendar_token`). `services/notify.py` crea avisos en la misma transacción que la acción (nunca la rompe): evento nuevo, votación de fechas, pendiente asignado en la pizarra, candidatura recibida, banda elegida para un bolo y mensaje nuevo en Explorar. Lateral: "Avisos" con contador (refresco cada minuto con la pestaña visible) y lista; al abrir se marcan leídos. Calendario: vista **Mes** en la Agenda (`bfCalendar`, reutilizable), **suscripción** del calendario del móvil/Google/Outlook a los eventos de todas mis bandas (`/public/calendar/{token}.ics`, token privado y revocable) y **.ics** por evento desde la hoja del bolo.
 - **Verificación:** `tests/unit/test_api_notifications.py` (avisos a los demás y no al autor, leído, ajeno sin avisos; .ics con escapado, aislamiento y revocación del token).

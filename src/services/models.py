@@ -183,6 +183,8 @@ class Setlist(Base):
     band_id = Column(
         String(36), ForeignKey("bands.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    # Enlace de solo lectura (T-V6-63): setlist.html?t= para el técnico, la sala o un sustituto.
+    share_token = Column(String(64), nullable=True, unique=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime, nullable=True, index=True)  # soft delete (como Song)
@@ -381,6 +383,7 @@ class Event(Base):
 
     __tablename__ = "events"
     __table_args__ = (
+        Index("ix_events_band_starts", "band_id", "starts_at"),  # T-V6-75: agenda por banda
         CheckConstraint(
             "type IN (" + ", ".join(f"'{t}'" for t in EVENT_TYPES) + ")",
             name="ck_events_type",
@@ -501,6 +504,7 @@ class Transaction(Base):
 
     __tablename__ = "transactions"
     __table_args__ = (
+        Index("ix_transactions_band_date", "band_id", "date"),  # T-V6-75
         CheckConstraint(
             "type IN (" + ", ".join(f"'{t}'" for t in TRANSACTION_TYPES) + ")",
             name="ck_transactions_type",
@@ -574,6 +578,7 @@ class Message(Base):
     `is_pinned` (lo fija un admin) = nota importante; aparecen arriba. Soft delete."""
 
     __tablename__ = "messages"
+    __table_args__ = (Index("ix_messages_band_created", "band_id", "created_at"),)  # T-V6-75
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     band_id = Column(
@@ -1258,6 +1263,7 @@ class Notification(Base):
     """Centro de notificaciones in-app (T-V6-61): evento nuevo, votación, candidatura, mensaje…"""
 
     __tablename__ = "notifications"
+    __table_args__ = (Index("ix_notifications_user_read", "user_id", "read_at"),)
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     user_id = Column(String(36), nullable=False, index=True)

@@ -258,6 +258,7 @@ class SetlistResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     items: List[SetlistItemOut] = []
+    share_token: Optional[str] = None  # T-V6-63: enlace de solo lectura (si está activo)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1571,3 +1572,12 @@ class NotificationOut(BaseModel):
 class NotificationList(BaseModel):
     unread: int = 0
     items: List[NotificationOut] = []
+
+
+
+class PublicSetlistOut(BaseModel):
+    """Setlist de solo lectura (T-V6-63): sin notas internas, sin ids de usuario."""
+    name: str
+    band_name: Optional[str] = None
+    items: List[dict] = []   # [{"title", "artist", "key", "bpm", "duration_sec"}]
+    duration_sec: Optional[int] = None

@@ -532,3 +532,13 @@ async function bfSubscribeCalendar() {
         }).then(async (v) => { if (v === 'copy') { try { await navigator.clipboard.writeText(https); toast('Enlace copiado.', 'success'); } catch (e) { /* sin permiso */ } } });
     } catch (e) { toast('No se pudo crear el enlace del calendario.', 'error'); }
 }
+
+// ── T-V6-63: compartir un setlist de solo lectura (técnico, sala, sustituto) ──
+async function bfShareSetlist(setlistId, name) {
+    try {
+        const res = await apiFetch(`/setlists/${encodeURIComponent(setlistId)}/share`, { method: 'POST' });
+        if (!res.ok) throw new Error(res.status === 403 ? 'Los invitados no pueden compartir.' : 'http');
+        const t = await res.json();
+        await bfShare({ title: name || 'Setlist', text: `Setlist «${name || ''}»:`, url: `${location.origin}${t.path}` });
+    } catch (e) { toast(e.message && e.message !== 'http' ? e.message : 'No se pudo compartir el setlist.', 'error'); }
+}

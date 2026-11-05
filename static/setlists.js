@@ -125,6 +125,10 @@ async function openEditor(setlistId = null) {
             <div class="form-actions"><button id="sl-save" class="primary-btn">${bfIcon('save')} ${editing ? 'Guardar cambios' : 'Crear setlist'}</button></div>
         </div>`;
     document.getElementById('sl-back').addEventListener('click', (e) => { e.preventDefault(); loadSetlists(); });
+    const pr = document.getElementById('sl-print');
+    if (pr) pr.addEventListener('click', () => { document.body.classList.add('bf-print-setlist'); window.print(); setTimeout(() => document.body.classList.remove('bf-print-setlist'), 500); });
+    const shr = document.getElementById('sl-share');
+    if (shr) shr.addEventListener('click', () => bfShareSetlist(sl.id, sl.name));
 
     const elAvail = document.getElementById('sl-available');
     const elSel = document.getElementById('sl-selected');
@@ -229,7 +233,11 @@ async function openSetlist(id) {
             <a href="#" id="sl-back" class="back-link">← Volver</a>
             <div class="setlist-detail-head">
                 <h3>${escapeHtml(sl.name)}</h3>
-                ${sl.items.length ? `<button id="sl-playall" class="primary-btn">${bfIcon('play')} Reproducir todo</button>` : ''}
+                <span class="bf-row bf-wrap" style="gap:.4rem;">
+                ${sl.items.length ? `<button id="sl-playall" class="primary-btn">${bfIcon('play')} Reproducir todo</button>
+                <button id="sl-print" class="bf-btn bf-btn--sm" title="Imprimir el orden (para pegar en el suelo)">${bfIcon('printer', { size: 15 })} Imprimir</button>
+                <button id="sl-share" class="bf-btn bf-btn--sm" title="Enlace de solo lectura">${bfIcon('share', { size: 15 })} Compartir</button>` : ''}
+                </span>
             </div>
             ${bfSetlistInsightsHtml(sl.items)}
             <ul class="setlist-list">${rows}</ul>

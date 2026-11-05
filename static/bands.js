@@ -910,12 +910,15 @@ async function loadBandSetlists(bandId, canEdit) {
         <li class="setlist-song" data-id="${escapeHtml(sl.id)}">
             <span class="sl-title">${escapeHtml(sl.name)} <small>${sl.song_count} ${sl.song_count === 1 ? 'canción' : 'canciones'}${sl.duration_sec ? ' · ' + bfDuration(sl.duration_sec) : ''}</small></span>
             <button class="setlist-item-btn" data-act="play" aria-label="Reproducir en orden" title="Reproducir en orden">${bfIcon('play')}</button>
-            ${canEdit ? `<button class="setlist-item-btn" data-act="edit" aria-label="Editar setlist" title="Editar">${bfIcon('edit')}</button>
+            ${canEdit ? `<button class="setlist-item-btn" data-act="share" aria-label="Compartir setlist (solo lectura)" title="Compartir / imprimir">${bfIcon('share')}</button>
+            <button class="setlist-item-btn" data-act="edit" aria-label="Editar setlist" title="Editar">${bfIcon('edit')}</button>
             <button class="setlist-item-btn danger" data-act="del" aria-label="Borrar setlist" title="Borrar">${bfIcon('trash')}</button>` : ''}
         </li>`).join('');
     el.querySelectorAll('.setlist-song').forEach(li => {
         const sid = li.dataset.id;
         li.querySelector('[data-act="play"]').addEventListener('click', () => playBandSetlist(bandId, sid));
+        const shr = li.querySelector('[data-act="share"]');
+        if (shr) shr.addEventListener('click', () => bfShareSetlist(sid, (setlists.find(x => x.id === sid) || {}).name));
         const edit = li.querySelector('[data-act="edit"]');
         if (edit) edit.addEventListener('click', () => {
             const listWrap = document.getElementById('b-setlist-list-wrap');

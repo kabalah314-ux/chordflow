@@ -81,6 +81,7 @@ from ..services.schemas import (
     PollOut,
     PollVotesIn,
     ProductEventIn,
+    PublicSetlistOut,
     RecurringIn,
     RecurringOut,
     RehearsalItem,
@@ -990,3 +991,63 @@ def season(band_id: str, year: Optional[int] = Query(None, ge=2000, le=2100),
         expenses_per_member=(expenses / members).quantize(Decimal("0.01")) if members else 0,
         members=members, top_songs=[{"title": t, "times": n} for t, n in top],
         new_songs=new_songs, currency=band.currency if band else "EUR")
+
+
+
+# ══ Setlist compartido de solo lectura (T-V6-63) ═══════════════════════════════
+def _editable_setlist(db: Session, setlist_id: str, user_id: str) -> Setlist:
+    sl = db.query(Setlist).filter(Setlist.id == setlist_id, Setlist.deleted_at.is_(None)).first()
+    if sl is None:
+        raise HTTPException(status_code=404, detail="Setlist no encontrado")
+    if sl.band_id is None:
+        if sl.owner_id != user_id:
+            raise HTTPException(status_code=404, detail="Setlist no encontrado")
+    else:
+        m = active_membership(db, sl.band_id, user_id)
+        if m is None:
+            raise HTTPException(status_code=404, detail="Setlist no encontrado")
+        if m.role == "guest":
+            raise HTTPException(status_code=403, detail="Los invitados solo pueden ver")
+    return sl
+
+
+@router.post("/setlists/{setlist_id}/share")
+def share_setlist(setlist_id: str, db: Session = Depends(get_db),
+                  user_id: str = Depends(get_current_user)):
+    sl = _editable_setlist(db, setlist_id, user_id)
+    if not sl.share_token:
+        sl.share_token = secrets.token_urlsafe(18)
+        db.commit()
+    return {"token": sl.share_token, "path": f"/static/setlist.html?t={sl.share_token}"}
+
+
+@router.delete("/setlists/{setlist_id}/share", status_code=status.HTTP_204_NO_CONTENT)
+def unshare_setlist(setlist_id: str, db: Session = Depends(get_db),
+                    user_id: str = Depends(get_current_user)):
+    sl = _editable_setlist(db, setlist_id, user_id)
+    sl.share_token = None
+    db.commit()
+
+
+@router.get("/public/setlists/{token}", response_model=PublicSetlistOut)
+def public_setlist(token: str, request: Request, db: Session = Depends(get_db)):
+    from .setlists_router import _duration
+
+    check_rate(f"pub-setlist:{request.client.host if request.client else '-'}", 120, 60)
+    sl = (db.query(Setlist).filter(Setlist.share_token == token, Setlist.deleted_at.is_(None))
+          .first() if len(token) >= 16 else None)
+    if sl is None or (sl.band_id and db.query(Band).filter(
+            Band.id == sl.band_id, Band.deleted_at.is_(None)).first() is None):
+        raise HTTPException(status_code=404, detail="Setlist no disponible")
+    items = []
+    for it in sl.items:
+        s = it.song
+        if s is None or s.deleted_at is not None:
+            continue
+        key = f"{s.key_root}{'m' if (s.key_mode or '').startswith('m') else ''}" if s.key_root else None
+        items.append({"title": s.title, "artist": s.artist, "key": key, "bpm": s.bpm,
+                      "duration_sec": _duration(s)})
+    known = [i["duration_sec"] for i in items if i["duration_sec"]]
+    return PublicSetlistOut(
+        name=sl.name, items=items, duration_sec=sum(known) if known else None,
+        band_name=db.query(Band.name).filter(Band.id == sl.band_id).scalar() if sl.band_id else None)

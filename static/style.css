@@ -1634,3 +1634,15 @@ kbd {
 .fc-reviews p { margin: .2rem 0 0; }
 /* T-V6-87: botón de práctica activo */
 #btn-practice.is-on { background: var(--accent-color) !important; color: #000 !important; }
+/* T-V6-63: setlist público y versión impresa */
+.pub-setlist { margin: 1rem 0 0; padding-left: 1.6rem; display: flex; flex-direction: column; gap: .55rem; }
+.pub-setlist li { font-size: 1.25rem; }
+.pub-setlist__title { font-weight: 700; }
+.pub-setlist__meta { display: block; font-size: .85rem; color: var(--text-secondary); }
+@media print {
+  .pub-setlist li { font-size: 22pt; }
+  body.bf-print-setlist .bf-sidebar, body.bf-print-setlist .bf-hamburger, body.bf-print-setlist #sl-back,
+  body.bf-print-setlist .setlist-detail-head button, body.bf-print-setlist .setlist-item-btn,
+  body.bf-print-setlist .bf-sl-insights__warn { display: none !important; }
+  body.bf-print-setlist .setlist-song .sl-title { font-size: 20pt; color: #000; }
+}

@@ -320,3 +320,23 @@ def test_resumen_de_temporada_y_marcas_de_practica(client):
     r = client.patch(f"/songs/{s['id']}", json={"practice_refs": {"0": 0, "1": 31.25, "x": 5}})
     assert r.status_code == 200, r.text
     assert r.json()["practice_refs"] == {"0": 0.0, "1": 31.2}
+
+
+# ── Setlist compartido de solo lectura (T-V6-63) ──────────────────────────────
+def test_setlist_compartido_sin_notas_y_revocable(client):
+    bid = _band(client)
+    s = _song(client, bid, "Apertura")
+    sl = client.post(f"/bands/{bid}/setlists/", json={
+        "name": "Bolo X", "items": [{"song_id": s["id"], "note": "NOTA-SECRETA"}]}).json()
+    with acting_as(GUEST):
+        assert client.post(f"/setlists/{sl['id']}/share").status_code == 403
+    with acting_as(STRANGER):
+        assert client.post(f"/setlists/{sl['id']}/share").status_code == 404
+    with acting_as(MEMBER):
+        tok = client.post(f"/setlists/{sl['id']}/share").json()["token"]
+    pub = client.get(f"/public/setlists/{tok}")
+    assert pub.status_code == 200
+    assert pub.json()["items"][0]["title"] == "Apertura" and pub.json()["band_name"] == "Banda Tools"
+    assert "NOTA-SECRETA" not in pub.text
+    client.delete(f"/setlists/{sl['id']}/share")
+    assert client.get(f"/public/setlists/{tok}").status_code == 404

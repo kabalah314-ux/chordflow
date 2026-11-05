@@ -820,7 +820,7 @@
 - [ ] **T-V6-60** Email transaccional (Edge Function + proveedor D-V6-7): invitación aceptada, evento nuevo/cambiado, recordatorio 24 h, movimiento que te afecta; preferencias por tipo
 - [x] **T-V6-61** Centro de notificaciones in-app (tabla + campana) y no-leídos de chat
 - [x] **T-V6-62** `bf-calendar` (mensual + semanal, contrato V5 §7) en Agenda TÚ, banda y Resumen; `.ics` por evento y suscripción por banda
-- [ ] **T-V6-63** Exportar/imprimir setlist (PDF orden + notas; pack con canciones) y compartir setlist por enlace de solo lectura
+- [x] **T-V6-63** Exportar/imprimir setlist (PDF orden + notas; pack con canciones) y compartir setlist por enlace de solo lectura
 - [ ] **T-V6-64** Onboarding: sin banda (dos caminos + canción demo), asistente de banda de 3 pasos, tour de 4 puntos
 - [ ] **T-V6-65** Borrar cuenta (con transferencia de admin) + exportar mis datos; verificación de email; emails de auth con marca
 - [ ] **T-V6-66** Moderación del catálogo (ocultar/retirar, borrar comentario), reportar, aviso de derechos
@@ -831,7 +831,7 @@
 - [ ] **T-V6-72** Backups `pg_dump` diarios + restauración probada + runbook de rollback
 - [ ] **T-V6-73** Dominio propio + HSTS + CSP con nonce (sin `onclick` inline)
 - [ ] **T-V6-74** Rate limiting completo (`/invites`, `/public`, `/catalog`) + cuota diaria de IA por usuario
-- [ ] **T-V6-75** Índices compuestos reales + migración de limpieza de columnas muertas
+- [x] **T-V6-75** Índices compuestos reales + migración de limpieza de columnas muertas
 - [ ] **T-V6-90** Una banda = inicio en la banda; 7 pestañas; Giras → agrupación; Explorar tras bandera
 - [x] **T-V6-80** Invitación con preview público + `bfShare` (WhatsApp) en invitación/evento/setlist/hoja/votación
 - [x] **T-V6-82** Votación de fechas sin cuenta (`date_polls`) → evento

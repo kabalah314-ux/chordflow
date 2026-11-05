@@ -91,7 +91,8 @@ def _to_response(setlist: Setlist) -> SetlistResponse:
                                     duration_sec=_duration(song)))
     return SetlistResponse(id=setlist.id, name=setlist.name, owner_id=setlist.owner_id,
                            band_id=setlist.band_id, created_at=setlist.created_at,
-                           updated_at=setlist.updated_at, items=items)
+                           updated_at=setlist.updated_at, items=items,
+                           share_token=setlist.share_token)
 
 
 @router.get("/", response_model=List[SetlistSummary])
