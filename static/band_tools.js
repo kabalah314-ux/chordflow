@@ -572,6 +572,37 @@
             agenda.parentNode.insertBefore(box, agenda);
             loadPolls(bandId, ctx);
         }
+        // T-V6-42b: filtro Próximos / Pasados / Todo (recordado en el dispositivo)
+        const heads = [...agenda.querySelectorAll(':scope > h5')];
+        if (heads.length) {
+            let seg = document.getElementById('bt-ag-seg');
+            if (!seg) {
+                seg = document.createElement('div');
+                seg.id = 'bt-ag-seg';
+                seg.className = 'bf-segmented bt-ag-seg';
+                seg.setAttribute('role', 'group');
+                seg.setAttribute('aria-label', 'Qué eventos ver');
+                agenda.parentNode.insertBefore(seg, agenda);
+            }
+            let mode = 'all';   // por defecto todo (los eventos sin fecha van con los pasados)
+            try { mode = localStorage.getItem('bf-ag-mode') || 'all'; } catch (e2) { /* */ }
+            const apply = () => {
+                heads.forEach(h => {
+                    const past = /Pasados/i.test(h.textContent);
+                    const show = mode === 'all' || (mode === 'past' ? past : !past);
+                    h.hidden = !show;
+                    if (h.nextElementSibling) h.nextElementSibling.hidden = !show;
+                });
+                seg.innerHTML = [['upcoming', 'Próximos'], ['past', 'Pasados'], ['all', 'Todo']].map(([k, l]) =>
+                    `<button type="button" class="bf-btn bf-btn--sm${k === mode ? ' bf-btn--primary' : ''}" data-m="${k}" aria-pressed="${k === mode}">${l}</button>`).join('');
+                seg.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => {
+                    mode = b.dataset.m;
+                    try { localStorage.setItem('bf-ag-mode', mode); } catch (e3) { /* */ }
+                    apply();
+                }));
+            };
+            apply();
+        }
         agenda.querySelectorAll('.setlist-song[data-id]').forEach(li => {
             if (li.querySelector('[data-act="sheet"]')) return;
             const btn = document.createElement('button');

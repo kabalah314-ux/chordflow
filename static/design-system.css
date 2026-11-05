@@ -729,3 +729,4 @@ a.rd-pro:hover { border-color: var(--bf-primary); }
 .fin-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .8rem; }
 .fin-kpis .bf-card { display: flex; flex-direction: column; gap: .2rem; }
 .fin-kpis strong { font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.bt-ag-seg { display: flex; gap: .3rem; margin-bottom: .6rem; }

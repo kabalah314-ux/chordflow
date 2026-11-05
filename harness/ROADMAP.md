@@ -796,9 +796,9 @@
 - [x] **T-V6-40** Login (dos columnas, pestañas Entrar/Crear, Google oficial, mostrar contraseña) + `reset.html` + Términos/Privacidad
 - [x] **T-V6-41** Join (tarjeta centrada, estados inválida/caducada, login conservando código)
 - [x] **T-V6-42a** Espacio de banda: cabecera con cover, pestañas con contador + hash, onboarding una sola vez (persistido en perfil)
-- [ ] **T-V6-42b** Agenda de banda: filas 56 px + segmented + ⋯ + panel de detalle (`bf-drawer`); Salas a Ajustes
+- [x] **T-V6-42b** Agenda de banda: filas 56 px + segmented + ⋯ + panel de detalle (`bf-drawer`); Salas a Ajustes
 - [x] **T-V6-42c** Chat de banda: agrupación, avatar, hora, fijados colapsables, composer, editar propio
-- [ ] **T-V6-42d** Repertorio + Setlists de banda: "Añadir canción" con menú, meta tono/BPM/capo, ⋯, orden, tarjetas de setlist con duración
+- [x] **T-V6-42d** Repertorio + Setlists de banda: "Añadir canción" con menú, meta tono/BPM/capo, ⋯, orden, tarjetas de setlist con duración
 - [x] **T-V6-42e** Miembros + Invitaciones (lista, revocar, copiar) + Salir de la banda + transferir admin
 - [x] **T-V6-42f** Finanzas de banda: `Intl`, quién pagó, filtros, liquidaciones listadas/borrables, gráfico por mes
 - [x] **T-V6-42g** Giras: tarjeta + timeline + editar/borrar
