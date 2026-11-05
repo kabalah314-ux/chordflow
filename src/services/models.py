@@ -854,9 +854,10 @@ class EventChecklistItem(Base):
     event_id = Column(
         String(36), ForeignKey("events.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    text = Column(String(255), nullable=False)
-    assignee_id = Column(String(36), nullable=True)
+    # `position` va ANTES de `text`: el atributo `text` tapa a sqlalchemy.text dentro de la clase.
     position = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    assignee_id = Column(String(36), nullable=True)
+    text = Column(String(255), nullable=False)
     done_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
