@@ -204,3 +204,31 @@ def test_reportes_ocultan_tras_tres_personas(client):
                                                  "reason": "Perfil falso"}).status_code == 201
     assert client.get(f"/public/pros/{v['id']}").status_code == 404
     assert all(p["id"] != v["id"] for p in client.get("/public/pros").json())
+
+
+def test_moderacion_del_catalogo(client):
+    """T-V6-66: quien publica retira; comentarios los borra su autor o quien publicó; 3 reportes
+    ocultan la partitura."""
+    s = client.post("/songs/", json={"title": "Para el catálogo", "sections": []}).json()
+    sc = client.post("/catalog/publish", json={"song_id": s["id"]})
+    assert sc.status_code == 201, sc.text
+    sid = sc.json()["id"]
+    assert client.get(f"/catalog/scores/{sid}").json()["is_mine"] is True
+    with acting_as(OTRO):
+        c = client.post(f"/catalog/scores/{sid}/comments", json={"body": "Falta el puente"}).json()
+        assert client.delete(f"/catalog/scores/{sid}").status_code == 404   # no es suya
+    with acting_as(FOTO):
+        assert client.delete(f"/catalog/scores/{sid}/comments/{c['id']}").status_code == 403
+    assert client.delete(f"/catalog/scores/{sid}/comments/{c['id']}").status_code == 204
+    for uid in (OTRO, FOTO, MIEMBRO):
+        with acting_as(uid):
+            client.post("/reports", json={"target_kind": "score", "target_id": sid,
+                                          "reason": "Letra completa con derechos"})
+    assert client.get(f"/catalog/scores/{sid}").status_code == 404   # oculta hasta revisión
+
+
+def test_quien_publica_retira_su_partitura(client):
+    s = client.post("/songs/", json={"title": "Me arrepiento", "sections": []}).json()
+    sid = client.post("/catalog/publish", json={"song_id": s["id"]}).json()["id"]
+    assert client.delete(f"/catalog/scores/{sid}").status_code == 204
+    assert client.get(f"/catalog/scores/{sid}").status_code == 404

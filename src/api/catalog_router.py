@@ -37,6 +37,7 @@ from ..services.models import (
     ScoreComment,
     ScoreRating,
     Song,
+    _utcnow,
 )
 from ..services.schemas import (
     CatalogCommentCreate,
@@ -258,6 +259,7 @@ def get_score(
     mine = (db.query(ScoreRating.stars)
             .filter(ScoreRating.public_score_id == sc.id, ScoreRating.user_id == user_id).first())
     detail.my_rating = mine[0] if mine else None
+    detail.is_mine = sc.publisher_id == user_id
     return detail
 
 
@@ -337,3 +339,34 @@ def add_comment(
     db.refresh(c)
     return ScoreCommentOut(id=c.id, user_id=user_id, author_name=_name_of(db, user_id),
                            body=c.body, created_at=c.created_at)
+
+
+# ── Moderación (T-V6-66) ──────────────────────────────────────────────────────
+# Quien publicó puede retirar su partitura (status='removed': deja de listarse y de importarse; los
+# que ya la importaron conservan su copia). Un comentario lo borra su autor o quien publicó la
+# partitura. Los reportes van por POST /reports (target_kind 'score' | 'comment'); con 3
+# reporteros distintos la partitura se oculta (status='hidden') hasta que Oscar la revise.
+@router.delete("/scores/{score_id}", status_code=status.HTTP_204_NO_CONTENT)
+def withdraw_score(score_id: str, db: Session = Depends(get_db),
+                   user_id: str = Depends(get_current_user)):
+    sc = (db.query(PublicScore)
+          .filter(PublicScore.id == score_id, PublicScore.deleted_at.is_(None)).first())
+    if sc is None or sc.publisher_id != user_id:
+        raise HTTPException(status_code=404, detail="Partitura no encontrada")
+    sc.status = "removed"
+    db.commit()
+
+
+@router.delete("/scores/{score_id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_comment(score_id: str, comment_id: str, db: Session = Depends(get_db),
+                   user_id: str = Depends(get_current_user)):
+    sc = _get_score(db, score_id)
+    c = (db.query(ScoreComment)
+         .filter(ScoreComment.id == comment_id, ScoreComment.public_score_id == sc.id,
+                 ScoreComment.deleted_at.is_(None)).first())
+    if c is None:
+        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+    if user_id not in (c.user_id, sc.publisher_id):
+        raise HTTPException(status_code=403, detail="Solo su autor o quien publicó la partitura")
+    c.deleted_at = _utcnow()
+    db.commit()

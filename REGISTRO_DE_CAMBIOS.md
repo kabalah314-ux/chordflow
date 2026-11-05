@@ -46,6 +46,10 @@ seguir. Bucle de oro por tarea (doctor+test+cachebust+registro+cerrar), commit+d
 
 <!-- V6-ENTRADAS -->
 
+### V6 — Moderación del catálogo (T-V6-66)
+- **Qué:** `DELETE /catalog/scores/{id}` (quien publicó la retira: deja de listarse; las copias importadas se quedan), `DELETE /catalog/scores/{id}/comments/{cid}` (autor o quien publicó), reportes `score`/`comment` en `POST /reports` con ocultación automática a los 3 reporteros distintos. En la ficha del catálogo: "Retirar del catálogo" o "Reportar", borrar comentarios y aviso de derechos.
+- **Verificación:** `test_moderacion_del_catalogo`, `test_quien_publica_retira_su_partitura`.
+
 ### V6 — Cuenta: exportar datos, borrar cuenta, salir de la banda (T-V6-65, T-V6-42e)
 - **Qué:** `account_router.py`: `GET /me/export` (JSON con perfil, canciones y setlists personales, bandas y fichas de la red), `POST /me/delete-account` (confirmación "BORRAR": borra lo personal, anonimiza el perfil, sale de las bandas traspasando el admin al miembro más antiguo o archivando la banda si estaba solo) y `POST /bands/{id}/leave` (si eres el único admin hay que elegir heredero). Perfil: "Ver mis eventos en mi calendario", "Descargar mis datos", "Borrar mi cuenta" y acceso a "Mis perfiles en la red". Miembros: "Salir de la banda".
 - **Pendiente de Oscar:** borrar el usuario en Supabase Auth cuando alguien borre su cuenta (la API no tiene la service key, a propósito); los logs dejan constancia.

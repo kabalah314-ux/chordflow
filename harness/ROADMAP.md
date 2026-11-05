@@ -823,7 +823,7 @@
 - [x] **T-V6-63** Exportar/imprimir setlist (PDF orden + notas; pack con canciones) y compartir setlist por enlace de solo lectura
 - [ ] **T-V6-64** Onboarding: sin banda (dos caminos + canción demo), asistente de banda de 3 pasos, tour de 4 puntos
 - [x] **T-V6-65** Borrar cuenta (con transferencia de admin) + exportar mis datos; verificación de email; emails de auth con marca
-- [ ] **T-V6-66** Moderación del catálogo (ocultar/retirar, borrar comentario), reportar, aviso de derechos
+- [x] **T-V6-66** Moderación del catálogo (ocultar/retirar, borrar comentario), reportar, aviso de derechos
 - [x] **T-V6-67** Búsqueda global Ctrl+K y hoja de atajos `?`
 - [x] **T-V6-68** Landing pública en `/` y páginas 404/500 con marca (D-V6-11)
 - [ ] **T-V6-70** Staging (Supabase + env de preview en Vercel) + smoke post-deploy

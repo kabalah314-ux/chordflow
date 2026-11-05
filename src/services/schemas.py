@@ -942,6 +942,7 @@ class PublicScoreDetail(PublicScoreSummary):
     sections: List[Any] = []               # snapshot del árbol (lo pinta score_render.js)
     comments: List[ScoreCommentOut] = []
     my_rating: Optional[int] = None
+    is_mine: bool = False  # T-V6-66: quien publicó puede retirarla y moderar comentarios
 
 
 class CatalogPublishRequest(BaseModel):
@@ -1448,7 +1449,7 @@ class ReviewIn(BaseModel):
 
 
 class ReportIn(BaseModel):
-    target_kind: Literal["pro", "gig_call", "band", "review"]
+    target_kind: Literal["pro", "gig_call", "band", "review", "score", "comment"]
     target_id: str = Field(max_length=36)
     reason: str = Field(min_length=3, max_length=2000)
 

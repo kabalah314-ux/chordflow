@@ -75,6 +75,11 @@
                     <button class="bf-btn bf-btn--primary" id="cat-import">${bfIcon('download')} Importar</button>
                 </div>
                 <p class="bf-faint" style="font-size:var(--bf-fs-xs);">Al importar obtienes la versión completa (con toda la letra) en tu espacio.</p>
+                <div class="bf-row bf-wrap" style="gap:.4rem;">
+                    ${d.is_mine ? `<button class="bf-btn bf-btn--sm bf-btn--danger" id="cat-withdraw">${bfIcon('trash', { size: 14 })} Retirar del catálogo</button>`
+                                : `<button class="bf-btn bf-btn--sm bf-btn--ghost" id="cat-report">Reportar</button>`}
+                </div>
+                <p class="bf-faint" style="font-size:var(--bf-fs-xs);">Las letras y canciones son de sus autores. Aquí se comparten transcripciones de acordes para tocarlas; si eres titular de derechos y quieres que retiremos algo, usa «Reportar».</p>
             </div>
 
             <div class="bf-card" style="margin-bottom:1rem;">
@@ -104,7 +109,29 @@
         catch (e) { document.getElementById('cat-preview').innerHTML = '<p class="bf-faint">Sin vista previa.</p>'; }
 
         renderStars(id, d.my_rating || 0);
-        renderComments(d.comments || []);
+        renderComments(d.comments || [], id, d.is_mine);
+        // T-V6-66: retirar (quien publicó) / reportar (resto)
+        const wd = document.getElementById('cat-withdraw');
+        if (wd) wd.addEventListener('click', async () => {
+            if (!(await confirmModal('¿Retirar esta partitura del catálogo? Quien ya la importó conserva su copia.', { okText: 'Retirar' }))) return;
+            try {
+                const res = await apiFetch(`/catalog/scores/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                toast('Retirada del catálogo.', 'success');
+                renderShell();
+            } catch (e) { toast('No se pudo retirar.', 'error'); }
+        });
+        const rp = document.getElementById('cat-report');
+        if (rp) rp.addEventListener('click', async () => {
+            const reason = await promptModal('¿Qué pasa con esta partitura? (errores graves, contenido inapropiado, derechos…)', { okText: 'Reportar' });
+            if (!reason) return;
+            try {
+                const res = await apiFetch('/reports', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target_kind: 'score', target_id: id, reason }) });
+                if (!res.ok) throw new Error('http');
+                toast('Gracias. Lo revisaremos.', 'success');
+            } catch (e) { toast('No se pudo enviar el reporte.', 'error'); }
+        });
 
         document.getElementById('cat-import').addEventListener('click', async () => {
             const bandId = document.getElementById('cat-import-dest').value || null;
@@ -155,16 +182,27 @@
         }));
     }
 
-    function renderComments(comments) {
+    let myId = null;
+    function renderComments(comments, scoreId, isMine) {
         const el = document.getElementById('cat-comments');
         if (!el) return;
         if (!comments.length) { el.innerHTML = '<li><small>Sé el primero en comentar.</small></li>'; return; }
         el.innerHTML = comments.map(c => `
-            <li class="setlist-song">
+            <li class="setlist-song" data-comment="${escapeHtml(c.id)}">
                 <span class="sl-title">${escapeHtml(c.author_name || 'Anónimo')}
                     <small>${escapeHtml(c.body)}</small></span>
+                ${(isMine || (myId && c.user_id === myId)) ? `<button class="setlist-item-btn" data-act="del-comment" aria-label="Borrar comentario" title="Borrar">${bfIcon('trash', { size: 14 })}</button>` : ''}
             </li>`).join('');
+        el.querySelectorAll('[data-act="del-comment"]').forEach(b => b.addEventListener('click', async () => {
+            const cid = b.closest('[data-comment]').dataset.comment;
+            try {
+                const res = await apiFetch(`/catalog/scores/${encodeURIComponent(scoreId)}/comments/${encodeURIComponent(cid)}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) throw new Error('http');
+                b.closest('li').remove();
+            } catch (e) { toast('No se pudo borrar.', 'error'); }
+        }));
     }
+    getUser().then(u => { myId = u ? u.id : null; }).catch(() => {});
 
     function renderShell() {
         root.innerHTML = `

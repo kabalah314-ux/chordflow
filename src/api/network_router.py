@@ -34,8 +34,10 @@ from ..services.models import (
     GigCall,
     MusicianProfile,
     ProProfile,
+    PublicScore,
     Report,
     Review,
+    ScoreComment,
     Venue,
     _utcnow,
 )
@@ -901,6 +903,15 @@ def report(payload: ReportIn, db: Session = Depends(get_db),
                         Report.target_id == payload.target_id,
                         Report.resolved_at.is_(None)).scalar())
     if distinct >= AUTO_HIDE_REPORTS:
+        if payload.target_kind == "score":   # catálogo (T-V6-66): se oculta hasta revisión
+            sc = db.get(PublicScore, payload.target_id)
+            if sc is not None and sc.status == "published":
+                sc.status = "hidden"
+                logger.warning("Partitura %s oculta por %d reportes", sc.id, distinct)
+        if payload.target_kind == "comment":
+            cm = db.get(ScoreComment, payload.target_id)
+            if cm is not None and cm.deleted_at is None:
+                cm.deleted_at = _utcnow()
         target = {"pro": ProProfile, "review": Review}.get(payload.target_kind)
         obj = db.get(target, payload.target_id) if target else None
         if obj is not None and obj.hidden_at is None:
